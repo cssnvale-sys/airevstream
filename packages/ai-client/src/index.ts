@@ -30,7 +30,7 @@ export interface StreamChunk {
 
 // ─── Default Config ───
 
-const DEFAULT_MODEL = 'llama3.2';
+const DEFAULT_MODEL = 'qwen3:8b';
 
 // ─── Client ───
 

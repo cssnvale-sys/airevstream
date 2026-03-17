@@ -1,0 +1,26 @@
+{
+  "name": "airevstream",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*",
+    "workers"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "db:generate": "turbo db:generate --filter=@airevstream/db",
+    "db:migrate": "turbo db:migrate --filter=@airevstream/db",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:reset": "docker compose down -v && docker compose up -d"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}

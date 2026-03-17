@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  accounts      Account[]
+  contents      Content[]
+  workflows     Workflow[]
+  conversations Conversation[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─── Platform Accounts ───
+
+model Account {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  platform        String   // youtube, tiktok, instagram, twitter, facebook
+  platformUserId  String?  @map("platform_user_id")
+  username        String?
+  displayName     String?  @map("display_name")
+  avatarUrl       String?  @map("avatar_url")
+  accessToken     String?  @map("access_token") // encrypted
+  refreshToken    String?  @map("refresh_token") // encrypted
+  tokenExpiresAt  DateTime? @map("token_expires_at")
+  status          String   @default("pending") // active, suspended, disconnected, pending
+  metadata        Json?
+  lastSyncedAt    DateTime? @map("last_synced_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postings Posting[]
+
+  @@unique([userId, platform, platformUserId])
+  @@index([userId])
+  @@index([platform])
+  @@map("accounts")
+}
+
+// ─── Content ───
+
+model Content {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String
+  description String?
+  type        String   // video, image, text, story, reel, short
+  status      String   @default("draft") // draft, generating, review, approved, scheduled, publishing, published, failed
+  script      String?
+  metadata    Json?
+  tags        String[] @default([])
+  scheduledAt DateTime? @map("scheduled_at")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assets ContentAsset[]
+  postings Posting[]
+  workflowRuns WorkflowRun[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("contents")
+}
+
+model ContentAsset {
+  id         String   @id @default(cuid())
+  contentId  String   @map("content_id")
+  type       String   // video, audio, image, thumbnail, subtitle
+  fileName   String   @map("file_name")
+  mimeType   String   @map("mime_type")
+  size       Int
+  bucket     String
+  key        String
+  url        String?
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@map("content_assets")
+}
+
+// ─── Posting (cross-platform publishing) ───
+
+model Posting {
+  id            String   @id @default(cuid())
+  contentId     String   @map("content_id")
+  accountId     String   @map("account_id")
+  platformPostId String? @map("platform_post_id")
+  status        String   @default("pending") // pending, publishing, published, failed
+  publishedAt   DateTime? @map("published_at")
+  errorMessage  String?   @map("error_message")
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@index([accountId])
+  @@index([status])
+  @@map("postings")
+}
+
+// ─── Workflows ───
+
+model Workflow {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  definition  Json     // WorkflowDefinition JSON
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs WorkflowRun[]
+
+  @@index([userId])
+  @@map("workflows")
+}
+
+model WorkflowRun {
+  id         String   @id @default(cuid())
+  workflowId String   @map("workflow_id")
+  contentId  String?  @map("content_id")
+  status     String   @default("idle") // idle, running, paused, completed, failed
+  startedAt  DateTime? @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  error      String?
+  stepResults Json?   @map("step_results")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  content  Content? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+
+  @@index([workflowId])
+  @@index([status])
+  @@map("workflow_runs")
+}
+
+// ─── AI Conversations ───
+
+model Conversation {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  role           String   // user, assistant, system
+  content        String
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+// ─── Research ───
+
+model ResearchTopic {
+  id        String   @id @default(cuid())
+  topic     String
+  platform  String?
+  trendScore Float?  @map("trend_score")
+  data      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([platform])
+  @@index([createdAt])
+  @@map("research_topics")
+}
+
+// ─── Job Log ───
+
+model JobLog {
+  id          String   @id @default(cuid())
+  queue       String
+  jobId       String   @map("job_id")
+  jobType     String   @map("job_type")
+  status      String   // queued, active, completed, failed
+  data        Json?
+  result      Json?
+  error       String?
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([queue])
+  @@index([jobType])
+  @@index([status])
+  @@map("job_logs")
+}

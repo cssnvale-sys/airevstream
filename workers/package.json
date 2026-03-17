@@ -1,0 +1,27 @@
+{
+  "name": "@airevstream/workers",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@airevstream/shared": "*",
+    "@airevstream/db": "*",
+    "@airevstream/queue": "*",
+    "@airevstream/ai-client": "*",
+    "@airevstream/storage": "*",
+    "@airevstream/crypto": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  }
+}

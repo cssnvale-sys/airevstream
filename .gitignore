@@ -12,3 +12,10 @@ test-results/
 playwright-report/
 *.log
 .DS_Store
+*.tsbuildinfo
+
+# Compiled output in source dirs (dist/ already ignored above)
+services/production-pipeline/src/*.js
+services/production-pipeline/src/*.js.map
+services/production-pipeline/src/*.d.ts
+services/production-pipeline/src/*.d.ts.map

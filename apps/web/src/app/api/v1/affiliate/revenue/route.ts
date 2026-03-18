@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     return success({
       period: { start: start ?? null, end: end ?? null },
       summary: {
-        totalRevenue: totals._sum.revenue ?? 0,
+        totalRevenue: Number(totals._sum.revenue ?? 0),
         totalConversions: totals._count.id,
         totalClicks,
         conversionRate: totalClicks > 0 ? totals._count.id / totalClicks : 0,
@@ -83,14 +83,14 @@ export async function GET(req: NextRequest) {
       byChannel: byChannel.map((row) => ({
         channelId: row.channelId,
         channelName: row.channelId ? channelMap.get(row.channelId) ?? 'Unknown' : 'Direct',
-        revenue: row._sum.revenue ?? 0,
+        revenue: Number(row._sum.revenue ?? 0),
         conversions: row._count.id,
       })),
       byProduct: byProduct.map((row) => ({
         productId: row.productId,
         productName: productMap.get(row.productId)?.name ?? 'Unknown',
         category: productMap.get(row.productId)?.category ?? null,
-        revenue: row._sum.revenue ?? 0,
+        revenue: Number(row._sum.revenue ?? 0),
         conversions: row._count.id,
       })),
     });

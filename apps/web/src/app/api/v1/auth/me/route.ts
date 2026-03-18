@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@airevstream/db';
 import { success, error, authenticate } from '@/lib/api-server';
 
 export async function GET(req: NextRequest) {
@@ -7,8 +6,7 @@ export async function GET(req: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const db = getDb();
-    const user = await db.user.findUnique({
+    const user = await auth.db.user.findUnique({
       where: { id: auth.userId },
       select: {
         id: true,
@@ -27,7 +25,8 @@ export async function GET(req: NextRequest) {
     }
 
     return success(user);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/auth/me failed:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
   }
 }

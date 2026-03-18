@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(jobs, total, page, limit);
   } catch (err) {
+    console.error('GET /api/v1/workflows/hitl failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list HITL tasks', 500);
   }
 }

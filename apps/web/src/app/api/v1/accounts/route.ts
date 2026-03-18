@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
+    console.error('GET /api/v1/accounts failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list accounts', 500);
   }
 }
@@ -111,6 +112,7 @@ export async function POST(req: NextRequest) {
     const { passwordEnc: _, ...safe } = account;
     return success(safe);
   } catch (err) {
+    console.error('POST /api/v1/accounts failed:', err);
     return error('INTERNAL_ERROR', 'Failed to create account', 500);
   }
 }

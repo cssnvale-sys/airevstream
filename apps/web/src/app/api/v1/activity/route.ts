@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@airevstream/db';
 import { authenticate, success, error, parseQuery } from '@/lib/api-server';
 
 export async function GET(req: NextRequest) {
@@ -8,21 +7,20 @@ export async function GET(req: NextRequest) {
 
   try {
     const { limit } = parseQuery(req);
-    const db = getDb();
 
     // Aggregate recent activity from multiple sources
     const [recentContent, recentPosts, recentAlerts] = await Promise.all([
-      db.contentItem.findMany({
+      ctx.db.contentItem.findMany({
         orderBy: { updatedAt: 'desc' },
         take: limit,
         select: { id: true, title: true, status: true, contentType: true, updatedAt: true, channel: { select: { name: true } } },
       }),
-      db.scheduledPost.findMany({
+      ctx.db.scheduledPost.findMany({
         orderBy: { updatedAt: 'desc' },
         take: limit,
         select: { id: true, status: true, platform: true, scheduledAt: true, updatedAt: true, channel: { select: { name: true } } },
       }),
-      db.alert.findMany({
+      ctx.db.alert.findMany({
         orderBy: { createdAt: 'desc' },
         take: Math.min(limit, 5),
         select: { id: true, title: true, severity: true, category: true, createdAt: true },

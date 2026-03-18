@@ -48,6 +48,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
+    console.error('GET /api/v1/accounts/[id]/socials failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list social accounts', 500);
   }
 }
@@ -112,6 +113,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { credentialsEnc: _, ...safe } = social;
     return success(safe);
   } catch (err) {
+    console.error('POST /api/v1/accounts/[id]/socials failed:', err);
     return error('INTERNAL_ERROR', 'Failed to create social account', 500);
   }
 }

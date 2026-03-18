@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@airevstream/db';
 import { authenticate, success, error } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string; action: string }> };
@@ -14,12 +13,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const db = getDb();
-    const content = await db.contentItem.findUnique({ where: { id } });
+    const content = await ctx.db.contentItem.findUnique({ where: { id } });
     if (!content) return error('NOT_FOUND', 'Content not found', 404);
 
     if (action === 'approve') {
-      await db.contentItem.update({
+      await ctx.db.contentItem.update({
         where: { id },
         data: {
           status: 'approved',
@@ -36,7 +34,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         // no body
       }
 
-      await db.contentItem.update({
+      await ctx.db.contentItem.update({
         where: { id },
         data: { status: 'draft' },
       });

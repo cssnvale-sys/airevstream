@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
-import { getDb } from '@airevstream/db';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 
 function verifyPassword(password: string, hash: string): boolean {
@@ -32,15 +31,14 @@ export async function POST(req: NextRequest) {
       return validationError('New password must be at least 8 characters');
     }
 
-    const db = getDb();
-    const user = await db.user.findUnique({ where: { id: ctx.userId } });
+    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
     if (!user) return error('NOT_FOUND', 'User not found', 404);
 
     if (!verifyPassword(currentPassword, user.passwordHash)) {
       return error('INVALID_CREDENTIALS', 'Current password is incorrect', 400);
     }
 
-    await db.user.update({
+    await ctx.db.user.update({
       where: { id: ctx.userId },
       data: { passwordHash: hashPassword(newPassword) },
     });

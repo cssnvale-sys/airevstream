@@ -26,15 +26,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       orderBy: { performanceScore: 'desc' },
     });
 
+    // Convert Prisma Decimal fields to numbers for JSON serialization
     const data = pool.map((entry) => ({
       ...entry.affiliateProduct,
+      commissionRate: entry.affiliateProduct.commissionRate != null ? Number(entry.affiliateProduct.commissionRate) : null,
+      totalRevenue: Number(entry.affiliateProduct.totalRevenue),
       isAutoSuggested: entry.isAutoSuggested,
-      performanceScore: entry.performanceScore,
+      performanceScore: Number(entry.performanceScore),
       lastUsedAt: entry.lastUsedAt,
     }));
 
     return success(data);
   } catch (err) {
+    console.error('GET affiliate-pool failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list affiliate pool', 500);
   }
 }
@@ -89,11 +93,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({
       ...entry.affiliateProduct,
+      commissionRate: entry.affiliateProduct.commissionRate != null ? Number(entry.affiliateProduct.commissionRate) : null,
+      totalRevenue: Number(entry.affiliateProduct.totalRevenue),
       isAutoSuggested: entry.isAutoSuggested,
-      performanceScore: entry.performanceScore,
+      performanceScore: Number(entry.performanceScore),
       lastUsedAt: entry.lastUsedAt,
     });
   } catch (err) {
+    console.error('POST affiliate-pool failed:', err);
     return error('INTERNAL_ERROR', 'Failed to add product to affiliate pool', 500);
   }
 }

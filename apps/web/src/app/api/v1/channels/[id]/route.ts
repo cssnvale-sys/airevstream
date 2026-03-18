@@ -61,6 +61,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       contentItemsCount: _count.contentItems,
     });
   } catch (err) {
+    console.error('GET /api/v1/channels/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch channel', 500);
   }
 }
@@ -128,6 +129,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
+    console.error('PUT /api/v1/channels/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update channel', 500);
   }
 }

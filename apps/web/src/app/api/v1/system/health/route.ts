@@ -1,5 +1,4 @@
 import { authenticate, error, json } from '@/lib/api-server';
-import { getDb } from '@airevstream/db';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -12,14 +11,12 @@ export async function GET(req: NextRequest) {
   if (ctx instanceof NextResponse) return ctx;
 
   try {
-    const db = getDb();
-
     // Latest metrics by type
     const metricTypes = ['cpu', 'ram', 'disk', 'queue_depth'];
     const latestMetrics: Record<string, unknown> = {};
 
     for (const metricType of metricTypes) {
-      const metric = await db.systemMetric.findFirst({
+      const metric = await ctx.db.systemMetric.findFirst({
         where: { metricType },
         orderBy: { createdAt: 'desc' },
       });
@@ -29,7 +26,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Service status counts
-    const serviceStatuses = await db.aiService.groupBy({
+    const serviceStatuses = await ctx.db.aiService.groupBy({
       by: ['status'],
       _count: { id: true },
     });
@@ -38,19 +35,19 @@ export async function GET(req: NextRequest) {
     const healthyServices = serviceStatuses.find((s) => s.status === 'active')?._count.id ?? 0;
 
     // Active alerts count
-    const alertCounts = await db.alert.groupBy({
+    const alertCounts = await ctx.db.alert.groupBy({
       by: ['severity'],
       where: { status: 'open' },
       _count: { id: true },
     });
 
     // Active workflow jobs
-    const activeJobs = await db.workflowJob.count({
+    const activeJobs = await ctx.db.workflowJob.count({
       where: { status: { in: ['queued', 'running'] } },
     });
 
     // Scheduled posts pending
-    const pendingPosts = await db.scheduledPost.count({
+    const pendingPosts = await ctx.db.scheduledPost.count({
       where: { status: 'scheduled' },
     });
 

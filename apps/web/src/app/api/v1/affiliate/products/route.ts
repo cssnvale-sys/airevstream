@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';
     const sortOrder = order === 'asc' ? 'asc' : 'desc';
 
-    const [items, total] = await Promise.all([
+    const [rawItems, total] = await Promise.all([
       ctx.db.affiliateProduct.findMany({
         where,
         orderBy: { [sortField]: sortOrder },
@@ -40,6 +40,13 @@ export async function GET(req: NextRequest) {
       }),
       ctx.db.affiliateProduct.count({ where }),
     ]);
+
+    // Convert Prisma Decimal fields to numbers for JSON serialization
+    const items = rawItems.map((item) => ({
+      ...item,
+      commissionRate: item.commissionRate != null ? Number(item.commissionRate) : null,
+      totalRevenue: Number(item.totalRevenue),
+    }));
 
     return paginated(items, total, page, limit);
   } catch (err) {
@@ -77,7 +84,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return success(product);
+    return success({
+      ...product,
+      commissionRate: product.commissionRate != null ? Number(product.commissionRate) : null,
+      totalRevenue: Number(product.totalRevenue),
+    });
   } catch (err) {
     console.error('POST /api/v1/affiliate/products error:', err);
     return error('INTERNAL_ERROR', 'Failed to create affiliate product', 500);

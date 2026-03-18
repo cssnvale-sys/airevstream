@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@airevstream/db';
 import { authenticate, success, error } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -11,8 +10,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const db = getDb();
-    const alert = await db.alert.findUnique({ where: { id } });
+    const alert = await ctx.db.alert.findUnique({ where: { id } });
     if (!alert) return error('NOT_FOUND', 'Alert not found', 404);
 
     let duration = 3600; // default 1 hour
@@ -23,7 +21,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       // no body
     }
 
-    await db.alert.update({
+    await ctx.db.alert.update({
       where: { id },
       data: {
         status: 'suppressed',

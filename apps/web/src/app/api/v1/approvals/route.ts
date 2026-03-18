@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const sortField = allowedSortFields.includes(sort) ? sort : 'createdAt';
     const sortOrder = order === 'asc' ? 'asc' : 'desc';
 
-    const [items, total] = await Promise.all([
+    const [rawItems, total] = await Promise.all([
       ctx.db.contentItem.findMany({
         where,
         include: {
@@ -35,6 +35,12 @@ export async function GET(req: NextRequest) {
       }),
       ctx.db.contentItem.count({ where }),
     ]);
+
+    // Convert Prisma Decimal fields to numbers for JSON serialization
+    const items = rawItems.map((item) => ({
+      ...item,
+      qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+    }));
 
     return paginated(items, total, page, limit);
   } catch (err) {

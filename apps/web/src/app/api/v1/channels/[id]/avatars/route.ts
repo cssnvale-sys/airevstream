@@ -34,6 +34,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(data);
   } catch (err) {
+    console.error('GET avatars failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list channel avatars', 500);
   }
 }
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       role: channelAvatar.role,
     });
   } catch (err) {
+    console.error('POST avatars failed:', err);
     return error('INTERNAL_ERROR', 'Failed to assign avatar to channel', 500);
   }
 }

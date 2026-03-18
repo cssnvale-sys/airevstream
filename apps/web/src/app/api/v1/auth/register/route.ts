@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
         },
       },
     );
-  } catch {
+  } catch (err) {
+    console.error('POST /api/v1/auth/register failed:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
   }
 }

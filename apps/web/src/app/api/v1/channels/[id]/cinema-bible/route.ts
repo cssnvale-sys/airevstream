@@ -27,6 +27,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(cinemaBible);
   } catch (err) {
+    console.error('GET cinema-bible failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch cinema bible', 500);
   }
 }
@@ -89,6 +90,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(cinemaBible);
   } catch (err) {
+    console.error('PUT cinema-bible failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update cinema bible', 500);
   }
 }

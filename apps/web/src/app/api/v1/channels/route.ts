@@ -85,6 +85,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
+    console.error('GET /api/v1/channels failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list channels', 500);
   }
 }
@@ -148,6 +149,7 @@ export async function POST(req: NextRequest) {
 
     return success(channel);
   } catch (err) {
+    console.error('POST /api/v1/channels failed:', err);
     return error('INTERNAL_ERROR', 'Failed to create channel', 500);
   }
 }

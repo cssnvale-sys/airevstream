@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@airevstream/db';
 import { authenticate, success, error } from '@/lib/api-server';
 
 export async function GET(req: NextRequest) {
@@ -7,8 +6,7 @@ export async function GET(req: NextRequest) {
   if (ctx instanceof NextResponse) return ctx;
 
   try {
-    const db = getDb();
-    const services = await db.aiService.findMany({
+    const services = await ctx.db.aiService.findMany({
       where: { status: { not: 'disabled' } },
       orderBy: [{ fallbackGroup: 'asc' }, { fallbackOrder: 'asc' }],
       select: {

@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
       recentlyActiveAccounts: recentlyActive,
     });
   } catch (err) {
+    console.error('GET /api/v1/accounts/stats failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch account stats', 500);
   }
 }

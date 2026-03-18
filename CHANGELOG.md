@@ -6,6 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- `.claude/rules/` — 6 modular rules files codifying development patterns
+
+### Fixed
+
+**Audit Round 5 (Session 6)**
+- Fixed 7 API routes using `getDb()` instead of tenant-scoped `ctx.db` (KI-009)
+- Added `console.error` logging to 28 silent catch blocks across 20+ API routes (KI-010)
+- Fixed Prisma Decimal field serialization in 5 API routes (analytics/revenue, affiliate/products, affiliate/revenue, approvals, affiliate-pool) — all Decimal fields now wrapped in `Number()` server-side (KI-012)
+- Added defensive `Number()` casts in 3 frontend pages (affiliate, approvals, dashboard) for Decimal fields
+
 ### To Do
 - E2E test suite (Playwright)
 - Complete PM2 production config

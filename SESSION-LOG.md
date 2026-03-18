@@ -160,3 +160,40 @@ Audit round 4 — final wave of fixes + git commit organization.
 - PM2 production config is partial
 - Platform posting adapters untested against real APIs
 - Browser automation untested in production
+
+---
+
+## Session 6 — 2026-03-18
+
+### Summary
+Created `.claude/rules/` behavioral rules and fixed 53 remaining bugs across 4 known issue categories.
+
+### What Was Done
+- **Claude Rules:** Created 6 modular rules files in `.claude/rules/`:
+  - `01-planning.md` — investigation-first workflow, mandatory file maintenance
+  - `02-parallel-agents.md` — when/how to use parallel agents, 2-phase audit pattern
+  - `03-monorepo-map.md` — directory layout, dependency chain, key files
+  - `04-git.md` — conventional commits, 4-commit structure, staging rules
+  - `05-frontend.md` (scoped to `apps/web/**`) — data shape mismatch prevention, SWR, Decimal casting
+  - `06-backend.md` (scoped to `packages/**,services/**,workers/**`) — ctx.db, error handling, API/worker patterns
+- **CLAUDE.md trimmed:** Replaced completed Phased Build Plan (34 lines) with single status line (93→59 lines)
+- **Audit Round 5:** 5 parallel fix agents resolved 53 issues:
+  - 7 `getDb()` → `ctx.db` tenant isolation fixes (KI-009)
+  - 28 silent catch blocks → added `console.error` logging (KI-010)
+  - ~15 Decimal field serialization fixes across 5 API routes + 3 frontend pages (KI-012)
+  - 3 confirmed data shape mismatches fixed (dashboard revenue, affiliate products, approvals qualityScore)
+
+### Commits
+- `4391b66` — docs: add .claude/rules for planning, agents, git, and codebase conventions
+- (pending) — fix: resolve tenant scoping, silent catches, and Decimal serialization bugs
+
+### Issues Resolved
+- KI-009: getDb() tenant isolation — FIXED
+- KI-010: Silent catch blocks — FIXED
+- KI-012: Decimal field serialization — FIXED
+
+### Open Items
+- E2E testing (Playwright) not started
+- PM2 production config is partial
+- Platform posting adapters untested against real APIs
+- Browser automation untested in production

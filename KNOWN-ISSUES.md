@@ -76,15 +76,13 @@ The `@airevstream/browser-automation` package (stealth Playwright, human behavio
 
 ### KI-009: Multiple API Routes Use getDb() Instead of ctx.db
 **Severity**: Medium
-**Status**: Open
-Several API routes call `getDb()` directly instead of using the tenant-scoped `ctx.db` from `authenticate()`. This bypasses multi-tenant data isolation — queries may return data from other tenants.
-**Action**: Audit all API routes and replace `getDb()` calls with `ctx.db` from the authenticated context.
+**Status**: Fixed (Session 6)
+Fixed 7 API routes that called `getDb()` instead of `ctx.db`: auth/me, auth/change-password, activity, approvals/[id]/[action], system/health, system/alerts/[id]/snooze, settings/ai/fallback-chains. Auth routes (login, register) are excluded — they don't have authenticated context.
 
 ### KI-010: Silent Catch Blocks in 14+ API Routes
 **Severity**: Medium
-**Status**: Open
-At least 14 API route handlers have `catch (error) { ... }` blocks that return generic error responses without logging the actual error. This makes debugging production issues difficult.
-**Action**: Add `console.error` or pino logger calls in all catch blocks to capture error details.
+**Status**: Fixed (Session 6)
+Added `console.error` logging to 28 silent catch blocks across settings (4), auth (3), accounts (9), channels (12), and workflows (1) API routes. All catch blocks now log the error with route/method context before returning the error response.
 
 ---
 
@@ -102,6 +100,5 @@ At least 14 API route handlers have `catch (error) { ... }` blocks that return g
 
 ### KI-012: Prisma Decimal Fields Serialize as Strings
 **Severity**: Low
-**Status**: By Design (D013)
-Prisma `Decimal` fields (e.g., `qualityScore`, `budget`) serialize to strings in JSON responses. Frontend must use `Number()` to convert. This is a Prisma behavior, not a bug.
-**Action**: Documented in DECISIONS.md D013. Frontend already handles this via `Number()` casting.
+**Status**: Fixed (Session 6)
+Fixed in Session 6: all API routes now wrap Decimal fields in `Number()` server-side (analytics/revenue, affiliate/products, affiliate/revenue, approvals, affiliate-pool). Frontend also adds defensive `Number()` casts (affiliate, approvals, dashboard pages). Original design decision D013 still applies for any new Decimal fields.

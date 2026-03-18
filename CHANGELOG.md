@@ -8,6 +8,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - `.claude/rules/` — 6 modular rules files codifying development patterns
+- **Rate Limiting** (Session 7): In-memory sliding window rate limiter on login, register, forgot-password, reset-password routes
+- **Security Headers** (Session 7): X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy via next.config.js
 - **Reusable UI Components** (Session 7): `ConfirmDialog`, `EmptyState`, `CopyButton`, `KeyboardShortcutsModal`, toast wrapper
 - **Forgot Password Flow** (Session 7): forgot-password + reset-password API routes and frontend pages
 - **Job Status Polling** (Session 7): `GET /api/v1/jobs/:id` endpoint + `useJobStatus` SWR hook (KI-006)
@@ -35,6 +37,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Loading Skeletons** (Session 7): Pulse-animated loading.tsx for all 11 dashboard page segments
 
 ### Fixed
+
+**Audit Round 17 (Session 7) — Rate Limiting, Validation & Security Headers**
+- Added in-memory sliding window rate limiter to 4 auth routes (login, register, forgot-password, reset-password)
+- Added Zod validation schemas to 8 POST/PUT routes (settings/general, appearance, notifications, security, api-keys, ai-services, affiliate/products, channels)
+- Added security headers via next.config.js (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy)
 
 **Audit Round 13 (Session 7) — NaN Guards & Accessibility**
 - Added isNaN fallback on parseInt in analytics/engagement and system/metrics routes

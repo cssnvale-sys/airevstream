@@ -505,7 +505,23 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `0d67a9e` — docs: tracking docs round 9
 - `7250343` — fix: families/stats/bulk-import/subscriptions tenant scoping
 - `7ab58be` — fix: SSE tenant scoping + err:any cleanup
-- (this commit) — docs: tracking docs round 10
+- `f6a02f6` — docs: tracking docs round 10
+- `2db3338` — feat: rate limiting on auth routes
+- `56cc8bf` — fix: Zod validation on 8 POST/PUT routes
+- `f656dcf` — feat: security headers
+- (this commit) — docs: tracking docs round 11
+
+**Batch 48: Rate Limiting on Auth Routes**
+- Created `apps/web/src/lib/rate-limit.ts` — in-memory sliding window rate limiter
+- Applied to login (5/15min), register (3/30min), forgot-password (3/1hr), reset-password (5/15min)
+- IP-based tracking via x-forwarded-for/x-real-ip headers
+
+**Batch 49: Zod Validation on POST/PUT Routes**
+- Added Zod schemas to 8 routes: settings/general, settings/appearance, settings/notifications, settings/security, settings/api-keys, ai-services, affiliate/products, channels
+- Validates request bodies before persisting to database, prevents injection of unexpected fields
+
+**Batch 50: Security Headers**
+- Added via next.config.js headers(): X-Content-Type-Options (nosniff), X-Frame-Options (DENY), X-XSS-Protection, Referrer-Policy, Permissions-Policy
 
 ### Open Items
 - E2E testing (Playwright) not started

@@ -105,6 +105,9 @@
 | 5.55 | Tenant scoping round 4 | Done | **CRITICAL:** channels/families, accounts/stats, bulk-import, subscriptions auth |
 | 5.56 | SSE tenant scoping | Done | Workflow/content pollers scoped by tenant channels |
 | 5.57 | err:any cleanup | Done | Removed all 11 remaining err:any types across API routes |
+| 5.58 | Rate limiting | Done | In-memory sliding window rate limiter on 4 auth routes (login, register, forgot-password, reset-password) |
+| 5.59 | Zod input validation | Done | Zod schemas on 8 POST/PUT routes (settings, api-keys, ai-services, affiliate/products, channels) |
+| 5.60 | Security headers | Done | X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

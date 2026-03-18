@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { EmptyState as EmptyStateComponent } from '@/components/ui/empty-state';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -92,13 +93,15 @@ function TableSkeleton() {
   );
 }
 
-function EmptyState() {
+function AccountsEmptyState({ onAddEmail }: { onAddEmail: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
-      <Mail className="w-12 h-12 mb-4 opacity-40" />
-      <p className="text-lg font-medium mb-1">No accounts found</p>
-      <p className="text-sm">Add your first email account to get started.</p>
-    </div>
+    <EmptyStateComponent
+      icon={Mail}
+      title="No accounts found"
+      description="Add your first email account to get started."
+      actionLabel="Add Email Account"
+      onAction={onAddEmail}
+    />
   );
 }
 
@@ -748,7 +751,7 @@ export default function AccountsPage() {
             <button onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
           </div>
         ) : filteredAccounts.length === 0 ? (
-          <EmptyState />
+          <AccountsEmptyState onAddEmail={() => setShowAddEmail(true)} />
         ) : (
           <>
             <div className="overflow-x-auto">

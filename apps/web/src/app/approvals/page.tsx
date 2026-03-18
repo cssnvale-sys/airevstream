@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { Check, X, Loader2, FileText, Video, Image } from 'lucide-react';
+import { Check, X, Loader2, FileText, Video, Image, CheckCircle } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface ApprovalItem {
   id: string;
@@ -57,9 +58,11 @@ export default function ApprovalsPage() {
             <Loader2 className="animate-spin text-text-secondary" size={32} />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-20 text-text-secondary">
-            No content pending approval.
-          </div>
+          <EmptyState
+            icon={CheckCircle}
+            title="All caught up!"
+            description="No content pending approval. New content will appear here when it needs your review."
+          />
         ) : (
           <div className="space-y-3">
             {items.map((item) => {

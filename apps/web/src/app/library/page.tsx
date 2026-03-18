@@ -10,6 +10,7 @@ import {
   FileText, Image, Film, Video, Mic, ImageIcon,
   Star, Calendar, SlidersHorizontal,
 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -163,13 +164,15 @@ function ListSkeleton() {
   );
 }
 
-function EmptyState() {
+function LibraryEmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
-      <FileText className="w-12 h-12 mb-4 opacity-40" />
-      <p className="text-lg font-medium mb-1">No content found</p>
-      <p className="text-sm">Create your first content piece or adjust the filters.</p>
-    </div>
+    <EmptyState
+      icon={FileText}
+      title="No content found"
+      description="Create your first content piece or adjust the filters."
+      actionLabel="Create Content"
+      actionHref="/create"
+    />
   );
 }
 
@@ -511,7 +514,7 @@ export default function LibraryPage() {
         </div>
       ) : items.length === 0 ? (
         <div className="card">
-          <EmptyState />
+          <LibraryEmptyState />
         </div>
       ) : viewMode === 'grid' ? (
         /* Grid View */

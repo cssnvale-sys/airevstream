@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useWorkflows } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Activity } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface WorkflowJob {
   id: string;
@@ -62,9 +63,11 @@ export default function WorkflowsPage() {
             <Loader2 className="animate-spin text-text-secondary" size={32} />
           </div>
         ) : jobs.length === 0 ? (
-          <div className="text-center py-20 text-text-secondary">
-            No workflow jobs found.
-          </div>
+          <EmptyState
+            icon={Activity}
+            title="No workflow jobs found"
+            description="Workflow jobs will appear here when content is being generated or processed."
+          />
         ) : (
           <div className="space-y-3">
             {jobs.map((job) => {

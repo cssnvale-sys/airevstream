@@ -173,6 +173,21 @@ Login page accepted arbitrary redirect URLs from query params, allowing attacker
 **Status**: Fixed (Session 7, Batch 116)
 5 AI service management routes had no role check — any authenticated user could register/modify services or view infrastructure cost data. Fixed by adding `ctx.role !== 'admin'` guards to POST create, PUT update, POST health-check, GET costs, GET usage. DELETE already had the check.
 
+### KI-025: SSRF in AI Health-Check Endpoint
+**Severity**: Critical
+**Status**: Fixed (Session 7, Batch 135)
+AI health-check fetched arbitrary URLs from DB `endpoint` field. Admin could point to internal IPs (169.254.169.254, localhost, RFC1918). Fixed with `isPrivateUrl()` check — blocks loopback/link-local/RFC1918 except Ollama on localhost:11434.
+
+### KI-026: Open Redirect via Affiliate Link
+**Severity**: High
+**Status**: Fixed (Session 7, Batch 135)
+Public `/api/v1/affiliate/redirect/[shortCode]` redirected to `product.url` without protocol validation. URLs with `javascript:`, `data:`, or `ftp:` scheme could be used. Fixed by validating protocol is `http:` or `https:` at redirect time.
+
+### KI-027: Rate Limiter Cleanup Bug
+**Severity**: High
+**Status**: Fixed (Session 7, Batch 135)
+The cleanup interval captured the `windowMs` from the first `checkRateLimit` call and used it for ALL entries. Entries with longer windows (e.g., 1-hour content generation) were incorrectly evicted using a shorter window (e.g., 15-minute login). Fixed by storing `windowMs` per entry.
+
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium
 **Status**: Fixed (Session 6, Round 8)

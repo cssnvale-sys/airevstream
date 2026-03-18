@@ -50,6 +50,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 42 (Session 7) — Security, Transactions, Rate Limiting, Workers**
+- SSRF prevention: block private/loopback IPs in AI health-check (exception for Ollama localhost:11434)
+- Open redirect fix: validate redirect URL protocol in affiliate redirect endpoint
+- Rate limiter bug: cleanup interval was using first caller's windowMs for all entries — now per-entry
+- Rate limiter: evict oldest entries at 50k (was warn-only at 10k)
+- Transaction safety: posting worker 3-step update wrapped in $transaction
+- Transaction safety: storyboard + shots creation wrapped in $transaction, uses createMany
+- N+1 elimination: research worker trends/topics use createMany, URL duplicate checks batched
+- Job rollback: content generate/regenerate roll back to 'failed' if addJob throws
+- Version chain traversal: walks to true root at arbitrary depth (was depth-2 only)
+- Rate limiting added to assistant/chat, content/generate, content/regenerate (20/hr per user)
+- Calendar: range validation (end > start, max 90 days), take limit 1000, enum param allowlists
+- Health-check: parallel fetches via Promise.allSettled, batched DB updates in $transaction
+- Content worker: throws on unknown approval action (was silent no-op)
+- Research worker: job.updateProgress on trends and topics handlers
+- /tmp video files cleaned up after render (prevents disk fill)
+- SortIcon extracted to module scope in accounts page
+- Library date filters moved to server-side query params
+- Overflow-x-auto on calendar grid, analytics tabs, library list view for mobile
+- Removed unused hasActiveJobs, Shield import dead code
+- Rate limiter per-entry windowMs regression test added
+
 **Audit Round 41 (Session 7) — Input Validation, Accessibility, Worker Safety**
 - Zod validation on 4 Fastify PUT/bulk routes (content update, content bulk approvals, account update, bulk import with max 500)
 - Sort field allowlists on content + workflow GET routes (prevent Prisma injection)

@@ -83,6 +83,27 @@ describe('rate-limit', () => {
       const r1 = checkRateLimit(key, config);
       expect(r1.allowed).toBe(false);
     });
+
+    it('uses per-entry windowMs — different windows for different keys', () => {
+      vi.useFakeTimers();
+      const shortKey = uniqueKey();
+      const longKey = uniqueKey();
+      const shortConfig = { maxAttempts: 1, windowMs: 1_000 };
+      const longConfig = { maxAttempts: 1, windowMs: 60_000 };
+
+      // Exhaust both limits
+      checkRateLimit(shortKey, shortConfig);
+      checkRateLimit(longKey, longConfig);
+      expect(checkRateLimit(shortKey, shortConfig).allowed).toBe(false);
+      expect(checkRateLimit(longKey, longConfig).allowed).toBe(false);
+
+      // After 1.5s: short-key should be allowed, long-key still blocked
+      vi.advanceTimersByTime(1_500);
+      expect(checkRateLimit(shortKey, shortConfig).allowed).toBe(true);
+      expect(checkRateLimit(longKey, longConfig).allowed).toBe(false);
+
+      vi.useRealTimers();
+    });
   });
 
   describe('getClientIp', () => {

@@ -207,7 +207,7 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Total tests**: 139 (all passing across 27 test tasks)
+- **Total tests**: 140 (all passing across 27 test tasks)
 - Packages: 64 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3)
 - Services: 18 tests (workflow-engine: 8, ai-assistant: 5, production-pipeline: 5)
 - Workers: 5 tests

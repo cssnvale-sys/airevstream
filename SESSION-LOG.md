@@ -1003,6 +1003,54 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `c40fd07` — fix: add missing .env.example entries and Prisma schema indexes/cascades
 - `95d93b7` — test: add 46 behavioral tests for utils, auth, and CSV export
 
+**Batch 135: Critical Security Fixes**
+- SSRF prevention: block private/loopback IPs in AI health-check endpoint (exception for Ollama localhost:11434)
+- Open redirect fix: validate redirect URL protocol (http/https only) in affiliate redirect
+- Rate limiter bug fix: cleanup was using wrong windowMs for all buckets (captured first call's window). Now stores windowMs per entry
+- Added rate limiting to health-check endpoint
+- Added store eviction at 50k entries (was warn-only at 10k)
+
+**Batch 136: Transaction Safety + N+1 Query Elimination**
+- Posting worker: wrap 3-step update (scheduledPost + contentItem + socialAccount) in $transaction
+- Production worker: wrap storyboard + shots creation in $transaction, use createMany (was N inserts)
+- Production worker: delete /tmp video files after render (prevents disk fill)
+- Research worker: replace N+1 inserts with createMany for trends and topics
+- Research worker: batch duplicate URL checks into single findMany (was N findFirst)
+- Content generate/regenerate: rollback content status to 'failed' if addJob fails
+- Content versions: fix chain traversal to walk to true root (was depth-2 only)
+
+**Batch 137: Rate Limiting on AI/Generation Routes**
+- Rate limit assistant/chat (20/hr per user) to prevent AI cost abuse
+- Rate limit content/generate and content/regenerate (20/hr per user)
+- Calendar: validate end > start, enforce 90-day max range, take limit 1000
+- Calendar: validate platform and status against enum allowlists
+- Eliminate redundant DB query in assistant/chat (build messages in-memory)
+- Remove unused hasActiveJobs from workflows page and Shield import from accounts
+
+**Batch 138: Frontend Perf + Server-Side Filters + Responsive**
+- Extract SortIcon to module scope in accounts page (prevents re-creation)
+- Move library dateFrom/dateTo filtering to server-side API query params
+- Add overflow-x-auto to calendar grid, analytics tabs, library list view
+- Add min-width constraints on grid layouts for mobile viewports
+
+**Batch 139: Worker Robustness**
+- Throw on unknown approval action in content worker (was silent no-op)
+- Add job.updateProgress to research worker handleTrends and handleTopics
+- Parallelize health-check fetches with Promise.allSettled (was sequential)
+- Batch health-check DB updates in single $transaction (was N updates)
+
+**Batch 140: Rate Limiter Test**
+- Added test for per-entry windowMs fix (critical bug regression test)
+- Total web tests: 108
+
+### Commits (continued part 2)
+- `0f3ae21` — docs: update tracking files for batches 131-134
+- `b13721b` — fix: critical security — SSRF prevention, open redirect fix, rate limiter bug
+- `babd359` — fix: transaction safety, N+1 query elimination, job rollback
+- `28bdb5c` — fix: add rate limiting to AI/generation routes, harden calendar, remove dead code
+- `c90781c` — fix: frontend perf, server-side date filters, responsive mobile scrolling
+- `0b80205` — fix: worker robustness — unknown action throw, progress reporting, parallel health checks
+
 ### Open Items
 - E2E testing (Playwright) not started
 - Platform posting adapters untested against real APIs

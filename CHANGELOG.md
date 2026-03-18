@@ -43,6 +43,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 37 (Session 7) — Type Safety, Production Guards, Indexes**
+- Eliminated all `catch (err: any)` across codebase — 6 files fixed with `instanceof Error` guards
+- All 3 services: JWT_SECRET required in production mode (throws at startup)
+- All 3 services: removed `(error as any).code` cast in error handlers
+- Prisma schema: added 4 missing indexes (storyboards, conversations, action_audit_log, cinema_bibles)
+
 **Audit Round 36 (Session 7) — Worker/Service Safety**
 - production.worker: replaced `new PrismaClient()` with `getDb()` singleton (prevents broken tenant isolation)
 - account.worker: added try-finally for browser context cleanup on all 4 handlers (prevents context leaks)

@@ -166,6 +166,9 @@
 | 5.116 | Production worker getDb | Done | Replaced new PrismaClient() with getDb() singleton |
 | 5.117 | Browser context cleanup | Done | try-finally on all 4 account worker handlers |
 | 5.118 | Service error message leaks | Done | 3 generate routes + 4 service parseInt NaN |
+| 5.119 | catch err:any elimination | Done | All 6 remaining files fixed (zero left in codebase) |
+| 5.120 | Production JWT guard | Done | All 3 services throw on missing JWT_SECRET in prod |
+| 5.121 | Prisma indexes | Done | 4 new indexes on storyboards, conversations, audit log, cinema bibles |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

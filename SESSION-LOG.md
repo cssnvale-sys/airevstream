@@ -790,6 +790,17 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - ai-assistant generate: stopped leaking error.message to clients (3 routes)
 - 4 service routes: fixed parseInt NaN on page/limit params
 
+**Batch 103: catch (err: any) Cleanup**
+- Replaced all remaining `catch (err: any)` with `catch (err: unknown)` + instanceof Error guards
+- 4 ai-client providers: openai-compat, http, ollama, registry
+- 2 service/worker files: ai-assistant chat route, posting worker
+- Zero `catch (err: any)` remaining in codebase
+
+**Batch 104: Production Guards + Prisma Indexes**
+- All 3 services: throw on missing JWT_SECRET in production mode
+- All 3 services: removed (error as any).code cast (FastifyError already has .code)
+- Prisma schema: 4 new indexes — storyboards(contentId), conversations(updatedAt), action_audit_log(conversationId,createdAt), cinema_bibles(channelId,version)
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

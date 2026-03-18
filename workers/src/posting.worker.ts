@@ -141,14 +141,15 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
       platformPostId: result.platformPostId,
       platformUrl: result.platformUrl,
     };
-  } catch (error: any) {
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     const retryCount = (scheduledPost.retryCount || 0) + 1;
 
     await db.scheduledPost.update({
       where: { id: scheduledPost.id },
       data: {
         status: 'failed',
-        errorMessage: error.message,
+        errorMessage: errMsg,
         retryCount,
       },
     });
@@ -165,9 +166,9 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
           severity: 'warning',
           category: 'content',
           title: `Posting failed after ${retryCount} retries`,
-          message: `Content "${scheduledPost.content.title}" failed to post to ${platform}: ${error.message}`,
+          message: `Content "${scheduledPost.content.title}" failed to post to ${platform}: ${errMsg}`,
           source: 'posting-worker',
-          metadata: { contentId, channelId, platform, error: error.message },
+          metadata: { contentId, channelId, platform, error: errMsg },
         },
       });
     }

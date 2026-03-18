@@ -193,10 +193,11 @@ export async function chatRoutes(app: FastifyInstance) {
         success: true,
         data: { userMessage, assistantMessage },
       });
-    } catch (error: any) {
+    } catch (error) {
+      chatLogger.error({ err: error }, 'AI chat service call failed');
       return reply.status(502).send({
         success: false,
-        error: { code: 'EXTERNAL_SERVICE_ERROR', message: `AI service unavailable: ${error.message}` },
+        error: { code: 'EXTERNAL_SERVICE_ERROR', message: 'AI service unavailable' },
       });
     }
   });

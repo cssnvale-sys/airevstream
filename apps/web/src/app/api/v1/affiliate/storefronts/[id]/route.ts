@@ -40,6 +40,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!storefront) return notFound('Storefront not found');
 
+    // Verify tenant ownership through channel → socialAccount → emailAccount
+    const ownsChannel = await ctx.db.channel.findFirst({
+      where: {
+        id: storefront.channelId,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+      select: { id: true },
+    });
+    if (!ownsChannel) return notFound('Storefront not found');
+
     return success(storefront);
   } catch (err) {
     console.error('GET /api/v1/affiliate/storefronts/[id] error:', err);
@@ -60,6 +70,16 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const existing = await ctx.db.storefront.findUnique({ where: { id } });
     if (!existing) return notFound('Storefront not found');
+
+    // Verify tenant ownership through channel → socialAccount → emailAccount
+    const ownsChannel = await ctx.db.channel.findFirst({
+      where: {
+        id: existing.channelId,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+      select: { id: true },
+    });
+    if (!ownsChannel) return notFound('Storefront not found');
 
     const body = await req.json();
     const parsed = updateStorefrontSchema.safeParse(body);
@@ -109,6 +129,16 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
     const existing = await ctx.db.storefront.findUnique({ where: { id } });
     if (!existing) return notFound('Storefront not found');
+
+    // Verify tenant ownership through channel → socialAccount → emailAccount
+    const ownsChannel = await ctx.db.channel.findFirst({
+      where: {
+        id: existing.channelId,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+      select: { id: true },
+    });
+    if (!ownsChannel) return notFound('Storefront not found');
 
     await ctx.db.storefront.delete({ where: { id } });
 

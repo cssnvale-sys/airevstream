@@ -1,0 +1,50 @@
+import { NextRequest } from 'next/server';
+import { SignJWT } from 'jose';
+import { getDb } from '@airevstream/db';
+import { success, error, validationError } from '@/lib/api-server';
+
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
+
+/**
+ * POST /api/v1/auth/forgot-password
+ * Generates a password reset token. In dev mode, logs the token to console.
+ * In production, this would send an email with the reset link.
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { email } = body as { email?: string };
+
+    if (!email) {
+      return validationError('Email is required');
+    }
+
+    const db = getDb();
+    const user = await db.user.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return success({ message: 'If an account with that email exists, a reset link has been sent.' });
+    }
+
+    // Generate a short-lived JWT as the reset token (15 minutes)
+    const resetToken = await new SignJWT({ sub: user.id, purpose: 'password-reset' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('15m')
+      .sign(JWT_SECRET);
+
+    // In dev mode, log the reset token/link to console
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/reset-password?token=${resetToken}`;
+    console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
+    console.log(`[Password Reset] Reset URL: ${resetUrl}`);
+
+    return success({ message: 'If an account with that email exists, a reset link has been sent.' });
+  } catch (err) {
+    console.error('POST /api/v1/auth/forgot-password failed:', err);
+    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+  }
+}

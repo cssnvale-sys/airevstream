@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
+
+const BulkApprovalSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(100),
+  action: z.enum(['approve', 'reject']),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,19 +13,22 @@ export async function POST(req: NextRequest) {
     if (ctx instanceof NextResponse) return ctx;
 
     const body = await req.json();
-    const { ids, action } = body as { ids?: string[]; action?: string };
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return validationError('ids must be a non-empty array of content item IDs');
+    const parsed = BulkApprovalSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
 
-    if (action !== 'approve' && action !== 'reject') {
-      return validationError('action must be either "approve" or "reject"');
-    }
+    const { ids, action } = parsed.data;
 
-    // Verify all content items exist
+    // Verify all content items exist and belong to tenant
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map(c => c.id);
+
     const items = await ctx.db.contentItem.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, channelId: { in: tenantChannelIds } },
       select: { id: true, status: true },
     });
 

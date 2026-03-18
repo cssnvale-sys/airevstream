@@ -12,8 +12,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
 
     // Find the root content item (check if this item IS the root, or has a parentId)
-    const contentItem = await ctx.db.contentItem.findUnique({
-      where: { id },
+    const contentItem = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
       select: { id: true, parentId: true, version: true },
     });
 
@@ -77,8 +80,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     };
 
     // Load the source content item
-    const source = await ctx.db.contentItem.findUnique({
-      where: { id },
+    const source = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
     });
 
     if (!source) {

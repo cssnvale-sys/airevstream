@@ -2,6 +2,18 @@ import { authenticate, success, error, validationError } from '@/lib/api-server'
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const AccountEntrySchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+  tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+const BulkImportSchema = z.object({
+  accounts: z.array(AccountEntrySchema).min(1).max(500),
+}).or(z.array(AccountEntrySchema).min(1).max(500));
 
 /**
  * POST /api/v1/accounts/bulk-import
@@ -27,18 +39,15 @@ export async function POST(req: NextRequest) {
       });
     } else {
       const body = await req.json();
-      accounts = body.accounts ?? body;
-      if (!Array.isArray(accounts)) {
-        accounts = body.accounts;
+      const parsed = BulkImportSchema.safeParse(body);
+      if (!parsed.success) {
+        return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
       }
+      accounts = Array.isArray(parsed.data) ? parsed.data : parsed.data.accounts;
     }
 
     if (!Array.isArray(accounts) || accounts.length === 0) {
       return validationError('Request must include a non-empty "accounts" array');
-    }
-
-    if (accounts.length > 500) {
-      return validationError('Cannot import more than 500 accounts at once');
     }
 
     const config = getConfig();

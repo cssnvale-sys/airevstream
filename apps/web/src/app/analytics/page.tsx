@@ -179,7 +179,7 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('revenue');
 
   // API hooks
-  const { data: analyticsData, isLoading } = useAnalytics('overview', `period=${period}`);
+  const { data: analyticsData, isLoading, error: analyticsError } = useAnalytics('overview', `period=${period}`);
 
   const analytics: AnalyticsData = (analyticsData?.data as AnalyticsData | undefined) ?? {};
 
@@ -727,6 +727,12 @@ export default function AnalyticsPage() {
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
+        </div>
+      ) : analyticsError ? (
+        <div className="card flex flex-col items-center justify-center py-12 text-center">
+          <BarChart3 size={32} className="text-text-secondary mb-3" />
+          <h3 className="text-lg font-medium text-text-primary">Failed to load analytics</h3>
+          <p className="text-sm text-text-secondary mt-1">There was an error loading your analytics data. Please try again later.</p>
         </div>
       ) : (
         <>

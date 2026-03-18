@@ -52,7 +52,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       orderBy: { version: 'asc' },
     });
 
-    return success(versions);
+    const converted = versions.map(v => ({
+      ...v,
+      qualityScore: v.qualityScore != null ? Number(v.qualityScore) : null,
+    }));
+    return success(converted);
   } catch (err) {
     console.error('GET /api/v1/content/[id]/versions error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

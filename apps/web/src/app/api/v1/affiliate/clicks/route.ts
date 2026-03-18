@@ -46,7 +46,8 @@ export async function GET(req: NextRequest) {
       ctx.db.affiliateClick.count({ where }),
     ]);
 
-    return paginated(clicks, total, page, limit);
+    const serialized = clicks.map(c => ({ ...c, revenue: c.revenue != null ? Number(c.revenue) : null }));
+    return paginated(serialized, total, page, limit);
   } catch (err) {
     console.error('GET /api/v1/affiliate/clicks error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch click analytics', 500);

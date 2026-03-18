@@ -43,7 +43,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    return success(updated);
+    return success({
+      ...updated,
+      qualityScore: updated.qualityScore != null ? Number(updated.qualityScore) : null,
+      durationSec: updated.durationSec != null ? Number(updated.durationSec) : null,
+      approvalGateWindowHrs: updated.approvalGateWindowHrs != null ? Number(updated.approvalGateWindowHrs) : null,
+    });
   } catch (err) {
     console.error('POST /api/v1/content/[id]/reject error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

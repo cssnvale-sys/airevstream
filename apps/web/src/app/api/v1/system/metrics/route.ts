@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
       return success({
         metricType,
-        entries: metrics,
+        entries: metrics.map(m => ({ ...m, value: Number(m.value) })),
       });
     }
 
@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
 
       if (metrics.length > 0) {
         latest[type] = historyLimit === 1
-          ? { value: metrics[0].value, unit: metrics[0].unit, timestamp: metrics[0].createdAt }
-          : metrics;
+          ? { value: Number(metrics[0].value), unit: metrics[0].unit, timestamp: metrics[0].createdAt }
+          : metrics.map(m => ({ ...m, value: Number(m.value) }));
       }
     }
 

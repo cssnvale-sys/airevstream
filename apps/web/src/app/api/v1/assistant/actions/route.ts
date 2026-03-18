@@ -143,7 +143,7 @@ const executors: Record<string, ActionExecutor> = {
       take: limit,
     });
 
-    return { data: { query, resultCount: entries.length, entries } };
+    return { data: { query, resultCount: entries.length, entries: entries.map(e => ({ ...e, relevanceScore: e.relevanceScore != null ? Number(e.relevanceScore) : null })) } };
   },
 
   'system.healthCheck': async (_params, ctx) => {

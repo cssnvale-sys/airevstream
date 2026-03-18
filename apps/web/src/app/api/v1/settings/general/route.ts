@@ -35,6 +35,6 @@ export async function PUT(req: NextRequest) {
     return success(row.value);
   } catch (err: any) {
     console.error('PUT /api/v1/settings/general failed:', err);
-    return error('INTERNAL_ERROR', err.message, 500);
+    return error('INTERNAL_ERROR', 'Failed to update general settings', 500);
   }
 }

@@ -54,8 +54,8 @@ export async function GET(req: NextRequest) {
         });
 
         reportData = {
-          summary: { totalRevenue: totals._sum.revenue ?? 0, totalConversions: totals._count.id },
-          records: clicks,
+          summary: { totalRevenue: Number(totals._sum.revenue ?? 0), totalConversions: totals._count.id },
+          records: clicks.map(c => ({ ...c, revenue: c.revenue != null ? Number(c.revenue) : null })),
         };
         break;
       }
@@ -98,7 +98,13 @@ export async function GET(req: NextRequest) {
           _avg: { qualityScore: true },
         });
 
-        reportData = { byStatus, byType };
+        reportData = {
+          byStatus,
+          byType: byType.map(t => ({
+            ...t,
+            _avg: { qualityScore: t._avg.qualityScore != null ? Number(t._avg.qualityScore) : null },
+          })),
+        };
         break;
       }
 
@@ -122,11 +128,11 @@ export async function GET(req: NextRequest) {
 
         reportData = {
           summary: {
-            totalCost: totals._sum.cost ?? 0,
+            totalCost: Number(totals._sum.cost ?? 0),
             totalTokens: totals._sum.tokensUsed ?? 0,
             totalRequests: totals._count.id,
           },
-          records: usage,
+          records: usage.map(u => ({ ...u, cost: u.cost != null ? Number(u.cost) : null })),
         };
         break;
       }

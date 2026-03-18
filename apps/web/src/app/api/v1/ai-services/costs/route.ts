@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
     return success({
       period: { start: start ?? null, end: end ?? null },
       totals: {
-        totalCost: totals._sum.cost ?? 0,
+        totalCost: Number(totals._sum.cost ?? 0),
         totalTokens: totals._sum.tokensUsed ?? 0,
         totalRequests: totals._count.id,
       },
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
           serviceType: svc?.serviceType ?? 'Unknown',
           isLocal: svc?.isLocal ?? false,
           isFree: svc?.isFree ?? false,
-          totalCost: row._sum.cost ?? 0,
+          totalCost: Number(row._sum.cost ?? 0),
           tokensUsed: row._sum.tokensUsed ?? 0,
           requests: row._count.id,
         };

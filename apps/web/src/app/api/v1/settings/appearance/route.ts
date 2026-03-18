@@ -34,6 +34,6 @@ export async function PUT(req: NextRequest) {
     return success(row.value);
   } catch (err: any) {
     console.error('PUT /api/v1/settings/appearance failed:', err);
-    return error('INTERNAL_ERROR', err.message, 500);
+    return error('INTERNAL_ERROR', 'Failed to update appearance settings', 500);
   }
 }

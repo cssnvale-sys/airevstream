@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     const totalConversions = conversions._count.id;
-    const totalRevenue = conversions._sum.revenue ?? 0;
+    const totalRevenue = Number(conversions._sum.revenue ?? 0);
     const conversionRate = totalClicks > 0 ? totalConversions / totalClicks : 0;
 
     const summary = {

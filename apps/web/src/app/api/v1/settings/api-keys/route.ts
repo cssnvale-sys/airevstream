@@ -76,6 +76,6 @@ export async function POST(req: NextRequest) {
     return success({ ...apiKey, key: rawKey });
   } catch (err: any) {
     console.error('POST /api/v1/settings/api-keys error:', err);
-    return error('INTERNAL_ERROR', err.message, 500);
+    return error('INTERNAL_ERROR', 'Failed to create API key', 500);
   }
 }

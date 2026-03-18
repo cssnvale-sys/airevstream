@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = CreateFamilySchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join('; '));
+      return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
     const { channelIds } = parsed.data;
 
@@ -87,10 +87,17 @@ export async function POST(req: NextRequest) {
         id: { in: channelIds },
         socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
+      select: { id: true, familyId: true },
     });
 
     if (channels.length !== channelIds.length) {
       return error('NOT_FOUND', 'One or more channels not found', 404);
+    }
+
+    // Check no channels already belong to a family
+    const alreadyInFamily = channels.filter(c => c.familyId !== null);
+    if (alreadyInFamily.length > 0) {
+      return error('CONFLICT', 'One or more channels already belong to a family', 409);
     }
 
     // Generate a new family UUID

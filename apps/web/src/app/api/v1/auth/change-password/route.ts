@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = ChangePasswordSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join('; '));
+      return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
     const { currentPassword, newPassword } = parsed.data;
 

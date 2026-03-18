@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const parsed = updateProductSchema.safeParse(body);
 
     if (!parsed.success) {
-      const messages = parsed.error.errors.map((e) => e.message).join('; ');
+      const messages = parsed.error.errors.map((e) => e.message).join(', ');
       return validationError(messages);
     }
 

@@ -100,7 +100,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = UpdateStoryboardSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join('; '));
+      return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
 
     const updateData: Record<string, unknown> = {};

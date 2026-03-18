@@ -14,6 +14,11 @@ const RegisterSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Guard open registration — disable in production when not wanted
+    if (process.env.REGISTRATION_DISABLED === 'true') {
+      return error('FORBIDDEN', 'Registration is currently closed', 403);
+    }
+
     const ip = getClientIp(req);
     const rl = checkRateLimit(`register:${ip}`, RATE_LIMITS.register);
     if (!rl.allowed) {

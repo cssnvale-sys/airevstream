@@ -78,7 +78,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const parsed = addProductSchema.safeParse(body);
 
     if (!parsed.success) {
-      const messages = parsed.error.errors.map((e) => e.message).join('; ');
+      const messages = parsed.error.errors.map((e) => e.message).join(', ');
       return validationError(messages);
     }
 

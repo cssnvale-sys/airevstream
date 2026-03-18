@@ -117,7 +117,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = AddToPoolSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join('; '));
+      return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
     const { affiliateProductId } = parsed.data;
 

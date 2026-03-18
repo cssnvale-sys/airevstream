@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = RescheduleSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join('; '));
+      return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
 
     const { scheduledAt, publishConfig } = parsed.data;

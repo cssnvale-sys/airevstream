@@ -74,46 +74,46 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = UpdateCinemaBibleSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join('; '));
+      return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
     const { lookBible, characterBible, environmentBible, promptBible, shotspecTemplate } = parsed.data;
 
-    // Find latest version for this channel
-    const latestBible = await ctx.db.cinemaBible.findFirst({
-      where: { channelId: id },
-      orderBy: { version: 'desc' },
-      select: { id: true, version: true },
+    // Use interactive transaction to prevent TOCTOU race on version
+    const cinemaBible = await ctx.db.$transaction(async (tx) => {
+      const latestBible = await tx.cinemaBible.findFirst({
+        where: { channelId: id },
+        orderBy: { version: 'desc' },
+        select: { id: true, version: true },
+      });
+
+      if (latestBible) {
+        // Update existing latest bible
+        const data: Record<string, unknown> = {};
+        if (lookBible !== undefined) data.lookBible = lookBible;
+        if (characterBible !== undefined) data.characterBible = characterBible;
+        if (environmentBible !== undefined) data.environmentBible = environmentBible;
+        if (promptBible !== undefined) data.promptBible = promptBible;
+        if (shotspecTemplate !== undefined) data.shotspecTemplate = shotspecTemplate;
+
+        return tx.cinemaBible.update({
+          where: { id: latestBible.id },
+          data,
+        });
+      } else {
+        // Create first cinema bible for this channel
+        return tx.cinemaBible.create({
+          data: {
+            channelId: id,
+            version: 1,
+            lookBible: (lookBible ?? {}) as any,
+            characterBible: (characterBible ?? {}) as any,
+            environmentBible: (environmentBible ?? {}) as any,
+            promptBible: (promptBible ?? {}) as any,
+            shotspecTemplate: (shotspecTemplate ?? {}) as any,
+          },
+        });
+      }
     });
-
-    let cinemaBible;
-
-    if (latestBible) {
-      // Update existing latest bible
-      const data: Record<string, unknown> = {};
-      if (lookBible !== undefined) data.lookBible = lookBible;
-      if (characterBible !== undefined) data.characterBible = characterBible;
-      if (environmentBible !== undefined) data.environmentBible = environmentBible;
-      if (promptBible !== undefined) data.promptBible = promptBible;
-      if (shotspecTemplate !== undefined) data.shotspecTemplate = shotspecTemplate;
-
-      cinemaBible = await ctx.db.cinemaBible.update({
-        where: { id: latestBible.id },
-        data,
-      });
-    } else {
-      // Create first cinema bible for this channel
-      cinemaBible = await ctx.db.cinemaBible.create({
-        data: {
-          channelId: id,
-          version: 1,
-          lookBible: (lookBible ?? {}) as any,
-          characterBible: (characterBible ?? {}) as any,
-          environmentBible: (environmentBible ?? {}) as any,
-          promptBible: (promptBible ?? {}) as any,
-          shotspecTemplate: (shotspecTemplate ?? {}) as any,
-        },
-      });
-    }
 
     return success(cinemaBible);
   } catch (err) {

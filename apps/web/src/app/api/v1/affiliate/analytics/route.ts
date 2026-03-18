@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
     const parsed = querySchema.safeParse(rawParams);
     if (!parsed.success) {
-      const messages = parsed.error.errors.map((e) => e.message).join('; ');
+      const messages = parsed.error.errors.map((e) => e.message).join(', ');
       return validationError(messages);
     }
 

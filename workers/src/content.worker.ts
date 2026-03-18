@@ -126,10 +126,15 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
 
     return { contentId: data.contentId, status: 'pending_approval' };
   } catch (error) {
-    await db.contentItem.update({
-      where: { id: data.contentId },
-      data: { status: 'failed' },
-    });
+    logger.error({ contentId: data.contentId, error: error instanceof Error ? error.message : String(error) }, 'Content generation failed');
+    try {
+      await db.contentItem.update({
+        where: { id: data.contentId },
+        data: { status: 'failed' },
+      });
+    } catch (dbErr) {
+      logger.error({ contentId: data.contentId, error: dbErr instanceof Error ? dbErr.message : String(dbErr) }, 'Failed to update content status to failed');
+    }
     throw error;
   }
 }

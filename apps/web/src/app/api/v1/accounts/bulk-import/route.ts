@@ -39,10 +39,14 @@ export async function POST(req: NextRequest) {
       const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
       const hasHeader = lines[0]?.toLowerCase().startsWith('email');
       const dataLines = hasHeader ? lines.slice(1) : lines;
-      accounts = dataLines.map((line) => {
-        const [email, password, tier, notes] = line.split(',').map((f) => f.trim());
-        return { email, password, tier: tier || undefined, notes: notes || undefined };
-      });
+      accounts = dataLines
+        .map((line) => {
+          const parts = line.split(',').map((f) => f.trim());
+          if (parts.length < 2) return null;
+          const [email, password, tier, notes] = parts;
+          return { email, password, tier: tier || undefined, notes: notes || undefined };
+        })
+        .filter((a): a is NonNullable<typeof a> => a !== null);
     } else {
       const body = await req.json();
       const parsed = BulkImportSchema.safeParse(body);

@@ -118,8 +118,8 @@ export function requireAdmin(ctx: ApiContext): NextResponse | null {
 
 export function parseQuery(req: NextRequest) {
   const url = new URL(req.url);
-  const rawPage = parseInt(url.searchParams.get('page') ?? '1');
-  const rawLimit = parseInt(url.searchParams.get('limit') ?? '50');
+  const rawPage = parseInt(url.searchParams.get('page') ?? '1', 10);
+  const rawLimit = parseInt(url.searchParams.get('limit') ?? '50', 10);
   const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage);
   const limit = Math.min(100, Math.max(1, Number.isNaN(rawLimit) ? 50 : rawLimit));
   const skip = (page - 1) * limit;

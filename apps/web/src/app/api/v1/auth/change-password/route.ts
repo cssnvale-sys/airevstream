@@ -7,7 +7,9 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
 function verifyPassword(password: string, hash: string): boolean {
-  const [salt, key] = hash.split(':');
+  const parts = hash.split(':');
+  if (parts.length !== 2) return false;
+  const [salt, key] = parts;
   if (!salt || !key) return false;
   const derived = scryptSync(password, salt, 64).toString('hex');
   return timingSafeEqual(Buffer.from(key, 'hex'), Buffer.from(derived, 'hex'));

@@ -14,7 +14,9 @@ const LoginSchema = z.object({
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
 function verifyPassword(password: string, storedHash: string): boolean {
-  const [salt, hash] = storedHash.split(':');
+  const parts = storedHash.split(':');
+  if (parts.length !== 2) return false;
+  const [salt, hash] = parts;
   if (!salt || !hash) return false;
   const derivedKey = scryptSync(password, salt, 64);
   const storedKey = Buffer.from(hash, 'hex');

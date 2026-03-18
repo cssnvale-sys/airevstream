@@ -16,9 +16,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     let duration = 3600; // default 1 hour
     try {
       const body = await req.json();
-      if (body.duration) duration = body.duration;
+      if (body.duration != null) {
+        const d = Number(body.duration);
+        if (Number.isFinite(d) && d > 0 && d <= 86400) {
+          duration = d;
+        }
+      }
     } catch {
-      // no body
+      // no body — use default duration
     }
 
     await ctx.db.alert.update({

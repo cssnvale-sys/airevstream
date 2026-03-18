@@ -1,0 +1,85 @@
+import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { NextRequest, NextResponse } from 'next/server';
+import { randomBytes } from 'crypto';
+
+/**
+ * GET /api/v1/affiliate/links
+ * List affiliate products that have shortened links.
+ */
+export async function GET(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const { page, limit, skip } = parseQuery(req);
+
+    const where = { shortUrl: { not: null } };
+
+    const [items, total] = await Promise.all([
+      ctx.db.affiliateProduct.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          url: true,
+          shortUrl: true,
+          category: true,
+          totalClicks: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      ctx.db.affiliateProduct.count({ where }),
+    ]);
+
+    return paginated(items, total, page, limit);
+  } catch (err) {
+    console.error('GET /api/v1/affiliate/links error:', err);
+    return error('INTERNAL_ERROR', 'Failed to list affiliate links', 500);
+  }
+}
+
+/**
+ * POST /api/v1/affiliate/links
+ * Create or update a shortened link for an affiliate product.
+ * Body: { productId, shortUrl? }
+ */
+export async function POST(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const body = await req.json();
+    const { productId, shortUrl } = body;
+
+    if (!productId) {
+      return validationError('productId is required');
+    }
+
+    const product = await ctx.db.affiliateProduct.findUnique({ where: { id: productId } });
+    if (!product) {
+      return validationError('Product not found');
+    }
+
+    // Generate a short URL if not provided
+    const generatedShortUrl = shortUrl ?? `https://link.airevstream.local/${randomBytes(4).toString('hex')}`;
+
+    const updated = await ctx.db.affiliateProduct.update({
+      where: { id: productId },
+      data: { shortUrl: generatedShortUrl },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        shortUrl: true,
+      },
+    });
+
+    return success(updated);
+  } catch (err) {
+    console.error('POST /api/v1/affiliate/links error:', err);
+    return error('INTERNAL_ERROR', 'Failed to create affiliate link', 500);
+  }
+}

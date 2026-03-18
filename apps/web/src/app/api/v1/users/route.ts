@@ -1,0 +1,63 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
+
+/**
+ * GET /api/v1/users
+ * List users (admin only), optional filter by tenantId, role
+ */
+export async function GET(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
+    if (!user || user.role !== 'admin') {
+      return error('FORBIDDEN', 'Admin access required', 403);
+    }
+
+    const { page, limit, skip, sort, order, search, params } = parseQuery(req);
+    const tenantId = params.get('tenantId') ?? undefined;
+    const role = params.get('role') ?? undefined;
+
+    const where: Record<string, unknown> = {};
+    if (tenantId) where.tenantId = tenantId;
+    if (role) where.role = role;
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      ctx.db.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sort]: order },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatarUrl: true,
+          role: true,
+          tenantId: true,
+          createdAt: true,
+          updatedAt: true,
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      }),
+      ctx.db.user.count({ where }),
+    ]);
+
+    return paginated(users, total, page, limit);
+  } catch {
+    return error('INTERNAL_ERROR', 'Failed to list users', 500);
+  }
+}

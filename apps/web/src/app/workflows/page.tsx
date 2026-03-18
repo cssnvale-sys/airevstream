@@ -1,137 +1,114 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { workflows as workflowsApi } from '@/lib/api';
-import { getToken } from '@/lib/auth';
-import { Plus, Play, Trash2 } from 'lucide-react';
+import { useWorkflows } from '@/hooks/use-api';
+import { cn, formatRelativeTime } from '@/lib/utils';
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
+
+interface WorkflowJob {
+  id: string;
+  jobType: string;
+  status: string;
+  progress: number;
+  priority: number;
+  retryCount: number;
+  maxRetries: number;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const STATUS_STYLES: Record<string, { icon: typeof Play; color: string; bg: string }> = {
+  queued: { icon: Clock, color: 'text-accent-amber', bg: 'bg-accent-amber/10' },
+  running: { icon: Loader2, color: 'text-accent-blue', bg: 'bg-accent-blue/10' },
+  completed: { icon: CheckCircle, color: 'text-accent-green', bg: 'bg-accent-green/10' },
+  failed: { icon: XCircle, color: 'text-accent-red', bg: 'bg-accent-red/10' },
+  cancelled: { icon: Pause, color: 'text-text-secondary', bg: 'bg-bg-tertiary' },
+};
 
 export default function WorkflowsPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-
-  const loadWorkflows = async () => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      const res = await workflowsApi.list(token);
-      setItems(res.data?.items ?? []);
-    } catch {
-      // ignore
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => { loadWorkflows(); }, []);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = getToken();
-    if (!token) return;
-    try {
-      await workflowsApi.create(token, {
-        name,
-        description: description || undefined,
-        definition: {
-          id: `wf-${Date.now()}`,
-          name,
-          steps: [
-            { id: 'step-1', type: 'research', name: 'Research Topics', config: {} },
-            { id: 'step-2', type: 'script', name: 'Generate Script', config: {}, dependsOn: ['step-1'] },
-            { id: 'step-3', type: 'review', name: 'Review Content', config: {}, dependsOn: ['step-2'] },
-          ],
-        },
-      });
-      setShowCreate(false);
-      setName('');
-      setDescription('');
-      loadWorkflows();
-    } catch {
-      // ignore
-    }
-  };
-
-  const handleRun = async (id: string) => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      await workflowsApi.run(token, id);
-      loadWorkflows();
-    } catch {
-      // ignore
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      await workflowsApi.delete(token, id);
-      loadWorkflows();
-    } catch {
-      // ignore
-    }
-  };
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const { data: jobsRes, isLoading } = useWorkflows(
+    `${statusFilter !== 'all' ? `status=${statusFilter}&` : ''}limit=50`,
+  );
+  const jobs = (jobsRes?.data as unknown as WorkflowJob[]) ?? [];
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Workflows</h1>
-          <p className="text-gray-400 mt-1">Automate your content pipeline</p>
-        </div>
-        <button onClick={() => setShowCreate(!showCreate)} className="btn-primary flex items-center gap-2">
-          <Plus size={16} /> New Workflow
-        </button>
-      </div>
-
-      {showCreate && (
-        <form onSubmit={handleCreate} className="card mb-6 space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Workflow Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="input w-full" required />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input w-full h-20" />
-          </div>
-          <p className="text-xs text-gray-500">A default 3-step workflow (Research → Script → Review) will be created. You can customize it later.</p>
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-text-primary">Workflows</h1>
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary">Create</button>
-            <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary">Cancel</button>
+            {['all', 'queued', 'running', 'completed', 'failed'].map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-sm capitalize transition-colors',
+                  statusFilter === s
+                    ? 'bg-accent-blue text-white'
+                    : 'bg-bg-secondary text-text-secondary hover:text-text-primary',
+                )}
+              >
+                {s}
+              </button>
+            ))}
           </div>
-        </form>
-      )}
-
-      {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading...</div>
-      ) : items.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">No workflows yet. Create your first automation!</div>
-      ) : (
-        <div className="space-y-3">
-          {items.map((item: any) => (
-            <div key={item.id} className="card flex items-center justify-between">
-              <div>
-                <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-400">
-                  {item.description ?? 'No description'} &middot; {item._count?.runs ?? 0} runs
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => handleRun(item.id)} className="btn-primary flex items-center gap-1 text-sm py-1.5 px-3">
-                  <Play size={14} /> Run
-                </button>
-                <button onClick={() => handleDelete(item.id)} className="text-gray-400 hover:text-red-400 transition-colors p-2">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
-      )}
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="animate-spin text-text-secondary" size={32} />
+          </div>
+        ) : jobs.length === 0 ? (
+          <div className="text-center py-20 text-text-secondary">
+            No workflow jobs found.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {jobs.map((job) => {
+              const style = STATUS_STYLES[job.status] ?? STATUS_STYLES.queued;
+              const Icon = style.icon;
+              return (
+                <div key={job.id} className="card flex items-center gap-4">
+                  <div className={cn('p-2 rounded-lg', style.bg)}>
+                    <Icon size={18} className={cn(style.color, job.status === 'running' && 'animate-spin')} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-text-primary">{job.jobType}</span>
+                      <span className={cn('text-xs px-2 py-0.5 rounded-full capitalize', style.bg, style.color)}>
+                        {job.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-text-secondary mt-0.5">
+                      ID: {job.id.slice(0, 8)}... | Priority: {job.priority} | Retries: {job.retryCount}/{job.maxRetries}
+                    </div>
+                    {job.error && (
+                      <div className="text-xs text-accent-red mt-1 truncate">{job.error}</div>
+                    )}
+                  </div>
+                  {job.status === 'running' && (
+                    <div className="w-32">
+                      <div className="h-2 rounded-full bg-bg-tertiary overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-accent-blue transition-all"
+                          style={{ width: `${job.progress}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-text-secondary text-right mt-0.5">{job.progress}%</div>
+                    </div>
+                  )}
+                  <div className="text-xs text-text-secondary whitespace-nowrap">
+                    {formatRelativeTime(job.createdAt)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </AppLayout>
   );
 }

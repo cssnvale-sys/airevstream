@@ -1,0 +1,80 @@
+import { authenticate, success, error } from '@/lib/api-server';
+import { NextRequest, NextResponse } from 'next/server';
+
+/**
+ * GET /api/v1/analytics/audience
+ * Audience insights: channel subscriber/follower counts from platform metadata.
+ * Query: channelId?
+ */
+export async function GET(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const url = new URL(req.url);
+    const channelId = url.searchParams.get('channelId') ?? undefined;
+
+    const where: Record<string, unknown> = { status: 'active' };
+    if (channelId) where.id = channelId;
+
+    const channels = await ctx.db.channel.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        primaryLanguage: true,
+        niches: true,
+        platformMetadata: true,
+        healthScore: true,
+        socialAccount: {
+          select: {
+            platform: true,
+            username: true,
+            metadata: true,
+          },
+        },
+        _count: {
+          select: {
+            contentItems: true,
+            scheduledPosts: true,
+            affiliateClicks: true,
+          },
+        },
+      },
+    });
+
+    const audienceData = channels.map((channel) => {
+      // Extract audience data from platformMetadata (JSONB)
+      const metadata = channel.platformMetadata as Record<string, unknown> ?? {};
+      const socialMetadata = channel.socialAccount.metadata as Record<string, unknown> ?? {};
+
+      return {
+        channelId: channel.id,
+        channelName: channel.name,
+        platform: channel.socialAccount.platform,
+        username: channel.socialAccount.username,
+        language: channel.primaryLanguage,
+        niches: channel.niches,
+        healthScore: channel.healthScore,
+        audience: {
+          subscribers: metadata.subscribers ?? socialMetadata.subscribers ?? null,
+          followers: metadata.followers ?? socialMetadata.followers ?? null,
+          totalViews: metadata.totalViews ?? socialMetadata.totalViews ?? null,
+        },
+        activity: {
+          totalContent: channel._count.contentItems,
+          scheduledPosts: channel._count.scheduledPosts,
+          affiliateClicks: channel._count.affiliateClicks,
+        },
+      };
+    });
+
+    return success({
+      totalChannels: audienceData.length,
+      channels: audienceData,
+    });
+  } catch (err) {
+    console.error('GET /api/v1/analytics/audience error:', err);
+    return error('INTERNAL_ERROR', 'Failed to fetch audience insights', 500);
+  }
+}

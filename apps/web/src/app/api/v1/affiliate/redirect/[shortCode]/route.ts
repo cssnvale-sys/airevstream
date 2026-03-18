@@ -1,0 +1,84 @@
+import { error } from '@/lib/api-server';
+import { getDb } from '@airevstream/db';
+import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
+
+type RouteParams = { params: Promise<{ shortCode: string }> };
+
+/**
+ * GET /api/v1/affiliate/redirect/[shortCode]
+ * Public redirect endpoint — no auth required.
+ *
+ * Looks up an AffiliateProduct by shortUrl matching the shortCode,
+ * records an AffiliateClick with analytics data, increments totalClicks,
+ * and redirects (302) to the product's full URL.
+ *
+ * Optional query params for attribution:
+ *   - platform: originating platform (youtube, tiktok, etc.)
+ *   - contentId: content item that contained the link
+ *   - channelId: channel that published the link
+ */
+export async function GET(req: NextRequest, { params }: RouteParams) {
+  const { shortCode } = await params;
+
+  try {
+    const db = getDb();
+    const url = new URL(req.url);
+
+    // Extract attribution query params
+    const platform = url.searchParams.get('platform') ?? null;
+    const contentId = url.searchParams.get('contentId') ?? null;
+    const channelId = url.searchParams.get('channelId') ?? null;
+
+    // Look up the affiliate product by matching shortUrl.
+    // The shortUrl stored in the DB may be a full URL like
+    // "https://link.airevstream.local/<shortCode>" or just the code.
+    // We search with `contains` on the shortCode to handle both formats.
+    const product = await db.affiliateProduct.findFirst({
+      where: {
+        shortUrl: { contains: shortCode },
+        status: 'active',
+      },
+      select: {
+        id: true,
+        url: true,
+        shortUrl: true,
+      },
+    });
+
+    if (!product) {
+      return error('NOT_FOUND', 'Link not found', 404);
+    }
+
+    // Hash the client IP for privacy-safe analytics
+    const forwarded = req.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const ipHash = createHash('sha256').update(ip).digest('hex');
+
+    const userAgent = req.headers.get('user-agent') ?? null;
+
+    // Record the click and increment counter in parallel
+    await Promise.all([
+      db.affiliateClick.create({
+        data: {
+          productId: product.id,
+          contentId,
+          channelId,
+          platform,
+          ipHash,
+          userAgent,
+        },
+      }),
+      db.affiliateProduct.update({
+        where: { id: product.id },
+        data: { totalClicks: { increment: 1 } },
+      }),
+    ]);
+
+    // 302 redirect to the actual affiliate URL
+    return NextResponse.redirect(product.url, 302);
+  } catch (err) {
+    console.error('GET /api/v1/affiliate/redirect/[shortCode] error:', err);
+    return error('INTERNAL_ERROR', 'Redirect failed', 500);
+  }
+}

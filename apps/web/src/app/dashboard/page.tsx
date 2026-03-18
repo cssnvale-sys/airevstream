@@ -1,117 +1,553 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { content, accounts, workflows } from '@/lib/api';
-import { getToken } from '@/lib/auth';
-import { FileText, Users, GitBranch, TrendingUp } from 'lucide-react';
+import {
+  useApprovals,
+  useContent,
+  useWorkflows,
+  useSystemHealth,
+  useSystemMetrics,
+  useApi,
+  apiPost,
+} from '@/hooks/use-api';
+import { Youtube, Instagram, Facebook, Music2 } from 'lucide-react';
+import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
+import {
+  ClipboardCheck,
+  Send,
+  HeartPulse,
+  DollarSign,
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  Clock,
+  Cpu,
+  MemoryStick,
+  Layers,
+  ChevronRight,
+} from 'lucide-react';
+import Link from 'next/link';
 
-interface Stats {
-  contentCount: number;
-  accountCount: number;
-  workflowCount: number;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface ApprovalItem {
+  id: string;
+  channel?: { id: string; name: string };
+  contentType: string;
+  qualityScore: string | null;
+  status: string;
+  createdAt: string;
 }
 
+interface ContentItem {
+  id: string;
+  status: string;
+  postedAt?: string;
+  createdAt: string;
+}
+
+interface WorkflowItem {
+  id: string;
+  jobType: string;
+  status: string;
+  progress: number;
+  content?: { id: string; title: string; contentType: string } | null;
+}
+
+interface HealthData {
+  status: string;
+  services: { total: number; healthy: number };
+  alerts?: { open: Record<string, number> };
+  queues?: { activeJobs: number; pendingPosts: number };
+}
+
+interface MetricsData {
+  cpu: number;
+  ram: number;
+  queueDepth: number;
+}
+
+interface ActivityItem {
+  id: string;
+  type: 'content' | 'posting' | 'alert';
+  message: string;
+  timestamp: string;
+}
+
+interface RevenueData {
+  totals: { totalRevenue: number; totalConversions: number };
+  period?: { start: string | null; end: string | null };
+}
+
+interface AccountStats {
+  totalEmailAccounts: number;
+  platformDistribution: Record<string, { count: number; avgHealth: number }>;
+  platformCoverage: Record<string, { count: number; percentage: number }>;
+  emailsByStatus: Record<string, number>;
+  emailsByTier: Record<string, number>;
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton components
+// ---------------------------------------------------------------------------
+
+function SkeletonCard() {
+  return (
+    <div className="card animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-3 w-24 bg-bg-tertiary rounded" />
+          <div className="h-7 w-16 bg-bg-tertiary rounded" />
+        </div>
+        <div className="h-10 w-10 bg-bg-tertiary rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex items-center gap-3 py-3 animate-pulse">
+      <div className="h-4 w-4 bg-bg-tertiary rounded-full" />
+      <div className="flex-1 space-y-1">
+        <div className="h-3 w-48 bg-bg-tertiary rounded" />
+        <div className="h-2 w-32 bg-bg-tertiary rounded" />
+      </div>
+      <div className="h-6 w-16 bg-bg-tertiary rounded" />
+    </div>
+  );
+}
+
+function SkeletonProgress() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="space-y-1">
+          <div className="h-3 w-20 bg-bg-tertiary rounded" />
+          <div className="h-2 w-full bg-bg-tertiary rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function formatDate(): string {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date());
+}
+
+function activityIcon(type: string) {
+  switch (type) {
+    case 'content':
+      return <ClipboardCheck size={14} className="text-accent-purple" />;
+    case 'posting':
+      return <Send size={14} className="text-accent-green" />;
+    case 'alert':
+      return <XCircle size={14} className="text-accent-red" />;
+    default:
+      return <Clock size={14} className="text-text-secondary" />;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard page
+// ---------------------------------------------------------------------------
+
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats>({ contentCount: 0, accountCount: 0, workflowCount: 0 });
-  const [loading, setLoading] = useState(true);
+  const { data: approvalsRes, isLoading: approvalsLoading, mutate: mutateApprovals } = useApprovals('status=pending_approval&limit=5');
+  const { data: contentRes, isLoading: contentLoading } = useContent('limit=100');
+  const { data: workflowsRes, isLoading: workflowsLoading } = useWorkflows();
+  const { data: healthRes, isLoading: healthLoading } = useSystemHealth();
+  const { data: metricsRes, isLoading: metricsLoading } = useSystemMetrics();
+  const { data: activityRes, isLoading: activityLoading } = useApi<ActivityItem[]>('/activity?limit=10');
+  const { data: revenueRes, isLoading: revenueLoading } = useApi<RevenueData>('/analytics/revenue');
+  const { data: accountStatsRes, isLoading: accountStatsLoading } = useApi<AccountStats>('/accounts/stats');
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+  const [actionInFlight, setActionInFlight] = useState<string | null>(null);
 
-    Promise.all([
-      content.list(token, 1, 1).catch(() => ({ data: { total: 0 } })),
-      accounts.list(token, 1, 1).catch(() => ({ data: { total: 0 } })),
-      workflows.list(token, 1, 1).catch(() => ({ data: { total: 0 } })),
-    ]).then(([c, a, w]) => {
-      setStats({
-        contentCount: c.data?.total ?? 0,
-        accountCount: a.data?.total ?? 0,
-        workflowCount: w.data?.total ?? 0,
-      });
-      setLoading(false);
+  // Derived data
+  const approvals = (approvalsRes?.data as unknown as ApprovalItem[]) ?? [];
+  const contentItems = (contentRes?.data as unknown as ContentItem[]) ?? [];
+  const workflows = (workflowsRes?.data as unknown as WorkflowItem[]) ?? [];
+  const health = healthRes?.data as unknown as HealthData | undefined;
+  const metrics = metricsRes?.data as unknown as MetricsData | undefined;
+  const activityFeed = (activityRes?.data as unknown as ActivityItem[]) ?? [];
+  const revenue = revenueRes?.data as unknown as RevenueData | undefined;
+  const accountStats = accountStatsRes?.data as unknown as AccountStats | undefined;
+
+  const postedTodayCount = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return contentItems.filter(
+      (c) => c.status === 'posted' && (c.postedAt ?? c.createdAt)?.slice(0, 10) === todayStr,
+    ).length;
+  }, [contentItems]);
+
+  const accountsHealthy = health?.services
+    ? Math.round((health.services.healthy / Math.max(health.services.total, 1)) * 100)
+    : null;
+
+  // Workflow type counts
+  const workflowCategories = useMemo(() => {
+    const cats: Record<string, number> = {};
+    workflows.forEach((w) => {
+      const cat = w.jobType || 'Other';
+      cats[cat] = (cats[cat] ?? 0) + 1;
     });
-  }, []);
+    return Object.entries(cats);
+  }, [workflows]);
 
-  const statCards = [
-    { label: 'Content Items', value: stats.contentCount, icon: FileText, color: 'text-blue-400' },
-    { label: 'Accounts', value: stats.accountCount, icon: Users, color: 'text-green-400' },
-    { label: 'Workflows', value: stats.workflowCount, icon: GitBranch, color: 'text-purple-400' },
-    { label: 'Published', value: '-', icon: TrendingUp, color: 'text-orange-400' },
-  ];
+  // Actions
+  const handleApproval = async (id: string, action: 'approve' | 'reject') => {
+    setActionInFlight(id);
+    try {
+      await apiPost(`/approvals/${id}/${action}`);
+      mutateApprovals();
+    } catch {
+      // toast or ignore
+    } finally {
+      setActionInFlight(null);
+    }
+  };
+
+  // ---------- Render ----------
 
   return (
     <AppLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-gray-400 mt-1">Overview of your content automation</p>
+      {/* 1. Greeting Row */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-text-primary">{getGreeting()}</h1>
+        <p className="text-text-secondary mt-1">{formatDate()}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div key={card.label} className="card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">{card.label}</p>
-                  <p className="text-2xl font-bold mt-1">
-                    {loading ? '...' : card.value}
-                  </p>
-                </div>
-                <Icon className={card.color} size={24} />
+      {/* 2. KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {approvalsLoading ? (
+          <SkeletonCard />
+        ) : (
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Pending Approvals</p>
+                <p className="text-2xl font-bold text-text-primary mt-1">
+                  {formatNumber(approvalsRes?.meta?.total ?? approvals.length)}
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-accent-purple/10 flex items-center justify-center">
+                <ClipboardCheck size={20} className="text-accent-purple" />
               </div>
             </div>
-          );
-        })}
+          </div>
+        )}
+
+        {contentLoading ? (
+          <SkeletonCard />
+        ) : (
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Posted Today</p>
+                <p className="text-2xl font-bold text-text-primary mt-1">{formatNumber(postedTodayCount)}</p>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-accent-green/10 flex items-center justify-center">
+                <Send size={20} className="text-accent-green" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {healthLoading ? (
+          <SkeletonCard />
+        ) : (
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Accounts Healthy</p>
+                <p className="text-2xl font-bold text-text-primary mt-1">
+                  {accountsHealthy !== null ? `${accountsHealthy}%` : '--'}
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-accent-green/10 flex items-center justify-center">
+                <HeartPulse size={20} className="text-accent-green" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {revenueLoading ? (
+          <SkeletonCard />
+        ) : (
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Revenue</p>
+                <p className="text-2xl font-bold text-text-primary mt-1">
+                  {revenue ? formatCurrency(revenue.totals.totalRevenue) : '--'}
+                </p>
+                {revenue && (
+                  <div className="flex items-center gap-1 mt-1 text-xs text-text-secondary">
+                    {revenue.totals.totalConversions} conversions
+                  </div>
+                )}
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-accent-amber/10 flex items-center justify-center">
+                <DollarSign size={20} className="text-accent-amber" />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-          <div className="space-y-2">
-            <a href="/content" className="block p-3 rounded-lg bg-gray-800 hover:bg-gray-750 transition-colors">
-              <p className="font-medium">Create New Content</p>
-              <p className="text-sm text-gray-400">Start a new content piece</p>
-            </a>
-            <a href="/chat" className="block p-3 rounded-lg bg-gray-800 hover:bg-gray-750 transition-colors">
-              <p className="font-medium">AI Assistant</p>
-              <p className="text-sm text-gray-400">Get help planning content</p>
-            </a>
-            <a href="/workflows" className="block p-3 rounded-lg bg-gray-800 hover:bg-gray-750 transition-colors">
-              <p className="font-medium">Run Workflow</p>
-              <p className="text-sm text-gray-400">Execute an automation workflow</p>
-            </a>
-          </div>
+      {/* 3. Approval Queue Preview */}
+      <div className="card mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-text-primary">Approval Queue</h2>
+          <Link href="/approvals" className="text-sm text-accent-blue hover:underline flex items-center gap-1">
+            View all <ChevronRight size={14} />
+          </Link>
         </div>
 
+        {approvalsLoading ? (
+          <div className="divide-y divide-border">
+            {[1, 2, 3].map((i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </div>
+        ) : approvals.length === 0 ? (
+          <p className="text-text-secondary text-sm py-4 text-center">No pending approvals</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {approvals.slice(0, 5).map((item) => (
+              <div key={item.id} className="flex items-center gap-3 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-primary truncate">{item.channel?.name ?? 'No channel'}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={cn('badge text-xs', statusColor(item.status))}>{item.contentType}</span>
+                    <span className="text-xs text-text-secondary">
+                      Score: {item.qualityScore != null ? Number(item.qualityScore) : '--'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    disabled={actionInFlight === item.id}
+                    onClick={() => handleApproval(item.id, 'approve')}
+                    className="btn-success btn-sm flex items-center gap-1"
+                  >
+                    <CheckCircle2 size={14} />
+                    <span className="hidden sm:inline">Approve</span>
+                  </button>
+                  <button
+                    disabled={actionInFlight === item.id}
+                    onClick={() => handleApproval(item.id, 'reject')}
+                    className="btn-danger btn-sm flex items-center gap-1"
+                  >
+                    <XCircle size={14} />
+                    <span className="hidden sm:inline">Reject</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Active Workflows + System Health */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Workflows */}
         <div className="card">
-          <h2 className="text-lg font-semibold mb-4">System Status</h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">API Server</span>
-              <span className="flex items-center gap-2 text-green-400 text-sm">
-                <span className="w-2 h-2 rounded-full bg-green-400" />
-                Running
-              </span>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text-primary">Active Workflows</h2>
+            <Link href="/workflows" className="text-sm text-accent-blue hover:underline flex items-center gap-1">
+              Manage <ArrowRight size={14} />
+            </Link>
+          </div>
+          {workflowsLoading ? (
+            <SkeletonProgress />
+          ) : workflowCategories.length === 0 ? (
+            <p className="text-text-secondary text-sm py-4 text-center">No active workflows</p>
+          ) : (
+            <div className="space-y-3">
+              {workflowCategories.map(([category, count]) => (
+                <div key={category} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Layers size={14} className="text-accent-blue" />
+                    <span className="text-sm text-text-primary">{category}</span>
+                  </div>
+                  <span className="text-sm font-medium text-text-primary">{count}</span>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">AI Assistant</span>
-              <span className="flex items-center gap-2 text-green-400 text-sm">
-                <span className="w-2 h-2 rounded-full bg-green-400" />
-                Running
-              </span>
+          )}
+        </div>
+
+        {/* System Health */}
+        <div className="card">
+          <h2 className="text-lg font-semibold text-text-primary mb-4">System Health</h2>
+          {metricsLoading || healthLoading ? (
+            <SkeletonProgress />
+          ) : (
+            <div className="space-y-4">
+              {/* CPU */}
+              <div>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="flex items-center gap-1.5 text-text-secondary">
+                    <Cpu size={14} /> CPU
+                  </span>
+                  <span className="text-text-primary font-medium">{metrics?.cpu ?? 0}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-bg-tertiary overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all',
+                      (metrics?.cpu ?? 0) > 80 ? 'bg-accent-red' : (metrics?.cpu ?? 0) > 50 ? 'bg-accent-amber' : 'bg-accent-green',
+                    )}
+                    style={{ width: `${metrics?.cpu ?? 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* RAM */}
+              <div>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="flex items-center gap-1.5 text-text-secondary">
+                    <MemoryStick size={14} /> RAM
+                  </span>
+                  <span className="text-text-primary font-medium">{metrics?.ram ?? 0}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-bg-tertiary overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all',
+                      (metrics?.ram ?? 0) > 80 ? 'bg-accent-red' : (metrics?.ram ?? 0) > 50 ? 'bg-accent-amber' : 'bg-accent-green',
+                    )}
+                    style={{ width: `${metrics?.ram ?? 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Queue Depth */}
+              <div className="flex items-center justify-between pt-1">
+                <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+                  <Layers size={14} /> Queue Depth
+                </span>
+                <span className="text-sm font-medium text-text-primary">{metrics?.queueDepth ?? 0} jobs</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Workers</span>
-              <span className="flex items-center gap-2 text-yellow-400 text-sm">
-                <span className="w-2 h-2 rounded-full bg-yellow-400" />
-                Check Needed
+          )}
+        </div>
+      </div>
+
+      {/* 6. Account Coverage */}
+      <div className="card mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-text-primary">Platform Coverage</h2>
+          <Link href="/accounts" className="text-sm text-accent-blue hover:underline flex items-center gap-1">
+            Manage accounts <ChevronRight size={14} />
+          </Link>
+        </div>
+        {accountStatsLoading ? (
+          <SkeletonProgress />
+        ) : !accountStats ? (
+          <p className="text-text-secondary text-sm py-4 text-center">No account data available</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { platform: 'youtube', label: 'YouTube', icon: <Youtube size={16} />, color: 'text-red-500' },
+                { platform: 'tiktok', label: 'TikTok', icon: <Music2 size={16} />, color: 'text-cyan-400' },
+                { platform: 'instagram', label: 'Instagram', icon: <Instagram size={16} />, color: 'text-pink-500' },
+                { platform: 'facebook', label: 'Facebook', icon: <Facebook size={16} />, color: 'text-blue-500' },
+              ].map(({ platform, label, icon, color }) => {
+                const dist = accountStats.platformDistribution[platform];
+                const cov = accountStats.platformCoverage[platform];
+                return (
+                  <div key={platform} className="rounded-lg border border-border bg-bg-secondary p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={color}>{icon}</span>
+                      <span className="text-sm font-medium text-text-primary">{label}</span>
+                    </div>
+                    <p className="text-xl font-bold text-text-primary">{dist?.count ?? 0}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-text-secondary">
+                        {cov?.percentage ?? 0}% coverage
+                      </span>
+                      {dist && (
+                        <span className={cn(
+                          'text-xs',
+                          dist.avgHealth >= 80 ? 'text-accent-green' : dist.avgHealth >= 50 ? 'text-accent-amber' : 'text-accent-red',
+                        )}>
+                          {dist.avgHealth}% health
+                        </span>
+                      )}
+                    </div>
+                    <div className="h-1.5 rounded-full bg-bg-tertiary mt-2 overflow-hidden">
+                      <div
+                        className={cn('h-full rounded-full', color.replace('text-', 'bg-'))}
+                        style={{ width: `${cov?.percentage ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between text-sm pt-2 border-t border-border">
+              <span className="text-text-secondary">
+                Total email accounts: <span className="font-medium text-text-primary">{accountStats.totalEmailAccounts}</span>
+              </span>
+              <span className="text-text-secondary">
+                Active: <span className="font-medium text-accent-green">{accountStats.emailsByStatus?.active ?? 0}</span>
               </span>
             </div>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* 7. Recent Activity Feed */}
+      <div className="card">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">Recent Activity</h2>
+        {activityLoading ? (
+          <div className="divide-y divide-border">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </div>
+        ) : activityFeed.length === 0 ? (
+          <p className="text-text-secondary text-sm py-4 text-center">No recent activity</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {activityFeed.slice(0, 10).map((item) => (
+              <div key={item.id} className="flex items-center gap-3 py-2.5">
+                <div className="h-7 w-7 rounded-full bg-bg-tertiary flex items-center justify-center shrink-0">
+                  {activityIcon(item.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary truncate">{item.message}</p>
+                </div>
+                <span className="text-xs text-text-secondary whitespace-nowrap shrink-0">
+                  {formatRelativeTime(item.timestamp)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getDb } from '@airevstream/db';
+import { authenticate, success, error } from '@/lib/api-server';
+
+export async function GET(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const db = getDb();
+    const services = await db.aiService.findMany({
+      where: { status: { not: 'disabled' } },
+      orderBy: [{ fallbackGroup: 'asc' }, { fallbackOrder: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        provider: true,
+        serviceType: true,
+        fallbackGroup: true,
+        fallbackOrder: true,
+        status: true,
+        healthScore: true,
+        isLocal: true,
+        isFree: true,
+      },
+    });
+
+    // Group by fallback group
+    const groups = new Map<string, typeof services>();
+    for (const service of services) {
+      const group = service.fallbackGroup ?? `${service.serviceType}_gen`;
+      if (!groups.has(group)) groups.set(group, []);
+      groups.get(group)!.push(service);
+    }
+
+    const chains = Array.from(groups.entries()).map(([type, members]) => ({
+      type,
+      services: members.map((s) => ({
+        id: s.id,
+        name: s.name,
+        provider: s.provider,
+        order: s.fallbackOrder,
+        status: s.status,
+        healthScore: s.healthScore,
+        isLocal: s.isLocal,
+        isFree: s.isFree,
+      })),
+    }));
+
+    return success(chains);
+  } catch (err: any) {
+    console.error('[GET /settings/ai/fallback-chains]', err);
+    return error('INTERNAL_ERROR', 'Failed to load fallback chains', 500);
+  }
+}

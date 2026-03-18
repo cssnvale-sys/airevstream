@@ -1,0 +1,153 @@
+import { authenticate, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
+import { NextRequest, NextResponse } from 'next/server';
+
+/**
+ * GET /api/v1/channels
+ * List channels (filterable by niche, platform, language, status, search)
+ */
+export async function GET(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { page, limit, skip, sort, order, search, params } = parseQuery(req);
+  const niche = params.get('niche') ?? undefined;
+  const platform = params.get('platform') ?? undefined;
+  const language = params.get('language') ?? undefined;
+  const status = params.get('status') ?? undefined;
+
+  try {
+    const where: Record<string, unknown> = {};
+
+    // Tenant scoping through socialAccount → emailAccount chain
+    if (ctx.tenantId) {
+      where.socialAccount = {
+        ...(where.socialAccount as Record<string, unknown> ?? {}),
+        emailAccount: { tenantId: ctx.tenantId },
+      };
+    }
+
+    if (status) where.status = status;
+    if (language) where.primaryLanguage = language;
+    if (niche) where.niches = { has: niche };
+    if (platform) {
+      where.socialAccount = {
+        ...(where.socialAccount as Record<string, unknown> ?? {}),
+        platform,
+      };
+    }
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { personality: { contains: search, mode: 'insensitive' } },
+        { targetAudience: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [channels, total] = await Promise.all([
+      ctx.db.channel.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { [sort]: order },
+        include: {
+          socialAccount: {
+            select: {
+              id: true,
+              platform: true,
+              username: true,
+              status: true,
+              healthScore: true,
+              emailAccount: {
+                select: {
+                  id: true,
+                  email: true,
+                  tier: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              contentItems: true,
+              channelAvatars: true,
+            },
+          },
+        },
+      }),
+      ctx.db.channel.count({ where }),
+    ]);
+
+    const data = channels.map(({ _count, ...channel }) => ({
+      ...channel,
+      contentItemsCount: _count.contentItems,
+      avatarsCount: _count.channelAvatars,
+    }));
+
+    return paginated(data, total, page, limit);
+  } catch (err) {
+    return error('INTERNAL_ERROR', 'Failed to list channels', 500);
+  }
+}
+
+/**
+ * POST /api/v1/channels
+ * Create a new channel
+ */
+export async function POST(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const body = await req.json();
+    const {
+      socialAccountId,
+      name,
+      niches,
+      primaryLanguage,
+      tone,
+      personality,
+      targetAudience,
+      postingCadence,
+    } = body;
+
+    if (!socialAccountId || !name) {
+      return validationError('socialAccountId and name are required');
+    }
+
+    // Verify social account exists
+    const socialAccount = await ctx.db.socialAccount.findUnique({
+      where: { id: socialAccountId },
+    });
+    if (!socialAccount) return notFound('Social account not found');
+
+    if (niches && !Array.isArray(niches)) {
+      return validationError('niches must be an array of strings');
+    }
+
+    const channel = await ctx.db.channel.create({
+      data: {
+        socialAccountId,
+        name,
+        niches: niches ?? [],
+        primaryLanguage: primaryLanguage ?? 'en',
+        tone: tone ?? null,
+        personality: personality ?? null,
+        targetAudience: targetAudience ?? null,
+        postingCadence: postingCadence ?? {},
+      },
+      include: {
+        socialAccount: {
+          select: {
+            id: true,
+            platform: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    return success(channel);
+  } catch (err) {
+    return error('INTERNAL_ERROR', 'Failed to create channel', 500);
+  }
+}

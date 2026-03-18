@@ -1,0 +1,90 @@
+import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { NextRequest, NextResponse } from 'next/server';
+
+type RouteParams = { params: Promise<{ id: string }> };
+
+/**
+ * PUT /api/v1/schedule/[id]
+ * Reschedule a post (update scheduledAt and optionally publishConfig).
+ */
+export async function PUT(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { id } = await params;
+
+  try {
+    const existing = await ctx.db.scheduledPost.findUnique({ where: { id } });
+    if (!existing) return notFound('Scheduled post not found');
+
+    if (existing.status === 'posted') {
+      return validationError('Cannot reschedule an already posted item');
+    }
+
+    const body = await req.json();
+    const { scheduledAt, publishConfig } = body;
+
+    const data: Record<string, unknown> = {};
+
+    if (scheduledAt) {
+      const scheduledDate = new Date(scheduledAt);
+      if (isNaN(scheduledDate.getTime())) {
+        return validationError('scheduledAt must be a valid ISO date');
+      }
+      if (scheduledDate <= new Date()) {
+        return validationError('scheduledAt must be in the future');
+      }
+      data.scheduledAt = scheduledDate;
+    }
+
+    if (publishConfig !== undefined) {
+      data.publishConfig = publishConfig;
+    }
+
+    // Reset status to scheduled if it was failed/cancelled
+    if (existing.status === 'failed' || existing.status === 'cancelled') {
+      data.status = 'scheduled';
+    }
+
+    const updated = await ctx.db.scheduledPost.update({
+      where: { id },
+      data,
+      include: {
+        content: { select: { id: true, title: true, contentType: true } },
+        channel: { select: { id: true, name: true } },
+      },
+    });
+
+    return success(updated);
+  } catch (err) {
+    console.error('PUT /api/v1/schedule/[id] error:', err);
+    return error('INTERNAL_ERROR', 'Failed to reschedule post', 500);
+  }
+}
+
+/**
+ * DELETE /api/v1/schedule/[id]
+ * Cancel and delete a scheduled post.
+ */
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { id } = await params;
+
+  try {
+    const existing = await ctx.db.scheduledPost.findUnique({ where: { id } });
+    if (!existing) return notFound('Scheduled post not found');
+
+    if (existing.status === 'posted') {
+      return validationError('Cannot delete an already posted item');
+    }
+
+    await ctx.db.scheduledPost.delete({ where: { id } });
+
+    return success({ deleted: true });
+  } catch (err) {
+    console.error('DELETE /api/v1/schedule/[id] error:', err);
+    return error('INTERNAL_ERROR', 'Failed to cancel scheduled post', 500);
+  }
+}

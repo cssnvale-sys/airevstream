@@ -1,0 +1,135 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import type { Prisma } from '@prisma/client';
+
+const createPromptSchema = z.object({
+  name: z.string().min(1).max(255),
+  category: z.string().min(1).max(50),
+  platform: z.string().max(20).optional().nullable(),
+  contentType: z.string().max(30).optional().nullable(),
+  template: z.string().min(1),
+  negativePrompt: z.string().optional().nullable(),
+  tags: z.array(z.string()).optional().default([]),
+  metadata: z.record(z.unknown()).optional().default({}),
+});
+
+/**
+ * GET /api/v1/prompts
+ * List prompt templates with filtering, search, and pagination.
+ *
+ * Query params:
+ *   - category: filter by category (hook, intro, content, cta, thumbnail, description)
+ *   - platform: filter by platform (youtube, tiktok, instagram, facebook)
+ *   - contentType: filter by content type
+ *   - search: search in name and template text
+ *   - tags: comma-separated list of tags to filter by
+ *   - sortBy: usageCount, avgScore, createdAt (default: createdAt)
+ *   - page, limit: pagination
+ */
+export async function GET(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const { page, limit, skip, sort, order, search, params } = parseQuery(req);
+
+    const category = params.get('category') ?? undefined;
+    const platform = params.get('platform') ?? undefined;
+    const contentType = params.get('contentType') ?? undefined;
+    const tagsParam = params.get('tags') ?? undefined;
+    const sortBy = params.get('sortBy') ?? undefined;
+
+    const where: Prisma.PromptTemplateWhereInput = {};
+
+    if (category) {
+      where.category = category;
+    }
+    if (platform) {
+      where.platform = platform;
+    }
+    if (contentType) {
+      where.contentType = contentType;
+    }
+    if (tagsParam) {
+      const tagList = tagsParam.split(',').map((t) => t.trim()).filter(Boolean);
+      if (tagList.length > 0) {
+        where.tags = { hasSome: tagList };
+      }
+    }
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { template: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Determine sort field
+    const allowedSortFields = ['usageCount', 'avgScore', 'createdAt', 'updatedAt', 'name'];
+    let sortField: string;
+    if (sortBy && allowedSortFields.includes(sortBy)) {
+      sortField = sortBy;
+    } else if (allowedSortFields.includes(sort)) {
+      sortField = sort;
+    } else {
+      sortField = 'createdAt';
+    }
+    const sortOrder = order === 'asc' ? 'asc' : 'desc';
+
+    const [templates, total] = await Promise.all([
+      ctx.db.promptTemplate.findMany({
+        where,
+        orderBy: { [sortField]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      ctx.db.promptTemplate.count({ where }),
+    ]);
+
+    return paginated(templates, total, page, limit);
+  } catch (err) {
+    console.error('GET /api/v1/prompts error:', err);
+    return error('INTERNAL_ERROR', 'Failed to fetch prompt templates', 500);
+  }
+}
+
+/**
+ * POST /api/v1/prompts
+ * Create a new prompt template.
+ *
+ * Body: { name, category, platform?, contentType?, template, negativePrompt?, tags?, metadata? }
+ */
+export async function POST(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const body = await req.json();
+    const parsed = createPromptSchema.safeParse(body);
+
+    if (!parsed.success) {
+      const firstError = parsed.error.errors[0];
+      return validationError(`${firstError.path.join('.')}: ${firstError.message}`);
+    }
+
+    const { name, category, platform, contentType, template, negativePrompt, tags, metadata } = parsed.data;
+
+    const promptTemplate = await ctx.db.promptTemplate.create({
+      data: {
+        name,
+        category,
+        platform: platform ?? null,
+        contentType: contentType ?? null,
+        template,
+        negativePrompt: negativePrompt ?? null,
+        tags,
+        metadata: (metadata ?? {}) as any,
+      },
+    });
+
+    return success(promptTemplate);
+  } catch (err) {
+    console.error('POST /api/v1/prompts error:', err);
+    return error('INTERNAL_ERROR', 'Failed to create prompt template', 500);
+  }
+}

@@ -1,0 +1,110 @@
+import { authenticate, success, error, notFound, validationError, forbidden } from '@/lib/api-server';
+import { NextRequest, NextResponse } from 'next/server';
+import { encrypt } from '@airevstream/crypto';
+
+type RouteParams = { params: Promise<{ id: string }> };
+
+/**
+ * GET /api/v1/ai-services/[id]
+ * Get AI service detail with usage stats.
+ */
+export async function GET(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { id } = await params;
+
+  try {
+    const service = await ctx.db.aiService.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { usage: true, contentItems: true } },
+      },
+    });
+
+    if (!service) return notFound('AI service not found');
+
+    const { apiKeyEnc: _, ...safe } = service;
+    return success(safe);
+  } catch (err) {
+    console.error('GET /api/v1/ai-services/[id] error:', err);
+    return error('INTERNAL_ERROR', 'Failed to fetch AI service', 500);
+  }
+}
+
+/**
+ * PUT /api/v1/ai-services/[id]
+ * Update AI service config.
+ */
+export async function PUT(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { id } = await params;
+
+  try {
+    const existing = await ctx.db.aiService.findUnique({ where: { id } });
+    if (!existing) return notFound('AI service not found');
+
+    const body = await req.json();
+    const {
+      name, endpoint, apiKey, capabilities, costPerUnit, rateLimits,
+      status, fallbackGroup, fallbackOrder, isLocal, isFree,
+    } = body;
+
+    const validStatuses = ['active', 'degraded', 'down', 'disabled'];
+    if (status && !validStatuses.includes(status)) {
+      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    const data: Record<string, unknown> = {};
+    if (name !== undefined) data.name = name;
+    if (endpoint !== undefined) data.endpoint = endpoint;
+    if (apiKey !== undefined) data.apiKeyEnc = apiKey ? encrypt(apiKey, process.env.ENCRYPTION_KEY!) : null;
+    if (capabilities !== undefined) data.capabilities = capabilities;
+    if (costPerUnit !== undefined) data.costPerUnit = costPerUnit;
+    if (rateLimits !== undefined) data.rateLimits = rateLimits;
+    if (status !== undefined) data.status = status;
+    if (fallbackGroup !== undefined) data.fallbackGroup = fallbackGroup;
+    if (fallbackOrder !== undefined) data.fallbackOrder = fallbackOrder;
+    if (isLocal !== undefined) data.isLocal = isLocal;
+    if (isFree !== undefined) data.isFree = isFree;
+
+    const updated = await ctx.db.aiService.update({
+      where: { id },
+      data,
+    });
+
+    const { apiKeyEnc: _, ...safe } = updated;
+    return success(safe);
+  } catch (err) {
+    console.error('PUT /api/v1/ai-services/[id] error:', err);
+    return error('INTERNAL_ERROR', 'Failed to update AI service', 500);
+  }
+}
+
+/**
+ * DELETE /api/v1/ai-services/[id]
+ * Delete an AI service.
+ */
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  if (ctx.role !== 'admin') {
+    return forbidden('Only admins can delete AI services');
+  }
+
+  const { id } = await params;
+
+  try {
+    const existing = await ctx.db.aiService.findUnique({ where: { id } });
+    if (!existing) return notFound('AI service not found');
+
+    await ctx.db.aiService.delete({ where: { id } });
+    return success({ deleted: true });
+  } catch (err) {
+    console.error('DELETE /api/v1/ai-services/[id] error:', err);
+    return error('INTERNAL_ERROR', 'Failed to delete AI service', 500);
+  }
+}

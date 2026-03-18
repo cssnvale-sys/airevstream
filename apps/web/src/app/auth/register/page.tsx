@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { auth } from '@/lib/api';
 import { setToken } from '@/lib/auth';
 
 export default function RegisterPage() {
@@ -20,8 +19,14 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await auth.register(email, password, name || undefined);
-      setToken(res.data.token);
+      const res = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name: name || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message ?? 'Registration failed');
+      setToken(data.data.token);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -31,22 +36,25 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-bg-primary">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-400">AiRevStream</h1>
-          <p className="text-gray-400 mt-2">Create your account</p>
+          <div className="w-12 h-12 rounded-xl bg-accent-purple flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
+            A
+          </div>
+          <h1 className="text-page-title text-text-primary">AiRevStream</h1>
+          <p className="text-text-secondary mt-1">Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">
           {error && (
-            <div className="bg-red-900/30 border border-red-800 text-red-300 px-4 py-2 rounded-lg text-sm">
+            <div className="bg-accent-red/10 border border-accent-red/20 text-accent-red px-4 py-2 rounded-md text-body">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Name</label>
+            <label className="block text-body text-text-secondary mb-1">Name</label>
             <input
               type="text"
               value={name}
@@ -56,7 +64,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
+            <label className="block text-body text-text-secondary mb-1">Email</label>
             <input
               type="email"
               value={email}
@@ -67,7 +75,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Password (min 8 characters)</label>
+            <label className="block text-body text-text-secondary mb-1">Password (min 8 characters)</label>
             <input
               type="password"
               value={password}
@@ -82,9 +90,9 @@ export default function RegisterPage() {
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
 
-          <p className="text-center text-sm text-gray-400">
+          <p className="text-center text-body text-text-secondary">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-brand-400 hover:underline">
+            <Link href="/auth/login" className="text-accent-blue hover:underline">
               Sign in
             </Link>
           </p>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -16,9 +16,11 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  HelpCircle,
 } from 'lucide-react';
 import { removeToken } from '@/lib/auth';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { KeyboardShortcutsModal } from '@/components/ui/keyboard-shortcuts';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
@@ -34,12 +36,44 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   const handleLogout = () => {
     removeToken();
     window.location.href = '/auth/login';
   };
+
+  // Global keyboard shortcuts
+  const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
+    // Don't trigger when typing in inputs
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) return;
+
+    switch (e.key) {
+      case '?':
+        setShowShortcuts((v) => !v);
+        break;
+      case 'n':
+      case 'N':
+        if (!e.metaKey && !e.ctrlKey) router.push('/create');
+        break;
+      case 'l':
+      case 'L':
+        if (!e.metaKey && !e.ctrlKey) router.push('/library');
+        break;
+      case 'a':
+      case 'A':
+        if (!e.metaKey && !e.ctrlKey) router.push('/analytics');
+        break;
+    }
+  }, [router]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [handleGlobalKeyDown]);
 
   return (
     <aside
@@ -86,6 +120,17 @@ export function Sidebar() {
 
       <div className="p-2 border-t border-border space-y-0.5">
         <button
+          onClick={() => setShowShortcuts(true)}
+          title={collapsed ? 'Keyboard Shortcuts (?)' : undefined}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
+            collapsed && 'justify-center px-2',
+          )}
+        >
+          <HelpCircle size={18} className="shrink-0" />
+          {!collapsed && 'Shortcuts'}
+        </button>
+        <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
@@ -106,6 +151,11 @@ export function Sidebar() {
           {!collapsed && 'Sign Out'}
         </button>
       </div>
+
+      <KeyboardShortcutsModal
+        open={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
     </aside>
   );
 }

@@ -1,4 +1,4 @@
-import { readFile, unlink } from 'node:fs/promises';
+import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -281,7 +281,9 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     })),
   });
 
-  const outputPath = `/tmp/airevstream/renders/${data.contentId}-${Date.now()}.mp4`;
+  const outputDir = '/tmp/airevstream/renders';
+  await mkdir(outputDir, { recursive: true });
+  const outputPath = `${outputDir}/${data.contentId}-${Date.now()}.mp4`;
 
   try {
     // Invoke Remotion CLI render

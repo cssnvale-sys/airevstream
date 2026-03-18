@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     // Calculate date range from period
     const now = new Date();
-    const periodDays = parseInt(period.replace('d', ''));
+    const periodDays = parseInt(period.replace('d', ''), 10) || 30;
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
     // Build base where clause

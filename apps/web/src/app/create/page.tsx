@@ -308,8 +308,8 @@ export default function CreatePage() {
       setFormData(INITIAL_FORM);
       setCurrentStep(1);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to save content';
-      setError(msg);
+      console.error('Failed to save content:', err);
+      setError('Failed to save content');
     } finally {
       setGenerating(false);
     }

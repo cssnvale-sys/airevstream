@@ -103,31 +103,38 @@ export async function GET(req: NextRequest) {
         ...tenantFilter,
       },
     });
-    const estimatedStorageGb = parseFloat((filesCount * 0.05).toFixed(2));
+    const estimatedStorageGb = parseFloat((filesCount * 0.05).toFixed(2)) || 0;
 
     const maxAccounts = limits.maxAccounts ?? 5;
     const maxChannels = limits.maxChannels ?? 3;
     const maxContentPerMonth = limits.maxContentPerMonth ?? 100;
     const storageGb = limits.storageGb ?? 1;
 
+    const safePercent = (current: number, max: number): number => {
+      if (max === -1) return 0;
+      if (max === 0) return 100;
+      const pct = parseFloat(((current / max) * 100).toFixed(1));
+      return isNaN(pct) ? 0 : pct;
+    };
+
     const metrics: UsageMetric[] = [
       {
         metric: 'accounts',
         current: accountCount,
         limit: maxAccounts,
-        percentUsed: maxAccounts === -1 ? 0 : maxAccounts === 0 ? 100 : parseFloat(((accountCount / maxAccounts) * 100).toFixed(1)),
+        percentUsed: safePercent(accountCount, maxAccounts),
       },
       {
         metric: 'channels',
         current: channelCount,
         limit: maxChannels,
-        percentUsed: maxChannels === -1 ? 0 : maxChannels === 0 ? 100 : parseFloat(((channelCount / maxChannels) * 100).toFixed(1)),
+        percentUsed: safePercent(channelCount, maxChannels),
       },
       {
         metric: 'content_items',
         current: contentCount,
         limit: maxContentPerMonth,
-        percentUsed: maxContentPerMonth === -1 ? 0 : maxContentPerMonth === 0 ? 100 : parseFloat(((contentCount / maxContentPerMonth) * 100).toFixed(1)),
+        percentUsed: safePercent(contentCount, maxContentPerMonth),
       },
       {
         metric: 'ai_api_calls',
@@ -139,7 +146,7 @@ export async function GET(req: NextRequest) {
         metric: 'storage_gb',
         current: estimatedStorageGb,
         limit: storageGb,
-        percentUsed: storageGb === -1 ? 0 : storageGb === 0 ? 100 : parseFloat(((estimatedStorageGb / storageGb) * 100).toFixed(1)),
+        percentUsed: safePercent(estimatedStorageGb, storageGb),
       },
     ];
 

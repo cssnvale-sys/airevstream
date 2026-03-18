@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
     const contentType = url.searchParams.get('contentType') ?? undefined;
     const start = url.searchParams.get('start');
     const end = url.searchParams.get('end');
-    const resultLimit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') ?? '20')));
+    const parsedLimit = parseInt(url.searchParams.get('limit') ?? '20', 10);
+    const resultLimit = Math.min(100, Math.max(1, isNaN(parsedLimit) ? 20 : parsedLimit));
 
     // Tenant scoping: get this tenant's channel IDs
     const tenantChannels = await ctx.db.channel.findMany({

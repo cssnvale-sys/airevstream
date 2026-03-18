@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const metricType = url.searchParams.get('type') ?? undefined;
-    const historyLimit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') ?? '1')));
+    const parsedLimit = parseInt(url.searchParams.get('limit') ?? '1', 10);
+    const historyLimit = Math.min(100, Math.max(1, isNaN(parsedLimit) ? 1 : parsedLimit));
 
     if (metricType) {
       // Get history for a specific metric type

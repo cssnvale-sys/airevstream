@@ -5,7 +5,7 @@ import { authenticate, success, error, validationError } from '@/lib/api-server'
 const AppearanceSettingsSchema = z.object({
   theme: z.enum(['dark', 'light', 'system']).optional(),
   sidebarPosition: z.enum(['left', 'right']).optional(),
-}).strict().strict();
+}).strict();
 
 const SETTING_KEY = 'appearance';
 const DEFAULTS = {

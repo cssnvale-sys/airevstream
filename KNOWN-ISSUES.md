@@ -153,6 +153,18 @@ Several models lack `tenantId` and cannot be tenant-scoped without a Prisma sche
 - **AffiliateProduct** — Products are global (may need `tenantId` or shared product catalog design).
 **Action**: Add `tenantId` fields to these models in a future schema migration and update all related API routes.
 
+### KI-021: No JWT Token Revocation on Password Change
+**Severity**: Medium
+**Status**: Open (Requires Schema Change)
+Old JWTs remain valid after password change until they naturally expire (7 days). The change-password route now returns a fresh JWT so clients can replace the old one, but the old token isn't explicitly invalidated.
+**Action**: Add `passwordChangedAt` field to User model, check it in `authenticate()` to reject tokens issued before the last password change.
+
+### KI-022: API Key Authentication Not Implemented
+**Severity**: Medium
+**Status**: Open (Feature Gap)
+API keys (ars_ prefix, SHA-256 hashed) are created and managed via CRUD endpoints, but there's no middleware that actually authenticates incoming requests using API keys. Scopes (read/write/admin) and rate limits (rateLimitRpm) are stored but not enforced.
+**Action**: Add `authenticateApiKey()` function in api-server.ts that validates API key headers, enforces scopes, and applies per-key rate limiting.
+
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium
 **Status**: Fixed (Session 6, Round 8)

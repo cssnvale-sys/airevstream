@@ -38,6 +38,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 18 (Session 7) — Password Security, PUT Validation & Image Optimization**
+- Added rate limiting to change-password (5/15min) and users/invite (10/hr) routes
+- Change-password now returns fresh JWT for token rotation
+- Added Zod validation schemas to 4 PUT routes (content/[id], channels/[id], accounts/[id], ai-services/[id])
+- Converted raw img tag to next/image in create page storyboard shots
+
 **Audit Round 17 (Session 7) — Rate Limiting, Validation & Security Headers**
 - Added in-memory sliding window rate limiter to 4 auth routes (login, register, forgot-password, reset-password)
 - Added Zod validation schemas to 8 POST/PUT routes (settings/general, appearance, notifications, security, api-keys, ai-services, affiliate/products, channels)

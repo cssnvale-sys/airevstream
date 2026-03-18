@@ -509,7 +509,24 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `2db3338` — feat: rate limiting on auth routes
 - `56cc8bf` — fix: Zod validation on 8 POST/PUT routes
 - `f656dcf` — feat: security headers
-- (this commit) — docs: tracking docs round 11
+- `b2890c6` — docs: tracking docs round 11
+- `8d61e99` — fix: Next.js Image on create page
+- `7607eab` — fix: password change rate limiting + token refresh
+- `5bf6c00` — fix: Zod validation on 4 PUT routes
+- (this commit) — docs: tracking docs round 12
+
+**Batch 52: Next.js Image Optimization**
+- Converted raw `<img>` tag to `next/image` component in create page storyboard shots
+- Uses `unoptimized` flag for dynamic external URLs
+
+**Batch 53: Password Change Security**
+- Added rate limiting to change-password route (5/15min per IP+user)
+- Change-password now returns fresh JWT so client can replace old token
+- Added rate limiting to users/invite route (10/hr per IP)
+
+**Batch 54: Zod Validation on PUT Routes**
+- Added Zod schemas to content/[id], channels/[id], accounts/[id], ai-services/[id] PUT handlers
+- Validates status enums, string lengths, UUID formats, JSON fields
 
 **Batch 48: Rate Limiting on Auth Routes**
 - Created `apps/web/src/lib/rate-limit.ts` — in-memory sliding window rate limiter

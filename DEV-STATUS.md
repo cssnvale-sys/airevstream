@@ -108,6 +108,9 @@
 | 5.58 | Rate limiting | Done | In-memory sliding window rate limiter on 4 auth routes (login, register, forgot-password, reset-password) |
 | 5.59 | Zod input validation | Done | Zod schemas on 8 POST/PUT routes (settings, api-keys, ai-services, affiliate/products, channels) |
 | 5.60 | Security headers | Done | X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy |
+| 5.61 | Image optimization | Done | next/image on create page storyboard shots |
+| 5.62 | Password change security | Done | Rate limiting + fresh JWT on change-password; invite rate limiting |
+| 5.63 | Zod validation (PUT routes) | Done | content/[id], channels/[id], accounts/[id], ai-services/[id] PUT handlers |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

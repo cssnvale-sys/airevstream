@@ -587,6 +587,17 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - affiliate/products/[id] PUT: status enum, commission rate (0-100)
 - assistant/chat POST: message (1-10k chars), conversationId (uuid)
 
+**Batch 69: Tenant Scoping — Channel/Content Sub-Routes**
+- CRITICAL: channels/[id]/cinema-bible, affiliate-pool, avatars — findFirst with tenant chain
+- CRITICAL: content/[id]/quality-score, storyboard — findFirst with tenant chain
+- Fixed _count: undefined leak in tenants list and detail routes
+
+**Batch 70: Zod + Tenant Scoping — Approvals, Variants, Regenerate, Bulk Import**
+- approvals/bulk POST: Zod schema (ids uuid array, action enum) + tenant scoping
+- content/[id]/variants GET/POST: tenant-scoped findFirst
+- content/[id]/regenerate POST: tenant-scoped findFirst
+- accounts/bulk-import POST: Zod schema for JSON path
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

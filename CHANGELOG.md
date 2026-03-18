@@ -43,6 +43,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 22 (Session 7) — Tenant Scoping & Validation Expansion**
+- **CRITICAL:** Tenant scoping on channels/[id]/cinema-bible, affiliate-pool, avatars sub-routes
+- **CRITICAL:** Tenant scoping on content/[id]/quality-score, storyboard, variants, regenerate
+- **CRITICAL:** Tenant scoping on approvals/bulk POST (cross-tenant bulk approve/reject possible)
+- Zod validation on approvals/bulk (ids array, action enum)
+- Zod validation on accounts/bulk-import JSON path (email, password, tier)
+- Fixed _count leak in tenants list and detail routes
+
 **Audit Round 21 (Session 7) — Comprehensive Zod Validation**
 - Added Zod validation schemas to 11 more POST/PUT routes: content/generate, generate-script, generate-storyboard, generate-shot, content/[id]/reject, accounts/bulk-delete, accounts/[id]/socials, affiliate/links, affiliate/products/[id], assistant/chat
 - Content reject route now tenant-scoped via findFirst with channel chain

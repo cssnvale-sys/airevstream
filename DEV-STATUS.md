@@ -123,6 +123,11 @@
 | 5.73 | Zod validation (content gen) | Done | 5 content generation/reject routes with full schemas |
 | 5.74 | Zod validation (accounts/affiliate) | Done | 5 accounts/affiliate/assistant routes with schemas |
 | 5.75 | Content reject tenant scoping | Done | findFirst with tenant chain + Zod schema |
+| 5.76 | Channel sub-routes tenant scoping | Done | cinema-bible, affiliate-pool, avatars findFirst |
+| 5.77 | Content sub-routes tenant scoping | Done | quality-score, storyboard, variants, regenerate |
+| 5.78 | Approvals bulk tenant scoping | Done | Zod schema + tenant channel filtering |
+| 5.79 | Bulk import Zod validation | Done | Email, password, tier enum for JSON path |
+| 5.80 | Tenants _count cleanup | Done | Proper destructuring in list and detail routes |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

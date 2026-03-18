@@ -52,14 +52,13 @@ export async function GET(req: NextRequest) {
       ctx.db.emailAccount.count({ where }),
     ]);
 
-    const data = accounts.map(({ passwordEnc, ...account }) => ({
+    const data = accounts.map(({ passwordEnc, _count, ...account }) => ({
       ...account,
       socialAccounts: account.socialAccounts.map((sa) => ({
         ...sa,
         healthScore: sa.healthScore != null ? Number(sa.healthScore) : null,
       })),
-      socialAccountsCount: account._count.socialAccounts,
-      _count: undefined,
+      socialAccountsCount: _count.socialAccounts,
     }));
 
     return paginated(data, total, page, limit);

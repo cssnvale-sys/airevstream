@@ -23,6 +23,9 @@ const UpdateAiServiceSchema = z.object({
 /**
  * GET /api/v1/ai-services/[id]
  * Get AI service detail with usage stats.
+ *
+ * NOTE: AI services are intentionally NOT tenant-scoped (shared infrastructure).
+ * See KI-020 for future multi-tenant considerations.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);

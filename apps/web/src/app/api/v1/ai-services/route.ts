@@ -22,6 +22,10 @@ const CreateAiServiceSchema = z.object({
 /**
  * GET /api/v1/ai-services
  * List AI services (filterable by provider, serviceType, status).
+ *
+ * NOTE: AI services are intentionally NOT tenant-scoped. In a self-hosted
+ * deployment, services (Ollama, ComfyUI, etc.) are shared infrastructure.
+ * See KI-020 for future multi-tenant service isolation if needed.
  */
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);

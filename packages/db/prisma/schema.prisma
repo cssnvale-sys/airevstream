@@ -688,6 +688,7 @@ model WorkflowJob {
 
   @@index([status, priority])
   @@index([jobType])
+  @@index([status, jobType])
   @@map("workflow_jobs")
 }
 
@@ -711,6 +712,7 @@ model Alert {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([status, severity])
+  @@index([status, resolvedAt])
   @@map("alerts")
 }
 

@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { CopyButton } from '@/components/ui/copy-button';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -794,6 +795,7 @@ function SecurityTab() {
                   </div>
                   <div className="flex items-center gap-3 mt-0.5 text-xs text-text-secondary">
                     <span className="font-mono">{key.keyPrefix}...</span>
+                    <CopyButton value={key.keyPrefix} label="Copy key prefix" size={12} showToast={false} />
                     <span>Created {new Date(key.createdAt).toLocaleDateString()}</span>
                     {key.lastUsedAt && <span>Last used {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
                     {key.expiresAt && <span>Expires {new Date(key.expiresAt).toLocaleDateString()}</span>}

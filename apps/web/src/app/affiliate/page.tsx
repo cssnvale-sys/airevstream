@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { CopyButton } from '@/components/ui/copy-button';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -792,10 +793,11 @@ function LinksTab({
                   </td>
                   <td className="px-4 py-3">
                     {link.shortUrl ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <code className="text-accent-blue text-xs bg-bg-tertiary px-2 py-0.5 rounded">
                           {link.shortUrl}
                         </code>
+                        <CopyButton value={link.shortUrl} label="Copy short URL" size={12} />
                       </div>
                     ) : (
                       <span className="text-text-secondary">--</span>
@@ -1461,9 +1463,12 @@ function ProductDetailModal({
                   <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
                     Short URL
                   </p>
-                  <code className="text-sm text-accent-blue bg-bg-tertiary px-2 py-0.5 rounded">
-                    {product.shortUrl}
-                  </code>
+                  <div className="flex items-center gap-1">
+                    <code className="text-sm text-accent-blue bg-bg-tertiary px-2 py-0.5 rounded">
+                      {product.shortUrl}
+                    </code>
+                    <CopyButton value={product.shortUrl} label="Copy short URL" size={14} />
+                  </div>
                 </div>
               )}
 

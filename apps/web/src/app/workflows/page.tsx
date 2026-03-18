@@ -6,6 +6,7 @@ import { useWorkflows } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Activity } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { CopyButton } from '@/components/ui/copy-button';
 
 interface WorkflowJob {
   id: string;
@@ -85,8 +86,10 @@ export default function WorkflowsPage() {
                         {job.status}
                       </span>
                     </div>
-                    <div className="text-xs text-text-secondary mt-0.5">
-                      ID: {job.id.slice(0, 8)}... | Priority: {job.priority} | Retries: {job.retryCount}/{job.maxRetries}
+                    <div className="text-xs text-text-secondary mt-0.5 flex items-center gap-1">
+                      ID: <span className="font-mono">{job.id.slice(0, 8)}...</span>
+                      <CopyButton value={job.id} label="Copy job ID" size={12} showToast={false} />
+                      <span className="mx-1">|</span> Priority: {job.priority} | Retries: {job.retryCount}/{job.maxRetries}
                     </div>
                     {job.error && (
                       <div className="text-xs text-accent-red mt-1 truncate">{job.error}</div>

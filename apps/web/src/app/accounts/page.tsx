@@ -848,10 +848,7 @@ export default function AccountsPage() {
                 <tbody>
                   {filteredAccounts.map((account) => {
                     const health = accountHealthAvg(account.socialAccounts ?? []);
-                    const channelCount = account.socialAccounts?.reduce(
-                      (sum, sa) => sum + ((sa as unknown as { channels?: unknown[] }).channels?.length ?? 0),
-                      0,
-                    ) ?? account.socialAccountsCount ?? 0;
+                    const channelCount = account.socialAccountsCount ?? account.socialAccounts?.length ?? 0;
 
                     return (
                       <tr

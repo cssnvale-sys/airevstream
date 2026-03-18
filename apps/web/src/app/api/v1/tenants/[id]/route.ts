@@ -64,13 +64,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!tenant) return notFound('Tenant not found');
 
+    const { _count, subscriptions, ...rest } = tenant;
     const data = {
-      ...tenant,
-      userCount: tenant._count.users,
-      apiKeyCount: tenant._count.apiKeys,
-      activeSubscription: tenant.subscriptions[0] ?? null,
-      _count: undefined,
-      subscriptions: undefined,
+      ...rest,
+      userCount: _count.users,
+      apiKeyCount: _count.apiKeys,
+      activeSubscription: subscriptions[0] ?? null,
     };
 
     return success(data);

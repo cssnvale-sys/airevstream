@@ -11,8 +11,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
 
     // Verify the content item exists
-    const item = await ctx.db.contentItem.findUnique({
-      where: { id },
+    const item = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
       select: { id: true },
     });
     if (!item) {
@@ -61,8 +64,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
 
     // Verify the content item exists
-    const item = await ctx.db.contentItem.findUnique({
-      where: { id },
+    const item = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
       select: { id: true },
     });
     if (!item) {

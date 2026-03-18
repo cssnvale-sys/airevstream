@@ -43,7 +43,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   try {
     // Verify channel exists
-    const channel = await ctx.db.channel.findUnique({ where: { id } });
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+      },
+    });
     if (!channel) return notFound('Channel not found');
 
     const pool = await ctx.db.channelAffiliatePool.findMany({
@@ -83,7 +88,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   try {
     // Verify channel exists
-    const channel = await ctx.db.channel.findUnique({ where: { id } });
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+      },
+    });
     if (!channel) return notFound('Channel not found');
 
     const body = await req.json();

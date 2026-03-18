@@ -63,12 +63,11 @@ export async function GET(req: NextRequest) {
       ctx.db.tenant.count({ where }),
     ]);
 
-    const data = tenants.map((tenant) => ({
+    const data = tenants.map(({ _count, ...tenant }) => ({
       ...tenant,
-      userCount: tenant._count.users,
-      subscriptionCount: tenant._count.subscriptions,
-      apiKeyCount: tenant._count.apiKeys,
-      _count: undefined,
+      userCount: _count.users,
+      subscriptionCount: _count.subscriptions,
+      apiKeyCount: _count.apiKeys,
     }));
 
     return paginated(data, total, page, limit);

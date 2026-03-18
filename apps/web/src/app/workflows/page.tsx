@@ -82,8 +82,9 @@ export default function WorkflowsPage() {
     <AppLayout>
       <div className="max-w-7xl mx-auto">
         {fetchError && (
-          <div className="mb-4 rounded-lg border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red">
-            Failed to load workflow data. Please try refreshing the page.
+          <div className="mb-4 rounded-lg border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red flex items-center justify-between">
+            <span>Failed to load workflow data.</span>
+            <button onClick={() => mutate()} className="btn-secondary btn-sm ml-4">Retry</button>
           </div>
         )}
         <div className="flex items-center justify-between mb-6">

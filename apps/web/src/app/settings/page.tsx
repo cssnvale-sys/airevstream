@@ -545,6 +545,9 @@ function NotificationsTab() {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-text-primary capitalize">{ch.type}</span>
             <button
+              role="switch"
+              aria-checked={ch.enabled}
+              aria-label={`${ch.type} notifications`}
               onClick={() => toggleChannel(idx)}
               className={cn(
                 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',

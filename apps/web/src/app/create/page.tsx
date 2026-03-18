@@ -162,7 +162,7 @@ export default function CreatePage() {
         return !!formData.channelId;
       case 2:
         if (formData.affiliateEnabled && !formData.affiliateProductId) return false;
-        return !!formData.topic.trim() && formData.platforms.length > 0;
+        return formData.topic.trim().length >= 3 && formData.platforms.length > 0;
       case 3:
         return !!formData.script.trim();
       case 4:

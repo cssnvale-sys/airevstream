@@ -43,7 +43,7 @@ export default function ApprovalsPage() {
     return parts.join('&');
   }, [page, typeFilter]);
 
-  const { data: approvalsRes, isLoading, mutate } = useApi<ApprovalItem[]>(`/approvals?${queryParams}`);
+  const { data: approvalsRes, isLoading, error: fetchError, mutate } = useApi<ApprovalItem[]>(`/approvals?${queryParams}`);
   const items = approvalsRes?.data ?? [];
   const meta = approvalsRes?.meta;
   const totalPages = meta?.pages ?? 1;
@@ -165,7 +165,12 @@ export default function ApprovalsPage() {
           </div>
         )}
 
-        {isLoading ? (
+        {fetchError ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center">
+            <p className="text-red-400 mb-3">Failed to load approvals</p>
+            <button onClick={() => mutate()} className="btn-secondary btn-sm">Retry</button>
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="animate-spin text-text-secondary" size={32} />
           </div>

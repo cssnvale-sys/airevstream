@@ -360,6 +360,8 @@ function DetailPanel({
         {tabs.map((t) => (
           <button
             key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
             className={cn(
               'flex-1 px-4 py-2.5 text-sm font-medium transition-colors',
@@ -374,7 +376,7 @@ function DetailPanel({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-5">
+      <div role="tabpanel" className="flex-1 overflow-auto p-5">
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 6 }).map((_, i) => (

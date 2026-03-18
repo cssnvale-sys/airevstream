@@ -282,9 +282,9 @@ function ContentRow({ item, onDelete }: { item: ContentItem; onDelete?: (id: str
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(item.id); }}
             className="text-text-secondary hover:text-accent-red transition-colors p-1 flex-shrink-0"
-            title="Delete"
+            aria-label={`Delete ${item.title ?? 'content'}`}
           >
-            <Trash2 size={14} />
+            <Trash2 size={14} aria-hidden="true" />
           </button>
         )}
       </div>

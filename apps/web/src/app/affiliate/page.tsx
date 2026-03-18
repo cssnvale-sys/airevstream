@@ -291,10 +291,12 @@ export default function AffiliatePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-border">
+      <div role="tablist" className="flex gap-1 mb-6 border-b border-border">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
+            role="tab"
+            aria-selected={activeTab === key}
             onClick={() => setActiveTab(key)}
             className={cn(
               'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
@@ -303,7 +305,7 @@ export default function AffiliatePage() {
                 : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border',
             )}
           >
-            <Icon size={16} />
+            <Icon size={16} aria-hidden="true" />
             {label}
           </button>
         ))}
@@ -512,7 +514,7 @@ function ProductsTab({
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
-                          alt=""
+                          alt={product.name}
                           className="w-8 h-8 rounded object-cover"
                         />
                       ) : (
@@ -1406,7 +1408,7 @@ function ProductDetailModal({
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
-                      alt=""
+                      alt={product.name}
                       className="w-14 h-14 rounded-lg object-cover"
                     />
                   ) : (

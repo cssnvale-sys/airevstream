@@ -5,24 +5,32 @@
 
 type RateLimitEntry = {
   timestamps: number[];
+  windowMs: number;
 };
 
 const store = new Map<string, RateLimitEntry>();
 
 // Cleanup stale entries every 5 minutes
 const CLEANUP_INTERVAL = 5 * 60 * 1000;
+const MAX_STORE_SIZE = 50_000;
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
-function ensureCleanup(windowMs: number) {
+function ensureCleanup() {
   if (cleanupTimer) return;
   cleanupTimer = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of store) {
-      entry.timestamps = entry.timestamps.filter((t) => now - t < windowMs);
+      entry.timestamps = entry.timestamps.filter((t) => now - t < entry.windowMs);
       if (entry.timestamps.length === 0) store.delete(key);
     }
-    if (store.size > 10000) {
-      console.warn(`Rate limiter store has ${store.size} entries — possible memory issue`);
+    // Evict oldest entries if store grows too large
+    if (store.size > MAX_STORE_SIZE) {
+      console.warn(`Rate limiter store has ${store.size} entries — evicting oldest`);
+      const entries = [...store.entries()].sort(
+        (a, b) => (a[1].timestamps[0] ?? 0) - (b[1].timestamps[0] ?? 0),
+      );
+      const toRemove = entries.slice(0, store.size - MAX_STORE_SIZE);
+      for (const [key] of toRemove) store.delete(key);
     }
   }, CLEANUP_INTERVAL);
   // Don't prevent process exit
@@ -50,9 +58,11 @@ type RateLimitResult = {
  * @param config - Rate limit configuration
  */
 export function checkRateLimit(key: string, config: RateLimitConfig): RateLimitResult {
-  ensureCleanup(config.windowMs);
+  ensureCleanup();
   const now = Date.now();
-  const entry = store.get(key) ?? { timestamps: [] };
+  const entry = store.get(key) ?? { timestamps: [], windowMs: config.windowMs };
+  // Update the window in case config changed
+  entry.windowMs = config.windowMs;
 
   // Remove timestamps outside the window
   entry.timestamps = entry.timestamps.filter((t) => now - t < config.windowMs);

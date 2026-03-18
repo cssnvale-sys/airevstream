@@ -76,8 +76,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }),
     ]);
 
+    // Validate redirect URL protocol to prevent open redirect / XSS
+    let redirectUrl: URL;
+    try {
+      redirectUrl = new URL(product.url);
+    } catch {
+      return error('INVALID_URL', 'Product has an invalid URL', 500);
+    }
+    if (redirectUrl.protocol !== 'https:' && redirectUrl.protocol !== 'http:') {
+      return error('INVALID_URL', 'Product URL uses an unsupported protocol', 400);
+    }
+
     // 302 redirect to the actual affiliate URL
-    return NextResponse.redirect(product.url, 302);
+    return NextResponse.redirect(redirectUrl.toString(), 302);
   } catch (err) {
     console.error('GET /api/v1/affiliate/redirect/[shortCode] error:', err);
     return error('INTERNAL_ERROR', 'Redirect failed', 500);

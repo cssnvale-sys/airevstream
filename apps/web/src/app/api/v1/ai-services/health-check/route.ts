@@ -1,5 +1,45 @@
 import { authenticate, success, error, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+
+/** Block SSRF by rejecting URLs targeting private/loopback addresses */
+function isPrivateUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    const hostname = parsed.hostname;
+    // Block loopback, link-local, RFC1918, and metadata endpoints
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname === '[::1]' ||
+      hostname === '0.0.0.0' ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('169.254.') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^fc[0-9a-f]{2}:/i.test(hostname) ||
+      /^fd[0-9a-f]{2}:/i.test(hostname) ||
+      /^fe80:/i.test(hostname)
+    ) {
+      // Allow localhost ONLY for Ollama (local AI) endpoints
+      if ((hostname === 'localhost' || hostname === '127.0.0.1') &&
+          (parsed.port === '11434' || parsed.port === '11435')) {
+        return false;
+      }
+      return true;
+    }
+    // Block non-http(s) schemes
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
 
 /**
  * POST /api/v1/ai-services/health-check
@@ -12,6 +52,11 @@ export async function POST(req: NextRequest) {
 
   if (ctx.role !== 'admin') {
     return forbidden('Only admins can trigger health checks');
+  }
+
+  const rl = checkRateLimit(`health-check:${getClientIp(req)}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) {
+    return error('RATE_LIMITED', 'Too many requests', 429);
   }
 
   try {
@@ -51,6 +96,23 @@ export async function POST(req: NextRequest) {
           await ctx.db.aiService.update({
             where: { id: service.id },
             data: { lastHealthCheck: now },
+          });
+          continue;
+        }
+
+        // SSRF protection: block requests to private/internal networks
+        if (isPrivateUrl(healthUrl)) {
+          healthy = false;
+          errorMsg = 'Blocked: endpoint points to private/internal address';
+          results.push({
+            id: service.id,
+            name: service.name,
+            provider: service.provider,
+            status: 'down',
+            checkedAt: now.toISOString(),
+            healthy: false,
+            responseMs: null,
+            error: errorMsg,
           });
           continue;
         }

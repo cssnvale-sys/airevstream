@@ -88,9 +88,8 @@ Added `console.error` logging to 28 silent catch blocks across settings (4), aut
 
 ### KI-011: PM2 Production Config Is Partial
 **Severity**: Low
-**Status**: Partially Fixed (Session 7)
-`ecosystem.config.js` now covers all 4 services + 6 workers (worker-production was missing, fixed in batch 125). Still needs memory limits, restart policies, and log rotation for production deployment.
-**Action**: Add memory limits, restart policies, and log rotation to PM2 config.
+**Status**: Fixed (Session 7)
+`ecosystem.config.js` now covers all 4 services + 6 workers with full production config: max_memory_restart (128M–512M), restart_delay (5s), min_uptime (10s), max_restarts (10), structured log files per process, log_date_format. All 3 Fastify services have SIGTERM/SIGINT graceful shutdown handlers.
 
 ---
 

@@ -973,10 +973,41 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - KI-023: Admin role checks on AI services — FIXED (batch 116)
 - KI-024: Open redirect on login — FIXED (batch 118)
 
+**Batch 131: Service Graceful Shutdown**
+- All 3 Fastify services (workflow-engine, ai-assistant, production-pipeline): SIGTERM/SIGINT handlers call app.close()
+- Matches existing worker shutdown pattern
+
+**Batch 132: PM2 Config Hardening**
+- max_memory_restart per process (128M–512M based on workload)
+- restart_delay: 5000ms, min_uptime: 10s, max_restarts: 10
+- Structured log files in ./logs/ per process (error + out)
+- log_date_format for consistent timestamps, merge_logs enabled
+- Added logs/ to .gitignore
+
+**Batch 133: .env.example + Prisma Schema**
+- .env.example: added TTS_BASE_URL, TTS_API_KEY, NEXT_PUBLIC_APP_URL
+- Prisma: @@index([channelId]) on BrandingPackage
+- Prisma: @@index([status]) on AffiliateProduct and CostBudget
+- Prisma: onDelete Cascade on AffiliateClick→product and AiServiceUsage→service
+
+**Batch 134: Behavioral Tests**
+- utils-behavior.test.ts (28 tests): cn, formatNumber, formatCurrency, formatRelativeTime, statusColor, platformIcon
+- auth.test.ts (10 tests): getToken, setToken, removeToken, isAuthenticated (valid/expired/malformed JWT)
+- export.test.ts (8 tests): CSV escaping, null handling, function accessors, filename extension
+- Total web tests: 107 (up from 61)
+
+### Commits (continued)
+- `d72477a` — docs: update tracking files for batches 125-130
+- `42639ac` — fix: add graceful shutdown handlers to all 3 Fastify services
+- `d130e8f` — fix: harden PM2 config with memory limits, restart policies, and log files
+- `c40fd07` — fix: add missing .env.example entries and Prisma schema indexes/cascades
+- `95d93b7` — test: add 46 behavioral tests for utils, auth, and CSV export
+
 ### Open Items
 - E2E testing (Playwright) not started
-- PM2 production config is partial
 - Platform posting adapters untested against real APIs
 - Browser automation untested in production
 - PDF export not yet implemented (CSV only)
 - Forgot password email sending requires email service setup
+- Models without tenantId need schema migration (KI-020)
+- JWT token revocation on password change needs schema change (KI-021)

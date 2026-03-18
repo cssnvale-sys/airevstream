@@ -42,9 +42,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Create Wizard Progress Bar** (Session 7): "Step X of 6" text + animated percentage bar
 - **System Refresh Button** (Session 7): Manual re-fetch of all health/metrics data with toast feedback
 
-- **Unit Tests** (Session 7): 55 new web tests — password (11), rate-limit (14), api-server (30). Total: 61 web tests
+- **Unit Tests** (Session 7): 101 new web tests — password (11), rate-limit (14), api-server (30), utils-behavior (28), auth (10), export (8). Total: 107 web tests
 - **API Key Access on Read Endpoints** (Session 7): 13 GET routes accept both JWT and API key via authenticateAny()
-- **Prisma Indexes** (Session 7): @@index([status, jobType]) on WorkflowJob, @@index([status, resolvedAt]) on Alert
+- **Prisma Indexes** (Session 7): @@index on WorkflowJob, Alert, BrandingPackage, AffiliateProduct, CostBudget
+- **Graceful Shutdown** (Session 7): SIGTERM/SIGINT handlers on all 3 Fastify services (drain connections)
+- **PM2 Hardening** (Session 7): Memory limits, restart policies, structured log files, crash detection
 
 ### Fixed
 

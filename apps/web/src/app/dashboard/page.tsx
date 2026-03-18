@@ -342,7 +342,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={cn('badge text-xs', statusColor(item.status))}>{item.contentType}</span>
                     <span className="text-xs text-text-secondary">
-                      Score: {item.qualityScore != null ? Number(item.qualityScore) : '--'}
+                      Score: {item.qualityScore != null && !isNaN(Number(item.qualityScore)) ? Number(item.qualityScore) : '--'}
                     </span>
                   </div>
                 </div>

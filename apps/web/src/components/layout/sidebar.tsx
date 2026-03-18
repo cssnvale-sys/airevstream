@@ -122,6 +122,7 @@ export function Sidebar() {
       <div className="p-2 border-t border-border space-y-0.5">
         <button
           onClick={() => setShowShortcuts(true)}
+          aria-label="Show keyboard shortcuts"
           title={collapsed ? 'Keyboard Shortcuts (?)' : undefined}
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',

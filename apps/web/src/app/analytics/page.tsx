@@ -13,6 +13,8 @@ import {
   FileText,
   Download,
 } from 'lucide-react';
+import { exportToCSV } from '@/lib/export';
+import { toast } from '@/lib/toast';
 import {
   LineChart,
   Line,
@@ -230,12 +232,58 @@ export default function AnalyticsPage() {
 
   // Export handlers
   const handleExportCSV = () => {
-    // Placeholder — would trigger API download
-    window.alert('CSV export requested. This will be implemented with the analytics API.');
+    try {
+      switch (activeTab) {
+        case 'revenue':
+          if (revenueOverTime.length > 0) {
+            exportToCSV(revenueOverTime, [
+              { header: 'Date', accessor: 'date' },
+              { header: 'Revenue', accessor: 'revenue' },
+            ], `revenue-${period}.csv`);
+          } else if (revenueByChannel.length > 0) {
+            exportToCSV(revenueByChannel, [
+              { header: 'Channel', accessor: 'channel' },
+              { header: 'Revenue', accessor: 'revenue' },
+              { header: 'Content Count', accessor: 'contentCount' },
+            ], `revenue-by-channel-${period}.csv`);
+          }
+          break;
+        case 'engagement':
+          exportToCSV(engagementData, [
+            { header: 'Date', accessor: 'date' },
+            { header: 'Views', accessor: 'views' },
+            { header: 'Likes', accessor: 'likes' },
+            { header: 'Shares', accessor: 'shares' },
+          ], `engagement-${period}.csv`);
+          break;
+        case 'content':
+          exportToCSV(contentMetrics, [
+            { header: 'Metric', accessor: 'label' },
+            { header: 'Value', accessor: 'value' },
+          ], `content-metrics-${period}.csv`);
+          break;
+        case 'costs':
+          exportToCSV(costByService, [
+            { header: 'Service', accessor: 'service' },
+            { header: 'Cost', accessor: 'cost' },
+          ], `costs-${period}.csv`);
+          break;
+        case 'audience':
+          exportToCSV(audienceData, [
+            { header: 'Date', accessor: 'date' },
+            { header: 'Followers', accessor: 'followers' },
+            { header: 'Subscribers', accessor: 'subscribers' },
+          ], `audience-${period}.csv`);
+          break;
+      }
+      toast.success('CSV exported');
+    } catch {
+      toast.error('No data available to export');
+    }
   };
 
   const handleExportPDF = () => {
-    window.alert('PDF export requested. This will be implemented with the analytics API.');
+    toast.info('PDF export is not yet available. Use CSV export instead.');
   };
 
   // -------------------------------------------------------------------------

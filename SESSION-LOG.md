@@ -1084,9 +1084,10 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `6559d05` — fix: add console.error to 4 silent settings catches, accessibility polish
 - `23e9b82` — fix: dashboard activity icons aria-hidden, calendar day/month buttons disabled
 
-### Session 8 — Integration Audit (2026-03-18)
+### Session 8 — Integration Audit + Auth Fixes (2026-03-18)
 
 **Post-Sprint Integrity Check**: Audited all Session 7 components for integration completeness.
+Fixed critical auth flow bugs found during deep dive.
 
 **Findings**:
 - ConfirmDialog: 5/5 expected pages ✓
@@ -1103,6 +1104,15 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Added `EmptyState` to affiliate page (products table) — was using plain `<td>` text
 - Added `EmptyState` to settings page (AI Services + API Keys sections) — was using plain `<p>` text
 - Documented `useJobStatus` hook as intentionally unused (create page uses local simulation)
+
+**Auth Flow Fixes**:
+- Login page: error allowlist checked for `'Invalid credentials'` but API returns `'Invalid email or password'` — ALL login errors showed generic "Login failed"
+- Register page: safe messages list had `'Email already registered'` but API returns `'A user with this email already exists'` — ALL register errors showed generic "Registration failed"
+- Forgot-password page: leaked raw API error messages directly to UI (no sanitization)
+- Reset-password page: leaked raw API error messages directly to UI (no sanitization)
+- Register route: created users with NO tenant (tenantId: null) — broke all tenant-scoped API calls after login
+- Register response: missing tenantId field (inconsistent with login response)
+- Seed script: admin user created without a tenant — same issue
 
 **Build/Test**: 14 packages building, 222 tests passing (135 web + 87 packages/services)
 

@@ -57,6 +57,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added EmptyState component to settings AI Services and API Keys sections (was plain text)
 - Documented useJobStatus hook as intentionally unused (create page uses per-shot local state)
 
+**Auth Flow (Session 8) — Critical**
+- Login error allowlist mismatch: showed "Login failed" for all errors including wrong password and rate limiting
+- Register error allowlist mismatch: showed "Registration failed" for all errors including duplicate email
+- Forgot-password and reset-password pages leaked raw API error messages to UI
+- Register route created users without a tenant, breaking all tenant-scoped queries
+- Seed script admin user created without a tenant
+
 **Audit Round 45 (Session 7) — Security, N+1 Queries, Accessibility, Validation**
 - Tenant ownership checks added to generate-script, generate-storyboard, generate-shot (channelId verification)
 - Admin role guards added to settings PUT endpoints (general, appearance, notifications)

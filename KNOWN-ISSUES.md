@@ -188,6 +188,17 @@ Public `/api/v1/affiliate/redirect/[shortCode]` redirected to `product.url` with
 **Status**: Fixed (Session 7, Batch 135)
 The cleanup interval captured the `windowMs` from the first `checkRateLimit` call and used it for ALL entries. Entries with longer windows (e.g., 1-hour content generation) were incorrectly evicted using a shorter window (e.g., 15-minute login). Fixed by storing `windowMs` per entry.
 
+### KI-028: Auth Pages Error Handling Mismatch + Missing Tenant on Register
+**Severity**: Critical
+**Status**: Fixed (Session 8)
+Multiple auth flow bugs:
+1. Login page error allowlist had `'Invalid credentials'` but API returned `'Invalid email or password'` — ALL login errors displayed as generic "Login failed" hiding real cause (wrong password, rate limited, server error)
+2. Register page safe messages list had `'Email already registered'` but API returned `'A user with this email already exists'` — ALL register errors showed "Registration failed"
+3. Forgot-password and reset-password pages passed raw `data.error.message` to UI — leaked internal error messages
+4. Register route created users without a tenant (`tenantId: null`), breaking every tenant-scoped API call after login
+5. Seed script admin user created without a tenant
+**Fix**: Corrected allowlists to match actual API messages, added sanitized error handling to forgot/reset pages, register now creates tenant+user in a transaction, seed creates default tenant.
+
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium
 **Status**: Fixed (Session 6, Round 8)

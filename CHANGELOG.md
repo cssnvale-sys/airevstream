@@ -43,6 +43,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 36 (Session 7) — Worker/Service Safety**
+- production.worker: replaced `new PrismaClient()` with `getDb()` singleton (prevents broken tenant isolation)
+- account.worker: added try-finally for browser context cleanup on all 4 handlers (prevents context leaks)
+- content.worker: added logging to silent catch in service registry init
+- ai-assistant generate: stopped returning raw `error.message` to clients (3 routes)
+- 4 service routes: fixed parseInt NaN on page/limit query params (chat, content, account, workflow)
+- system/metrics: added metricType allowlist validation, removed `as any` casts
+
+**Audit Round 35 (Session 7) — Tenant Scoping & Validation**
+- HITL complete + error retry: tenant scoping via content relation OR emailAccountId chain
+- Storefront products GET/POST/PATCH/DELETE: two-step channel ownership verification
+- 5 API routes: added Zod validation schemas (cinema-bible, avatars, families, affiliate-pool, storyboard)
+
 **Audit Round 34 (Session 7) — Type Safety, Error States, Query Safety**
 - AI providers: replaced `providerType: any` with proper `AiServiceProvider` type
 - 5 frontend pages: destructured error from useApi hooks with error banners (dashboard, workflows, system, calendar, settings)

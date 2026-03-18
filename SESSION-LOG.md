@@ -760,6 +760,35 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `9127892` — fix: date isNaN guards + unbounded query caps on analytics
 - `6e82ddd` — fix: frontend error state handling on 5 pages
 - `db35fb9` — fix: type safety for AI providers, misc cleanup
+- `133b737` — docs: tracking docs round 24
+- `c43e147` — fix: tenant scoping on HITL complete, error retry, storefront products
+- `9316a04` — fix: add Zod validation schemas to 5 API routes
+- `9f5b61c` — fix: add metricType allowlist validation and remove as-any casts in system metrics
+- `e475ce4` — fix: worker/service safety (getDb singleton, browser context cleanup, err.message leaks, NaN guards)
+
+**Batch 98: Tenant Scoping — HITL + Storefront Products**
+- HITL complete: tenant scope via content relation OR emailAccountId chain
+- Error retry: same dual-path tenant scoping
+- Storefront products GET/POST/PATCH/DELETE: two-step channel ownership verification
+
+**Batch 99: Zod Validation on 5 Routes**
+- cinema-bible PUT: UpdateCinemaBibleSchema (z.record fields + refine)
+- avatars POST: AssignAvatarSchema (uuid, boolean, string)
+- families POST: CreateFamilySchema (uuid array with min/max)
+- affiliate-pool POST: AddToPoolSchema (uuid)
+- storyboard PUT: UpdateStoryboardSchema (enum status, z.record for JSON)
+
+**Batch 100: Type Safety — System Metrics**
+- metricType query param allowlist validation
+- Replaced `as any` with proper type guard (`as { value: unknown }`)
+- Deduplicated allTypes/validMetricTypes arrays
+
+**Batch 102: Worker/Service Safety**
+- production.worker: replaced `new PrismaClient()` with `getDb()` singleton
+- account.worker: try-finally for browser context cleanup on all 4 handlers
+- content.worker: logging on silent catch in registry init
+- ai-assistant generate: stopped leaking error.message to clients (3 routes)
+- 4 service routes: fixed parseInt NaN on page/limit params
 
 ### Open Items
 - E2E testing (Playwright) not started

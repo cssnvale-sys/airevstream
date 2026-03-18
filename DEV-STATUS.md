@@ -159,6 +159,13 @@
 | 5.109 | Frontend error states | Done | Error banners on dashboard, workflows, system, calendar, settings |
 | 5.110 | AI provider type safety | Done | Replaced providerType: any with proper AiServiceProvider type |
 | 5.111 | Misc cleanup | Done | Approvals catch logging, library duplicate import |
+| 5.112 | HITL/retry tenant scoping | Done | Dual-path scoping via content or emailAccount chain |
+| 5.113 | Storefront products tenant scoping | Done | Two-step channel ownership verification |
+| 5.114 | Zod validation (5 routes) | Done | cinema-bible, avatars, families, affiliate-pool, storyboard |
+| 5.115 | System metrics type safety | Done | metricType allowlist, removed as-any casts |
+| 5.116 | Production worker getDb | Done | Replaced new PrismaClient() with getDb() singleton |
+| 5.117 | Browser context cleanup | Done | try-finally on all 4 account worker handlers |
+| 5.118 | Service error message leaks | Done | 3 generate routes + 4 service parseInt NaN |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

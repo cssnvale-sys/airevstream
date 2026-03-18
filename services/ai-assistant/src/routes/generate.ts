@@ -88,10 +88,11 @@ Format the script with clear sections.`;
         systemPrompt: 'You are an expert content creator and scriptwriter.',
       });
       return reply.send({ success: true, data: { script: result.content, model: result.model } });
-    } catch (error: any) {
+    } catch (error) {
+      genLogger.error({ err: error }, 'AI service call failed');
       return reply.status(502).send({
         success: false,
-        error: { code: 'EXTERNAL_SERVICE_ERROR', message: `AI service unavailable: ${error.message}` },
+        error: { code: 'EXTERNAL_SERVICE_ERROR', message: 'AI service unavailable' },
       });
     }
   });
@@ -142,10 +143,11 @@ Return a JSON array of objects with: title, description, contentType, estimatedE
         systemPrompt: 'You are a social media strategist. Return valid JSON only.',
       });
       return reply.send({ success: true, data: { ideas: result } });
-    } catch (error: any) {
+    } catch (error) {
+      genLogger.error({ err: error }, 'AI service call failed');
       return reply.status(502).send({
         success: false,
-        error: { code: 'EXTERNAL_SERVICE_ERROR', message: `AI service unavailable: ${error.message}` },
+        error: { code: 'EXTERNAL_SERVICE_ERROR', message: 'AI service unavailable' },
       });
     }
   });
@@ -187,10 +189,11 @@ Keep it within the platform's character limit.`;
         systemPrompt: 'You are a social media copywriter. Write engaging captions.',
       });
       return reply.send({ success: true, data: { caption: result.content, model: result.model } });
-    } catch (error: any) {
+    } catch (error) {
+      genLogger.error({ err: error }, 'AI service call failed');
       return reply.status(502).send({
         success: false,
-        error: { code: 'EXTERNAL_SERVICE_ERROR', message: `AI service unavailable: ${error.message}` },
+        error: { code: 'EXTERNAL_SERVICE_ERROR', message: 'AI service unavailable' },
       });
     }
   });

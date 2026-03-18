@@ -7,7 +7,7 @@ import type { Job } from 'bullmq';
 let _registry: ReturnType<typeof createServiceRegistry> | null = null;
 function getRegistry() {
   if (!_registry) {
-    try { _registry = createServiceRegistry(getDb()); } catch { return null; }
+    try { _registry = createServiceRegistry(getDb()); } catch (err) { logger.warn({ err }, 'Service registry init failed'); return null; }
   }
   return _registry;
 }

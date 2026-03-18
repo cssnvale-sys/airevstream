@@ -99,68 +99,68 @@ async function handleCreate(data: AccountCreateJob, job: Job) {
   });
 
   if (automationAvailable && createWorkflow && BrowserContextManager) {
-    try {
-      const mgr = await getBrowserManager();
-      const sessMgr = await getSessionManager();
-      if (!mgr) throw new Error('Browser manager unavailable');
-
+    const mgr = await getBrowserManager();
+    const sessMgr = await getSessionManager();
+    if (mgr) {
       const contextEntry = await mgr.createContext({
         headless: true,
         viewport: { width: 1920, height: 1080 },
       });
 
-      const workflow = createWorkflow(data.platform as any, contextEntry.context);
-      const password = decryptCredential(emailAccount.passwordEnc);
+      try {
+        const workflow = createWorkflow(data.platform as any, contextEntry.context);
+        const password = decryptCredential(emailAccount.passwordEnc);
 
-      const result = await workflow.createAccount({
-        email: emailAccount.email,
-        password,
-        platform: data.platform as any,
-      });
+        const result = await workflow.createAccount({
+          email: emailAccount.email,
+          password,
+          platform: data.platform as any,
+        });
 
-      // Save session if successful
-      if (result.success && sessMgr) {
-        await sessMgr.saveSession(data.emailAccountId, data.platform as any, contextEntry.context);
-      }
+        // Save session if successful
+        if (result.success && sessMgr) {
+          await sessMgr.saveSession(data.emailAccountId, data.platform as any, contextEntry.context);
+        }
 
-      await mgr.closeContext(contextEntry.id);
+        if (result.needsHuman) {
+          // Create HITL task
+          await db.workflowJob.update({
+            where: { id: workflowJob.id },
+            data: {
+              status: 'running',
+              needsHuman: true,
+              humanTaskDesc: result.humanTaskDescription ?? `Manual verification needed for ${data.platform} account creation`,
+              humanLinks: result.screenshots ? JSON.stringify(result.screenshots) : '[]',
+            },
+          });
 
-      if (result.needsHuman) {
-        // Create HITL task
-        await db.workflowJob.update({
-          where: { id: workflowJob.id },
+          logger.info({ emailAccountId: data.emailAccountId, platform: data.platform }, 'Account creation needs human intervention');
+          return { status: 'needs_human', workflowJobId: workflowJob.id };
+        }
+
+        const social = await db.socialAccount.create({
           data: {
-            status: 'running',
-            needsHuman: true,
-            humanTaskDesc: result.humanTaskDescription ?? `Manual verification needed for ${data.platform} account creation`,
-            humanLinks: result.screenshots ? JSON.stringify(result.screenshots) : '[]',
+            emailAccountId: data.emailAccountId,
+            platform: data.platform,
+            status: 'active',
           },
         });
 
-        logger.info({ emailAccountId: data.emailAccountId, platform: data.platform }, 'Account creation needs human intervention');
-        return { status: 'needs_human', workflowJobId: workflowJob.id };
+        await db.workflowJob.update({
+          where: { id: workflowJob.id },
+          data: { status: 'completed', completedAt: new Date(), result: { socialAccountId: social.id } },
+        });
+
+        return { socialAccountId: social.id, status: 'created' };
+      } catch (err) {
+        logger.error({ err, emailAccountId: data.emailAccountId, platform: data.platform }, 'Account creation automation failed');
+        await db.workflowJob.update({
+          where: { id: workflowJob.id },
+          data: { status: 'failed', error: String(err) },
+        });
+      } finally {
+        await mgr.closeContext(contextEntry.id);
       }
-
-      const social = await db.socialAccount.create({
-        data: {
-          emailAccountId: data.emailAccountId,
-          platform: data.platform,
-          status: 'active',
-        },
-      });
-
-      await db.workflowJob.update({
-        where: { id: workflowJob.id },
-        data: { status: 'completed', completedAt: new Date(), result: { socialAccountId: social.id } },
-      });
-
-      return { socialAccountId: social.id, status: 'created' };
-    } catch (err) {
-      logger.error({ err, emailAccountId: data.emailAccountId, platform: data.platform }, 'Account creation automation failed');
-      await db.workflowJob.update({
-        where: { id: workflowJob.id },
-        data: { status: 'failed', error: String(err) },
-      });
     }
   }
 
@@ -197,45 +197,45 @@ async function handleSync(data: AccountSyncJob, job: Job) {
   const automationAvailable = await loadBrowserAutomation();
 
   if (automationAvailable && createWorkflow && BrowserContextManager) {
-    try {
-      const mgr = await getBrowserManager();
-      const sessMgr = await getSessionManager();
-      if (!mgr) throw new Error('Browser manager unavailable');
-
+    const mgr = await getBrowserManager();
+    const sessMgr = await getSessionManager();
+    if (mgr) {
       const contextEntry = await mgr.createContext({ headless: true });
 
-      // Restore session if available
-      if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
-        await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
-      }
-
-      const workflow = createWorkflow(account.platform as any, contextEntry.context);
-      const password = decryptCredential(account.emailAccount.passwordEnc);
-
-      const loginResult = await workflow.login({
-        email: account.emailAccount.email,
-        password,
-        platform: account.platform as any,
-      });
-
-      if (loginResult.success) {
-        // Save refreshed session
-        if (sessMgr) {
-          await sessMgr.saveSession(data.socialAccountId, account.platform as any, contextEntry.context);
+      try {
+        // Restore session if available
+        if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
+          await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
         }
 
-        await db.socialAccount.update({
-          where: { id: data.socialAccountId },
-          data: { lastLoginAt: new Date(), status: 'active' },
+        const workflow = createWorkflow(account.platform as any, contextEntry.context);
+        const password = decryptCredential(account.emailAccount.passwordEnc);
+
+        const loginResult = await workflow.login({
+          email: account.emailAccount.email,
+          password,
+          platform: account.platform as any,
         });
+
+        if (loginResult.success) {
+          // Save refreshed session
+          if (sessMgr) {
+            await sessMgr.saveSession(data.socialAccountId, account.platform as any, contextEntry.context);
+          }
+
+          await db.socialAccount.update({
+            where: { id: data.socialAccountId },
+            data: { lastLoginAt: new Date(), status: 'active' },
+          });
+        }
+
+        logger.info({ socialAccountId: data.socialAccountId, platform: account.platform, success: loginResult.success }, 'Account synced');
+        return { socialAccountId: data.socialAccountId, status: loginResult.success ? 'synced' : 'sync_failed' };
+      } catch (err) {
+        logger.error({ err, socialAccountId: data.socialAccountId }, 'Account sync automation failed');
+      } finally {
+        await mgr.closeContext(contextEntry.id);
       }
-
-      await mgr.closeContext(contextEntry.id);
-
-      logger.info({ socialAccountId: data.socialAccountId, platform: account.platform, success: loginResult.success }, 'Account synced');
-      return { socialAccountId: data.socialAccountId, status: loginResult.success ? 'synced' : 'sync_failed' };
-    } catch (err) {
-      logger.error({ err, socialAccountId: data.socialAccountId }, 'Account sync automation failed');
     }
   }
 
@@ -266,28 +266,28 @@ async function handleHealthCheck(data: AccountHealthCheckJob, job: Job) {
   const issues: string[] = [];
 
   if (automationAvailable && createWorkflow && BrowserContextManager) {
-    try {
-      const mgr = await getBrowserManager();
-      const sessMgr = await getSessionManager();
-      if (!mgr) throw new Error('Browser manager unavailable');
-
+    const mgr = await getBrowserManager();
+    const sessMgr = await getSessionManager();
+    if (mgr) {
       const contextEntry = await mgr.createContext({ headless: true });
 
-      // Restore session
-      if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
-        await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
+      try {
+        // Restore session
+        if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
+          await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
+        }
+
+        const workflow = createWorkflow(account.platform as any, contextEntry.context);
+        const healthResult = await workflow.checkAccountHealth();
+
+        isHealthy = healthResult.healthy;
+        issues.push(...healthResult.issues);
+      } catch (err) {
+        logger.error({ err, socialAccountId: data.socialAccountId }, 'Health check automation failed');
+        issues.push('Health check automation error');
+      } finally {
+        await mgr.closeContext(contextEntry.id);
       }
-
-      const workflow = createWorkflow(account.platform as any, contextEntry.context);
-      const healthResult = await workflow.checkAccountHealth();
-
-      isHealthy = healthResult.healthy;
-      issues.push(...healthResult.issues);
-
-      await mgr.closeContext(contextEntry.id);
-    } catch (err) {
-      logger.error({ err, socialAccountId: data.socialAccountId }, 'Health check automation failed');
-      issues.push('Health check automation error');
     }
   }
 
@@ -352,88 +352,88 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
   const automationAvailable = await loadBrowserAutomation();
 
   if (automationAvailable && createWorkflow && BrowserContextManager) {
-    try {
-      const mgr = await getBrowserManager();
-      const sessMgr = await getSessionManager();
-      if (!mgr) throw new Error('Browser manager unavailable');
-
+    const mgr = await getBrowserManager();
+    const sessMgr = await getSessionManager();
+    if (mgr) {
       const contextEntry = await mgr.createContext({ headless: true });
 
-      // Restore session
-      if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
-        await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
-      }
+      try {
+        // Restore session
+        if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
+          await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
+        }
 
-      // First login if no session
-      const workflow = createWorkflow(account.platform as any, contextEntry.context);
-      const password = decryptCredential(account.emailAccount.passwordEnc);
+        // First login if no session
+        const workflow = createWorkflow(account.platform as any, contextEntry.context);
+        const password = decryptCredential(account.emailAccount.passwordEnc);
 
-      if (!sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
-        await workflow.login({
-          email: account.emailAccount.email,
-          password,
+        if (!sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
+          await workflow.login({
+            email: account.emailAccount.email,
+            password,
+            platform: account.platform as any,
+          });
+        }
+
+        // Collect niche tags from channels for targeted warming
+        const nicheTags = account.channels.flatMap((ch) => ch.niches);
+
+        const warmResult = await workflow.warmAccount({
           platform: account.platform as any,
+          durationMinutes,
+          activities: ['browse', 'watch', 'like', 'search'],
+          nicheTags: nicheTags.length > 0 ? nicheTags : undefined,
+          intensity: 'low',
         });
-      }
 
-      // Collect niche tags from channels for targeted warming
-      const nicheTags = account.channels.flatMap((ch) => ch.niches);
+        // Save session after warming
+        if (sessMgr) {
+          await sessMgr.saveSession(data.socialAccountId, account.platform as any, contextEntry.context);
+        }
 
-      const warmResult = await workflow.warmAccount({
-        platform: account.platform as any,
-        durationMinutes,
-        activities: ['browse', 'watch', 'like', 'search'],
-        nicheTags: nicheTags.length > 0 ? nicheTags : undefined,
-        intensity: 'low',
-      });
-
-      // Save session after warming
-      if (sessMgr) {
-        await sessMgr.saveSession(data.socialAccountId, account.platform as any, contextEntry.context);
-      }
-
-      await mgr.closeContext(contextEntry.id);
-
-      await db.socialAccount.update({
-        where: { id: data.socialAccountId },
-        data: {
-          lastLoginAt: new Date(),
-          metadata: {
-            ...(typeof account.metadata === 'object' && account.metadata !== null ? account.metadata as Record<string, unknown> : {}),
-            lastWarmingSession: JSON.parse(JSON.stringify({
-              date: new Date().toISOString(),
-              durationMs: warmResult.totalDurationMs,
-              activities: warmResult.activitiesPerformed,
-              flagged: warmResult.flagged,
-            })),
-          } as any,
-        },
-      });
-
-      if (warmResult.flagged) {
-        await db.alert.create({
+        await db.socialAccount.update({
+          where: { id: data.socialAccountId },
           data: {
-            severity: 'warning',
-            category: 'account_health',
-            title: `Warming flagged: ${account.username ?? account.platform}`,
-            message: `Account may have been flagged during warming session`,
-            source: 'account-worker',
-            metadata: { socialAccountId: data.socialAccountId },
+            lastLoginAt: new Date(),
+            metadata: {
+              ...(typeof account.metadata === 'object' && account.metadata !== null ? account.metadata as Record<string, unknown> : {}),
+              lastWarmingSession: JSON.parse(JSON.stringify({
+                date: new Date().toISOString(),
+                durationMs: warmResult.totalDurationMs,
+                activities: warmResult.activitiesPerformed,
+                flagged: warmResult.flagged,
+              })),
+            } as any,
           },
         });
+
+        if (warmResult.flagged) {
+          await db.alert.create({
+            data: {
+              severity: 'warning',
+              category: 'account_health',
+              title: `Warming flagged: ${account.username ?? account.platform}`,
+              message: `Account may have been flagged during warming session`,
+              source: 'account-worker',
+              metadata: { socialAccountId: data.socialAccountId },
+            },
+          });
+        }
+
+        logger.info({
+          socialAccountId: data.socialAccountId,
+          platform: account.platform,
+          durationMinutes,
+          activities: warmResult.activitiesPerformed.length,
+          flagged: warmResult.flagged,
+        }, 'Account warmed');
+
+        return { socialAccountId: data.socialAccountId, status: 'warmed', durationMinutes, flagged: warmResult.flagged };
+      } catch (err) {
+        logger.error({ err, socialAccountId: data.socialAccountId }, 'Account warming automation failed');
+      } finally {
+        await mgr.closeContext(contextEntry.id);
       }
-
-      logger.info({
-        socialAccountId: data.socialAccountId,
-        platform: account.platform,
-        durationMinutes,
-        activities: warmResult.activitiesPerformed.length,
-        flagged: warmResult.flagged,
-      }, 'Account warmed');
-
-      return { socialAccountId: data.socialAccountId, status: 'warmed', durationMinutes, flagged: warmResult.flagged };
-    } catch (err) {
-      logger.error({ err, socialAccountId: data.socialAccountId }, 'Account warming automation failed');
     }
   }
 

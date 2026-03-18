@@ -24,8 +24,8 @@ export async function contentRoutes(app: FastifyInstance) {
       page = '1', limit = '50', status, contentType, channelId, search, sort = 'createdAt', order = 'desc',
     } = request.query as Record<string, string>;
 
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
     const skip = (pageNum - 1) * limitNum;
 
     const where: Record<string, unknown> = {};
@@ -245,8 +245,8 @@ export async function contentRoutes(app: FastifyInstance) {
   // List pending approvals
   app.get('/approvals/pending', async (request, reply) => {
     const { page = '1', limit = '50' } = request.query as Record<string, string>;
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
     const skip = (pageNum - 1) * limitNum;
     const db = getDb();
 

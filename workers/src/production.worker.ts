@@ -10,11 +10,10 @@ import type {
   ProductionGenerateAudioJob,
   ProductionStoryboardJob,
 } from '@airevstream/queue';
-import { PrismaClient } from '@airevstream/db';
+import { getDb } from '@airevstream/db';
 import { uploadBuffer, ensureBucket } from '@airevstream/storage';
 
 const logger = createLogger('production-worker');
-const db = new PrismaClient();
 
 const BUCKET = 'airevstream-production';
 const COMFYUI_URL = process.env.COMFYUI_URL ?? 'http://localhost:8188';
@@ -139,6 +138,7 @@ async function renderTemplate(
 // ─── Image Generation Handler ───
 
 async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<void> {
+  const db = getDb();
   logger.info({ workflowType: data.workflowType, shotId: data.shotId }, 'Processing image generation job');
 
   const healthy = await comfyIsHealthy();
@@ -242,6 +242,7 @@ const execFileAsync = promisify(execFile);
 const REMOTION_DIR = resolve(__dirname, '../../remotion');
 
 async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> {
+  const db = getDb();
   logger.info({ contentId: data.contentId, storyboardId: data.storyboardId }, 'Processing video render job');
 
   // Update storyboard status
@@ -348,6 +349,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
 // ─── Audio Generation Handler ───
 
 async function handleGenerateAudio(data: ProductionGenerateAudioJob): Promise<void> {
+  const db = getDb();
   logger.info({ contentId: data.contentId, textLength: data.text.length }, 'Processing audio generation job');
 
   let ttsClient: any;
@@ -400,6 +402,7 @@ async function handleGenerateAudio(data: ProductionGenerateAudioJob): Promise<vo
 // ─── Storyboard Generation Handler ───
 
 async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<void> {
+  const db = getDb();
   logger.info({ contentId: data.contentId }, 'Processing storyboard generation job');
 
   const content = await db.contentItem.findUnique({

@@ -34,8 +34,8 @@ export async function chatRoutes(app: FastifyInstance) {
   // List conversations
   app.get('/conversations', async (request, reply) => {
     const { page = '1', limit = '50' } = request.query as Record<string, string>;
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
     const skip = (pageNum - 1) * limitNum;
     const db = getDb();
 

@@ -1,6 +1,7 @@
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -22,6 +23,11 @@ const BulkImportSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const rl = checkRateLimit(`bulk:import:${ctx.userId}`, RATE_LIMITS.bulkOperation);
+  if (!rl.allowed) {
+    return error('RATE_LIMITED', 'Too many bulk operations. Please try again later.', 429);
+  }
 
   try {
     let accounts: { email: string; password: string; tier?: string; notes?: string }[];

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 const GenerateScriptSchema = z.object({
   channelId: z.string().uuid(),
@@ -15,6 +16,11 @@ const GenerateScriptSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const rl = checkRateLimit(`gen:script:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+  if (!rl.allowed) {
+    return error('RATE_LIMITED', 'Too many generation requests. Please try again later.', 429);
+  }
 
   try {
     const body = await req.json();

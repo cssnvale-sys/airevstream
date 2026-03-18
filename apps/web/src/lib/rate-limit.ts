@@ -82,6 +82,12 @@ export const RATE_LIMITS = {
   forgotPassword: { maxAttempts: 3, windowMs: 60 * 60 * 1000 },
   /** Reset password: 5 attempts per 15 minutes per IP */
   resetPassword: { maxAttempts: 5, windowMs: 15 * 60 * 1000 },
+  /** Content generation: 20 per hour per user */
+  contentGeneration: { maxAttempts: 20, windowMs: 60 * 60 * 1000 },
+  /** Bulk operations: 5 per hour per user */
+  bulkOperation: { maxAttempts: 5, windowMs: 60 * 60 * 1000 },
+  /** Analytics export: 10 per hour per user */
+  analyticsExport: { maxAttempts: 10, windowMs: 60 * 60 * 1000 },
 } as const;
 
 /**

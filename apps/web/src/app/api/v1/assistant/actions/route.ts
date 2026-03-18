@@ -57,11 +57,16 @@ const executors: Record<string, ActionExecutor> = {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
+    // Tenant-scoped filter for channel-linked models
+    const tenantChannelFilter = ctx.tenantId
+      ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
+      : {};
+
     if (reportType === 'content') {
       const statusCounts = await ctx.db.contentItem.groupBy({
         by: ['status'],
         _count: { id: true },
-        where: { createdAt: { gte: since } },
+        where: { createdAt: { gte: since }, ...tenantChannelFilter },
       });
       return {
         data: {
@@ -74,7 +79,7 @@ const executors: Record<string, ActionExecutor> = {
 
     if (reportType === 'revenue') {
       const clicks = await ctx.db.affiliateClick.aggregate({
-        where: { createdAt: { gte: since } },
+        where: { createdAt: { gte: since }, ...tenantChannelFilter },
         _sum: { revenue: true },
         _count: { id: true },
       });
@@ -92,7 +97,7 @@ const executors: Record<string, ActionExecutor> = {
       const posts = await ctx.db.scheduledPost.groupBy({
         by: ['status'],
         _count: { id: true },
-        where: { createdAt: { gte: since } },
+        where: { createdAt: { gte: since }, ...tenantChannelFilter },
       });
       return {
         data: {
@@ -105,8 +110,9 @@ const executors: Record<string, ActionExecutor> = {
 
     // Default: aggregate overview
     const [contentCount, postCount, alertCount] = await Promise.all([
-      ctx.db.contentItem.count({ where: { createdAt: { gte: since } } }),
-      ctx.db.scheduledPost.count({ where: { createdAt: { gte: since } } }),
+      ctx.db.contentItem.count({ where: { createdAt: { gte: since }, ...tenantChannelFilter } }),
+      ctx.db.scheduledPost.count({ where: { createdAt: { gte: since }, ...tenantChannelFilter } }),
+      // Alerts are system-level (no tenantId on Alert model) — intentional
       ctx.db.alert.count({ where: { createdAt: { gte: since }, status: 'open' } }),
     ]);
 
@@ -536,13 +542,16 @@ export async function POST(req: NextRequest) {
     try {
       result = await executor(parameters, ctx);
     } catch (execError) {
-      // Log failed execution
+      const errMsg = execError instanceof Error ? execError.message : String(execError);
+      console.error(`Action ${actionType} execution failed:`, execError);
+
+      // Log failed execution (internal log only — don't expose to client)
       await ctx.db.actionAuditLog.create({
         data: {
           actionType,
           tier,
           parameters: parameters as object,
-          result: { error: (execError as Error).message },
+          result: { error: errMsg },
           status: 'failed',
           conversationId: conversationId ?? null,
         },
@@ -550,7 +559,7 @@ export async function POST(req: NextRequest) {
 
       return error(
         'ACTION_FAILED',
-        `Action "${actionType}" failed: ${(execError as Error).message}`,
+        `Action "${actionType}" failed. Check system logs for details.`,
         400,
       );
     }

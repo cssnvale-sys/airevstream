@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
 
     if (conversationId) {
       // Use existing conversation
+      // Note: Conversation model lacks userId/tenantId (KI-020) so ownership
+      // cannot be validated until the schema is migrated.
       conversation = await ctx.db.conversation.findUnique({
         where: { id: conversationId },
       });
@@ -305,6 +307,8 @@ async function buildSystemContext(
 
 /**
  * Get alert context: total open count and top 3 recent alerts.
+ * Alerts are system-level (no tenantId on Alert model) — intentional.
+ * All tenants see system health alerts (e.g. service outages, resource issues).
  */
 async function getAlertsContext(ctx: ApiContext) {
   const [totalOpen, topAlerts] = await Promise.all([
@@ -332,11 +336,16 @@ async function getAlertsContext(ctx: ApiContext) {
  * Get content queue statistics by status.
  */
 async function getContentQueueStats(ctx: ApiContext) {
+  const tenantChannelFilter = ctx.tenantId
+    ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
+    : {};
+
   const statusCounts = await ctx.db.contentItem.groupBy({
     by: ['status'],
     _count: { id: true },
     where: {
       status: { in: ['draft', 'generating', 'generated', 'pending_approval', 'approved'] },
+      ...tenantChannelFilter,
     },
   });
 
@@ -355,6 +364,9 @@ async function getContentQueueStats(ctx: ApiContext) {
  * Find knowledge base entries relevant to the user's question.
  * Uses simple keyword matching on title and content fields.
  * Returns top 3 results sorted by relevance score.
+ *
+ * Note: KnowledgeBaseEntry does not have tenantId (KI-020). Entries are
+ * shared across all tenants until the schema is migrated.
  */
 async function getRelevantKnowledge(
   ctx: ApiContext,

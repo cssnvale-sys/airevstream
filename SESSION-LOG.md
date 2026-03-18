@@ -598,6 +598,22 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - content/[id]/regenerate POST: tenant-scoped findFirst
 - accounts/bulk-import POST: Zod schema for JSON path
 
+**Batch 72: Tenant Scoping — Final findUnique Sweep**
+- channels POST: socialAccount.findUnique → findFirst with tenant chain
+- content/generate: channel.findUnique → findFirst with tenant chain
+- schedule POST: consolidated redundant findUnique + separate tenant check into single findFirst queries
+- jobs/[id] GET: added tenant verification via channel/account ownership check
+- accounts/[id]/socials GET+POST: emailAccount.findUnique → findFirst with tenantId
+- **CRITICAL:** assistant/actions: 5 findUnique calls → findFirst with tenant scoping
+  (content.generate, content.schedule, content.approve, account.create, account.delete)
+
+### Commits (continued)
+- `97da66b` — docs: tracking docs round 15
+- `e550c0e` — fix: tenant scoping on channel/content sub-routes, _count cleanup
+- `7a7a181` — fix: Zod validation + tenant scoping on approvals, variants, regenerate
+- `208ab3e` — docs: tracking docs round 16
+- `8c62e9a` — fix: tenant scoping on channels POST, content/generate, schedule, jobs, socials, assistant/actions
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

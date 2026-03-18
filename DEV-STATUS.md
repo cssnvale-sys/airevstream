@@ -128,6 +128,12 @@
 | 5.78 | Approvals bulk tenant scoping | Done | Zod schema + tenant channel filtering |
 | 5.79 | Bulk import Zod validation | Done | Email, password, tier enum for JSON path |
 | 5.80 | Tenants _count cleanup | Done | Proper destructuring in list and detail routes |
+| 5.81 | Channels POST tenant scoping | Done | socialAccount findFirst with tenant chain |
+| 5.82 | Content generate tenant scoping | Done | channel findFirst with tenant chain |
+| 5.83 | Schedule consolidated tenant check | Done | Merged redundant findUnique + tenant check into findFirst |
+| 5.84 | Jobs tenant verification | Done | Channel/account ownership check after findUnique |
+| 5.85 | Socials tenant scoping | Done | emailAccount findFirst with tenantId in GET+POST |
+| 5.86 | Assistant actions tenant scoping | Done | **CRITICAL:** 5 executors scoped via findFirst |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

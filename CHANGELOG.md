@@ -43,6 +43,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 23 (Session 7) — Final findUnique Sweep**
+- **CRITICAL:** Tenant scoping on channels POST (socialAccount ownership check)
+- **CRITICAL:** Tenant scoping on content/generate (channel ownership check)
+- **CRITICAL:** Tenant scoping on assistant/actions — 5 executors (content.generate, content.schedule, content.approve, account.create, account.delete)
+- Tenant scoping on schedule POST (consolidated redundant checks)
+- Tenant scoping on jobs/[id] GET (channel/account ownership verification)
+- Tenant scoping on accounts/[id]/socials GET+POST (emailAccount tenantId filter)
+
 **Audit Round 22 (Session 7) — Tenant Scoping & Validation Expansion**
 - **CRITICAL:** Tenant scoping on channels/[id]/cinema-bible, affiliate-pool, avatars sub-routes
 - **CRITICAL:** Tenant scoping on content/[id]/quality-score, storyboard, variants, regenerate

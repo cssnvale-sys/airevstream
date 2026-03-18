@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
+
+const BulkDeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(100),
+});
 
 /**
  * POST /api/v1/accounts/bulk-delete
@@ -12,15 +17,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { ids } = body as { ids?: string[] };
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return validationError('ids must be a non-empty array of account IDs');
+    const parsed = BulkDeleteSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
 
-    if (ids.length > 100) {
-      return validationError('Cannot delete more than 100 accounts at once');
-    }
+    const { ids } = parsed.data;
 
     // Verify all accounts belong to this tenant
     const where = {

@@ -1,7 +1,21 @@
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+const UpdateProductSchema = z.object({
+  name: z.string().min(1).max(500).optional(),
+  url: z.string().url().max(2000).optional(),
+  shortUrl: z.string().url().max(500).optional().nullable(),
+  salesAngle: z.string().max(2000).optional().nullable(),
+  commissionRate: z.number().min(0).max(100).optional().nullable(),
+  category: z.string().max(100).optional().nullable(),
+  description: z.string().max(5000).optional().nullable(),
+  brand: z.string().max(200).optional().nullable(),
+  imageUrl: z.string().url().max(2000).optional().nullable(),
+  status: z.enum(['active', 'inactive', 'expired']).optional(),
+});
 
 /**
  * GET /api/v1/affiliate/products/[id]
@@ -60,24 +74,23 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (!existing) return notFound('Affiliate product not found');
 
     const body = await req.json();
-    const { name, url, shortUrl, salesAngle, commissionRate, category, description, brand, imageUrl, status } = body;
-
-    const validStatuses = ['active', 'inactive', 'expired'];
-    if (status && !validStatuses.includes(status)) {
-      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    const parsed = UpdateProductSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
 
+    const fields = parsed.data;
     const data: Record<string, unknown> = {};
-    if (name !== undefined) data.name = name;
-    if (url !== undefined) data.url = url;
-    if (shortUrl !== undefined) data.shortUrl = shortUrl;
-    if (salesAngle !== undefined) data.salesAngle = salesAngle;
-    if (commissionRate !== undefined) data.commissionRate = commissionRate;
-    if (category !== undefined) data.category = category;
-    if (description !== undefined) data.description = description;
-    if (brand !== undefined) data.brand = brand;
-    if (imageUrl !== undefined) data.imageUrl = imageUrl;
-    if (status !== undefined) data.status = status;
+    if (fields.name !== undefined) data.name = fields.name;
+    if (fields.url !== undefined) data.url = fields.url;
+    if (fields.shortUrl !== undefined) data.shortUrl = fields.shortUrl;
+    if (fields.salesAngle !== undefined) data.salesAngle = fields.salesAngle;
+    if (fields.commissionRate !== undefined) data.commissionRate = fields.commissionRate;
+    if (fields.category !== undefined) data.category = fields.category;
+    if (fields.description !== undefined) data.description = fields.description;
+    if (fields.brand !== undefined) data.brand = fields.brand;
+    if (fields.imageUrl !== undefined) data.imageUrl = fields.imageUrl;
+    if (fields.status !== undefined) data.status = fields.status;
 
     const updated = await ctx.db.affiliateProduct.update({
       where: { id },

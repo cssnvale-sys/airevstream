@@ -2,6 +2,14 @@ import { authenticate, success, error, notFound, paginated, parseQuery, validati
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const CreateSocialSchema = z.object({
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']),
+  platformUserId: z.string().max(255).optional().nullable(),
+  username: z.string().max(255).optional().nullable(),
+  credentials: z.union([z.string(), z.record(z.unknown())]).optional().nullable(),
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -40,10 +48,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       ctx.db.socialAccount.count({ where }),
     ]);
 
-    const data = socials.map(({ credentialsEnc, ...sa }) => ({
+    const data = socials.map(({ credentialsEnc, _count, ...sa }) => ({
       ...sa,
-      channelsCount: sa._count.channels,
-      _count: undefined,
+      channelsCount: _count.channels,
     }));
 
     return paginated(data, total, page, limit);
@@ -69,16 +76,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!emailAccount) return notFound('Email account not found');
 
     const body = await req.json();
-    const { platform, platformUserId, username, credentials } = body;
-
-    if (!platform) {
-      return validationError('Platform is required');
+    const parsed = CreateSocialSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
 
-    const validPlatforms = ['youtube', 'tiktok', 'instagram', 'facebook'];
-    if (!validPlatforms.includes(platform)) {
-      return validationError(`Invalid platform. Must be one of: ${validPlatforms.join(', ')}`);
-    }
+    const { platform, platformUserId, username, credentials } = parsed.data;
 
     // Check for duplicate platform account under this email
     const existing = await ctx.db.socialAccount.findUnique({

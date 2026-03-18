@@ -1,8 +1,15 @@
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import type { ApiContext } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { chat, createServiceRegistry } from '@airevstream/ai-client';
 import type { ChatMessage } from '@airevstream/ai-client';
+
+const ChatSchema = z.object({
+  conversationId: z.string().uuid().optional().nullable(),
+  message: z.string().min(1).max(10000),
+  contextPage: z.string().max(100).optional().nullable(),
+});
 
 /**
  * POST /api/v1/assistant/chat
@@ -20,11 +27,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { conversationId, message, contextPage: bodyContextPage } = body;
-
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return validationError('message is required and must be a non-empty string');
+    const parsed = ChatSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
+
+    const { conversationId, message, contextPage: bodyContextPage } = parsed.data;
 
     // Resolve context page: header takes precedence, then body, then existing conversation
     const headerContextPage = req.headers.get('x-context-page');

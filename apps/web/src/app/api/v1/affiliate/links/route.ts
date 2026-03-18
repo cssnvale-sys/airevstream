@@ -1,6 +1,12 @@
 import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
+import { z } from 'zod';
+
+const CreateLinkSchema = z.object({
+  productId: z.string().uuid(),
+  shortUrl: z.string().url().max(500).optional().nullable(),
+});
 
 /**
  * GET /api/v1/affiliate/links
@@ -52,11 +58,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { productId, shortUrl } = body;
-
-    if (!productId) {
-      return validationError('productId is required');
+    const parsed = CreateLinkSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
+
+    const { productId, shortUrl } = parsed.data;
 
     const product = await ctx.db.affiliateProduct.findUnique({ where: { id: productId } });
     if (!product) {

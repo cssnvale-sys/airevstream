@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { SignJWT } from 'jose';
+import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+
+const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'currentPassword is required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
@@ -33,15 +39,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { currentPassword, newPassword } = body;
-
-    if (!currentPassword || !newPassword) {
-      return validationError('currentPassword and newPassword are required');
+    const parsed = ChangePasswordSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => e.message).join('; '));
     }
-
-    if (newPassword.length < 8) {
-      return validationError('New password must be at least 8 characters');
-    }
+    const { currentPassword, newPassword } = parsed.data;
 
     const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
     if (!user) return error('NOT_FOUND', 'User not found', 404);

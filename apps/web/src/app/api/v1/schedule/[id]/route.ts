@@ -1,5 +1,13 @@
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const RescheduleSchema = z.object({
+  scheduledAt: z.string().datetime({ message: 'scheduledAt must be a valid ISO date' }).optional(),
+  publishConfig: z.record(z.unknown()).optional(),
+}).refine(d => d.scheduledAt !== undefined || d.publishConfig !== undefined, {
+  message: 'At least one of scheduledAt or publishConfig must be provided',
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -36,19 +44,16 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     const body = await req.json();
-    const { scheduledAt, publishConfig } = body;
-
-    if (scheduledAt === undefined && publishConfig === undefined) {
-      return validationError('At least one of scheduledAt or publishConfig must be provided');
+    const parsed = RescheduleSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => e.message).join('; '));
     }
 
+    const { scheduledAt, publishConfig } = parsed.data;
     const data: Record<string, unknown> = {};
 
     if (scheduledAt) {
       const scheduledDate = new Date(scheduledAt);
-      if (isNaN(scheduledDate.getTime())) {
-        return validationError('scheduledAt must be a valid ISO date');
-      }
       if (scheduledDate <= new Date()) {
         return validationError('scheduledAt must be in the future');
       }

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error } from '@/lib/api-server';
+
+const SnoozeSchema = z.object({
+  duration: z.number().positive().max(86400).optional(),
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -16,11 +21,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     let duration = 3600; // default 1 hour
     try {
       const body = await req.json();
-      if (body.duration != null) {
-        const d = Number(body.duration);
-        if (Number.isFinite(d) && d > 0 && d <= 86400) {
-          duration = d;
-        }
+      const parsed = SnoozeSchema.safeParse(body);
+      if (parsed.success && parsed.data.duration != null) {
+        duration = parsed.data.duration;
       }
     } catch {
       // no body — use default duration

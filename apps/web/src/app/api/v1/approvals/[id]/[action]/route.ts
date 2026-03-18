@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error } from '@/lib/api-server';
+
+const RejectBodySchema = z.object({
+  feedback: z.string().max(2000).optional(),
+});
 
 type RouteParams = { params: Promise<{ id: string; action: string }> };
 
@@ -35,7 +40,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       let feedback: string | undefined;
       try {
         const body = await req.json();
-        feedback = body.feedback;
+        const parsed = RejectBodySchema.safeParse(body);
+        if (parsed.success) {
+          feedback = parsed.data.feedback;
+        }
       } catch {
         // no body
       }

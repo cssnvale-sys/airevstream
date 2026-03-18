@@ -701,6 +701,41 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Research worker: wrapped 2 JSON.parse calls in try-catch for AI-generated content
 - AI assistant chat/generate routes: logged silent registry initialization failures
 
+**Batch 91: Package-Level Safety**
+- Crypto decrypt: minimum ciphertext length validation before buffer slicing
+- ai-client generateJSON: wrapped JSON.parse in try-catch
+- HTTP provider: empty messages array guard in generateChat
+
+**Batch 92: Abort Signal Timeouts on LLM Fetch Calls**
+- OpenAI-compat: 120s timeout on generateChat, 300s on streamChat
+- HTTP provider: 120s timeout on generateText
+- Prevents server hangs when LLM endpoints don't respond
+
+**Batch 93: Storefront Tenant Ownership Verification (Security)**
+- GET/PATCH/DELETE verify channel ownership through channel→socialAccount→emailAccount→tenantId chain
+- Prevents cross-tenant storefront access
+
+**Batch 94: Date isNaN Guards on Analytics Routes**
+- Added isNaN(d.getTime()) guards on 5 routes: affiliate/revenue, ai-services/costs, affiliate/clicks, ai-services/usage, affiliate/products/[id]/analytics
+- Invalid date strings are silently ignored instead of causing Prisma errors
+
+**Batch 95: Unbounded Query Caps on Analytics Overview**
+- Added `take: 5000` cap on revenueClicks and qualityScores findMany queries
+- Prevents OOM on large datasets
+
+**Batch 96: Frontend Error State Handling**
+- Dashboard: destructured `error` from 8 hooks, shows error banner
+- Workflows: destructured `error`, shows error banner
+- System: destructured `error` from 4 hooks, shows error banner
+- Calendar: destructured `error` from 2 hooks, shows error banner
+- Settings: shows error message for fallback chains fetch failure
+
+**Batch 97: Type Safety + Misc Fixes**
+- OpenAICompatProvider: `providerType: any` → `AiProvider['providerType']`
+- HttpProvider: `providerType: any` + `supportedTypes: any[]` → proper interface types
+- Approvals bulk action: added console.error to silent catch
+- Library: merged duplicate apiDelete import
+
 ### Commits (continued)
 - `e403391` — docs: tracking docs round 19
 - `f10425d` — fix: SWR revalidation after job retry on system page
@@ -716,6 +751,15 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `cf33c79` — docs: tracking docs round 22
 - `c85803b` — fix: API helper JSON parse error handling
 - `c8cd7e5` — fix: service/worker error handling and security hardening
+- `ad23d6e` — fix: guard JSON.parse in AI idea generation route
+- `8bfe217` — fix: guard JSON.parse in research worker knowledge populate handler
+- `afa9d46` — docs: tracking docs round 23
+- `db5eed0` — fix: package-level safety (crypto validation, JSON.parse guards, empty messages check)
+- `357f273` — fix: abort signal timeouts on LLM fetch calls
+- `51fa207` — fix: storefront tenant ownership verification
+- `9127892` — fix: date isNaN guards + unbounded query caps on analytics
+- `6e82ddd` — fix: frontend error state handling on 5 pages
+- `db35fb9` — fix: type safety for AI providers, misc cleanup
 
 ### Open Items
 - E2E testing (Playwright) not started

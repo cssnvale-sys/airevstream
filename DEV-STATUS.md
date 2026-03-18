@@ -151,6 +151,14 @@
 | 5.101 | Resource cleanup | Done | SSE error logging, health check timeout cleanup, rate limiter bounds warning |
 | 5.102 | API helper JSON parse | Done | Handle non-JSON responses in apiPost/apiPut/apiDelete |
 | 5.103 | Service/worker hardening | Done | main() .catch(), safe error messages, JSON.parse guards, registry logging |
+| 5.104 | Package-level safety | Done | Crypto decrypt validation, JSON.parse guard in generateJSON, empty messages check |
+| 5.105 | LLM abort signals | Done | 120s timeout on generate, 300s on stream — prevents server hangs |
+| 5.106 | Storefront tenant verification | Done | **SECURITY:** Channel ownership verification on GET/PATCH/DELETE |
+| 5.107 | Date isNaN guards | Done | 5 analytics routes: invalid dates silently ignored |
+| 5.108 | Unbounded query caps | Done | Analytics overview: revenueClicks + qualityScores capped at 5000 |
+| 5.109 | Frontend error states | Done | Error banners on dashboard, workflows, system, calendar, settings |
+| 5.110 | AI provider type safety | Done | Replaced providerType: any with proper AiServiceProvider type |
+| 5.111 | Misc cleanup | Done | Approvals catch logging, library duplicate import |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

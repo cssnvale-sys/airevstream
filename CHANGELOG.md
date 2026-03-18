@@ -43,6 +43,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 34 (Session 7) — Type Safety, Error States, Query Safety**
+- AI providers: replaced `providerType: any` with proper `AiServiceProvider` type
+- 5 frontend pages: destructured error from useApi hooks with error banners (dashboard, workflows, system, calendar, settings)
+- 5 analytics routes: date isNaN guard on query param parsing
+- Analytics overview: capped unbounded findMany queries at 5000 rows
+- Storefront GET/PATCH/DELETE: tenant ownership verification through channel chain (security fix)
+- LLM fetch calls: abort signal timeouts (120s generate, 300s stream) to prevent server hangs
+- Crypto decrypt: minimum ciphertext length validation
+- ai-client generateJSON: try-catch on JSON.parse
+- HTTP provider: empty messages array guard
+- Approvals bulk action: error logging in catch block
+- Library page: merged duplicate apiDelete import
+
 **Audit Round 32 (Session 7) — Service/Worker Hardening**
 - 3 service entry points: .catch() on main() to handle startup failures
 - 3 service global error handlers: static safe error messages (no error.message leaks)

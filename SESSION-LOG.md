@@ -570,6 +570,22 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `a197b89` — fix: tenant scoping on workflows list + content approve
 - `f47a575` — fix: validation improvements (budget max, domain enum, metadata cast)
 - `3389f7a` — fix: AI services global scope documentation + accounts _count cleanup
+- `d198194` — fix: Zod validation on content generation + reject routes
+- `c33991e` — fix: Zod validation on accounts, affiliate, assistant routes
+
+**Batch 66: Zod Validation — Content Generation Routes**
+- generate: channelId (uuid), contentType (required), prompt (max 10k)
+- generate-script: topic (required), duration (5-3600), platforms
+- generate-storyboard: script (required, max 50k), channelId, contentType
+- generate-shot: shotId (required), description (max 5k), workflowType
+- reject: Zod schema + tenant scoping via findFirst with channel chain
+
+**Batch 67: Zod Validation — Accounts/Affiliate/Assistant Routes**
+- bulk-delete: ids array (uuid, 1-100 items)
+- accounts/[id]/socials POST: platform enum, credentials union type
+- affiliate/links POST: productId (uuid), shortUrl (url)
+- affiliate/products/[id] PUT: status enum, commission rate (0-100)
+- assistant/chat POST: message (1-10k chars), conversationId (uuid)
 
 ### Open Items
 - E2E testing (Playwright) not started

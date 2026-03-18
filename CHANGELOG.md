@@ -43,6 +43,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 21 (Session 7) — Comprehensive Zod Validation**
+- Added Zod validation schemas to 11 more POST/PUT routes: content/generate, generate-script, generate-storyboard, generate-shot, content/[id]/reject, accounts/bulk-delete, accounts/[id]/socials, affiliate/links, affiliate/products/[id], assistant/chat
+- Content reject route now tenant-scoped via findFirst with channel chain
+- Fixed _count leak in accounts/[id]/socials GET response
+
 **Audit Round 20 (Session 7) — Tenant Scoping, Validation & Cleanup**
 - **CRITICAL:** Tenant scoping on workflows list route (was returning all tenants' jobs)
 - **CRITICAL:** Tenant scoping on content approve route (could approve any tenant's content)

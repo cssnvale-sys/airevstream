@@ -120,6 +120,9 @@
 | 5.70 | Validation improvements | Done | Budget max cap, knowledge-base domain enum, metadata cast |
 | 5.71 | AI services scope docs | Done | Documented global scope as intentional for self-hosted |
 | 5.72 | Accounts _count cleanup | Done | Proper destructuring removes _count from JSON response |
+| 5.73 | Zod validation (content gen) | Done | 5 content generation/reject routes with full schemas |
+| 5.74 | Zod validation (accounts/affiliate) | Done | 5 accounts/affiliate/assistant routes with schemas |
+| 5.75 | Content reject tenant scoping | Done | findFirst with tenant chain + Zod schema |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

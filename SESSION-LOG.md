@@ -302,6 +302,43 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `CopyButton` component with check animation and toast feedback
 - Copy buttons on: affiliate short URLs, API key prefixes, workflow job IDs
 
+**Batch 12: Tracking Docs Update (round 1)**
+- Updated SESSION-LOG, CHANGELOG, KNOWN-ISSUES, DEV-STATUS, DECISIONS, MEMORY
+
+**Batch 13: Dashboard & System Error Handling**
+- Dashboard: fixed silent catch in `handleApproval` with toast.error feedback
+- System: fixed 3 silent catches in `handleAcknowledgeAlert`, `handleSnoozeAlert`, `handleRetryError`
+- Added toast.success/toast.error notifications for all system actions
+
+**Batch 14: Workflows Page Improvements**
+- Added pagination (20 per page) with page controls
+- Added job type filter dropdown (7 types)
+- Added retry button for failed jobs with toast feedback
+- Added manual refresh button
+
+**Batch 15: Approvals Page Improvements**
+- Added bulk approve/reject with select-all checkbox and toolbar
+- Added pagination (20 per page) with page controls
+- Added content type filter dropdown
+- ConfirmDialog for bulk rejection
+
+**Batch 16: Accessibility Quick Wins**
+- Sidebar: `aria-current="page"` on active links, `aria-label` on nav/buttons
+- ConfirmDialog & KeyboardShortcutsModal: `aria-label` on close buttons
+- Calendar: `role="grid"`, `aria-label`
+- Accounts: `aria-label` on checkboxes
+
+**Batch 17: Analytics Error State**
+- Added error state card when analytics API fails (icon + message)
+
+**Batch 18: Settings Form Dirty State**
+- Created `useUnsavedChanges` hook (beforeunload warning)
+- Added dirty state tracking to GeneralTab with "Unsaved changes" indicator
+
+**Batch 19: Search Debounce**
+- Created `useDebounce` hook (300ms delay)
+- Applied to library and accounts page search inputs
+
 ### Commits
 - `21a51f4` — feat: add reusable UI components (confirm dialog, toast helper, empty state)
 - `b50f085` — fix: add error toasts and confirmation dialogs across all pages
@@ -314,6 +351,14 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `7d35962` — fix: add server-side calendar filters for platform, channel, status (KI-004)
 - `dcd045c` — feat: add keyboard shortcuts modal and global navigation shortcuts
 - `31877b3` — feat: add copy-to-clipboard buttons for identifiers
+- `2880583` — docs: update tracking files for session 7
+- `3fcc09e` — fix: add error toasts to dashboard and system page catch blocks
+- `ff3e8a6` — feat: add workflows pagination, job type filter, and retry button
+- `df5552d` — feat: add bulk approve/reject, pagination, and content type filter to approvals
+- `98df5e8` — feat: add accessibility attributes to sidebar, modals, calendar, accounts
+- `b79fef9` — feat: add error state display for analytics page
+- `146b5fe` — feat: add unsaved changes warning to settings general tab
+- `be850d0` — feat: add search debounce to library and accounts pages
 
 ### Issues Resolved
 - KI-003: CSV export — IMPLEMENTED (batch 6)

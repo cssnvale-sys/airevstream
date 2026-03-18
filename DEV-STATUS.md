@@ -77,6 +77,13 @@
 | 5.27 | Calendar server filters (KI-004) | Done | channelId, platform, status query params passed to API |
 | 5.28 | Keyboard shortcuts | Done | Global shortcuts (?/N/L/A), modal, sidebar help button |
 | 5.29 | Copy-to-clipboard | Done | CopyButton on affiliate short URLs, API key prefixes, job IDs |
+| 5.30 | Error toasts (round 2) | Done | Dashboard handleApproval + System 3 silent catches → toast feedback |
+| 5.31 | Workflows improvements | Done | Pagination (20/page), job type filter, retry failed, refresh |
+| 5.32 | Approvals improvements | Done | Bulk approve/reject, select-all, pagination, content type filter |
+| 5.33 | Accessibility quick wins | Done | aria-current, aria-labels, role=grid on sidebar/modals/calendar/accounts |
+| 5.34 | Analytics error state | Done | Error display card when analytics API fails |
+| 5.35 | Settings dirty state | Done | useUnsavedChanges hook + dirty tracking on general tab |
+| 5.36 | Search debounce | Done | useDebounce hook (300ms) on library + accounts search |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

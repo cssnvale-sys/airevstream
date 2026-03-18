@@ -19,8 +19,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Copy-to-Clipboard** (Session 7): Copy buttons on affiliate short URLs, API key prefixes, job IDs
 - **Empty States** (Session 7): Actionable empty states with CTAs on library, workflows, approvals, accounts pages
 - **Server-Side Calendar Filters** (Session 7): channelId, platform, status query params (KI-004)
-- **Error Toasts** (Session 7): Toast notifications replacing silent catches on settings, approvals, accounts, affiliate
-- **Confirmation Dialogs** (Session 7): ConfirmDialog on API key revocation, content rejection, content deletion, bulk delete
+- **Error Toasts** (Session 7): Toast notifications replacing silent catches on settings, approvals, accounts, affiliate, dashboard, system
+- **Confirmation Dialogs** (Session 7): ConfirmDialog on API key revocation, content rejection, content deletion, bulk delete, bulk reject
+- **Workflows Pagination & Filters** (Session 7): 20-per-page pagination, job type filter, retry failed jobs, refresh button
+- **Approvals Bulk Actions** (Session 7): Bulk approve/reject with select-all, pagination, content type filter
+- **Accessibility** (Session 7): aria-current on sidebar, aria-labels on nav/buttons/checkboxes/modals, role=grid on calendar
+- **Analytics Error State** (Session 7): Error display card when analytics data fails to load
+- **Unsaved Changes Warning** (Session 7): useUnsavedChanges hook + dirty state tracking on settings general tab
+- **Search Debounce** (Session 7): useDebounce hook (300ms) on library and accounts search inputs
 
 ### Fixed
 

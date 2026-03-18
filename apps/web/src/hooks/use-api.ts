@@ -9,6 +9,7 @@ async function fetcher(url: string) {
   const token = getToken();
   const res = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
+    signal: AbortSignal.timeout(30_000),
   });
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
@@ -44,6 +45,7 @@ export async function apiPost<T = unknown>(path: string, body?: unknown): Promis
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(30_000),
   });
   let data;
   try {
@@ -64,6 +66,7 @@ export async function apiPut<T = unknown>(path: string, body?: unknown): Promise
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(30_000),
   });
   let data;
   try {
@@ -80,6 +83,7 @@ export async function apiDelete(path: string): Promise<void> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'DELETE',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
+    signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok && res.status !== 204) {
     let data;

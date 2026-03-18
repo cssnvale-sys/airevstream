@@ -121,6 +121,27 @@ describe('rate-limit', () => {
       });
       expect(getClientIp(req)).toBe('1.2.3.4');
     });
+
+    it('rejects invalid x-forwarded-for values', () => {
+      const req = new Request('http://localhost', {
+        headers: { 'x-forwarded-for': '../../../etc/passwd' },
+      });
+      expect(getClientIp(req)).toBe('127.0.0.1');
+    });
+
+    it('rejects overly long header values', () => {
+      const req = new Request('http://localhost', {
+        headers: { 'x-forwarded-for': 'a'.repeat(100) },
+      });
+      expect(getClientIp(req)).toBe('127.0.0.1');
+    });
+
+    it('accepts IPv6 addresses', () => {
+      const req = new Request('http://localhost', {
+        headers: { 'x-forwarded-for': '::1' },
+      });
+      expect(getClientIp(req)).toBe('::1');
+    });
   });
 
   describe('RATE_LIMITS presets', () => {

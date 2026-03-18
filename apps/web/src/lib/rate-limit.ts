@@ -97,13 +97,19 @@ export const RATE_LIMITS = {
   adminWrite: { maxAttempts: 30, windowMs: 60 * 1000 },
 } as const;
 
+const IP_PATTERN = /^[\d.:%a-fA-F]{1,45}$/;
+
 /**
  * Extract client IP from a Next.js request.
+ * Validates format to prevent rate-limit key pollution from spoofed headers.
  */
 export function getClientIp(req: Request): string {
   const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0]!.trim();
+  if (forwarded) {
+    const ip = forwarded.split(',')[0]!.trim();
+    if (IP_PATTERN.test(ip)) return ip;
+  }
   const real = req.headers.get('x-real-ip');
-  if (real) return real;
+  if (real && IP_PATTERN.test(real)) return real;
   return '127.0.0.1';
 }

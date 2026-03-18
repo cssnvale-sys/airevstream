@@ -171,7 +171,7 @@ export async function authenticateApiKey(
     db.apiKey.update({
       where: { id: key.id },
       data: { lastUsedAt: new Date() },
-    }).catch(() => { /* best-effort */ });
+    }).catch((err) => { console.error(`Failed to update lastUsedAt for API key ${key.id}:`, err); });
 
     // API key context uses 'api-key' as userId and derives role from scopes
     const role = key.scopes.includes('admin') ? 'admin' : 'operator';

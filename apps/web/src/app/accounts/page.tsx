@@ -69,8 +69,8 @@ function tierLabel(tier: string): string {
   }
 }
 
-function accountHealthAvg(socials: SocialAccount[]): number | null {
-  if (socials.length === 0) return null;
+function accountHealthAvg(socials: SocialAccount[] | undefined): number | null {
+  if (!socials || socials.length === 0) return null;
   return Math.round(socials.reduce((sum, s) => sum + s.healthScore, 0) / socials.length);
 }
 
@@ -328,7 +328,7 @@ function DetailPanel({
   const account = (data?.data ?? undefined) as DetailAccount | undefined;
 
   const allChannels = useMemo(
-    () => account?.socialAccounts?.flatMap((sa: DetailSocialAccount) => sa.channels?.map((ch: ChannelDetail) => ({ ...ch, platform: sa.platform, socialUsername: sa.username }))) ?? [],
+    () => account?.socialAccounts?.flatMap((sa: DetailSocialAccount) => sa.channels?.map((ch: ChannelDetail) => ({ ...ch, platform: sa.platform, socialUsername: sa.username })) ?? []) ?? [],
     [account],
   );
 
@@ -457,12 +457,12 @@ function DetailPanel({
                   <Tag size={14} /> Niche Tags
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
-                  {[...new Set(allChannels.flatMap((ch) => ch.niches))].map((niche) => (
+                  {[...new Set(allChannels.flatMap((ch) => ch.niches ?? []))].map((niche) => (
                     <span key={niche} className="badge-idle text-xs px-2 py-0.5 rounded">
                       {niche}
                     </span>
                   ))}
-                  {allChannels.every((ch) => ch.niches.length === 0) && (
+                  {allChannels.every((ch) => !ch.niches?.length) && (
                     <p className="text-sm text-text-secondary">No niches assigned.</p>
                   )}
                 </div>
@@ -560,7 +560,7 @@ function DetailPanel({
                   {allChannels
                     .filter((ch) => ch.brandingPackages && ch.brandingPackages.length > 0)
                     .map((ch) =>
-                      ch.brandingPackages.map((bp) => (
+                      ch.brandingPackages?.map((bp) => (
                         <div key={bp.id} className="bg-bg-tertiary rounded-lg p-3">
                           <p className="text-sm font-medium text-text-primary mb-1">{ch.name}</p>
                           <div className="flex items-center gap-2">

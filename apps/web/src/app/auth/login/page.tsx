@@ -29,7 +29,8 @@ export default function LoginPage() {
         throw new Error(msg === 'Invalid credentials' ? msg : 'Login failed');
       }
       setToken(data.data.token);
-      router.push('/dashboard');
+      const params = new URLSearchParams(window.location.search);
+      router.push(params.get('redirect') || '/dashboard');
     } catch (err) {
       console.error('Login failed:', err);
       setError(err instanceof Error ? err.message : 'Login failed');

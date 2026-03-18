@@ -63,6 +63,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (ctx.role !== 'admin') {
+    return forbidden('Only admins can update AI services');
+  }
+
   const { id } = await params;
 
   try {

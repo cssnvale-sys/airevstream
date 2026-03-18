@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
@@ -107,6 +107,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  if (ctx.role !== 'admin') {
+    return forbidden('Only admins can register AI services');
+  }
 
   try {
     const body = await req.json();

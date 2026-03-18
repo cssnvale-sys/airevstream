@@ -1,4 +1,4 @@
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticate, success, error, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -9,6 +9,10 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  if (ctx.role !== 'admin') {
+    return forbidden('Only admins can trigger health checks');
+  }
 
   try {
     const services = await ctx.db.aiService.findMany({

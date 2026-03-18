@@ -25,7 +25,9 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     logger.info('Shutting down workers...');
-    await Promise.all(workers.map((w) => w.close()));
+    await Promise.allSettled(workers.map((w) => {
+      try { return w.close(); } catch (err) { logger.error(err, 'Error closing worker'); return Promise.resolve(); }
+    }));
     logger.info('All workers stopped');
     process.exit(0);
   };

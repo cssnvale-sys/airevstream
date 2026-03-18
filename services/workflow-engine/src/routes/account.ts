@@ -2,13 +2,29 @@ import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { encrypt } from '@airevstream/crypto';
-import { getConfig } from '@airevstream/shared';
+import { getConfig, createLogger } from '@airevstream/shared';
+
+const logger = createLogger('routes:account');
 
 const createEmailAccountSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
   tier: z.enum(['tier1', 'tier2', 'tier3']).default('tier2'),
   notes: z.string().optional(),
+});
+
+const updateEmailAccountSchema = z.object({
+  status: z.enum(['active', 'suspended', 'banned', 'warming']).optional(),
+  tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
+const bulkImportSchema = z.object({
+  accounts: z.array(z.object({
+    email: z.string().email(),
+    password: z.string().min(1),
+    tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
+  })).min(1).max(500),
 });
 
 const createSocialAccountSchema = z.object({
@@ -101,6 +117,9 @@ export async function accountRoutes(app: FastifyInstance) {
     }
 
     const config = getConfig();
+    if (!config.ENCRYPTION_KEY) {
+      logger.warn('ENCRYPTION_KEY not set — storing password in plaintext. Set ENCRYPTION_KEY in .env for production.');
+    }
     const passwordEnc = config.ENCRYPTION_KEY
       ? encrypt(parsed.data.password, config.ENCRYPTION_KEY)
       : parsed.data.password;
@@ -121,13 +140,19 @@ export async function accountRoutes(app: FastifyInstance) {
   // Update email account
   app.put('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const body = request.body as Record<string, unknown>;
-    const db = getDb();
+    const parsed = updateEmailAccountSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+      });
+    }
 
+    const db = getDb();
     const updateData: Record<string, unknown> = {};
-    if (body.status) updateData.status = body.status as string;
-    if (body.tier) updateData.tier = body.tier as string;
-    if (body.notes !== undefined) updateData.notes = body.notes as string | null;
+    if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+    if (parsed.data.tier !== undefined) updateData.tier = parsed.data.tier;
+    if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
 
     const account = await db.emailAccount.update({
       where: { id },
@@ -147,7 +172,14 @@ export async function accountRoutes(app: FastifyInstance) {
 
   // Bulk import email accounts
   app.post('/bulk-import', async (request, reply) => {
-    const { accounts } = request.body as { accounts: Array<{ email: string; password: string; tier?: string }> };
+    const parsed = bulkImportSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+      });
+    }
+    const { accounts } = parsed.data;
     const config = getConfig();
     const db = getDb();
 

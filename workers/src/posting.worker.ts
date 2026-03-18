@@ -48,7 +48,12 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     }
 
     const decryptedJson = decrypt(socialAccount.credentialsEnc, config.ENCRYPTION_KEY);
-    const credentials: PlatformCredentials = JSON.parse(decryptedJson);
+    let credentials: PlatformCredentials;
+    try {
+      credentials = JSON.parse(decryptedJson);
+    } catch (parseErr) {
+      throw new Error(`Failed to parse decrypted credentials for social account ${socialAccount.id}: invalid JSON`);
+    }
 
     // Use channelId from the platform if not in credentials
     if (!credentials.channelId && scheduledPost.channel.platformChannelId) {

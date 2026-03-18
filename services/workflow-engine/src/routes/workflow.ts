@@ -12,6 +12,8 @@ const createJobSchema = z.object({
   params: z.record(z.unknown()).default({}),
 });
 
+const WORKFLOW_SORT_FIELDS = ['createdAt', 'updatedAt', 'priority', 'status', 'jobType'] as const;
+
 export async function workflowRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
@@ -27,12 +29,15 @@ export async function workflowRoutes(app: FastifyInstance) {
     if (status) where.status = status;
     if (jobType) where.jobType = jobType;
 
+    const safeSort = (WORKFLOW_SORT_FIELDS as readonly string[]).includes(sort) ? sort : 'createdAt';
+    const safeOrder = order === 'asc' ? 'asc' : 'desc';
+
     const [items, total] = await Promise.all([
       db.workflowJob.findMany({
         where,
         skip,
         take: limitNum,
-        orderBy: { [sort]: order },
+        orderBy: { [safeSort]: safeOrder },
         include: {
           content: { select: { id: true, title: true, contentType: true } },
         },

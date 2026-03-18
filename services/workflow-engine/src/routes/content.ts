@@ -4,6 +4,20 @@ import { getDb } from '@airevstream/db';
 import { addJob } from '@airevstream/queue';
 import type { Prisma } from '@prisma/client';
 
+const CONTENT_SORT_FIELDS = ['createdAt', 'updatedAt', 'title', 'status', 'contentType', 'qualityScore'] as const;
+
+const updateContentSchema = z.object({
+  title: z.string().max(500).optional(),
+  status: z.enum(['draft', 'generating', 'pending_approval', 'approved', 'scheduled', 'posted', 'failed', 'archived']).optional(),
+  prompt: z.string().max(10000).optional(),
+  platformMetadata: z.record(z.unknown()).optional(),
+});
+
+const bulkApprovalSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(100),
+  action: z.enum(['approve', 'reject']),
+});
+
 const createContentSchema = z.object({
   channelId: z.string().uuid(),
   title: z.string().max(500).optional(),
@@ -34,13 +48,16 @@ export async function contentRoutes(app: FastifyInstance) {
     if (channelId) where.channelId = channelId;
     if (search) where.title = { contains: search, mode: 'insensitive' };
 
+    const safeSort = (CONTENT_SORT_FIELDS as readonly string[]).includes(sort) ? sort : 'createdAt';
+    const safeOrder = order === 'asc' ? 'asc' : 'desc';
+
     const db = getDb();
     const [items, total] = await Promise.all([
       db.contentItem.findMany({
         where,
         skip,
         take: limitNum,
-        orderBy: { [sort]: order },
+        orderBy: { [safeSort]: safeOrder },
         include: {
           channel: { select: { id: true, name: true, primaryLanguage: true } },
           aiService: { select: { id: true, name: true, provider: true } },
@@ -121,14 +138,20 @@ export async function contentRoutes(app: FastifyInstance) {
   // Update content metadata
   app.put('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const body = request.body as Record<string, unknown>;
-    const db = getDb();
+    const parsed = updateContentSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+      });
+    }
 
+    const db = getDb();
     const updateData: Record<string, unknown> = {};
-    if (body.title !== undefined) updateData.title = body.title as string;
-    if (body.status) updateData.status = body.status as string;
-    if (body.prompt !== undefined) updateData.prompt = body.prompt as string;
-    if (body.platformMetadata) updateData.platformMetadata = body.platformMetadata;
+    if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
+    if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+    if (parsed.data.prompt !== undefined) updateData.prompt = parsed.data.prompt;
+    if (parsed.data.platformMetadata !== undefined) updateData.platformMetadata = parsed.data.platformMetadata;
 
     const content = await db.contentItem.update({
       where: { id },
@@ -274,7 +297,14 @@ export async function contentRoutes(app: FastifyInstance) {
 
   // Bulk approve/reject
   app.post('/approvals/bulk', async (request, reply) => {
-    const { ids, action } = request.body as { ids: string[]; action: 'approve' | 'reject' };
+    const parsed = bulkApprovalSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+      });
+    }
+    const { ids, action } = parsed.data;
     const db = getDb();
 
     const updateData = action === 'approve'

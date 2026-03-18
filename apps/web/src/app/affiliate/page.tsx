@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useApi, useAffiliateProducts, useChannels, apiPost, apiPut } from '@/hooks/use-api';
+import { useApi, useAffiliateProducts, useChannels, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
 import {
   Plus,
@@ -344,10 +344,7 @@ export default function AffiliatePage() {
           onRemoveFromPool={async (productId: string) => {
             if (!selectedChannelId) return;
             try {
-              await apiPost(`/channels/${selectedChannelId}/affiliate-pool`, {
-                affiliateProductId: productId,
-                _action: 'remove',
-              });
+              await apiDelete(`/channels/${selectedChannelId}/affiliate-pool?affiliateProductId=${productId}`);
               mutatePool();
             } catch {
               // ignore

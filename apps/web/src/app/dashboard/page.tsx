@@ -37,7 +37,7 @@ interface ApprovalItem {
   id: string;
   channel?: { id: string; name: string };
   contentType: string;
-  qualityScore: string | null;
+  qualityScore: number | null;
   status: string;
   createdAt: string;
 }
@@ -45,7 +45,6 @@ interface ApprovalItem {
 interface ContentItem {
   id: string;
   status: string;
-  postedAt?: string;
   createdAt: string;
 }
 
@@ -194,9 +193,9 @@ export default function DashboardPage() {
   const accountStats = accountStatsRes?.data as unknown as AccountStats | undefined;
 
   const postedTodayCount = useMemo(() => {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
     return contentItems.filter(
-      (c) => c.status === 'posted' && (c.postedAt ?? c.createdAt)?.slice(0, 10) === todayStr,
+      (c) => c.status === 'posted' && c.createdAt?.slice(0, 10) === today,
     ).length;
   }, [contentItems]);
 

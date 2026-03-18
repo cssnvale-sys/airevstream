@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
       });
       latestMetrics[metricType] = metric
-        ? { value: metric.value, unit: metric.unit, timestamp: metric.createdAt }
+        ? { value: Number(metric.value), unit: metric.unit, timestamp: metric.createdAt }
         : null;
     }
 

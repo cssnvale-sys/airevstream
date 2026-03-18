@@ -4,6 +4,34 @@ import { NextRequest, NextResponse } from 'next/server';
 type RouteParams = { params: Promise<{ id: string }> };
 
 /**
+ * DELETE /api/v1/channels/[id]/affiliate-pool?affiliateProductId=xxx
+ * Remove an affiliate product from a channel's pool
+ */
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { id: channelId } = await params;
+
+  try {
+    const affiliateProductId = req.nextUrl.searchParams.get('affiliateProductId');
+
+    if (!affiliateProductId) {
+      return validationError('affiliateProductId is required');
+    }
+
+    await ctx.db.channelAffiliatePool.deleteMany({
+      where: { channelId, affiliateProductId },
+    });
+
+    return success({ deleted: true });
+  } catch (err) {
+    console.error('DELETE /api/v1/channels/[id]/affiliate-pool failed:', err);
+    return error('INTERNAL_ERROR', 'Failed to remove from pool', 500);
+  }
+}
+
+/**
  * GET /api/v1/channels/[id]/affiliate-pool
  * List affiliate products in a channel's pool
  */

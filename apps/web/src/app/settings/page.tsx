@@ -45,7 +45,6 @@ interface AiService {
   serviceType: string;
   status: string;
   endpoint: string;
-  model?: string;
 }
 
 interface FallbackChainService {
@@ -74,6 +73,8 @@ interface ApiKey {
   id: string;
   name: string;
   keyPrefix: string;
+  status: string;
+  expiresAt?: string | null;
   createdAt: string;
   lastUsedAt?: string;
 }
@@ -247,7 +248,7 @@ function AiServicesTab() {
   const { data: chainsRes } = useApi<FallbackChain[]>('/settings/ai/fallback-chains');
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newService, setNewService] = useState({ name: '', type: 'text', endpoint: '', model: '' });
+  const [newService, setNewService] = useState({ name: '', type: 'text', endpoint: '' });
   const [adding, setAdding] = useState(false);
 
   const services = (servicesRes?.data as unknown as AiService[]) ?? [];
@@ -264,7 +265,7 @@ function AiServicesTab() {
         isLocal: true,
       });
       setShowAddForm(false);
-      setNewService({ name: '', type: 'text', endpoint: '', model: '' });
+      setNewService({ name: '', type: 'text', endpoint: '' });
       mutate();
     } catch {
       // ignore
@@ -341,15 +342,6 @@ function AiServicesTab() {
                   placeholder="http://localhost:11434"
                 />
               </div>
-              <div>
-                <label className="block text-xs text-text-secondary mb-1">Model (optional)</label>
-                <input
-                  value={newService.model}
-                  onChange={(e) => setNewService({ ...newService, model: e.target.value })}
-                  className="input w-full"
-                  placeholder="qwen3:8b"
-                />
-              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -390,7 +382,6 @@ function AiServicesTab() {
                   </div>
                   <p className="text-xs text-text-secondary mt-0.5 font-mono truncate">
                     {svc.endpoint}
-                    {svc.model ? ` / ${svc.model}` : ''}
                   </p>
                 </div>
                 <span className={cn('badge text-xs', svc.status === 'active' || svc.status === 'healthy' ? 'badge-active' : svc.status === 'degraded' ? 'badge-pending' : 'badge-error')}>
@@ -780,18 +771,28 @@ function SecurityTab() {
         ) : (
           <div className="space-y-2">
             {apiKeys.map((key) => (
-              <div key={key.id} className="card flex items-center gap-3">
+              <div key={key.id} className={cn('card flex items-center gap-3', key.status === 'revoked' && 'opacity-60')}>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-text-primary">{key.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-text-primary">{key.name}</span>
+                    {key.status === 'revoked' && (
+                      <span className="badge badge-error text-xs">Revoked</span>
+                    )}
+                    {key.status === 'expired' && (
+                      <span className="badge badge-pending text-xs">Expired</span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 mt-0.5 text-xs text-text-secondary">
                     <span className="font-mono">{key.keyPrefix}...</span>
                     <span>Created {new Date(key.createdAt).toLocaleDateString()}</span>
                     {key.lastUsedAt && <span>Last used {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
+                    {key.expiresAt && <span>Expires {new Date(key.expiresAt).toLocaleDateString()}</span>}
                   </div>
                 </div>
                 <button
                   onClick={() => handleRevokeKey(key.id)}
-                  className="btn-danger btn-sm flex items-center gap-1"
+                  disabled={key.status === 'revoked'}
+                  className={cn('btn-danger btn-sm flex items-center gap-1', key.status === 'revoked' && 'opacity-50 cursor-not-allowed')}
                 >
                   <Trash2 size={12} /> Revoke
                 </button>

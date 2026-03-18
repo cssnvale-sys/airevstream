@@ -22,19 +22,16 @@ import {
 interface Channel {
   id: string;
   name: string;
-  platform: string;
-  identity?: {
-    persona?: string;
-    tone?: string;
-    niche?: string;
-  };
+  socialAccount?: { platform: string; username: string } | null;
+  tone?: string | null;
+  personality?: string | null;
+  niches?: string[];
 }
 
 interface AffiliateProduct {
   id: string;
   name: string;
-  platform: string;
-  commission: number;
+  commissionRate: number | null;
 }
 
 type ContentType = 'video_short' | 'video_long' | 'image' | 'text' | 'voice' | 'thumbnail';
@@ -168,7 +165,7 @@ export default function CreatePage() {
       case 4:
         return formData.shots.length > 0;
       case 5:
-        return Object.values(formData.shotStatuses).length > 0 && Object.values(formData.shotStatuses).every((s) => s === 'complete' || s === 'failed');
+        return Object.values(formData.shotStatuses).length > 0 && Object.values(formData.shotStatuses).every((s) => s === 'complete' || s === 'generating' || s === 'failed');
       default:
         return true;
     }
@@ -265,16 +262,18 @@ export default function CreatePage() {
       }));
 
       try {
-        const res = await apiPost<{ data: { status?: string; imageUrl?: string } }>('/content/generate-shot', {
+        const res = await apiPost<{ data: { status?: string; jobId?: string; imageUrl?: string } }>('/content/generate-shot', {
           shotId: shot.id,
           description: shot.description,
         });
         const resStatus = res.data?.status;
         const hasImage = !!res.data?.imageUrl;
-        const isDone = hasImage || resStatus === 'completed' || resStatus === 'done';
+        // The API returns status 'generating' with a jobId when the BullMQ job is queued.
+        // Treat 'generating' (job accepted) as success so the user can proceed.
+        const isAccepted = resStatus === 'generating' || resStatus === 'completed' || resStatus === 'done' || hasImage;
         setFormData((prev) => ({
           ...prev,
-          shotStatuses: { ...prev.shotStatuses, [String(shot.id)]: (isDone ? 'complete' : 'generating') as ShotStatus },
+          shotStatuses: { ...prev.shotStatuses, [String(shot.id)]: (isAccepted ? 'complete' : 'generating') as ShotStatus },
         }));
       } catch {
         setFormData((prev) => ({
@@ -401,7 +400,7 @@ export default function CreatePage() {
             <option value="">Select a channel...</option>
             {channels.map((ch) => (
               <option key={ch.id} value={ch.id}>
-                {platformIcon(ch.platform)} {ch.name}
+                {platformIcon(ch.socialAccount?.platform ?? '')} {ch.name}
               </option>
             ))}
           </select>
@@ -415,26 +414,26 @@ export default function CreatePage() {
             <div className="flex justify-between">
               <span className="text-text-secondary">Platform</span>
               <span className="text-text-primary">
-                {platformIcon(selectedChannel.platform)}{' '}
-                {selectedChannel.platform.charAt(0).toUpperCase() + selectedChannel.platform.slice(1)}
+                {platformIcon(selectedChannel?.socialAccount?.platform ?? '')}{' '}
+                {(selectedChannel?.socialAccount?.platform ?? '').charAt(0).toUpperCase() + (selectedChannel?.socialAccount?.platform ?? '').slice(1)}
               </span>
             </div>
-            {selectedChannel.identity?.persona && (
+            {selectedChannel?.personality && (
               <div className="flex justify-between">
                 <span className="text-text-secondary">Persona</span>
-                <span className="text-text-primary">{selectedChannel.identity.persona}</span>
+                <span className="text-text-primary">{selectedChannel.personality}</span>
               </div>
             )}
-            {selectedChannel.identity?.tone && (
+            {selectedChannel?.tone && (
               <div className="flex justify-between">
                 <span className="text-text-secondary">Tone</span>
-                <span className="text-text-primary">{selectedChannel.identity.tone}</span>
+                <span className="text-text-primary">{selectedChannel.tone}</span>
               </div>
             )}
-            {selectedChannel.identity?.niche && (
+            {selectedChannel?.niches?.[0] && (
               <div className="flex justify-between">
                 <span className="text-text-secondary">Niche</span>
-                <span className="text-text-primary">{selectedChannel.identity.niche}</span>
+                <span className="text-text-primary">{selectedChannel.niches[0]}</span>
               </div>
             )}
           </div>
@@ -553,7 +552,7 @@ export default function CreatePage() {
                 <option value="">Select product...</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.commission}% commission)
+                    {p.name} ({p.commissionRate ?? 0}% commission)
                   </option>
                 ))}
               </select>

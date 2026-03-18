@@ -27,8 +27,14 @@ export async function GET(req: NextRequest) {
     }
 
     const dateFilter: Record<string, unknown> = {};
-    if (start) dateFilter.gte = new Date(start);
-    if (end) dateFilter.lte = new Date(end);
+    if (start) {
+      const d = new Date(start);
+      if (!isNaN(d.getTime())) dateFilter.gte = d;
+    }
+    if (end) {
+      const d = new Date(end);
+      if (!isNaN(d.getTime())) dateFilter.lte = d;
+    }
     const hasDateFilter = Object.keys(dateFilter).length > 0;
 
     // Tenant scoping: get this tenant's channel IDs

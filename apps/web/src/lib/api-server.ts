@@ -124,7 +124,8 @@ export function parseQuery(req: NextRequest) {
   const limit = Math.min(100, Math.max(1, Number.isNaN(rawLimit) ? 50 : rawLimit));
   const skip = (page - 1) * limit;
   const sort = url.searchParams.get('sort') ?? 'createdAt';
-  const order = url.searchParams.get('order') ?? 'desc';
+  const rawOrder = url.searchParams.get('order') ?? 'desc';
+  const order = rawOrder === 'asc' ? 'asc' : 'desc';
   const search = url.searchParams.get('search') ?? undefined;
   return { page, limit, skip, sort, order, search, params: url.searchParams };
 }

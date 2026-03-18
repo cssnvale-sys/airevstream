@@ -37,12 +37,15 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (platform) where.platform = platform;
     if (status) where.status = status;
 
+    const allowedSorts = ['platform', 'username', 'createdAt', 'status', 'healthScore'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';
+
     const [socials, total] = await Promise.all([
       ctx.db.socialAccount.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sort]: order },
+        orderBy: { [sortField]: order },
         include: {
           _count: { select: { channels: true } },
         },

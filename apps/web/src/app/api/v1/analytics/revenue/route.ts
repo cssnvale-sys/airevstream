@@ -33,9 +33,15 @@ export async function GET(req: NextRequest) {
     if (productId) where.productId = productId;
     if (start || end) {
       const dateFilter: Record<string, unknown> = {};
-      if (start) dateFilter.gte = new Date(start);
-      if (end) dateFilter.lte = new Date(end);
-      where.createdAt = dateFilter;
+      if (start) {
+        const d = new Date(start);
+        if (!isNaN(d.getTime())) dateFilter.gte = d;
+      }
+      if (end) {
+        const d = new Date(end);
+        if (!isNaN(d.getTime())) dateFilter.lte = d;
+      }
+      if (Object.keys(dateFilter).length > 0) where.createdAt = dateFilter;
     }
 
     // Total revenue

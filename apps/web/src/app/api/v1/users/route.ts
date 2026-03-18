@@ -30,12 +30,15 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    const allowedSorts = ['email', 'name', 'createdAt', 'role'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';
+
     const [users, total] = await Promise.all([
       ctx.db.user.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sort]: order },
+        orderBy: { [sortField]: order },
         select: {
           id: true,
           email: true,

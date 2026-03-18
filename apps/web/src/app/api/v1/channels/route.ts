@@ -58,12 +58,15 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    const allowedSorts = ['name', 'createdAt', 'updatedAt', 'status', 'primaryLanguage'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';
+
     const [channels, total] = await Promise.all([
       ctx.db.channel.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sort]: order },
+        orderBy: { [sortField]: order },
         include: {
           socialAccount: {
             select: {

@@ -38,12 +38,15 @@ export async function GET(req: NextRequest) {
     };
     if (statusFilter) where.status = statusFilter;
 
+    const allowedSorts = ['name', 'createdAt', 'lastUsedAt', 'status'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';
+
     const [keys, total] = await Promise.all([
       ctx.db.apiKey.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sort]: order },
+        orderBy: { [sortField]: order },
         select: {
           id: true,
           tenantId: true,

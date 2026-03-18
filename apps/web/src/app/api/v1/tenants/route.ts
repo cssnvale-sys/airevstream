@@ -48,12 +48,15 @@ export async function GET(req: NextRequest) {
     if (statusFilter && validStatuses.includes(statusFilter)) where.status = statusFilter;
     if (planFilter && validPlans.includes(planFilter)) where.plan = planFilter;
 
+    const allowedSorts = ['name', 'slug', 'createdAt', 'plan', 'status'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';
+
     const [tenants, total] = await Promise.all([
       ctx.db.tenant.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sort]: order },
+        orderBy: { [sortField]: order },
         include: {
           _count: {
             select: {

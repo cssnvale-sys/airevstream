@@ -33,12 +33,15 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    const allowedSorts = ['email', 'createdAt', 'updatedAt', 'status', 'tier'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';
+
     const [accounts, total] = await Promise.all([
       ctx.db.emailAccount.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sort]: order },
+        orderBy: { [sortField]: order },
         include: {
           _count: { select: { socialAccounts: true } },
           socialAccounts: {

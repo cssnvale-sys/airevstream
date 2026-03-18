@@ -76,10 +76,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Fetch existing emails to skip duplicates
+    // Fetch existing emails to skip duplicates (scoped to tenant)
     const emails = accounts.map((a: { email: string }) => a.email);
     const existingAccounts = await ctx.db.emailAccount.findMany({
-      where: { email: { in: emails } },
+      where: { email: { in: emails }, tenantId: ctx.tenantId },
       select: { email: true },
     });
     const existingEmails = new Set(existingAccounts.map((a) => a.email));
@@ -110,7 +110,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (toCreate.length > 0) {
-      await ctx.db.emailAccount.createMany({ data: toCreate });
+      await ctx.db.emailAccount.createMany({
+        data: toCreate.map((r) => ({ ...r, tenantId: ctx.tenantId })),
+      });
     }
 
     const imported = results.filter((r) => r.status === 'created').length;

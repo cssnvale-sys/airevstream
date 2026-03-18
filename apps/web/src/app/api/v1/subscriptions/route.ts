@@ -80,6 +80,11 @@ export async function POST(req: NextRequest) {
 
     const { tenantId, plan } = parsed.data;
 
+    // Authorization: only allow creating subscriptions for own tenant (or admin for any)
+    if (ctx.tenantId !== tenantId && ctx.role !== 'admin') {
+      return error('FORBIDDEN', 'Cannot create subscription for another tenant', 403);
+    }
+
     // Verify tenant exists
     const tenant = await ctx.db.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) {

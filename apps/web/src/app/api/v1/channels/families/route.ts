@@ -14,7 +14,10 @@ export async function GET(req: NextRequest) {
   try {
     // Get all channels that have a familyId, grouped by familyId
     const channelsWithFamily = await ctx.db.channel.findMany({
-      where: { familyId: { not: null } },
+      where: {
+        familyId: { not: null },
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
       orderBy: [{ familyId: 'asc' }, { isPrimary: 'desc' }, { name: 'asc' }],
       include: {
         socialAccount: {
@@ -73,9 +76,12 @@ export async function POST(req: NextRequest) {
       return error('VALIDATION_ERROR', 'channelIds must be an array with at least 2 channel IDs', 400);
     }
 
-    // Verify all channels exist
+    // Verify all channels exist and belong to this tenant
     const channels = await ctx.db.channel.findMany({
-      where: { id: { in: channelIds } },
+      where: {
+        id: { in: channelIds },
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
     });
 
     if (channels.length !== channelIds.length) {

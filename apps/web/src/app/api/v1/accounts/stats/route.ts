@@ -12,6 +12,10 @@ export async function GET(req: NextRequest) {
   try {
     const db = ctx.db;
 
+    const tenantScope = { tenantId: ctx.tenantId };
+    const socialTenantScope = { emailAccount: { tenantId: ctx.tenantId } };
+    const channelTenantScope = { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } };
+
     const [
       totalEmails,
       emailsByStatus,
@@ -21,36 +25,42 @@ export async function GET(req: NextRequest) {
       channelsByLanguage,
       recentlyActive,
     ] = await Promise.all([
-      db.emailAccount.count(),
+      db.emailAccount.count({ where: tenantScope }),
 
       db.emailAccount.groupBy({
         by: ['status'],
+        where: tenantScope,
         _count: { id: true },
       }),
 
       db.socialAccount.groupBy({
         by: ['platform'],
+        where: socialTenantScope,
         _count: { id: true },
         _avg: { healthScore: true },
       }),
 
       db.socialAccount.groupBy({
         by: ['status'],
+        where: socialTenantScope,
         _count: { id: true },
       }),
 
       db.emailAccount.groupBy({
         by: ['tier'],
+        where: tenantScope,
         _count: { id: true },
       }),
 
       db.channel.groupBy({
         by: ['primaryLanguage'],
+        where: channelTenantScope,
         _count: { id: true },
       }),
 
       db.socialAccount.count({
         where: {
+          ...socialTenantScope,
           lastLoginAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
         },
       }),
@@ -58,6 +68,7 @@ export async function GET(req: NextRequest) {
 
     // Calculate coverage: emails that have at least one social account per platform
     const emailsWithSocials = await db.emailAccount.findMany({
+      where: tenantScope,
       select: {
         id: true,
         socialAccounts: {

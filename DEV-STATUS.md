@@ -99,6 +99,9 @@
 | 5.49 | Accessibility round 2 | Done | aria-label on shortcuts button, NaN guard on qualityScore, descriptive alt text on shots |
 | 5.50 | Approvals tenant scoping | Done | **CRITICAL:** Tenant scoping on approvals GET + POST, err:any fix |
 | 5.51 | Auth + data quality | Done | JWT expiry check in isAuthenticated(), healthScore Decimal, use-api error fallback |
+| 5.52 | Tenant scoping round 2 | Done | **CRITICAL:** accounts/[id], channels/[id] detail routes tenant-scoped |
+| 5.53 | Tenant scoping round 3 | Done | system/workflows, activity, affiliate/revenue, affiliate/clicks tenant-scoped |
+| 5.54 | Tenant scoping gaps documented | Done | KI-020: 7 models need tenantId schema migration |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

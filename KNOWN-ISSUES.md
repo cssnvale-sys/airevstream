@@ -130,6 +130,29 @@ All 7 analytics routes (overview, engagement, revenue, costs, content-performanc
 **Status**: Fixed (Session 7, Batch 39)
 Approvals GET returned all tenants' content. Approvals POST approve/reject allowed cross-tenant actions. Fixed by adding channel→socialAccount→emailAccount→tenantId filter on GET and using findFirst with tenant scope on POST.
 
+### KI-018: Missing Tenant Scoping on accounts/channels Detail Routes
+**Severity**: Critical
+**Status**: Fixed (Session 7, Batch 42)
+GET/PUT/DELETE on accounts/[id] had no tenantId check. GET/PUT on channels/[id] had no tenant chain verification. Fixed by using findFirst with tenant scope.
+
+### KI-019: Missing Tenant Scoping on System/Activity/Affiliate Routes
+**Severity**: High
+**Status**: Fixed (Session 7, Batch 43)
+system/workflows returned all tenants' jobs. Activity feed showed all tenants' content/posts. Affiliate revenue/clicks had no tenant filtering. Fixed by scoping via tenant channel/account IDs.
+
+### KI-020: Models Without tenantId — Need Schema Migration
+**Severity**: Medium
+**Status**: Open (Requires Schema Change)
+Several models lack `tenantId` and cannot be tenant-scoped without a Prisma schema migration:
+- **Conversation** — AI chat conversations are globally visible. Needs `userId` and/or `tenantId` field.
+- **KnowledgeBaseEntry** — Knowledge base entries are shared globally. Needs `tenantId` for isolation.
+- **PromptTemplate** — Prompt templates are shared globally. Needs `tenantId` for isolation.
+- **CostBudget** — Cost budgets are not tenant-scoped. Needs `tenantId` field.
+- **Alert** — System alerts are global. Needs `tenantId` or category-based scoping.
+- **AiService** — AI service registry is global (may be intentional for self-hosted).
+- **AffiliateProduct** — Products are global (may need `tenantId` or shared product catalog design).
+**Action**: Add `tenantId` fields to these models in a future schema migration and update all related API routes.
+
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium
 **Status**: Fixed (Session 6, Round 8)

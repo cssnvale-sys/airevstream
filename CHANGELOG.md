@@ -53,6 +53,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added `Number()` wrapping on `healthScore` Decimal in accounts GET route
 - Improved error message extraction in `use-api.ts` — falls back to `error.code` if `message` is missing
 
+**Audit Round 15 (Session 7) — Comprehensive Tenant Scoping**
+- **CRITICAL:** Tenant scoping on accounts/[id] GET/PUT/DELETE (any user could access other tenants' accounts)
+- **CRITICAL:** Tenant scoping on channels/[id] GET/PUT (any user could view/edit other tenants' channels)
+- Tenant scoping on system/workflows (scoped by tenant channels/accounts)
+- Tenant scoping on activity feed (content/posts scoped by tenant channels)
+- Tenant scoping on affiliate/revenue and affiliate/clicks (scoped by tenant channels)
+- Fixed `err: any` type in activity route
+- Documented 7 models needing `tenantId` schema migration (KI-020)
+
 **Audit Round 12 (Session 7) — Validation & Polish**
 - Added password minLength and submit disabled state to accounts add-email modal
 - Added required/minLength/maxLength to create page topic field

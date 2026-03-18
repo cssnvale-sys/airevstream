@@ -462,6 +462,20 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 **Batch 41: Tracking Docs Update (round 8)**
 - Updated SESSION-LOG, CHANGELOG, DEV-STATUS, KNOWN-ISSUES (KI-017)
 
+**Batch 42: Tenant Scoping — accounts/channels Detail Routes**
+- accounts/[id] GET/PUT/DELETE: findFirst with tenantId
+- channels/[id] GET/PUT: findFirst with tenant chain scope
+
+**Batch 43: Tenant Scoping — system/activity/affiliate Routes**
+- system/workflows: scoped by tenant channels + accounts
+- activity: content/posts scoped by tenant channels
+- affiliate/revenue: all click queries scoped
+- affiliate/clicks: scoped with channelId validation
+
+**Batch 44: Tenant Scoping Gaps + Tracking Docs (round 9)**
+- Documented KI-020: 7 models need tenantId schema migration
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS, KNOWN-ISSUES
+
 ### Commits
 - `e721ffd` — docs: tracking docs round 5
 - `7db01f5` — feat: auth middleware
@@ -472,7 +486,10 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `4393d19` — docs: tracking docs round 7
 - `aa9c7cc` — fix: approvals tenant scoping
 - `5cba1e1` — fix: JWT expiry, healthScore, error messages
-- (this commit) — docs: tracking docs round 8
+- `34ec381` — docs: tracking docs round 8
+- `1f69d4a` — fix: accounts/channels tenant scoping
+- `5fc329b` — fix: system/activity/affiliate tenant scoping
+- (this commit) — docs: tracking docs round 9
 
 ### Open Items
 - E2E testing (Playwright) not started

@@ -14,6 +14,16 @@ async function main() {
     logger.error(err, 'Failed to start server');
     process.exit(1);
   }
+
+  const shutdown = async () => {
+    logger.info('Shutting down AI assistant...');
+    await app.close();
+    logger.info('AI assistant stopped');
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 
 main().catch((err) => {

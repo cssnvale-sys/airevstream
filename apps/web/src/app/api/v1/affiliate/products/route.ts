@@ -1,5 +1,17 @@
 import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const CreateProductSchema = z.object({
+  name: z.string().min(1).max(200),
+  url: z.string().url(),
+  salesAngle: z.string().max(500).optional().nullable(),
+  commissionRate: z.number().min(0).max(100).optional().nullable(),
+  category: z.string().max(100).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  brand: z.string().max(200).optional().nullable(),
+  imageUrl: z.string().url().optional().nullable(),
+});
 
 /**
  * GET /api/v1/affiliate/products
@@ -65,22 +77,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, url, salesAngle, commissionRate, category, description, brand, imageUrl } = body;
-
-    if (!name || !url) {
-      return validationError('name and url are required');
+    const parsed = CreateProductSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
     }
 
     const product = await ctx.db.affiliateProduct.create({
       data: {
-        name,
-        url,
-        salesAngle: salesAngle ?? null,
-        commissionRate: commissionRate ?? null,
-        category: category ?? null,
-        description: description ?? null,
-        brand: brand ?? null,
-        imageUrl: imageUrl ?? null,
+        name: parsed.data.name,
+        url: parsed.data.url,
+        salesAngle: parsed.data.salesAngle ?? null,
+        commissionRate: parsed.data.commissionRate ?? null,
+        category: parsed.data.category ?? null,
+        description: parsed.data.description ?? null,
+        brand: parsed.data.brand ?? null,
+        imageUrl: parsed.data.imageUrl ?? null,
       },
     });
 

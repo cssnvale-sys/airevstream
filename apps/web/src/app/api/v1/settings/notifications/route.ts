@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error } from '@/lib/api-server';
+import { z } from 'zod';
+import { authenticate, success, error, validationError } from '@/lib/api-server';
+
+const NotificationChannelSchema = z.object({
+  type: z.enum(['dashboard', 'email', 'slack']),
+  enabled: z.boolean(),
+  config: z.record(z.unknown()).optional(),
+});
+
+const NotificationSettingsSchema = z.union([
+  z.array(NotificationChannelSchema),
+  z.object({ channels: z.array(NotificationChannelSchema) }),
+]);
 
 const SETTING_KEY = 'notifications';
 const DEFAULTS = [
@@ -22,7 +34,11 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const value = body.channels ?? body;
+    const parsed = NotificationSettingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+    }
+    const value = (Array.isArray(parsed.data) ? parsed.data : parsed.data.channels) as any;
 
     const row = await ctx.db.systemSetting.upsert({
       where: { key: SETTING_KEY },

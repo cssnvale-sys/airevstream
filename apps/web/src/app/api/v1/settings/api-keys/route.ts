@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'node:crypto';
+import { z } from 'zod';
 import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 import { sha256 } from '@airevstream/crypto';
+
+const CreateApiKeySchema = z.object({
+  name: z.string().min(1).max(100),
+  scopes: z.array(z.enum(['read', 'write', 'admin'])).optional(),
+  rateLimitRpm: z.number().int().min(1).max(10000).optional(),
+  expiresAt: z.string().datetime().optional().nullable(),
+});
 
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
@@ -44,7 +52,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    if (!body.name) return validationError('name is required');
+    const parsed = CreateApiKeySchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+    }
 
     const rawKey = `ars_${randomBytes(32).toString('hex')}`;
     const keyHash = sha256(rawKey);
@@ -53,12 +64,12 @@ export async function POST(req: NextRequest) {
     const apiKey = await ctx.db.apiKey.create({
       data: {
         tenantId: ctx.tenantId,
-        name: body.name,
+        name: parsed.data.name,
         keyHash,
         keyPrefix,
-        scopes: body.scopes ?? ['read'],
-        rateLimitRpm: body.rateLimitRpm ?? 60,
-        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+        scopes: parsed.data.scopes ?? ['read'],
+        rateLimitRpm: parsed.data.rateLimitRpm ?? 60,
+        expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null,
       },
       select: {
         id: true,

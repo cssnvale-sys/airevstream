@@ -1,7 +1,23 @@
 import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
+
+const CreateAiServiceSchema = z.object({
+  name: z.string().min(1).max(200),
+  provider: z.string().min(1).max(100),
+  serviceType: z.enum(['text', 'image', 'video', 'voice']),
+  endpoint: z.string().url().optional().nullable(),
+  apiKey: z.string().optional(),
+  capabilities: z.record(z.unknown()).optional(),
+  costPerUnit: z.record(z.unknown()).optional(),
+  rateLimits: z.record(z.unknown()).optional(),
+  fallbackGroup: z.string().optional().nullable(),
+  fallbackOrder: z.number().int().min(0).optional(),
+  isLocal: z.boolean().optional(),
+  isFree: z.boolean().optional(),
+});
 
 /**
  * GET /api/v1/ai-services
@@ -86,20 +102,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const parsed = CreateAiServiceSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+    }
     const {
       name, provider, serviceType, endpoint, apiKey,
       capabilities, costPerUnit, rateLimits,
       fallbackGroup, fallbackOrder, isLocal, isFree,
-    } = body;
-
-    if (!name || !provider || !serviceType) {
-      return validationError('name, provider, and serviceType are required');
-    }
-
-    const validTypes = ['text', 'image', 'video', 'voice'];
-    if (!validTypes.includes(serviceType)) {
-      return validationError(`Invalid serviceType. Must be one of: ${validTypes.join(', ')}`);
-    }
+    } = parsed.data;
 
     let apiKeyEnc: string | null = null;
     if (apiKey) {
@@ -117,9 +128,9 @@ export async function POST(req: NextRequest) {
         serviceType,
         endpoint: endpoint ?? null,
         apiKeyEnc,
-        capabilities: capabilities ?? {},
-        costPerUnit: costPerUnit ?? {},
-        rateLimits: rateLimits ?? {},
+        capabilities: (capabilities ?? {}) as any,
+        costPerUnit: (costPerUnit ?? {}) as any,
+        rateLimits: (rateLimits ?? {}) as any,
         fallbackGroup: fallbackGroup ?? null,
         fallbackOrder: fallbackOrder ?? 0,
         isLocal: isLocal ?? false,

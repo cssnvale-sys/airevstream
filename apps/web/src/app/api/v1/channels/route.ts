@@ -1,5 +1,17 @@
 import { authenticate, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const CreateChannelSchema = z.object({
+  socialAccountId: z.string().uuid(),
+  name: z.string().min(1).max(200),
+  niches: z.array(z.string()).optional(),
+  primaryLanguage: z.string().min(2).max(10).optional(),
+  tone: z.string().max(500).optional().nullable(),
+  personality: z.string().max(500).optional().nullable(),
+  targetAudience: z.string().max(500).optional().nullable(),
+  postingCadence: z.record(z.unknown()).optional(),
+});
 
 /**
  * GET /api/v1/channels
@@ -100,30 +112,18 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const {
-      socialAccountId,
-      name,
-      niches,
-      primaryLanguage,
-      tone,
-      personality,
-      targetAudience,
-      postingCadence,
-    } = body;
-
-    if (!socialAccountId || !name) {
-      return validationError('socialAccountId and name are required');
+    const parsed = CreateChannelSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
     }
+
+    const { socialAccountId, name, niches, primaryLanguage, tone, personality, targetAudience, postingCadence } = parsed.data;
 
     // Verify social account exists
     const socialAccount = await ctx.db.socialAccount.findUnique({
       where: { id: socialAccountId },
     });
     if (!socialAccount) return notFound('Social account not found');
-
-    if (niches && !Array.isArray(niches)) {
-      return validationError('niches must be an array of strings');
-    }
 
     const channel = await ctx.db.channel.create({
       data: {
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
         tone: tone ?? null,
         personality: personality ?? null,
         targetAudience: targetAudience ?? null,
-        postingCadence: postingCadence ?? {},
+        postingCadence: (postingCadence ?? {}) as any,
       },
       include: {
         socialAccount: {

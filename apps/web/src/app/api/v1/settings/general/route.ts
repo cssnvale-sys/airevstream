@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error } from '@/lib/api-server';
+import { z } from 'zod';
+import { authenticate, success, error, validationError } from '@/lib/api-server';
+
+const GeneralSettingsSchema = z.object({
+  systemName: z.string().min(1).max(100).optional(),
+  timezone: z.string().min(1).max(100).optional(),
+  defaultLanguage: z.string().min(2).max(10).optional(),
+}).strict();
 
 const SETTING_KEY = 'general';
 const DEFAULTS = {
@@ -22,9 +29,13 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const parsed = GeneralSettingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+    }
     const existing = await ctx.db.systemSetting.findUnique({ where: { key: SETTING_KEY } });
     const current = (existing?.value as Record<string, unknown>) ?? DEFAULTS;
-    const merged = { ...current, ...body };
+    const merged = { ...current, ...parsed.data };
 
     const row = await ctx.db.systemSetting.upsert({
       where: { key: SETTING_KEY },

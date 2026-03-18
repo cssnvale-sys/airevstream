@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error } from '@/lib/api-server';
+import { z } from 'zod';
+import { authenticate, success, error, validationError } from '@/lib/api-server';
+
+const SecuritySettingsSchema = z.object({
+  sessionTimeout: z.number().int().min(300).max(86400).optional(),
+  maxLoginAttempts: z.number().int().min(1).max(20).optional(),
+  requireMfa: z.boolean().optional(),
+  passwordMinLength: z.number().int().min(6).max(128).optional(),
+  ipWhitelist: z.array(z.string()).optional(),
+}).strict();
 
 const SETTING_KEY = 'security';
 const DEFAULTS = {
@@ -28,9 +37,13 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const parsed = SecuritySettingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+    }
     const existing = await ctx.db.systemSetting.findUnique({ where: { key: SETTING_KEY } });
     const current = (existing?.value as Record<string, unknown>) ?? DEFAULTS;
-    const merged = { ...current, ...body };
+    const merged = { ...current, ...parsed.data };
 
     const row = await ctx.db.systemSetting.upsert({
       where: { key: SETTING_KEY },

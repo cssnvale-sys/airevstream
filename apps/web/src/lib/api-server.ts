@@ -3,7 +3,7 @@ import { jwtVerify } from 'jose';
 import { getDb } from '@airevstream/db';
 
 let _jwtSecret: Uint8Array | null = null;
-function getJwtSecret(): Uint8Array {
+export function getJwtSecret(): Uint8Array {
   if (!_jwtSecret) {
     if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
       throw new Error('JWT_SECRET environment variable is required in production');

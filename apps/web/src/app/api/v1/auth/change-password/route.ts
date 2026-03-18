@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { SignJWT } from 'jose';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'currentPassword is required'),
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
 });
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
 function verifyPassword(password: string, hash: string): boolean {
   const parts = hash.split(':');
@@ -62,7 +60,7 @@ export async function POST(req: NextRequest) {
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('7d')
-      .sign(JWT_SECRET);
+      .sign(getJwtSecret());
 
     return success({ message: 'Password changed successfully', token });
   } catch (err) {

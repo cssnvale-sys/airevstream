@@ -61,7 +61,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     if (publishConfig !== undefined) {
-      data.publishConfig = publishConfig;
+      data.publishConfig = publishConfig as any; // Prisma InputJsonValue
     }
 
     // Reset status to scheduled if it was failed/cancelled

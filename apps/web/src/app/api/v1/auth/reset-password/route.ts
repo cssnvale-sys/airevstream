@@ -3,15 +3,13 @@ import { jwtVerify } from 'jose';
 import { scryptSync, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { success, error, validationError } from '@/lib/api-server';
+import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const ResetPasswordSchema = z.object({
   token: z.string().min(1),
   newPassword: z.string().min(8, 'Password must be at least 8 characters'),
 });
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString('hex');
@@ -41,7 +39,7 @@ export async function POST(req: NextRequest) {
     // Verify the reset token
     let userId: string;
     try {
-      const { payload } = await jwtVerify(token, JWT_SECRET);
+      const { payload } = await jwtVerify(token, getJwtSecret());
       if (payload.purpose !== 'password-reset') {
         return error('INVALID_TOKEN', 'Invalid reset token', 400);
       }

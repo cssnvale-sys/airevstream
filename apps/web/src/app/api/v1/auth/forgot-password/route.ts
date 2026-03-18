@@ -2,14 +2,12 @@ import { NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { success, error, validationError } from '@/lib/api-server';
+import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const ForgotPasswordSchema = z.object({
   email: z.string().email(),
 });
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
 /**
  * POST /api/v1/auth/forgot-password
@@ -47,7 +45,7 @@ export async function POST(req: NextRequest) {
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('15m')
-      .sign(JWT_SECRET);
+      .sign(getJwtSecret());
 
     // In dev mode, log the reset token/link to console
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/reset-password?token=${resetToken}`;

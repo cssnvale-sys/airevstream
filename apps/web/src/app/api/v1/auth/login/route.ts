@@ -3,15 +3,13 @@ import { SignJWT } from 'jose';
 import { scryptSync, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { success, error, validationError } from '@/lib/api-server';
+import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
 function verifyPassword(password: string, storedHash: string): boolean {
   const parts = storedHash.split(':');
@@ -55,7 +53,7 @@ export async function POST(req: NextRequest) {
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('7d')
-      .sign(JWT_SECRET);
+      .sign(getJwtSecret());
 
     return success({
       token,

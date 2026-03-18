@@ -31,11 +31,18 @@ export async function GET(req: NextRequest) {
     if (end) dateFilter.lte = new Date(end);
     const hasDateFilter = Object.keys(dateFilter).length > 0;
 
+    // Tenant scoping: get this tenant's channel IDs
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
     let reportData: unknown;
 
     switch (reportType) {
       case 'revenue': {
-        const where: Record<string, unknown> = { converted: true };
+        const where: Record<string, unknown> = { converted: true, channelId: { in: tenantChannelIds } };
         if (hasDateFilter) where.createdAt = dateFilter;
 
         const clicks = await ctx.db.affiliateClick.findMany({
@@ -61,7 +68,7 @@ export async function GET(req: NextRequest) {
       }
 
       case 'engagement': {
-        const where: Record<string, unknown> = { status: 'posted' };
+        const where: Record<string, unknown> = { status: 'posted', channelId: { in: tenantChannelIds } };
         if (hasDateFilter) where.createdAt = dateFilter;
 
         const items = await ctx.db.contentItem.findMany({
@@ -82,7 +89,7 @@ export async function GET(req: NextRequest) {
       }
 
       case 'content': {
-        const where: Record<string, unknown> = {};
+        const where: Record<string, unknown> = { channelId: { in: tenantChannelIds } };
         if (hasDateFilter) where.createdAt = dateFilter;
 
         const byStatus = await ctx.db.contentItem.groupBy({
@@ -109,7 +116,7 @@ export async function GET(req: NextRequest) {
       }
 
       case 'costs': {
-        const where: Record<string, unknown> = {};
+        const where: Record<string, unknown> = { channelId: { in: tenantChannelIds } };
         if (hasDateFilter) where.createdAt = dateFilter;
 
         const usage = await ctx.db.aiServiceUsage.findMany({
@@ -139,7 +146,7 @@ export async function GET(req: NextRequest) {
 
       case 'audience': {
         const channels = await ctx.db.channel.findMany({
-          where: { status: 'active' },
+          where: { status: 'active', socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
           select: {
             id: true,
             name: true,

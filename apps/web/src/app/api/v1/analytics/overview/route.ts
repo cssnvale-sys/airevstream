@@ -27,6 +27,14 @@ export async function GET(req: NextRequest) {
     const { start, end } = getDateRange(period);
     const dateFilter = { createdAt: { gte: start, lte: end } };
 
+    // Tenant scoping: get this tenant's channel IDs
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+    const channelScope = { channelId: { in: tenantChannelIds } };
+
     // Run all queries in parallel
     const [
       revenueAgg,
@@ -44,71 +52,74 @@ export async function GET(req: NextRequest) {
     ] = await Promise.all([
       // Revenue (current period)
       ctx.db.affiliateClick.aggregate({
-        where: { converted: true, ...dateFilter },
+        where: { converted: true, ...channelScope, ...dateFilter },
         _sum: { revenue: true },
       }),
       // Revenue (previous period for trend)
       ctx.db.affiliateClick.aggregate({
         where: {
           converted: true,
+          ...channelScope,
           createdAt: { gte: new Date(start.getTime() - (end.getTime() - start.getTime())), lt: start },
         },
         _sum: { revenue: true },
       }),
       // AI costs (current period)
       ctx.db.aiServiceUsage.aggregate({
-        where: dateFilter,
+        where: { ...channelScope, ...dateFilter },
         _sum: { cost: true },
       }),
       // AI costs (previous period)
       ctx.db.aiServiceUsage.aggregate({
         where: {
+          ...channelScope,
           createdAt: { gte: new Date(start.getTime() - (end.getTime() - start.getTime())), lt: start },
         },
         _sum: { cost: true },
       }),
       // Content count (current)
-      ctx.db.contentItem.count({ where: dateFilter }),
+      ctx.db.contentItem.count({ where: { ...channelScope, ...dateFilter } }),
       // Content count (previous)
       ctx.db.contentItem.count({
         where: {
+          ...channelScope,
           createdAt: { gte: new Date(start.getTime() - (end.getTime() - start.getTime())), lt: start },
         },
       }),
       // Revenue clicks (for daily aggregation)
       ctx.db.affiliateClick.findMany({
-        where: { converted: true, ...dateFilter },
+        where: { converted: true, ...channelScope, ...dateFilter },
         select: { createdAt: true, revenue: true },
       }),
       // Revenue by channel
       ctx.db.affiliateClick.groupBy({
         by: ['channelId'],
-        where: { converted: true, ...dateFilter },
+        where: { converted: true, ...channelScope, ...dateFilter },
         _sum: { revenue: true },
         _count: { id: true },
       }),
       // Revenue by product
       ctx.db.affiliateClick.groupBy({
         by: ['productId'],
-        where: { converted: true, ...dateFilter },
+        where: { converted: true, ...channelScope, ...dateFilter },
         _sum: { revenue: true },
         _count: { id: true },
       }),
       // Content by status
       ctx.db.contentItem.groupBy({
         by: ['status'],
-        where: dateFilter,
+        where: { ...channelScope, ...dateFilter },
         _count: { id: true },
       }),
       // Quality scores
       ctx.db.contentItem.findMany({
-        where: { ...dateFilter, qualityScore: { not: null } },
+        where: { ...channelScope, ...dateFilter, qualityScore: { not: null } },
         select: { qualityScore: true },
       }),
       // Cost by service
       ctx.db.aiServiceUsage.groupBy({
         by: ['serviceId'],
-        where: dateFilter,
+        where: { ...channelScope, ...dateFilter },
         _sum: { cost: true },
       }),
     ]);

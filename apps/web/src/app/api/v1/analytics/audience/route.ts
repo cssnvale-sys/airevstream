@@ -14,7 +14,11 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const channelId = url.searchParams.get('channelId') ?? undefined;
 
-    const where: Record<string, unknown> = { status: 'active' };
+    // Tenant scoping through socialAccount → emailAccount chain
+    const where: Record<string, unknown> = {
+      status: 'active',
+      socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+    };
     if (channelId) where.id = channelId;
 
     const channels = await ctx.db.channel.findMany({

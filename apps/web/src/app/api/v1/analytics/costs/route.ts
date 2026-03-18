@@ -17,7 +17,16 @@ export async function GET(req: NextRequest) {
     const provider = url.searchParams.get('provider') ?? undefined;
     const serviceType = url.searchParams.get('serviceType') ?? undefined;
 
-    const where: Record<string, unknown> = {};
+    // Tenant scoping: get this tenant's channel IDs
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
+    const where: Record<string, unknown> = {
+      channelId: { in: tenantChannelIds },
+    };
     if (start || end) {
       const dateFilter: Record<string, unknown> = {};
       if (start) dateFilter.gte = new Date(start);

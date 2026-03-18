@@ -17,8 +17,19 @@ export async function GET(req: NextRequest) {
     const channelId = url.searchParams.get('channelId') ?? undefined;
     const productId = url.searchParams.get('productId') ?? undefined;
 
-    const where: Record<string, unknown> = { converted: true };
-    if (channelId) where.channelId = channelId;
+    // Tenant scoping: get this tenant's channel IDs
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
+    const where: Record<string, unknown> = {
+      converted: true,
+      channelId: channelId && tenantChannelIds.includes(channelId)
+        ? channelId
+        : { in: tenantChannelIds },
+    };
     if (productId) where.productId = productId;
     if (start || end) {
       const dateFilter: Record<string, unknown> = {};

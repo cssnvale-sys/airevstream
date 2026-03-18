@@ -18,10 +18,19 @@ export async function GET(req: NextRequest) {
     const end = url.searchParams.get('end');
     const resultLimit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') ?? '20')));
 
+    // Tenant scoping: get this tenant's channel IDs
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
     const where: Record<string, unknown> = {
       status: 'posted',
+      channelId: channelId && tenantChannelIds.includes(channelId)
+        ? channelId
+        : { in: tenantChannelIds },
     };
-    if (channelId) where.channelId = channelId;
     if (contentType) where.contentType = contentType;
     if (start || end) {
       const dateFilter: Record<string, unknown> = {};

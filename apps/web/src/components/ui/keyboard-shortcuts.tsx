@@ -72,6 +72,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
           <h2 className="text-lg font-semibold text-text-primary">Keyboard Shortcuts</h2>
           <button
             onClick={onClose}
+            aria-label="Close shortcuts modal"
             className="text-text-secondary hover:text-text-primary transition-colors"
           >
             <X size={18} />

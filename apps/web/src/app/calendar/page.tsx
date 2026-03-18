@@ -290,11 +290,12 @@ export default function CalendarPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
       ) : (
-        <div className="card p-0 overflow-hidden">
+        <div className="card p-0 overflow-hidden" role="grid" aria-label="Weekly calendar">
           {/* Day headers */}
           <div
             className="grid border-b border-border"
             style={{ gridTemplateColumns: '64px repeat(7, 1fr)' }}
+            role="row"
           >
             {/* Empty top-left cell */}
             <div className="p-2 border-r border-border" />

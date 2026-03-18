@@ -821,6 +821,7 @@ export default function AccountsPage() {
                         checked={selectedIds.size === filteredAccounts.length && filteredAccounts.length > 0}
                         onChange={toggleSelectAll}
                         className="rounded border-border"
+                        aria-label="Select all accounts"
                       />
                     </th>
                     <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('email')}>
@@ -862,6 +863,7 @@ export default function AccountsPage() {
                             checked={selectedIds.has(account.id)}
                             onChange={() => toggleSelect(account.id)}
                             className="rounded border-border"
+                            aria-label={`Select ${account.email}`}
                           />
                         </td>
                         <td className="px-4 py-3">

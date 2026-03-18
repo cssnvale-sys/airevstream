@@ -94,7 +94,7 @@ export function Sidebar() {
         )}
       </div>
 
-      <nav className="flex-1 px-2 mt-2 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-2 mt-2 space-y-0.5 overflow-y-auto" aria-label="Main navigation">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -103,6 +103,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               title={collapsed ? item.label : undefined}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-body transition-colors',
                 collapsed && 'justify-center px-2',
@@ -132,6 +133,7 @@ export function Sidebar() {
         </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
             collapsed && 'justify-center px-2',
@@ -142,6 +144,7 @@ export function Sidebar() {
         </button>
         <button
           onClick={handleLogout}
+          aria-label="Sign out"
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
             collapsed && 'justify-center px-2',

@@ -20,8 +20,26 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const job = await ctx.db.workflowJob.findUnique({ where: { id } });
+    // Verify tenant ownership through content or account chain
+    const job = await ctx.db.workflowJob.findFirst({
+      where: {
+        id,
+        OR: [
+          { content: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } },
+          { emailAccountId: { not: null } },
+        ],
+      },
+    });
     if (!job) return notFound('Workflow job not found');
+
+    // Extra check for emailAccountId-based jobs
+    if (!job.contentId && job.emailAccountId) {
+      const ownsAccount = await ctx.db.emailAccount.findFirst({
+        where: { id: job.emailAccountId, tenantId: ctx.tenantId },
+        select: { id: true },
+      });
+      if (!ownsAccount) return notFound('Workflow job not found');
+    }
 
     if (job.status !== 'failed') {
       return error('BAD_REQUEST', `Job is in "${job.status}" state, only failed jobs can be retried`, 400);

@@ -23,9 +23,18 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    // Verify storefront exists
+    // Verify storefront exists and belongs to this tenant
     const storefront = await ctx.db.storefront.findUnique({ where: { id } });
     if (!storefront) return notFound('Storefront not found');
+
+    const ownsChannel = await ctx.db.channel.findFirst({
+      where: {
+        id: storefront.channelId,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+      select: { id: true },
+    });
+    if (!ownsChannel) return notFound('Storefront not found');
 
     const products = await ctx.db.storefrontProduct.findMany({
       where: { storefrontId: id },
@@ -50,9 +59,18 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    // Verify storefront exists
+    // Verify storefront exists and belongs to this tenant
     const storefront = await ctx.db.storefront.findUnique({ where: { id } });
     if (!storefront) return notFound('Storefront not found');
+
+    const ownsChannel = await ctx.db.channel.findFirst({
+      where: {
+        id: storefront.channelId,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+      select: { id: true },
+    });
+    if (!ownsChannel) return notFound('Storefront not found');
 
     const body = await req.json();
     const parsed = addProductSchema.safeParse(body);

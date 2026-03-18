@@ -23,9 +23,18 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { id, productId } = await params;
 
   try {
-    // Verify storefront exists
+    // Verify storefront exists and belongs to this tenant
     const storefront = await ctx.db.storefront.findUnique({ where: { id } });
     if (!storefront) return notFound('Storefront not found');
+
+    const ownsChannel = await ctx.db.channel.findFirst({
+      where: {
+        id: storefront.channelId,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+      select: { id: true },
+    });
+    if (!ownsChannel) return notFound('Storefront not found');
 
     // Verify storefront product exists
     const existing = await ctx.db.storefrontProduct.findFirst({
@@ -64,9 +73,18 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { id, productId } = await params;
 
   try {
-    // Verify storefront exists
+    // Verify storefront exists and belongs to this tenant
     const storefront = await ctx.db.storefront.findUnique({ where: { id } });
     if (!storefront) return notFound('Storefront not found');
+
+    const ownsChannel = await ctx.db.channel.findFirst({
+      where: {
+        id: storefront.channelId,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+      select: { id: true },
+    });
+    if (!ownsChannel) return notFound('Storefront not found');
 
     // Verify storefront product exists
     const existing = await ctx.db.storefrontProduct.findFirst({

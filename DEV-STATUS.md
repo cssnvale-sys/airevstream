@@ -1,54 +1,111 @@
 # Development Status
 
-## Current Phase: 5 — Integration & Polish (partial)
+## Current Phase: PRD Epics — Working through Epics 1-9
 
 ### Phase 1: Foundation (Shared Packages) — COMPLETE
 | Step | Package | Status | Notes |
 |------|---------|--------|-------|
-| 1.1 | @airevstream/shared | Done | Config, errors, logger, types, utils. 20 tests |
-| 1.2 | @airevstream/db | Done | Prisma schema (12 models), migration applied. 4 tests |
+| 1.1 | @airevstream/shared | Done | Config, errors, logger, types (full schema-aligned), utils. 8 tests |
+| 1.2 | @airevstream/db | Done | Prisma schema (32 models), all relations, JSON columns, full-text search GIN indexes. 4 tests |
 | 1.3 | @airevstream/crypto | Done | AES-256-GCM encrypt/decrypt. 10 tests |
 | 1.4 | @airevstream/storage | Done | MinIO client with full CRUD. 3 tests |
 | 1.5 | @airevstream/queue | Done | BullMQ queues with typed jobs. 5 tests |
-| 1.6 | @airevstream/ai-client | Done | Ollama client with chat/stream/JSON. 8 tests |
+| 1.6 | @airevstream/ai-client | Done | Multi-provider Service Registry + Ollama/OpenAI-compat/HTTP providers. 14 tests |
 
 ### Phase 2: Core Services — COMPLETE
 | Step | Service | Status | Notes |
 |------|---------|--------|-------|
-| 2.1 | workflow-engine | Done | REST API: auth, content, accounts, workflows. 8 tests |
+| 2.1 | workflow-engine | Done | REST API: auth, content, accounts, channels, workflows. 8 tests |
 | 2.2 | ai-assistant | Done | Chat + content generation endpoints. 5 tests |
 | 2.3 | production-pipeline | Done | Image, video, audio, asset management. 5 tests |
 
 ### Phase 3: Workers — COMPLETE
 | Step | Worker | Status | Notes |
 |------|--------|--------|-------|
-| 3.1 | content.worker | Done | AI content generation + publish requests |
-| 3.2 | account.worker | Done | Sync + health check (placeholder for APIs) |
-| 3.3 | posting.worker | Done | Cross-platform publishing with rate limiting |
+| 3.1 | content.worker | Done | AI content generation + approve/reject/regenerate |
+| 3.2 | account.worker | Done | Create + sync + health check + warm with browser automation (graceful fallback) |
+| 3.3 | posting.worker | Done | Publish + schedule with rate limiting |
 | 3.4 | research.worker | Done | Trend analysis + topic generation via AI |
-| 3.5 | maintenance.worker | Done | Cleanup + backup (placeholder). All 5 tested |
+| 3.5 | maintenance.worker | Done | Cleanup + backup. All 5 tested |
 
 ### Phase 4: Web Dashboard — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
-| 4.1 | Auth pages | Done | Login + register with JWT |
-| 4.2 | Dashboard | Done | Stats cards, quick actions, system status |
-| 4.3 | Content management | Done | CRUD with status badges |
-| 4.4 | Account management | Done | Multi-platform with color coding |
-| 4.5 | Workflow builder | Done | Create + run workflows |
-| 4.6 | AI assistant chat | Done | Real-time chat with conversations. 2 tests |
+| 4.1 | Auth pages | Done | Login + register with JWT (scrypt hashing) |
+| 4.2 | Dashboard (Home) | Done | KPI cards, approval queue, timeline, workflows, system health, platform coverage widget, activity feed |
+| 4.3 | Accounts | Done | Full CRUD, bulk import (JSON + CSV), detail panel with tabs, social accounts, channel linking |
+| 4.4 | Calendar | Done | Week/Day/Month grid, drag scheduling, filter by channel/platform/status |
+| 4.5 | Create (Wizard) | Done | 6-step wizard: Channel → Concept → Script (H.I.C.C.) → Storyboard → Generate → Review |
+| 4.6 | Content Library | Done | Grid/List views, multi-filter, sort, type-coded thumbnails, quality scores |
+| 4.7 | Analytics | Done | Revenue/Engagement/Content/Costs/Audience tabs with Recharts, KPI cards, export |
+| 4.8 | System Health | Done | Resource usage, services grid, active workflows, alerts, error log |
+| 4.9 | Settings | Done | General/AI Services/Notifications/Security/Appearance tabs |
+| 4.10 | Affiliate Manager | Done | Products CRUD, channel pools, links, performance matrix |
+| 4.11 | API Routes | Done | 99 Next.js API route files under /api/v1/ covering all endpoint groups |
+| 4.12 | Design System | Done | CSS variable tokens (dark/light), component classes, layout components |
+| 4.13 | AI Assistant Panel | Done | Collapsible 380px chat panel, context-aware |
+| 4.14 | Notification Center | Done | Bell icon with badge, dropdown panel, mark all read, sonner toast integration |
+| 4.15 | Real-time (SSE) | Done | Server-Sent Events endpoint, useSSE/useSystemEvents hooks, typed events, auto-reconnect |
 
 ### Phase 5: Integration & Polish
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
-| 5.1 | ComfyUI workflows | Placeholder | JSON templates in comfyui-workflows/ |
-| 5.2 | Remotion compositions | Not Started | Requires Remotion setup |
-| 5.3 | E2E testing | Not Started | Requires Playwright |
-| 5.4 | Production config | Partial | PM2 ecosystem.config.js exists |
+| 5.1 | AI Service Registry | Done | Multi-provider with fallback chains, circuit breaker, health checks, cost tracking |
+| 5.2 | ComfyUI workflows | Done | 4 SDXL workflow templates: thumbnail, scenery, avatar, storyboard-frame |
+| 5.3 | Remotion compositions | Done | 3 compositions: ShortFormVideo (9:16), LongFormVideo (16:9), ThumbnailRenderer (still). H.I.C.C. beat system, Ken Burns, transitions, audio viz |
+| 5.4 | Full-text search | Done | PostgreSQL GIN indexes on content, knowledge base, accounts, channels, alerts, conversations |
+| 5.5 | Channel families | Done | API for family CRUD + grouping language-variant channels |
+| 5.6 | Account stats | Done | Platform coverage, distribution, tier breakdown, health averages |
+| 5.7 | Browser Automation | Done | @airevstream/browser-automation: stealth contexts, human behavior (Bezier/Gaussian), proxy rotation, session persistence, 4 platform workflows (YT/TT/IG/FB), HITL API |
+| 5.8 | Audit fixes (round 1) | Done | AI chat/script/shot wired to real AI, security hardening, DB-backed settings, tenant scoping, real SSE, error retry |
+| 5.11 | Audit fixes (round 2) | Done | Analytics overview API, settings form field mapping, AI service DELETE, platform filter fix, metrics shape fix, workflows/approvals pages, approvedBy audit trail, content [id] tenant scoping, health check pings, security settings route |
+| 5.12 | Audit fixes (round 3) | Done | 30+ frontend↔API data shape fixes: content POST handler, calendar start/end params, @airevstream/ai-client dep, dashboard activity/revenue/health/workflow shapes, status bar auth, notification center paginated response, system page severity/status/jobType fields, analytics mock data removal, create page shot error handling |
+| 5.13 | Audit fixes (round 4) | Done | Settings page: chain.chain→services crash fix, serviceType field, notifications type vs channel, API keys keyPrefix, removed invalid embedding type. Dashboard: approval channelName→channel.name, qualityScore Decimal type, status=pending_approval, dead code removal. System: workflows status filter removed (errors now visible), unused import, nullable AlertItem.message. Create: storyboard durationSeconds→duration, shot async status handling, generate-script affiliateProductId. Analytics: revenueOverTime from DB, costByModel aggregation, missing fields with graceful empty arrays |
+| 5.9 | E2E testing | Not Started | Requires Playwright browser install |
+| 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
+
+### PRD Epic Progress
+| Epic | Title | Status | Notes |
+|------|-------|--------|-------|
+| 1 | Foundation | Done | DB, auth, accounts, social accounts, channel identity, bulk import, full-text search |
+| 2 | Account Operations | Done | Browser automation pkg (stealth, human behavior, proxy, sessions), 4 platform workflows (YouTube/TikTok/Instagram/Facebook), account worker integration, HITL API |
+| 3 | Content Generation | Done | Text gen (H.I.C.C. + registry), ComfyUI client + template renderer, production worker (image/video/audio/storyboard), quality scoring (5-criteria), content variants/A/B testing |
+| 4 | Video Production | Done | Remotion CLI render via production worker, TTS via @airevstream/audio-engine (Piper/ElevenLabs), storyboard generation (H.I.C.C. parser), ComfyUI image pipeline |
+| 5 | Distribution | Done | Platform posting adapters (YouTube Data API v3, TikTok Content Posting API, Instagram Graph API, Facebook Graph API), scheduling engine, credential decryption, presigned URL resolution |
+| 6 | Intelligence Layer | Done | Knowledge base CRUD + search, action executor (4-tier safety with 11 actions), context-aware chat (alerts/workflows/content stats/KB injection) |
+| 7 | Affiliate & Monetization | Done | Storefront CRUD + products, link redirect with click tracking, revenue analytics (time series, groupBy), channel pools |
+| 8 | Optimization & Scale | Done | Prompt template library (CRUD + scoring), cost budget management (daily/weekly/monthly + threshold alerts), knowledge base population worker |
+| 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Total tests**: 62 (all passing)
-- Packages: 50 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 8)
+- **Total tests**: 93 (all passing across 27 test tasks)
+- Packages: 64 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3)
 - Services: 18 tests (workflow-engine: 8, ai-assistant: 5, production-pipeline: 5)
 - Workers: 5 tests
-- Web: 2 tests + Next.js build passes
+- Web: 6 tests + Next.js build (102 API routes, 14 dashboard pages)
+- **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
+
+## Architecture Highlights
+- **Prisma Schema**: 33 models (+ SystemSetting) with full-text search GIN indexes on key tables
+- **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
+- **Next.js API Routes**: 102 server-side route handlers with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Dashboard**: 14 views (+ workflows, approvals, affiliate) + notification center + SSE real-time updates
+- **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
+- **Remotion**: 3 compositions (short 9:16, long 16:9, thumbnail still) with H.I.C.C. beat timing
+- **ComfyUI**: 4 SDXL workflow templates with {{placeholder}} syntax + client API wrapper + template renderer
+- **Audio Engine**: @airevstream/audio-engine with TTSClient supporting Piper (local) and ElevenLabs (cloud) providers, placeholder fallback
+- **Production Worker**: Image generation (ComfyUI), video render (Remotion CLI), audio generation (TTS), storyboard generation (H.I.C.C. section parser)
+- **Platform Posting**: 4 platform adapters (YouTube resumable upload, TikTok PULL_FROM_URL, Instagram container publish, Facebook Graph API), credential decryption, presigned URL resolution
+- **Quality Scoring**: 5-criteria algorithm (hook strength, length, CTA, readability, engagement) with 0-10 scale and breakdown
+- **Content Variants**: A/B testing via version chains (parentId → variants), clone + modify API
+- **Intelligence Layer**: Knowledge base CRUD + keyword search, 4-tier action executor (11 actions with audit logging, rollback), context-aware chat (injects alerts, workflows, content queue, relevant KB entries)
+- **Storefronts**: Per-channel storefronts with product management, public link redirect with click tracking + IP hashing, revenue analytics with time series
+- **Prompt Library**: Template CRUD with category/platform/tag filtering, usage tracking, running average quality scoring
+- **Cost Management**: Budget CRUD (daily/weekly/monthly), spend threshold alerts, auto-check against AiServiceUsage aggregates
+- **Multi-Tenancy**: Tenant model with plan-based limits, User roles (admin/operator/viewer), invite workflow, tenant-scoped queries (accounts, channels, content, usage)
+- **API Keys**: Secure key generation (ars_ prefix), SHA-256 hashed storage, scope-based access control, rate limiting
+- **Subscriptions**: Plan management with period tracking, usage metering (accounts/channels/content/API calls/storage)
+- **Database Seed**: Full seed script with admin user, AI services, sample content, channels, accounts
+- **Real-time**: SSE endpoint with DB-polled events (alerts, workflow-updates, content-status, system-metrics), auto-reconnect with exponential backoff
+- **Security**: AI service API keys encrypted (AES-256-GCM), invite flow hides temp password, API keys SHA-256 hashed with revocation support
+- **Settings**: DB-backed via SystemSetting model (general, notifications, appearance) — persists across restarts

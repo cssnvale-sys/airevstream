@@ -35,14 +35,16 @@ DATABASE_URL="postgresql://airevstream:airevstream_dev@localhost:5432/airevstrea
 ## 4. Set Up Ollama (Required for AI Features)
 
 1. Install Ollama: https://ollama.com/download
-2. Pull a model:
+2. Pull a model (The system defaults to `qwen3:8b`):
    ```bash
-   ollama pull llama3.2
+   ollama pull qwen3:8b
    ```
 3. Verify it's running:
    ```bash
    curl http://localhost:11434/api/tags
    ```
+
+**Note**: Since you already have `qwen3:8b` installed, you can skip Step 4.2.
 
 Without Ollama, the AI chat and content generation features will return 502 errors. Everything else works fine.
 

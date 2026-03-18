@@ -7,10 +7,11 @@
     "apps/*",
     "packages/*",
     "services/*",
-    "workers"
+    "workers",
+    "remotion"
   ],
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "turbo dev --concurrency=12",
     "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",

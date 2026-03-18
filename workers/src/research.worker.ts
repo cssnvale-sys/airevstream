@@ -249,7 +249,12 @@ Return a JSON array of objects with: title, content (informative summary, max 50
         format: 'json',
         systemPrompt: 'You are a research assistant. Return valid JSON only.',
       });
-      entries = JSON.parse(result.content);
+      try {
+        entries = JSON.parse(result.content);
+      } catch (parseErr) {
+        logger.error({ parseErr, content: result.content.slice(0, 200) }, 'Failed to parse AI knowledge response as JSON');
+        throw new Error('AI service returned invalid JSON for knowledge population');
+      }
     } else {
       try {
         entries = await generateJSON(prompt, {

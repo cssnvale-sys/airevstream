@@ -17,12 +17,23 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id: channelId } = await params;
+  if (!isUUID(channelId)) return validationError('Invalid ID format');
 
   try {
+    // Verify channel belongs to tenant
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id: channelId,
+        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+      },
+      select: { id: true },
+    });
+    if (!channel) return notFound('Channel not found');
+
     const affiliateProductId = req.nextUrl.searchParams.get('affiliateProductId');
 
-    if (!affiliateProductId) {
-      return validationError('affiliateProductId is required');
+    if (!affiliateProductId || !isUUID(affiliateProductId)) {
+      return validationError('Valid affiliateProductId is required');
     }
 
     await ctx.db.channelAffiliatePool.deleteMany({

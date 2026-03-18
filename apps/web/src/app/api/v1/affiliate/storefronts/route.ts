@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -105,13 +105,7 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
     if (!channel) {
-      return validationError('Channel not found');
-    }
-
-    // Check slug uniqueness
-    const existing = await ctx.db.storefront.findUnique({ where: { slug } });
-    if (existing) {
-      return validationError('A storefront with this slug already exists');
+      return notFound('Channel not found');
     }
 
     const storefront = await ctx.db.storefront.create({
@@ -132,6 +126,9 @@ export async function POST(req: NextRequest) {
 
     return success(storefront);
   } catch (err) {
+    if ((err as any)?.code === 'P2002') {
+      return error('CONFLICT', 'A storefront with this slug already exists', 409);
+    }
     console.error('POST /api/v1/affiliate/storefronts error:', err);
     return error('INTERNAL_ERROR', 'Failed to create storefront', 500);
   }

@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
 const createContentSchema = z.object({
   channelId: z.string().uuid(),
   title: z.string().min(1).max(500),
-  contentType: z.string(),
+  contentType: z.enum(['video_short', 'video_long', 'image', 'text', 'voice', 'thumbnail']),
   platforms: z.array(z.string()).optional(),
   script: z.string().optional(),
   shots: z.array(z.object({
@@ -113,7 +113,7 @@ const createContentSchema = z.object({
   })).optional(),
   affiliateProductId: z.string().uuid().optional(),
   affiliateMode: z.string().optional(),
-  status: z.string().optional(),
+  status: z.enum(['draft', 'generating', 'generated', 'review', 'approved', 'scheduled', 'posted', 'archived', 'failed']).optional(),
 }).strict();
 
 export async function POST(req: NextRequest) {

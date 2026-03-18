@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, notFound } from '@/lib/api-server';
 import { addJob } from '@airevstream/queue';
 
 const GenerateShotSchema = z.object({
@@ -22,6 +22,18 @@ export async function POST(req: NextRequest) {
     }
 
     const { shotId, description, channelId, workflowType } = parsed.data;
+
+    // Verify channel belongs to tenant (if channelId provided)
+    if (channelId) {
+      const channel = await ctx.db.channel.findFirst({
+        where: {
+          id: channelId,
+          ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        },
+        select: { id: true },
+      });
+      if (!channel) return notFound('Channel not found');
+    }
 
     // Queue a ComfyUI image generation job via BullMQ
     const job = await addJob('production', 'production:generate-image', {

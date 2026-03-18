@@ -89,7 +89,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       where: { id: affiliateProductId },
     });
     if (!affiliateProduct) {
-      return validationError('Affiliate product not found');
+      return notFound('Affiliate product not found');
     }
 
     // Check if already added to this storefront
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       where: { storefrontId: id, affiliateProductId },
     });
     if (existingEntry) {
-      return validationError('This product is already in the storefront');
+      return error('CONFLICT', 'This product is already in the storefront', 409);
     }
 
     const storefrontProduct = await ctx.db.storefrontProduct.create({

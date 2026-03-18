@@ -11,8 +11,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
-    const item = await ctx.db.contentItem.findUnique({
-      where: { id },
+    const item = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
       select: { id: true, parentId: true },
     });
 

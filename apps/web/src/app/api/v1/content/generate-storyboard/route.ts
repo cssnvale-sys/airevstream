@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, notFound } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 const GenerateStoryboardSchema = z.object({
@@ -26,6 +26,18 @@ export async function POST(req: NextRequest) {
     }
 
     const { script, channelId, contentType } = parsed.data;
+
+    // Verify channel belongs to tenant (if channelId provided)
+    if (channelId) {
+      const channel = await ctx.db.channel.findFirst({
+        where: {
+          id: channelId,
+          ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        },
+        select: { id: true },
+      });
+      if (!channel) return notFound('Channel not found');
+    }
 
     // Parse H.I.C.C. sections from script to generate shots
     const sections = ['HOOK', 'INTRO', 'CONTENT', 'CTA'];

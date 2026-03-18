@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, notFound } from '@/lib/api-server';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -30,6 +30,16 @@ export async function POST(req: NextRequest) {
     }
 
     const { channelId, topic, contentType, platforms, duration, affiliateProductId } = parsed.data;
+
+    // Verify channel belongs to tenant
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id: channelId,
+        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+      },
+      select: { id: true },
+    });
+    if (!channel) return notFound('Channel not found');
 
     const durationSec = duration ?? 60;
     const format = contentType ?? 'video';

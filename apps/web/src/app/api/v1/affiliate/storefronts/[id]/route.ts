@@ -98,14 +98,6 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     const data = parsed.data;
 
-    // If slug is being changed, check uniqueness
-    if (data.slug && data.slug !== existing.slug) {
-      const slugTaken = await ctx.db.storefront.findUnique({ where: { slug: data.slug } });
-      if (slugTaken) {
-        return validationError('A storefront with this slug already exists');
-      }
-    }
-
     const updated = await ctx.db.storefront.update({
       where: { id },
       data: data as any,
@@ -118,6 +110,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
+    if ((err as any)?.code === 'P2002') {
+      return error('CONFLICT', 'A storefront with this slug already exists', 409);
+    }
     console.error('PATCH /api/v1/affiliate/storefronts/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to update storefront', 500);
   }

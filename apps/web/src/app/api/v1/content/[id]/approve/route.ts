@@ -23,8 +23,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return notFound('Content item not found');
     }
 
+    const approvableStatuses = ['generated', 'review', 'pending_approval'];
     if (item.status === 'approved') {
       return error('ALREADY_APPROVED', 'Content item is already approved', 409);
+    }
+    if (!approvableStatuses.includes(item.status)) {
+      return error('INVALID_STATE', `Cannot approve content with status "${item.status}"`, 409);
     }
 
     const [updated] = await ctx.db.$transaction([

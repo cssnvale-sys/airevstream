@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 
 const GeneralSettingsSchema = z.object({
   systemName: z.string().min(1).max(100).optional(),
@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  if (ctx.role !== 'admin') return forbidden('Admin access required');
 
   try {
     const body = await req.json();

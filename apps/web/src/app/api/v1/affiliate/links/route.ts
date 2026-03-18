@@ -1,7 +1,8 @@
-import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateLinkSchema = z.object({
   productId: z.string().uuid(),
@@ -56,6 +57,10 @@ export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`affiliate/links:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   try {
     const body = await req.json();
     const parsed = CreateLinkSchema.safeParse(body);
@@ -67,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     const product = await ctx.db.affiliateProduct.findUnique({ where: { id: productId } });
     if (!product) {
-      return validationError('Product not found');
+      return notFound('Affiliate product not found');
     }
 
     // Generate a short URL if not provided

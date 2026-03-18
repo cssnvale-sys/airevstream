@@ -45,7 +45,12 @@ export async function apiPost<T = unknown>(path: string, body?: unknown): Promis
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
   if (!res.ok) throw new Error(data.error?.message ?? data.error?.code ?? 'Request failed');
   return data;
 }
@@ -60,7 +65,12 @@ export async function apiPut<T = unknown>(path: string, body?: unknown): Promise
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
   if (!res.ok) throw new Error(data.error?.message ?? data.error?.code ?? 'Request failed');
   return data;
 }
@@ -72,7 +82,12 @@ export async function apiDelete(path: string): Promise<void> {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok && res.status !== 204) {
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(`Request failed with status ${res.status}`);
+    }
     throw new Error(data.error?.message ?? data.error?.code ?? 'Request failed');
   }
 }

@@ -6,7 +6,7 @@ import { z } from 'zod';
 const CreateLinkSchema = z.object({
   productId: z.string().uuid(),
   shortUrl: z.string().url().max(500).optional().nullable(),
-});
+}).strict();
 
 /**
  * GET /api/v1/affiliate/links

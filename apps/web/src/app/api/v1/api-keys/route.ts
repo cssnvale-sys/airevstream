@@ -8,7 +8,7 @@ const createApiKeySchema = z.object({
   scopes: z.array(z.string()).default(['read']),
   rateLimitRpm: z.number().int().min(1).max(10000).default(60),
   expiresAt: z.string().datetime().optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/api-keys

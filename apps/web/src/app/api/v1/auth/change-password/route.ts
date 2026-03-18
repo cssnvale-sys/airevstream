@@ -8,7 +8,7 @@ import { hashPassword, verifyPassword } from '@/lib/password';
 const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'currentPassword is required').max(256),
   newPassword: z.string().min(8, 'New password must be at least 8 characters').max(256),
-});
+}).strict();
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

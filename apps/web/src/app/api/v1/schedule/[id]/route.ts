@@ -6,7 +6,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const RescheduleSchema = z.object({
   scheduledAt: z.string().datetime({ message: 'scheduledAt must be a valid ISO date' }).optional(),
   publishConfig: z.record(z.unknown()).optional(),
-}).refine(d => d.scheduledAt !== undefined || d.publishConfig !== undefined, {
+}).strict().refine(d => d.scheduledAt !== undefined || d.publishConfig !== undefined, {
   message: 'At least one of scheduledAt or publishConfig must be provided',
 });
 

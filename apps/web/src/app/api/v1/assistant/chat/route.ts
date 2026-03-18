@@ -10,7 +10,7 @@ const ChatSchema = z.object({
   conversationId: z.string().uuid().optional().nullable(),
   message: z.string().min(1).max(10000),
   contextPage: z.string().max(100).optional().nullable(),
-});
+}).strict();
 
 /**
  * POST /api/v1/assistant/chat

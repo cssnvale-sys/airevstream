@@ -15,7 +15,7 @@ const updateTenantSchema = z.object({
     maxContentPerMonth: z.number().int().optional(),
     storageGb: z.number().optional(),
   }).optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/tenants/[id]

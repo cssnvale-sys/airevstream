@@ -10,7 +10,7 @@ const updateSubscriptionSchema = z.object({
   cancel: z.boolean().optional(),
   status: z.enum(['active', 'cancelled', 'past_due', 'trialing']).optional(),
   metadata: z.record(z.unknown()).optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/subscriptions/[id]

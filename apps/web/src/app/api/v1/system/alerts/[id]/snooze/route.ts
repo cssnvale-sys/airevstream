@@ -4,7 +4,7 @@ import { authenticate, success, error, isUUID, validationError } from '@/lib/api
 
 const SnoozeSchema = z.object({
   duration: z.number().positive().max(86400).optional(),
-});
+}).strict();
 
 type RouteParams = { params: Promise<{ id: string }> };
 

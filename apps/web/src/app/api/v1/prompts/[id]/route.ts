@@ -15,7 +15,7 @@ const updatePromptSchema = z.object({
   tags: z.array(z.string()).optional(),
   metadata: z.record(z.unknown()).optional(),
   incrementUsage: z.boolean().optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/prompts/[id]

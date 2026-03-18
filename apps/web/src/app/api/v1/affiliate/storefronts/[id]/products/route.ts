@@ -10,7 +10,7 @@ const addProductSchema = z.object({
   featured: z.boolean().optional().default(false),
   customTitle: z.string().max(255).nullish(),
   customDescription: z.string().nullish(),
-});
+}).strict();
 
 /**
  * GET /api/v1/affiliate/storefronts/[id]/products

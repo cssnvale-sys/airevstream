@@ -19,7 +19,7 @@ const UpdateAiServiceSchema = z.object({
   fallbackOrder: z.number().int().min(0).optional(),
   isLocal: z.boolean().optional(),
   isFree: z.boolean().optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/ai-services/[id]

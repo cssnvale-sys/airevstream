@@ -10,7 +10,7 @@ const CreateSocialSchema = z.object({
   platformUserId: z.string().max(255).optional().nullable(),
   username: z.string().max(255).optional().nullable(),
   credentials: z.union([z.string(), z.record(z.unknown())]).optional().nullable(),
-});
+}).strict();
 
 type RouteParams = { params: Promise<{ id: string }> };
 

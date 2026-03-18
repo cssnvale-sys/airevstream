@@ -7,7 +7,7 @@ const querySchema = z.object({
   channelId: z.string().uuid().optional(),
   productId: z.string().uuid().optional(),
   groupBy: z.enum(['product', 'channel', 'platform', 'day']).optional().default('product'),
-});
+}).strict();
 
 /**
  * GET /api/v1/affiliate/analytics

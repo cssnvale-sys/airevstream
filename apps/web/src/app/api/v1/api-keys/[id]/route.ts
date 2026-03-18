@@ -8,7 +8,7 @@ const updateApiKeySchema = z.object({
   name: z.string().min(1).max(255).optional(),
   scopes: z.array(z.string()).optional(),
   status: z.enum(['active', 'revoked']).optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/api-keys/[id]

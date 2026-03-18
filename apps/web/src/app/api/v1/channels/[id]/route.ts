@@ -15,7 +15,7 @@ const UpdateChannelSchema = z.object({
   postingCadence: z.record(z.unknown()).optional(),
   status: z.enum(['active', 'paused', 'disabled', 'archived']).optional(),
   familyId: z.string().uuid().optional().nullable(),
-});
+}).strict();
 
 /**
  * GET /api/v1/channels/[id]

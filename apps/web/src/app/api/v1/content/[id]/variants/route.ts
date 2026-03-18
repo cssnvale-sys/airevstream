@@ -6,7 +6,7 @@ const CreateVariantSchema = z.object({
   title: z.string().max(500).optional(),
   prompt: z.string().max(50000).optional(),
   modifications: z.record(z.unknown()).optional(),
-});
+}).strict();
 
 type RouteParams = { params: Promise<{ id: string }> };
 

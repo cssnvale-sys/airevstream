@@ -9,7 +9,7 @@ const UpdateStoryboardSchema = z.object({
   totalDurationSec: z.number().positive().optional(),
   fps: z.number().int().positive().optional(),
   aspectRatio: z.string().max(20).optional(),
-});
+}).strict();
 
 type RouteParams = { params: Promise<{ id: string }> };
 

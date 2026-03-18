@@ -7,7 +7,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const ForgotPasswordSchema = z.object({
   email: z.string().email(),
-});
+}).strict();
 
 /**
  * POST /api/v1/auth/forgot-password

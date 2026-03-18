@@ -12,7 +12,7 @@ const CreateProductSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   brand: z.string().max(200).optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
-});
+}).strict();
 
 /**
  * GET /api/v1/affiliate/products

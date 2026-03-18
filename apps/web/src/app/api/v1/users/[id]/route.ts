@@ -9,7 +9,7 @@ const updateUserSchema = z.object({
   avatarUrl: z.string().url().nullable().optional(),
   role: z.enum(['admin', 'operator', 'viewer']).optional(),
   tenantId: z.string().uuid().nullable().optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/users/[id]

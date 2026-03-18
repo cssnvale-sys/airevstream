@@ -6,7 +6,7 @@ const AssignAvatarSchema = z.object({
   avatarId: z.string().uuid(),
   isPrimary: z.boolean().optional().default(false),
   role: z.string().max(100).optional().nullable(),
-});
+}).strict();
 
 type RouteParams = { params: Promise<{ id: string }> };
 

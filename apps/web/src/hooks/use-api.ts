@@ -36,17 +36,22 @@ export function useApi<T = unknown>(path: string | null, config?: SWRConfigurati
   );
 }
 
-export async function apiPost<T = unknown>(path: string, body?: unknown): Promise<T> {
+// Shared mutation helper — DRY for apiPost/apiPut/apiDelete
+async function apiMutate<T>(method: string, path: string, body?: unknown): Promise<T> {
   const token = getToken();
+  const hasBody = method !== 'DELETE';
   const res = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
+    method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: hasBody && body ? JSON.stringify(body) : undefined,
     signal: AbortSignal.timeout(30_000),
   });
+  if (method === 'DELETE' && (res.ok || res.status === 204)) {
+    return undefined as T;
+  }
   let data;
   try {
     data = await res.json();
@@ -55,45 +60,18 @@ export async function apiPost<T = unknown>(path: string, body?: unknown): Promis
   }
   if (!res.ok) throw new Error(data.error?.message ?? data.error?.code ?? 'Request failed');
   return data;
+}
+
+export async function apiPost<T = unknown>(path: string, body?: unknown): Promise<T> {
+  return apiMutate<T>('POST', path, body);
 }
 
 export async function apiPut<T = unknown>(path: string, body?: unknown): Promise<T> {
-  const token = getToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(30_000),
-  });
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error(`Request failed with status ${res.status}`);
-  }
-  if (!res.ok) throw new Error(data.error?.message ?? data.error?.code ?? 'Request failed');
-  return data;
+  return apiMutate<T>('PUT', path, body);
 }
 
 export async function apiDelete(path: string): Promise<void> {
-  const token = getToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'DELETE',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok && res.status !== 204) {
-    let data;
-    try {
-      data = await res.json();
-    } catch {
-      throw new Error(`Request failed with status ${res.status}`);
-    }
-    throw new Error(data.error?.message ?? data.error?.code ?? 'Request failed');
-  }
+  return apiMutate<void>('DELETE', path);
 }
 
 // Typed hooks for common data patterns
@@ -115,10 +93,6 @@ export function useChannel<T = unknown>(id: string | null) {
 
 export function useContent<T = unknown>(params?: string) {
   return useApi<T>(`/content${params ? `?${params}` : ''}`);
-}
-
-export function useContentItem<T = unknown>(id: string | null) {
-  return useApi<T>(id ? `/content/${id}` : null);
 }
 
 export function useApprovals<T = unknown>(params?: string) {

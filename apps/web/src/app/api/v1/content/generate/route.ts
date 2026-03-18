@@ -13,7 +13,7 @@ const GenerateContentSchema = z.object({
   language: z.string().max(10).optional().default('en'),
   affiliateProductId: z.string().uuid().optional().nullable(),
   affiliateMode: z.string().max(50).optional().nullable(),
-});
+}).strict();
 
 export async function POST(req: NextRequest) {
   try {

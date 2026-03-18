@@ -12,7 +12,7 @@ const CreateChannelSchema = z.object({
   personality: z.string().max(500).optional().nullable(),
   targetAudience: z.string().max(500).optional().nullable(),
   postingCadence: z.record(z.unknown()).optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/channels

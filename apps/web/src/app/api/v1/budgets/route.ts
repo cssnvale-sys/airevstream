@@ -10,7 +10,7 @@ const createBudgetSchema = z.object({
   limitAmount: z.number().positive().max(1000000),
   alertThreshold: z.number().min(0).max(1).optional().default(0.8),
   category: z.string().max(50).optional().nullable(),
-});
+}).strict();
 
 /**
  * Calculate period start and end based on budget type.

@@ -9,7 +9,7 @@ import { verifyPassword } from '@/lib/password';
 const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1).max(256),
-});
+}).strict();
 
 export async function POST(req: NextRequest) {
   try {

@@ -5,7 +5,7 @@ import { authenticate, success, error, paginated, parseQuery, validationError } 
 const createSubscriptionSchema = z.object({
   tenantId: z.string().uuid(),
   plan: z.enum(['free', 'starter', 'pro', 'enterprise']),
-});
+}).strict();
 
 /**
  * GET /api/v1/subscriptions

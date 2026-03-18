@@ -16,7 +16,7 @@ const UpdateProductSchema = z.object({
   brand: z.string().max(200).optional().nullable(),
   imageUrl: z.string().url().max(2000).optional().nullable(),
   status: z.enum(['active', 'inactive', 'expired']).optional(),
-});
+}).strict();
 
 /**
  * GET /api/v1/affiliate/products/[id]

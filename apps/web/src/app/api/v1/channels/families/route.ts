@@ -4,7 +4,7 @@ import { authenticate, success, error, parseQuery, paginated, validationError } 
 
 const CreateFamilySchema = z.object({
   channelIds: z.array(z.string().uuid()).min(2, 'At least 2 channel IDs required').max(50),
-});
+}).strict();
 
 /**
  * GET /api/v1/channels/families

@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const RejectBodySchema = z.object({
   feedback: z.string().max(2000).optional(),
-});
+}).strict();
 
 type RouteParams = { params: Promise<{ id: string; action: string }> };
 

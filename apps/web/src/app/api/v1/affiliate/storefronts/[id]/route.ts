@@ -17,7 +17,7 @@ const updateStorefrontSchema = z.object({
   theme: z.record(z.unknown()).optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
   customDomain: z.string().max(255).nullish(),
-}).strict();
+}).strict().strict();
 
 /**
  * GET /api/v1/affiliate/storefronts/[id]

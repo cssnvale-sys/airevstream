@@ -6,7 +6,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 
 const RejectSchema = z.object({
   feedback: z.string().max(5000).optional(),
-}).strict();
+}).strict().strict();
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {

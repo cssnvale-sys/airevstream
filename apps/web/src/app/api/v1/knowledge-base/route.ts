@@ -11,7 +11,7 @@ const createEntrySchema = z.object({
   content: z.string().min(1).max(50000),
   sourceUrl: z.string().url().optional().nullable(),
   relevanceScore: z.number().min(0).max(10).optional().nullable(),
-});
+}).strict();
 
 /**
  * GET /api/v1/knowledge-base

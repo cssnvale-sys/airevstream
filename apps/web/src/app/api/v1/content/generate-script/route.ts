@@ -11,7 +11,7 @@ const GenerateScriptSchema = z.object({
   platforms: z.union([z.string(), z.array(z.string())]).optional().nullable(),
   duration: z.number().int().min(5).max(3600).optional().nullable(),
   affiliateProductId: z.string().uuid().optional().nullable(),
-});
+}).strict();
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

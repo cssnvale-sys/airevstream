@@ -8,7 +8,7 @@ const UpdateCinemaBibleSchema = z.object({
   environmentBible: z.record(z.unknown()).optional(),
   promptBible: z.record(z.unknown()).optional(),
   shotspecTemplate: z.record(z.unknown()).optional(),
-}).refine(data => Object.values(data).some(v => v !== undefined), {
+}).strict().refine(data => Object.values(data).some(v => v !== undefined), {
   message: 'At least one bible section must be provided',
 });
 

@@ -28,6 +28,8 @@ import {
   ArrowDownUp,
   Loader2,
 } from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -168,9 +170,10 @@ function GeneralTab() {
     try {
       await apiPut('/settings/general', form);
       setSaved(true);
+      toast.success('Settings saved');
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -267,8 +270,9 @@ function AiServicesTab() {
       setShowAddForm(false);
       setNewService({ name: '', type: 'text', endpoint: '' });
       mutate();
-    } catch {
-      // ignore
+      toast.success('AI service added');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add service');
     } finally {
       setAdding(false);
     }
@@ -278,8 +282,9 @@ function AiServicesTab() {
     try {
       await apiDelete(`/ai-services/${id}`);
       mutate();
-    } catch {
-      // ignore
+      toast.success('Service removed');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove service');
     }
   };
 
@@ -464,9 +469,10 @@ function NotificationsTab() {
     try {
       await apiPut('/settings/notifications', { channels });
       setSaved(true);
+      toast.success('Notification settings saved');
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save notification settings');
     } finally {
       setSaving(false);
     }
@@ -565,6 +571,7 @@ function SecurityTab() {
   const [creatingKey, setCreatingKey] = useState(false);
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
 
   const apiKeys = (keysRes?.data as unknown as ApiKey[]) ?? [];
 
@@ -605,8 +612,9 @@ function SecurityTab() {
       setNewKeyValue(res.data.key);
       setNewKeyName('');
       mutateKeys();
-    } catch {
-      // ignore
+      toast.success('API key generated');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate API key');
     } finally {
       setCreatingKey(false);
     }
@@ -616,8 +624,10 @@ function SecurityTab() {
     try {
       await apiPost(`/settings/api-keys/${id}/revoke`);
       mutateKeys();
-    } catch {
-      // ignore
+      setRevokeTarget(null);
+      toast.success('API key revoked');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to revoke key');
     }
   };
 
@@ -790,7 +800,7 @@ function SecurityTab() {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleRevokeKey(key.id)}
+                  onClick={() => setRevokeTarget(key.id)}
                   disabled={key.status === 'revoked'}
                   className={cn('btn-danger btn-sm flex items-center gap-1', key.status === 'revoked' && 'opacity-50 cursor-not-allowed')}
                 >
@@ -801,6 +811,16 @@ function SecurityTab() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!revokeTarget}
+        title="Revoke API Key"
+        message="This key will be permanently revoked and can no longer be used for authentication. This action cannot be undone."
+        confirmLabel="Revoke Key"
+        variant="danger"
+        onConfirm={() => revokeTarget && handleRevokeKey(revokeTarget)}
+        onCancel={() => setRevokeTarget(null)}
+      />
     </div>
   );
 }
@@ -825,9 +845,10 @@ function AppearanceTab() {
     try {
       await apiPut('/settings/appearance', { theme, sidebarPosition });
       setSaved(true);
+      toast.success('Appearance settings saved');
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save appearance settings');
     } finally {
       setSaving(false);
     }

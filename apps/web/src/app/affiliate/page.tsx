@@ -17,6 +17,8 @@ import {
   Layers,
   MousePointerClick,
 } from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -337,8 +339,9 @@ export default function AffiliatePage() {
                 affiliateProductId: productId,
               });
               mutatePool();
-            } catch {
-              // ignore
+              toast.success('Product added to pool');
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : 'Failed to add product to pool');
             }
           }}
           onRemoveFromPool={async (productId: string) => {
@@ -346,8 +349,9 @@ export default function AffiliatePage() {
             try {
               await apiDelete(`/channels/${selectedChannelId}/affiliate-pool?affiliateProductId=${productId}`);
               mutatePool();
-            } catch {
-              // ignore
+              toast.success('Product removed from pool');
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : 'Failed to remove product from pool');
             }
           }}
         />

@@ -6,8 +6,10 @@ import { useAccounts, useAccount, apiPost, apiPut, apiDelete } from '@/hooks/use
 import { cn, formatRelativeTime, statusColor, platformIcon } from '@/lib/utils';
 import {
   Plus, Upload, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  X, Mail, Shield, Activity, Hash, Globe, Tag, Palette, User,
+  X, Mail, Shield, Activity, Hash, Globe, Tag, Palette, User, Trash2,
 } from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -132,6 +134,7 @@ function AddEmailModal({
       setTier('tier2');
       onSuccess();
       onClose();
+      toast.success('Account added successfully');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to add account');
     } finally {
@@ -228,6 +231,7 @@ function BulkImportModal({
       const res = await apiPost<{ data: { imported: number; skipped: number } }>('/accounts/bulk-import', { accounts });
       setResult(res.data);
       onSuccess();
+      toast.success(`Imported ${res.data.imported} accounts`);
     } catch (err: unknown) {
       if (err instanceof SyntaxError) {
         setError('Invalid JSON. Please check the format.');

@@ -5,6 +5,8 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { Check, X, Loader2, FileText, Video, Image } from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface ApprovalItem {
   id: string;
@@ -26,16 +28,19 @@ export default function ApprovalsPage() {
   const { data: approvalsRes, isLoading, mutate } = useApi('/approvals?limit=50');
   const items = (approvalsRes?.data as unknown as ApprovalItem[]) ?? [];
   const [acting, setActing] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
 
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
     setActing(id);
     try {
       await apiPost(`/approvals/${id}/${action}`);
       mutate();
-    } catch {
-      // handled by UI
+      toast.success(action === 'approve' ? 'Content approved' : 'Content rejected');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Failed to ${action} content`);
     } finally {
       setActing(null);
+      setRejectTarget(null);
     }
   };
 
@@ -83,7 +88,7 @@ export default function ApprovalsPage() {
                       Approve
                     </button>
                     <button
-                      onClick={() => handleAction(item.id, 'reject')}
+                      onClick={() => setRejectTarget(item.id)}
                       disabled={acting === item.id}
                       className="btn-secondary flex items-center gap-1.5 text-sm px-3 py-1.5 text-accent-red"
                     >
@@ -96,6 +101,17 @@ export default function ApprovalsPage() {
             })}
           </div>
         )}
+
+        <ConfirmDialog
+          open={!!rejectTarget}
+          title="Reject Content"
+          message="This content will be rejected and moved back to draft. The creator will need to revise it."
+          confirmLabel="Reject"
+          variant="warning"
+          onConfirm={() => rejectTarget && handleAction(rejectTarget, 'reject')}
+          onCancel={() => setRejectTarget(null)}
+          loading={acting === rejectTarget}
+        />
       </div>
     </AppLayout>
   );

@@ -435,11 +435,28 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 **Batch 35: Tracking Docs Update (round 6)**
 - Updated SESSION-LOG, CHANGELOG, DEV-STATUS, DECISIONS, KNOWN-ISSUES
 
+**Batch 36: NaN Guards + Error Message Leak**
+- analytics/engagement, system/metrics: isNaN fallback on parseInt
+- usage: safePercent helper with NaN guard for percentage calculations
+- affiliate/analytics: NaN fallback on period parseInt
+- create page: static error string instead of err.message
+
+**Batch 37: Accessibility & UI Fixes**
+- sidebar: aria-label on keyboard shortcuts button
+- dashboard: NaN guard on qualityScore display
+- create: descriptive alt text on storyboard shot images
+
+**Batch 38: Tracking Docs Update (round 7)**
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS
+
 ### Commits
 - `e721ffd` — docs: tracking docs round 5
 - `7db01f5` — feat: auth middleware
 - `aa24053` — feat: 404 + loading skeletons
-- (this commit) — docs: tracking docs round 6
+- `7acafc3` — docs: tracking docs round 6
+- `e58ff53` — fix: NaN guards + error message leak
+- `f57944a` — fix: accessibility and UI quality
+- (this commit) — docs: tracking docs round 7
 
 ### Open Items
 - E2E testing (Playwright) not started

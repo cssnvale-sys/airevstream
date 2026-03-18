@@ -36,6 +36,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 13 (Session 7) — NaN Guards & Accessibility**
+- Added isNaN fallback on parseInt in analytics/engagement and system/metrics routes
+- Added safePercent helper with NaN guard in usage route for all percentage calculations
+- Added NaN fallback on affiliate/analytics period parseInt
+- Fixed error message leak in create page save content catch block
+- Added aria-label on keyboard shortcuts button in sidebar
+- Added NaN guard on dashboard qualityScore display
+- Improved alt text on create page storyboard shot images
+
 **Audit Round 12 (Session 7) — Validation & Polish**
 - Added password minLength and submit disabled state to accounts add-email modal
 - Added required/minLength/maxLength to create page topic field

@@ -44,14 +44,27 @@ export async function GET(req: NextRequest) {
     const [jobs, total] = await Promise.all([
       ctx.db.workflowJob.findMany({
         where,
-        orderBy: { [sortField]: sortOrder },
-        skip,
-        take: limit,
-        include: {
+        select: {
+          id: true,
+          jobType: true,
+          priority: true,
+          channelId: true,
+          contentId: true,
+          status: true,
+          progress: true,
+          etaSec: true,
+          error: true,
+          retryCount: true,
+          maxRetries: true,
+          createdAt: true,
+          updatedAt: true,
           content: {
             select: { id: true, title: true, contentType: true },
           },
         },
+        orderBy: { [sortField]: sortOrder },
+        skip,
+        take: limit,
       }),
       ctx.db.workflowJob.count({ where }),
     ]);

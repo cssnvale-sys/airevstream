@@ -31,6 +31,18 @@ export async function GET(req: NextRequest) {
     const [alerts, total] = await Promise.all([
       ctx.db.alert.findMany({
         where,
+        select: {
+          id: true,
+          severity: true,
+          category: true,
+          title: true,
+          message: true,
+          source: true,
+          status: true,
+          acknowledgedAt: true,
+          resolvedAt: true,
+          createdAt: true,
+        },
         orderBy: { [sortField]: sortOrder },
         skip,
         take: limit,

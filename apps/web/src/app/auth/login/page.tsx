@@ -24,11 +24,15 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message ?? 'Login failed');
+      if (!res.ok) {
+        const msg = data?.error?.message;
+        throw new Error(msg === 'Invalid credentials' ? msg : 'Login failed');
+      }
       setToken(data.data.token);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error('Login failed:', err);
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }

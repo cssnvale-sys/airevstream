@@ -25,11 +25,17 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password, name: name || undefined }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message ?? 'Registration failed');
+      if (!res.ok) {
+        const msg = data?.error?.message;
+        // Only allow known safe messages through
+        const safeMessages = ['Email already registered', 'Password must be at least 8 characters'];
+        throw new Error(msg && safeMessages.includes(msg) ? msg : 'Registration failed');
+      }
       setToken(data.data.token);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error('Registration failed:', err);
+      setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
     }

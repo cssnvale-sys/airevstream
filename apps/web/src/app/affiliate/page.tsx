@@ -342,7 +342,8 @@ export default function AffiliatePage() {
               mutatePool();
               toast.success('Product added to pool');
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : 'Failed to add product to pool');
+              console.error('Failed to add product to pool:', err);
+              toast.error('Failed to add product to pool');
             }
           }}
           onRemoveFromPool={async (productId: string) => {
@@ -352,7 +353,8 @@ export default function AffiliatePage() {
               mutatePool();
               toast.success('Product removed from pool');
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : 'Failed to remove product from pool');
+              console.error('Failed to remove product from pool:', err);
+              toast.error('Failed to remove product from pool');
             }
           }}
         />

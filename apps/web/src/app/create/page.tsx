@@ -203,8 +203,8 @@ export default function CreatePage() {
       });
       update('script', res.data?.script ?? '');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to generate script';
-      setError(msg);
+      console.error('Failed to generate script:', err);
+      setError('Failed to generate script. Please try again.');
       // Provide a placeholder so the user can still proceed
       if (!formData.script) {
         update(

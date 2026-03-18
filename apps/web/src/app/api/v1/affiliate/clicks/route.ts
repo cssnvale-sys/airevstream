@@ -18,9 +18,19 @@ export async function GET(req: NextRequest) {
     const end = params.get('end');
     const converted = params.get('converted');
 
-    const where: Record<string, unknown> = {};
+    // Tenant scoping: restrict to this tenant's channels
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
+    const where: Record<string, unknown> = {
+      channelId: channelId && tenantChannelIds.includes(channelId)
+        ? channelId
+        : { in: tenantChannelIds },
+    };
     if (productId) where.productId = productId;
-    if (channelId) where.channelId = channelId;
     if (converted === 'true') where.converted = true;
     if (converted === 'false') where.converted = false;
 

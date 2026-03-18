@@ -14,7 +14,26 @@ export async function GET(req: NextRequest) {
     const status = params.get('status') ?? undefined;
     const jobType = params.get('jobType') ?? undefined;
 
-    const where: Record<string, unknown> = {};
+    // Tenant scoping: get tenant's channel and account IDs
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+    const tenantAccounts = await ctx.db.emailAccount.findMany({
+      where: { tenantId: ctx.tenantId },
+      select: { id: true },
+    });
+    const tenantAccountIds = tenantAccounts.map((a) => a.id);
+
+    const where: Record<string, unknown> = {
+      OR: [
+        { channelId: { in: tenantChannelIds } },
+        { emailAccountId: { in: tenantAccountIds } },
+        // Include jobs without channel/account context (system jobs)
+        { channelId: null, emailAccountId: null },
+      ],
+    };
     if (status) where.status = status;
     if (jobType) where.jobType = jobType;
 

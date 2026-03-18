@@ -8,18 +8,26 @@ export async function GET(req: NextRequest) {
   try {
     const { limit } = parseQuery(req);
 
+    // Tenant scoping for content/posts
+    const tenantChannelScope = {
+      channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+    };
+
     // Aggregate recent activity from multiple sources
     const [recentContent, recentPosts, recentAlerts] = await Promise.all([
       ctx.db.contentItem.findMany({
+        where: tenantChannelScope,
         orderBy: { updatedAt: 'desc' },
         take: limit,
         select: { id: true, title: true, status: true, contentType: true, updatedAt: true, channel: { select: { name: true } } },
       }),
       ctx.db.scheduledPost.findMany({
+        where: tenantChannelScope,
         orderBy: { updatedAt: 'desc' },
         take: limit,
         select: { id: true, status: true, platform: true, scheduledAt: true, updatedAt: true, channel: { select: { name: true } } },
       }),
+      // Alerts are system-level (no tenant chain in schema)
       ctx.db.alert.findMany({
         orderBy: { createdAt: 'desc' },
         take: Math.min(limit, 5),
@@ -52,8 +60,8 @@ export async function GET(req: NextRequest) {
       .slice(0, limit);
 
     return success(activity);
-  } catch (err: any) {
-    console.error('[GET /activity]', err);
+  } catch (err) {
+    console.error('GET /api/v1/activity failed:', err);
     return error('INTERNAL_ERROR', 'Failed to load activity', 500);
   }
 }

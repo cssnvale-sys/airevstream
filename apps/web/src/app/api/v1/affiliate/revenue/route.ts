@@ -15,11 +15,21 @@ export async function GET(req: NextRequest) {
     const start = url.searchParams.get('start');
     const end = url.searchParams.get('end');
 
+    // Tenant scoping: restrict to this tenant's channels
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
     const dateFilter: Record<string, unknown> = {};
     if (start) dateFilter.gte = new Date(start);
     if (end) dateFilter.lte = new Date(end);
 
-    const clickWhere: Record<string, unknown> = { converted: true };
+    const clickWhere: Record<string, unknown> = {
+      converted: true,
+      channelId: { in: tenantChannelIds },
+    };
     if (Object.keys(dateFilter).length > 0) {
       clickWhere.createdAt = dateFilter;
     }
@@ -66,7 +76,9 @@ export async function GET(req: NextRequest) {
     const productMap = new Map(products.map((p) => [p.id, p]));
 
     // Total clicks (including non-converted) for conversion rate
-    const allClicksWhere: Record<string, unknown> = {};
+    const allClicksWhere: Record<string, unknown> = {
+      channelId: { in: tenantChannelIds },
+    };
     if (Object.keys(dateFilter).length > 0) {
       allClicksWhere.createdAt = dateFilter;
     }

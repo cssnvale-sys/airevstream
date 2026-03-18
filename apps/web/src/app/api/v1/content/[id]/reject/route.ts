@@ -36,26 +36,26 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const parsed = RejectSchema.safeParse(body);
     const feedback = parsed.success ? parsed.data.feedback : undefined;
 
-    const updated = await ctx.db.contentItem.update({
-      where: { id },
-      data: {
-        status: 'draft',
-      },
-    });
-
-    // Log rejection to audit log
-    await ctx.db.actionAuditLog.create({
-      data: {
-        actionType: 'content.reject',
-        tier: 1,
-        parameters: {
-          contentId: id,
-          ...(feedback ? { feedback } : {}),
+    const [updated] = await ctx.db.$transaction([
+      ctx.db.contentItem.update({
+        where: { id },
+        data: {
+          status: 'draft',
         },
-        result: { previousStatus: item.status, newStatus: 'draft' },
-        status: 'completed',
-      },
-    });
+      }),
+      ctx.db.actionAuditLog.create({
+        data: {
+          actionType: 'content.reject',
+          tier: 1,
+          parameters: {
+            contentId: id,
+            ...(feedback ? { feedback } : {}),
+          },
+          result: { previousStatus: item.status, newStatus: 'draft' },
+          status: 'completed',
+        },
+      }),
+    ]);
 
     return success({
       ...updated,

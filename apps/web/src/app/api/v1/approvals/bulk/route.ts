@@ -42,48 +42,47 @@ export async function POST(req: NextRequest) {
     const results: { id: string; status: string }[] = [];
 
     if (action === 'approve') {
-      await ctx.db.contentItem.updateMany({
-        where: { id: { in: ids } },
-        data: {
-          status: 'approved',
-          approvedAt: now,
-          approvedBy: ctx.userId,
-        },
-      });
-
-      // Log each approval to audit log
-      await ctx.db.actionAuditLog.createMany({
-        data: ids.map((contentId) => ({
-          actionType: 'content.bulk_approve',
-          tier: 1,
-          parameters: { contentId },
-          result: { status: 'approved' },
-          status: 'completed',
-        })),
-      });
+      await ctx.db.$transaction([
+        ctx.db.contentItem.updateMany({
+          where: { id: { in: ids } },
+          data: {
+            status: 'approved',
+            approvedAt: now,
+            approvedBy: ctx.userId,
+          },
+        }),
+        ctx.db.actionAuditLog.createMany({
+          data: ids.map((contentId) => ({
+            actionType: 'content.bulk_approve',
+            tier: 1,
+            parameters: { contentId },
+            result: { status: 'approved' },
+            status: 'completed',
+          })),
+        }),
+      ]);
 
       for (const id of ids) {
         results.push({ id, status: 'approved' });
       }
     } else {
-      // reject
-      await ctx.db.contentItem.updateMany({
-        where: { id: { in: ids } },
-        data: {
-          status: 'draft',
-        },
-      });
-
-      // Log each rejection to audit log
-      await ctx.db.actionAuditLog.createMany({
-        data: ids.map((contentId) => ({
-          actionType: 'content.bulk_reject',
-          tier: 1,
-          parameters: { contentId },
-          result: { previousStatus: 'pending_approval', newStatus: 'draft' },
-          status: 'completed',
-        })),
-      });
+      await ctx.db.$transaction([
+        ctx.db.contentItem.updateMany({
+          where: { id: { in: ids } },
+          data: {
+            status: 'draft',
+          },
+        }),
+        ctx.db.actionAuditLog.createMany({
+          data: ids.map((contentId) => ({
+            actionType: 'content.bulk_reject',
+            tier: 1,
+            parameters: { contentId },
+            result: { previousStatus: 'pending_approval', newStatus: 'draft' },
+            status: 'completed',
+          })),
+        }),
+      ]);
 
       for (const id of ids) {
         results.push({ id, status: 'draft' });

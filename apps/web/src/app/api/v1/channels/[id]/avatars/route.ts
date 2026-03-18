@@ -83,11 +83,30 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return error('CONFLICT', 'Avatar is already assigned to this channel', 409);
     }
 
-    // If setting as primary, unset other primaries first
+    // If setting as primary, unset other primaries and create atomically
     if (isPrimary) {
-      await ctx.db.channelAvatar.updateMany({
-        where: { channelId: id, isPrimary: true },
-        data: { isPrimary: false },
+      const [, channelAvatarResult] = await ctx.db.$transaction([
+        ctx.db.channelAvatar.updateMany({
+          where: { channelId: id, isPrimary: true },
+          data: { isPrimary: false },
+        }),
+        ctx.db.channelAvatar.create({
+          data: {
+            channelId: id,
+            avatarId,
+            isPrimary: true,
+            role: role ?? null,
+          },
+          include: {
+            avatar: true,
+          },
+        }),
+      ]);
+
+      return success({
+        ...channelAvatarResult.avatar,
+        isPrimary: channelAvatarResult.isPrimary,
+        role: channelAvatarResult.role,
       });
     }
 
@@ -95,7 +114,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       data: {
         channelId: id,
         avatarId,
-        isPrimary: isPrimary ?? false,
+        isPrimary: false,
         role: role ?? null,
       },
       include: {

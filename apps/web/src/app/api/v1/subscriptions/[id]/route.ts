@@ -113,16 +113,6 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     // Handle plan change
     if (plan !== undefined && plan !== existing.plan) {
       data.plan = plan;
-
-      // Also update the tenant's plan
-      await ctx.db.tenant.update({
-        where: { id: existing.tenantId },
-        data: {
-          plan,
-          // Update limits based on new plan
-          limits: getPlanLimits(plan),
-        },
-      });
     }
 
     if (status !== undefined) {
@@ -140,21 +130,41 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       data.metadata = { ...existingMeta, ...metadata };
     }
 
-    const updated = await ctx.db.subscription.update({
-      where: { id },
-      data,
-      include: {
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            plan: true,
-            limits: true,
+    // Use transaction when plan change requires updating both subscription and tenant
+    const needsTenantUpdate = plan !== undefined && plan !== existing.plan;
+
+    let updated;
+    if (needsTenantUpdate) {
+      const [subscriptionResult] = await ctx.db.$transaction([
+        ctx.db.subscription.update({
+          where: { id },
+          data,
+          include: {
+            tenant: {
+              select: { id: true, name: true, slug: true, plan: true, limits: true },
+            },
+          },
+        }),
+        ctx.db.tenant.update({
+          where: { id: existing.tenantId },
+          data: {
+            plan: plan!,
+            limits: getPlanLimits(plan!),
+          },
+        }),
+      ]);
+      updated = subscriptionResult;
+    } else {
+      updated = await ctx.db.subscription.update({
+        where: { id },
+        data,
+        include: {
+          tenant: {
+            select: { id: true, name: true, slug: true, plan: true, limits: true },
           },
         },
-      },
-    });
+      });
+    }
 
     return success(updated);
   } catch (err) {

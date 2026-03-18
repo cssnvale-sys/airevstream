@@ -26,25 +26,25 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return error('ALREADY_APPROVED', 'Content item is already approved', 409);
     }
 
-    const updated = await ctx.db.contentItem.update({
-      where: { id },
-      data: {
-        status: 'approved',
-        approvedAt: new Date(),
-        approvedBy: ctx.userId,
-      },
-    });
-
-    // Log approval to audit log
-    await ctx.db.actionAuditLog.create({
-      data: {
-        actionType: 'content.approve',
-        tier: 1,
-        parameters: { contentId: id },
-        result: { status: 'approved' },
-        status: 'completed',
-      },
-    });
+    const [updated] = await ctx.db.$transaction([
+      ctx.db.contentItem.update({
+        where: { id },
+        data: {
+          status: 'approved',
+          approvedAt: new Date(),
+          approvedBy: ctx.userId,
+        },
+      }),
+      ctx.db.actionAuditLog.create({
+        data: {
+          actionType: 'content.approve',
+          tier: 1,
+          parameters: { contentId: id },
+          result: { status: 'approved' },
+          status: 'completed',
+        },
+      }),
+    ]);
 
     return success({
       ...updated,

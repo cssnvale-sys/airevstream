@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, notFound } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+const RejectSchema = z.object({
+  feedback: z.string().max(5000).optional(),
+}).strict();
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
@@ -10,8 +15,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const item = await ctx.db.contentItem.findUnique({
-      where: { id },
+    const item = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
       select: { id: true, status: true },
     });
 
@@ -20,7 +28,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { feedback } = body as { feedback?: string };
+    const parsed = RejectSchema.safeParse(body);
+    const feedback = parsed.success ? parsed.data.feedback : undefined;
 
     const updated = await ctx.db.contentItem.update({
       where: { id },

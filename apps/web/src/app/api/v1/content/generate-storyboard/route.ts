@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
+
+const GenerateStoryboardSchema = z.object({
+  script: z.string().min(1).max(50000),
+  channelId: z.string().uuid().optional().nullable(),
+  contentType: z.string().max(50).optional().nullable(),
+});
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
@@ -7,11 +14,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { script, channelId, contentType } = body;
-
-    if (!script) {
-      return validationError('script is required');
+    const parsed = GenerateStoryboardSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
+
+    const { script, channelId, contentType } = parsed.data;
 
     // Parse H.I.C.C. sections from script to generate shots
     const sections = ['HOOK', 'INTRO', 'CONTENT', 'CTA'];

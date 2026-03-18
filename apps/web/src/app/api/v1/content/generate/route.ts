@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import { addJob } from '@airevstream/queue';
+
+const GenerateContentSchema = z.object({
+  channelId: z.string().uuid(),
+  title: z.string().max(500).optional().nullable(),
+  contentType: z.string().min(1).max(50),
+  contentPurpose: z.string().max(100).optional().nullable(),
+  prompt: z.string().max(10000).optional().nullable(),
+  language: z.string().max(10).optional().default('en'),
+  affiliateProductId: z.string().uuid().optional().nullable(),
+  affiliateMode: z.string().max(50).optional().nullable(),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,6 +20,11 @@ export async function POST(req: NextRequest) {
     if (ctx instanceof NextResponse) return ctx;
 
     const body = await req.json();
+    const parsed = GenerateContentSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+    }
+
     const {
       channelId,
       title,
@@ -17,23 +34,7 @@ export async function POST(req: NextRequest) {
       language,
       affiliateProductId,
       affiliateMode,
-    } = body as {
-      channelId?: string;
-      title?: string;
-      contentType?: string;
-      contentPurpose?: string;
-      prompt?: string;
-      language?: string;
-      affiliateProductId?: string;
-      affiliateMode?: string;
-    };
-
-    if (!channelId) {
-      return validationError('channelId is required');
-    }
-    if (!contentType) {
-      return validationError('contentType is required');
-    }
+    } = parsed.data;
 
     // Verify the channel exists
     const channel = await ctx.db.channel.findUnique({

@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
+
+const GenerateScriptSchema = z.object({
+  channelId: z.string().uuid(),
+  topic: z.string().min(1).max(1000),
+  contentType: z.string().max(50).optional().nullable(),
+  platforms: z.union([z.string(), z.array(z.string())]).optional().nullable(),
+  duration: z.number().int().min(5).max(3600).optional().nullable(),
+  affiliateProductId: z.string().uuid().optional().nullable(),
+});
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
@@ -8,11 +18,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { channelId, topic, contentType, platforms, duration, affiliateProductId } = body;
-
-    if (!channelId || !topic) {
-      return validationError('channelId and topic are required');
+    const parsed = GenerateScriptSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
+
+    const { channelId, topic, contentType, platforms, duration, affiliateProductId } = parsed.data;
 
     const durationSec = duration ?? 60;
     const format = contentType ?? 'video';

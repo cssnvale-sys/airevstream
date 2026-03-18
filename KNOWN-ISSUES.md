@@ -164,6 +164,11 @@ Old JWTs remain valid after password change until they naturally expire (7 days)
 **Status**: Fixed (Session 7, Batch 111)
 Added `authenticateApiKey()` and `authenticateAny()` functions in api-server.ts. Validates X-API-Key header, verifies hash against DB, checks status/expiry, enforces scope requirements, and applies per-key rate limiting (rateLimitRpm). Routes can use `authenticateAny()` to accept either JWT or API key.
 
+### KI-024: Open Redirect Vulnerability on Login Page
+**Severity**: High
+**Status**: Fixed (Session 7, Batch 118)
+Login page accepted arbitrary redirect URLs from query params, allowing attackers to redirect authenticated users to external phishing sites. Fixed by validating redirect param starts with `/` and not `//`.
+
 ### KI-023: Missing Admin Role Checks on AI Service Routes
 **Severity**: High
 **Status**: Fixed (Session 7, Batch 116)

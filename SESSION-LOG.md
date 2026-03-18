@@ -886,6 +886,40 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `565bab6` — fix: clamp commission rate to 0-100 range on affiliate product forms
 - `95dcc2c` — fix: add admin role checks to 5 AI service management routes
 
+**Batch 118: Open Redirect Fix + Affiliate Short URL Matching**
+- Login page: validate redirect param is relative path (prevents open redirect attacks)
+- Affiliate redirect: change shortUrl lookup from `contains` to `endsWith /code` (prevents false positives)
+
+**Batch 119: Frontend Defensive Guards**
+- accounts/page.tsx: flatMap inner .map() guarded with ?? []
+- .every() calls use optional chaining on niches/brandingPackages
+- accountHealthAvg accepts undefined input safely
+
+**Batch 120: api-server.ts Unit Tests**
+- 30 new tests covering all response helpers, requireAdmin, parseQuery
+- Total web tests: 61 (up from 6 at session start)
+
+**Batch 121: Missing Prisma Indexes**
+- WorkflowJob: composite @@index([status, jobType]) for filtered listings
+- Alert: @@index([status, resolvedAt]) for maintenance cleanup queries
+
+**Batch 122: Config Externalization**
+- ComfyUI timeout: COMFYUI_TIMEOUT_MS env var (default 120000)
+- Instagram/Facebook API versions: INSTAGRAM_API_VERSION, FACEBOOK_API_VERSION env vars
+- Updated .env.example
+
+**Batch 123: Maintenance Worker Transaction Safety**
+- All 5 cleanup deleteMany calls wrapped in db.$transaction for atomicity
+
+### Commits (continued)
+- `302bdc4` — docs: tracking docs round 29
+- `2911364` — fix: prevent open redirect on login and fix affiliate short URL matching
+- `b9f4569` — fix: add defensive optional chaining to accounts page data access
+- `843b8ae` — test: add 30 unit tests for api-server.ts response helpers and parseQuery
+- `e2f6865` — fix: add missing Prisma indexes for common query patterns
+- `09bf110` — fix: extract hardcoded config values to environment variables
+- `2f5972b` — fix: wrap maintenance cleanup deletes in Prisma transaction
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

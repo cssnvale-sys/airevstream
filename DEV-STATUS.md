@@ -199,7 +199,7 @@
 - Packages: 64 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3)
 - Services: 18 tests (workflow-engine: 8, ai-assistant: 5, production-pipeline: 5)
 - Workers: 5 tests
-- Web: 31 tests (lib: 6, password: 11, rate-limit: 14) + Next.js build (106 API routes, 14 dashboard pages)
+- Web: 61 tests (lib: 6, password: 11, rate-limit: 14, api-server: 30) + Next.js build (106 API routes, 14 dashboard pages)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 
 ## Architecture Highlights

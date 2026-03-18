@@ -42,10 +42,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Create Wizard Progress Bar** (Session 7): "Step X of 6" text + animated percentage bar
 - **System Refresh Button** (Session 7): Manual re-fetch of all health/metrics data with toast feedback
 
-- **Unit Tests** (Session 7): 22 new tests for password.ts (11) and rate-limit.ts (11) — total 31 web tests
+- **Unit Tests** (Session 7): 55 new web tests — password (11), rate-limit (14), api-server (30). Total: 61 web tests
 - **API Key Access on Read Endpoints** (Session 7): 13 GET routes accept both JWT and API key via authenticateAny()
+- **Prisma Indexes** (Session 7): @@index([status, jobType]) on WorkflowJob, @@index([status, resolvedAt]) on Alert
 
 ### Fixed
+
+**Audit Round 40 (Session 7) — Security, Config, Transactions**
+- Open redirect vulnerability fixed on login page (validate redirect param is relative path)
+- Affiliate short URL matching: `contains` → `endsWith /code` (prevents false positive matches)
+- Defensive optional chaining on accounts page (flatMap, every, reduce)
+- ComfyUI timeout and platform API versions extracted to env vars
+- Maintenance worker cleanup deletes wrapped in Prisma $transaction
 
 **Audit Round 39 (Session 7) — Security Hardening, Role Checks**
 - IP format validation in getClientIp() — prevents rate-limit key pollution from spoofed X-Forwarded-For headers

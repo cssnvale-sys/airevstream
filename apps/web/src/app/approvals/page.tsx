@@ -55,7 +55,7 @@ export default function ApprovalsPage() {
       mutate();
       toast.success(action === 'approve' ? 'Content approved' : 'Content rejected');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Failed to ${action} content`);
+      toast.error(`Failed to ${action} content`);
     } finally {
       setActing(null);
       setRejectTarget(null);

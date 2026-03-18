@@ -58,7 +58,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       ...v,
       qualityScore: v.qualityScore != null ? Number(v.qualityScore) : null,
     }));
-    return success(converted);
+    return success({ versions: converted, total: converted.length });
   } catch (err) {
     console.error('GET /api/v1/content/[id]/versions error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

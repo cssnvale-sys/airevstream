@@ -244,7 +244,7 @@ function BulkImportModal({
       if (err instanceof SyntaxError) {
         setError('Invalid JSON. Please check the format.');
       } else {
-        setError(err instanceof Error ? err.message : 'Import failed');
+        setError('Import failed');
       }
     } finally {
       setSubmitting(false);
@@ -696,7 +696,7 @@ export default function AccountsPage() {
       mutate();
       toast.success(`Deleted ${selectedIds.size} accounts`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete accounts');
+      toast.error('Failed to delete accounts');
     } finally {
       setBulkDeleting(false);
     }

@@ -13,13 +13,19 @@ const updateUserSchema = z.object({
 
 /**
  * GET /api/v1/users/[id]
- * Get user profile
+ * Get user profile.
+ * Admins may view any user; non-admins may only view their own profile.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+
+  // Non-admins can only view their own profile
+  if (ctx.role !== 'admin' && ctx.userId !== id) {
+    return error('FORBIDDEN', 'You can only view your own profile', 403);
+  }
 
   try {
     const user = await ctx.db.user.findUnique({
@@ -66,15 +72,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const currentUser = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!currentUser) {
-      return error('UNAUTHORIZED', 'User not found', 401);
-    }
-
     const targetUser = await ctx.db.user.findUnique({ where: { id } });
     if (!targetUser) return notFound('User not found');
 
-    const isAdmin = currentUser.role === 'admin';
+    const isAdmin = ctx.role === 'admin';
     const isSelf = ctx.userId === id;
 
     // Non-admins can only update themselves
@@ -133,7 +134,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('PUT /api/v1/users/[id] failed:', err);
+    console.error('PATCH /api/v1/users/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update user', 500);
   }
 }

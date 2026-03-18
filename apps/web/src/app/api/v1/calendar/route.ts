@@ -31,6 +31,16 @@ export async function GET(req: NextRequest) {
 
     const where: Record<string, unknown> = {
       scheduledAt: { gte: startDate, lte: endDate },
+      // Scope to tenant via the Channel -> SocialAccount -> EmailAccount chain
+      ...(ctx.tenantId
+        ? {
+            channel: {
+              socialAccount: {
+                emailAccount: { tenantId: ctx.tenantId },
+              },
+            },
+          }
+        : {}),
     };
 
     if (channelId) where.channelId = channelId;

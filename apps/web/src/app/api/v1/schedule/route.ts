@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       return validationError(`Invalid platform. Must be one of: ${validPlatforms.join(', ')}`);
     }
 
-    // Verify content and channel exist
+    // Verify content exists and belongs to the requested channel
     const [content, channel] = await Promise.all([
       ctx.db.contentItem.findUnique({ where: { id: contentId } }),
       ctx.db.channel.findUnique({ where: { id: channelId } }),
@@ -40,6 +40,26 @@ export async function POST(req: NextRequest) {
 
     if (!content) return validationError('Content not found');
     if (!channel) return validationError('Channel not found');
+
+    // Ensure the content belongs to the specified channel (prevents cross-channel scheduling)
+    if (content.channelId !== channelId) {
+      return validationError('Content does not belong to the specified channel');
+    }
+
+    // Verify the channel belongs to the authenticated user's tenant (if tenant-scoped)
+    if (ctx.tenantId) {
+      const channelWithTenant = await ctx.db.channel.findFirst({
+        where: {
+          id: channelId,
+          socialAccount: {
+            emailAccount: { tenantId: ctx.tenantId },
+          },
+        },
+      });
+      if (!channelWithTenant) {
+        return error('FORBIDDEN', 'Channel does not belong to your tenant', 403);
+      }
+    }
 
     const post = await ctx.db.scheduledPost.create({
       data: {

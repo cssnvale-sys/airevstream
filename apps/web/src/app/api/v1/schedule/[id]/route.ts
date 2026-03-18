@@ -14,7 +14,21 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const existing = await ctx.db.scheduledPost.findUnique({ where: { id } });
+    const existing = await ctx.db.scheduledPost.findFirst({
+      where: {
+        id,
+        // Scope to tenant via Channel -> SocialAccount -> EmailAccount chain
+        ...(ctx.tenantId
+          ? {
+              channel: {
+                socialAccount: {
+                  emailAccount: { tenantId: ctx.tenantId },
+                },
+              },
+            }
+          : {}),
+      },
+    });
     if (!existing) return notFound('Scheduled post not found');
 
     if (existing.status === 'posted') {
@@ -23,6 +37,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     const body = await req.json();
     const { scheduledAt, publishConfig } = body;
+
+    if (scheduledAt === undefined && publishConfig === undefined) {
+      return validationError('At least one of scheduledAt or publishConfig must be provided');
+    }
 
     const data: Record<string, unknown> = {};
 
@@ -73,7 +91,21 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const existing = await ctx.db.scheduledPost.findUnique({ where: { id } });
+    const existing = await ctx.db.scheduledPost.findFirst({
+      where: {
+        id,
+        // Scope to tenant via Channel -> SocialAccount -> EmailAccount chain
+        ...(ctx.tenantId
+          ? {
+              channel: {
+                socialAccount: {
+                  emailAccount: { tenantId: ctx.tenantId },
+                },
+              },
+            }
+          : {}),
+      },
+    });
     if (!existing) return notFound('Scheduled post not found');
 
     if (existing.status === 'posted') {

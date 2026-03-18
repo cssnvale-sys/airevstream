@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR, { type SWRConfiguration } from 'swr';
-import { getToken } from '@/lib/auth';
+import { getToken, removeToken } from '@/lib/auth';
 
 const API_BASE = '/api/v1';
 
@@ -10,7 +10,19 @@ async function fetcher(url: string) {
   const res = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  const data = await res.json();
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      removeToken();
+      window.location.href = '/auth/login';
+    }
+    throw new Error('Session expired');
+  }
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
   if (!res.ok) throw new Error(data.error?.message ?? 'Request failed');
   return data;
 }

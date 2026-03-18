@@ -26,7 +26,8 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
 
   const send = async () => {
     if (!input.trim() || loading) return;
-    const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content: input };
+    const message = input;
+    const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content: message };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setLoading(true);
@@ -36,7 +37,7 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
       const res = await fetch('/api/v1/assistant/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ conversationId, message: input, contextPage: pathname }),
+        body: JSON.stringify({ conversationId, message, contextPage: pathname }),
       });
       const data = await res.json();
       if (data.success) {
@@ -48,8 +49,13 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
         };
         setMessages((prev) => [...prev, aiMsg]);
       }
-    } catch {
-      // silent fail
+    } catch (err) {
+      console.error('AI chat failed:', err);
+      setMessages((prev) => [...prev, {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: 'Sorry, something went wrong. Please try again.',
+      }]);
     } finally {
       setLoading(false);
     }

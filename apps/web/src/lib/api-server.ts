@@ -56,7 +56,10 @@ export async function authenticate(req: NextRequest): Promise<ApiContext | NextR
     const db = getDb();
     // Fetch tenantId from DB (not in JWT to keep it current)
     const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
-    return { userId, role, tenantId: user?.tenantId ?? null, db };
+    if (!user) {
+      return error('UNAUTHORIZED', 'User not found', 401);
+    }
+    return { userId, role, tenantId: user.tenantId, db };
   } catch {
     return error('UNAUTHORIZED', 'Invalid or expired token', 401);
   }
@@ -93,7 +96,10 @@ export async function authenticateSSE(req: NextRequest): Promise<ApiContext | Ne
     const role = (payload.role as string) ?? 'operator';
     const db = getDb();
     const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
-    return { userId, role, tenantId: user?.tenantId ?? null, db };
+    if (!user) {
+      return error('UNAUTHORIZED', 'User not found', 401);
+    }
+    return { userId, role, tenantId: user.tenantId, db };
   } catch {
     return error('UNAUTHORIZED', 'Invalid or expired token', 401);
   }
@@ -112,8 +118,10 @@ export function requireAdmin(ctx: ApiContext): NextResponse | null {
 
 export function parseQuery(req: NextRequest) {
   const url = new URL(req.url);
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
-  const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') ?? '50')));
+  const rawPage = parseInt(url.searchParams.get('page') ?? '1');
+  const rawLimit = parseInt(url.searchParams.get('limit') ?? '50');
+  const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage);
+  const limit = Math.min(100, Math.max(1, Number.isNaN(rawLimit) ? 50 : rawLimit));
   const skip = (page - 1) * limit;
   const sort = url.searchParams.get('sort') ?? 'createdAt';
   const order = url.searchParams.get('order') ?? 'desc';

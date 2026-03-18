@@ -27,7 +27,7 @@ async function pollAlerts(ctx: ApiContext, lastCheck: Date): Promise<SystemEvent
       createdAt: { gt: lastCheck },
       status: { in: ['open', 'acknowledged'] },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: 'asc' },
   });
 
   if (!alert) return null;
@@ -81,7 +81,7 @@ async function pollContent(ctx: ApiContext, lastCheck: Date): Promise<SystemEven
       updatedAt: { gt: lastCheck },
       status: { in: ['generating', 'generated', 'pending_approval'] },
     },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: { updatedAt: 'asc' },
     select: {
       id: true,
       channelId: true,
@@ -184,8 +184,9 @@ export async function GET(req: NextRequest) {
             controller.enqueue(sseMessage(event.type, event));
           }
           lastCheck = new Date();
-        } catch {
-          // DB query failed, skip this cycle silently
+        } catch (err) {
+          // DB query failed — log for observability but keep the stream alive
+          console.error('SSE poll error (cycle skipped):', err);
         }
       }, 10_000);
 

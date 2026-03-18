@@ -19,13 +19,19 @@ const updateTenantSchema = z.object({
 
 /**
  * GET /api/v1/tenants/[id]
- * Get tenant with user count and subscription info
+ * Get tenant with user count and subscription info.
+ * Admins may view any tenant; non-admins may only view their own tenant.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+
+  // Non-admins can only view their own tenant
+  if (ctx.role !== 'admin' && ctx.tenantId !== id) {
+    return error('FORBIDDEN', 'You do not have access to this tenant', 403);
+  }
 
   try {
     const tenant = await ctx.db.tenant.findUnique({
@@ -68,7 +74,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     };
 
     return success(data);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/tenants/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch tenant', 500);
   }
 }
@@ -81,14 +88,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (ctx.role !== 'admin') {
+    return error('FORBIDDEN', 'Admin access required', 403);
+  }
+
   const { id } = await params;
 
   try {
-    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!user || user.role !== 'admin') {
-      return error('FORBIDDEN', 'Admin access required', 403);
-    }
-
     const existing = await ctx.db.tenant.findUnique({ where: { id } });
     if (!existing) return notFound('Tenant not found');
 
@@ -117,7 +123,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     });
 
     return success(updated);
-  } catch {
+  } catch (err) {
+    console.error('PATCH /api/v1/tenants/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update tenant', 500);
   }
 }

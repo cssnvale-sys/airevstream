@@ -9,12 +9,11 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  try {
-    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!user || user.role !== 'admin') {
-      return error('FORBIDDEN', 'Admin access required', 403);
-    }
+  if (ctx.role !== 'admin') {
+    return error('FORBIDDEN', 'Admin access required', 403);
+  }
 
+  try {
     const { page, limit, skip, sort, order, search, params } = parseQuery(req);
     const tenantId = params.get('tenantId') ?? undefined;
     const role = params.get('role') ?? undefined;

@@ -22,12 +22,12 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  try {
-    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!user || user.role !== 'admin') {
-      return error('FORBIDDEN', 'Admin access required', 403);
-    }
+  // Use role from JWT/context rather than an extra DB round-trip
+  if (ctx.role !== 'admin') {
+    return error('FORBIDDEN', 'Admin access required', 403);
+  }
 
+  try {
     const { page, limit, skip, sort, order, search } = parseQuery(req);
 
     const where: Record<string, unknown> = {};
@@ -72,18 +72,23 @@ export async function GET(req: NextRequest) {
     }));
 
     return paginated(data, total, page, limit);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/tenants failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list tenants', 500);
   }
 }
 
 /**
  * POST /api/v1/tenants
- * Create a new tenant
+ * Create a new tenant (admin only)
  */
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  if (ctx.role !== 'admin') {
+    return error('FORBIDDEN', 'Admin access required', 403);
+  }
 
   try {
     const body = await req.json();
@@ -122,7 +127,8 @@ export async function POST(req: NextRequest) {
     });
 
     return success(tenant);
-  } catch {
+  } catch (err) {
+    console.error('POST /api/v1/tenants failed:', err);
     return error('INTERNAL_ERROR', 'Failed to create tenant', 500);
   }
 }

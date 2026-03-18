@@ -166,10 +166,12 @@ Audit round 4 — final wave of fixes + git commit organization.
 ## Session 6 — 2026-03-18
 
 ### Summary
-Created `.claude/rules/` behavioral rules and fixed 53 remaining bugs across 4 known issue categories.
+Created `.claude/rules/` behavioral rules, then ran 5 deep sequential audit rounds (rounds 5-9) fixing ~160 bugs across 60+ files — including critical security holes, tenant scoping violations, silent catch blocks, Decimal serialization, data shape mismatches, auth hardening, and err.message leaks.
 
 ### What Was Done
-- **Claude Rules:** Created 6 modular rules files in `.claude/rules/`:
+
+**Claude Rules:**
+- Created 6 modular rules files in `.claude/rules/`:
   - `01-planning.md` — investigation-first workflow, mandatory file maintenance
   - `02-parallel-agents.md` — when/how to use parallel agents, 2-phase audit pattern
   - `03-monorepo-map.md` — directory layout, dependency chain, key files
@@ -177,20 +179,65 @@ Created `.claude/rules/` behavioral rules and fixed 53 remaining bugs across 4 k
   - `05-frontend.md` (scoped to `apps/web/**`) — data shape mismatch prevention, SWR, Decimal casting
   - `06-backend.md` (scoped to `packages/**,services/**,workers/**`) — ctx.db, error handling, API/worker patterns
 - **CLAUDE.md trimmed:** Replaced completed Phased Build Plan (34 lines) with single status line (93→59 lines)
-- **Audit Round 5:** 5 parallel fix agents resolved 53 issues:
-  - 7 `getDb()` → `ctx.db` tenant isolation fixes (KI-009)
-  - 28 silent catch blocks → added `console.error` logging (KI-010)
-  - ~15 Decimal field serialization fixes across 5 API routes + 3 frontend pages (KI-012)
-  - 3 confirmed data shape mismatches fixed (dashboard revenue, affiliate products, approvals qualityScore)
+
+**Audit Round 5 (5.14):** 53 issues via 5 parallel fix agents
+- 7 `getDb()` → `ctx.db` tenant isolation fixes (KI-009)
+- 28 silent catch blocks → `console.error` logging (KI-010)
+- ~15 Decimal `Number()` wrapping in 5 API routes + 3 frontend pages (KI-012)
+- 3 data shape mismatches (dashboard revenue, affiliate products, approvals qualityScore)
+
+**Audit Round 6 (5.15):** Remaining silent catches + Decimal + logic bugs
+- 15 more silent catch blocks fixed (usage, users, subscriptions, api-keys, tenants, events/stream)
+- Decimal fields in 20+ API routes (ai-services GET/POST/PUT, ai-services/usage, analytics/costs, content GET/POST/[id], storyboard, affiliate products, budgets, knowledge-base, prompts)
+- `ENCRYPTION_KEY` non-null assertion bug in ai-services routes → proper `getConfig()` guard
+- System health false positive when no services exist → returns `'unknown'` instead of `'healthy'`
+
+**Audit Round 7 (5.16):** Frontend↔API data shape mismatches across 6 pages
+- Create page: `channel.platform` → `channel.socialAccount.platform`, `channel.identity` → top-level `tone/personality/niches`, `product.commission` → `product.commissionRate`, shot generation accepts `'generating'` status
+- Dashboard: removed phantom `postedAt` field, `qualityScore` type `string|null` → `number|null`
+- Settings: added `status/expiresAt` to ApiKey display, show revoked badges, removed phantom `model` field from AiService
+- Affiliate: added DELETE handler for pool removal, use `apiDelete` instead of POST with `_action`
+- System: health metrics Decimal fix
+
+**Audit Round 8 (5.17):** Security holes + auth hardening + utility bugs
+- **CRITICAL security:** Tenants API missing auth on POST, missing access control on GET
+- **CRITICAL security:** Users API missing self-or-admin check on GET/PUT/DELETE `[id]`
+- **CRITICAL security:** Schedule API missing tenant scoping on POST/PUT/DELETE
+- **CRITICAL security:** Calendar API missing tenant scoping on GET
+- `authenticate()` now rejects deleted users (null user check)
+- `parseQuery()` handles NaN page/limit params gracefully
+- `use-api.ts`: 401 auto-redirect to login, safe JSON parsing in fetcher
+- AI panel: stale closure fix (capture `input` before clearing), error feedback on failure
+- SSE: poll order fix (`asc` not `desc` so events aren't skipped), error logging added
+
+**Audit Round 9 (5.18):** Final Decimal sweep + err.message leak prevention
+- 9 more routes with remaining Decimal fields (ai-services/costs, affiliate/analytics, affiliate/clicks, content versions/approve/reject, analytics/export, system/metrics, assistant/actions)
+- 5 settings routes leaking `err.message` to client → replaced with static error strings
+
+**Final verification sweep:** All clean
+- No remaining bare catches (6 found are all intentional)
+- No remaining `process.env.ENCRYPTION_KEY!`
+- No remaining `getDb()` in authenticated routes
+- No remaining `err.message` leaks
+- All 27 test tasks passing, build clean
 
 ### Commits
 - `4391b66` — docs: add .claude/rules for planning, agents, git, and codebase conventions
-- (pending) — fix: resolve tenant scoping, silent catches, and Decimal serialization bugs
+- `6a54c0c` — fix: resolve tenant scoping, silent catches, and Decimal serialization in API routes
+- `cab309f` — fix: add Number() casts for Decimal fields in affiliate, approvals, and dashboard pages
+- `3c5eb3d` — docs: update tracking files for session 6 audit round 5
+- `8315db1` — fix: audit round 6 — remaining silent catches, Decimal fields, logic bugs
+- `8aa1368` — fix: audit round 7 — frontend/API data shape mismatches across 6 pages
+- `5789bd8` — fix: audit round 8 — security holes, auth hardening, utility bugs
+- `80b7380` — fix: audit round 9 — remaining Decimal fields, err.message leak prevention
 
 ### Issues Resolved
-- KI-009: getDb() tenant isolation — FIXED
-- KI-010: Silent catch blocks — FIXED
-- KI-012: Decimal field serialization — FIXED
+- KI-009: getDb() tenant isolation — FIXED (round 5)
+- KI-010: Silent catch blocks — FIXED (rounds 5-6, 43 total)
+- KI-012: Decimal field serialization — FIXED (rounds 5-6-9, 30+ routes)
+- KI-013: Security — tenant/user/schedule/calendar access control — FIXED (round 8)
+- KI-014: err.message leak to client — FIXED (round 9)
+- KI-015: Auth utility bugs (deleted users, NaN params, 401 redirect) — FIXED (round 8)
 
 ### Open Items
 - E2E testing (Playwright) not started

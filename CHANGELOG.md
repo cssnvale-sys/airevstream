@@ -14,8 +14,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 **Audit Round 5 (Session 6)**
 - Fixed 7 API routes using `getDb()` instead of tenant-scoped `ctx.db` (KI-009)
 - Added `console.error` logging to 28 silent catch blocks across 20+ API routes (KI-010)
-- Fixed Prisma Decimal field serialization in 5 API routes (analytics/revenue, affiliate/products, affiliate/revenue, approvals, affiliate-pool) — all Decimal fields now wrapped in `Number()` server-side (KI-012)
-- Added defensive `Number()` casts in 3 frontend pages (affiliate, approvals, dashboard) for Decimal fields
+- Fixed Prisma Decimal field serialization in 5 API routes + 3 frontend pages (KI-012)
+
+**Audit Round 6 (Session 6)**
+- Fixed 15 more silent catch blocks (usage, users, subscriptions, api-keys, tenants, events/stream)
+- Decimal `Number()` wrapping in 20+ additional API routes (ai-services, analytics/costs, content, storyboard, affiliate products, budgets, knowledge-base, prompts)
+- Fixed `ENCRYPTION_KEY` non-null assertion bug in ai-services routes
+- Fixed system health false positive when no services exist
+
+**Audit Round 7 (Session 6)**
+- Create page: `channel.platform` → `channel.socialAccount.platform`, `channel.identity` → top-level fields, `product.commission` → `product.commissionRate`
+- Dashboard: removed phantom `postedAt` field, fixed `qualityScore` type
+- Settings: added `status/expiresAt` to ApiKey, removed phantom `model` from AiService
+- Affiliate: added DELETE handler for pool removal
+
+**Audit Round 8 (Session 6) — Security**
+- Fixed missing auth on tenants POST (anonymous access)
+- Fixed missing access control on tenants GET/PUT/DELETE `[id]`
+- Fixed missing self-or-admin check on users `[id]` routes
+- Fixed missing tenant scoping on schedule POST/PUT/DELETE
+- Fixed missing tenant scoping on calendar GET
+- `authenticate()` now rejects deleted users with valid JWTs
+- `parseQuery()` handles NaN page/limit params
+- `use-api.ts`: 401 auto-redirect to login, safe JSON parsing
+- AI panel: stale closure fix, error feedback on failure
+- SSE: poll order fix (asc not desc), error logging
+
+**Audit Round 9 (Session 6)**
+- Decimal `Number()` wrapping in 9 more routes (ai-services/costs, affiliate/analytics, affiliate/clicks, content versions/approve/reject, analytics/export, system/metrics, assistant/actions)
+- Fixed 5 settings routes leaking `err.message` to clients
 
 ### To Do
 - E2E test suite (Playwright)

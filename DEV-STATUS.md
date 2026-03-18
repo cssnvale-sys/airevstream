@@ -62,6 +62,10 @@
 | 5.12 | Audit fixes (round 3) | Done | 30+ frontend↔API data shape fixes: content POST handler, calendar start/end params, @airevstream/ai-client dep, dashboard activity/revenue/health/workflow shapes, status bar auth, notification center paginated response, system page severity/status/jobType fields, analytics mock data removal, create page shot error handling |
 | 5.13 | Audit fixes (round 4) | Done | Settings page: chain.chain→services crash fix, serviceType field, notifications type vs channel, API keys keyPrefix, removed invalid embedding type. Dashboard: approval channelName→channel.name, qualityScore Decimal type, status=pending_approval, dead code removal. System: workflows status filter removed (errors now visible), unused import, nullable AlertItem.message. Create: storyboard durationSeconds→duration, shot async status handling, generate-script affiliateProductId. Analytics: revenueOverTime from DB, costByModel aggregation, missing fields with graceful empty arrays |
 | 5.14 | Audit fixes (round 5) | Done | 7 getDb()→ctx.db tenant isolation fixes (KI-009), 28 silent catch blocks→console.error (KI-010), Decimal Number() wrapping in 5 API routes + 3 frontend pages (KI-012), 3 data shape mismatches fixed |
+| 5.15 | Audit fixes (round 6) | Done | 15 more silent catches, Decimal in 20+ routes (ai-services, analytics/costs, content, storyboard, affiliate, budgets, knowledge-base, prompts), ENCRYPTION_KEY guard, system health false positive |
+| 5.16 | Audit fixes (round 7) | Done | Frontend↔API shape fixes: create page channel/product fields, dashboard phantom fields, settings ApiKey/AiService fields, affiliate pool DELETE handler |
+| 5.17 | Audit fixes (round 8) | Done | **CRITICAL security:** tenant/user/schedule/calendar access control. Auth hardening: deleted user rejection, NaN param handling, 401 redirect, AI panel stale closure, SSE poll order |
+| 5.18 | Audit fixes (round 9) | Done | Decimal in 9 more routes, 5 settings routes err.message leak prevention |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

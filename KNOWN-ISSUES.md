@@ -100,5 +100,33 @@ Added `console.error` logging to 28 silent catch blocks across settings (4), aut
 
 ### KI-012: Prisma Decimal Fields Serialize as Strings
 **Severity**: Low
-**Status**: Fixed (Session 6)
-Fixed in Session 6: all API routes now wrap Decimal fields in `Number()` server-side (analytics/revenue, affiliate/products, affiliate/revenue, approvals, affiliate-pool). Frontend also adds defensive `Number()` casts (affiliate, approvals, dashboard pages). Original design decision D013 still applies for any new Decimal fields.
+**Status**: Fixed (Session 6, Rounds 5-6-9)
+Fixed across 30+ API routes and 6 frontend pages. All Decimal fields now wrapped in `Number()` server-side. Frontend adds defensive `Number()` casts. Original design decision D013 still applies for any new Decimal fields.
+
+---
+
+## Security (Found & Fixed in Session 6)
+
+### KI-013: Missing Access Control on Tenant/User/Schedule/Calendar APIs
+**Severity**: Critical
+**Status**: Fixed (Session 6, Round 8)
+Four critical authorization bypass vulnerabilities found and fixed:
+- Tenants POST had no auth — any anonymous request could create tenants
+- Tenants GET/PUT/DELETE `[id]` had no access control — any authenticated user could modify any tenant
+- Users GET/PUT/DELETE `[id]` had no self-or-admin check — any user could read/modify other users
+- Schedule POST/PUT/DELETE had no tenant scoping — content from other tenants could be scheduled
+- Calendar GET had no tenant scoping — events from other tenants were visible
+
+### KI-014: API Routes Leaking err.message to Clients
+**Severity**: Medium
+**Status**: Fixed (Session 6, Round 9)
+5 settings routes returned raw `err.message` in error responses, potentially leaking internal Prisma/DB error details to clients. Replaced with static error strings.
+
+### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
+**Severity**: Medium
+**Status**: Fixed (Session 6, Round 8)
+Three utility-level bugs fixed:
+- `authenticate()` / `authenticateSSE()` didn't reject deleted users with valid JWTs
+- `parseQuery()` produced `NaN` for non-numeric page/limit params
+- `use-api.ts` fetcher had no 401 handling — no redirect to login
+- AI panel stale closure bug — `input` read after `setInput('')` cleared it

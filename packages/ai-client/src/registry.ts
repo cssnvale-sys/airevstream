@@ -98,7 +98,7 @@ export class ServiceRegistry {
     }
 
     const attempts: AttemptRecord[] = [];
-    let lastError: Error | null = null;
+    let lastError: unknown = null;
 
     for (let i = 0; i < Math.min(maxRetries, services.length); i++) {
       const service = services[i];
@@ -189,9 +189,10 @@ export class ServiceRegistry {
           cost,
           attempts,
         };
-      } catch (err: any) {
+      } catch (err) {
         const durationMs = Date.now() - start;
         lastError = err;
+        const errMsg = err instanceof Error ? err.message : String(err);
 
         this.recordFailure(service.id);
         await this.logUsage?.({
@@ -201,7 +202,7 @@ export class ServiceRegistry {
           requestType: request.task,
           success: false,
           responseMs: durationMs,
-          errorMessage: err.message,
+          errorMessage: errMsg,
         });
 
         attempts.push({
@@ -209,14 +210,14 @@ export class ServiceRegistry {
           serviceName: service.name,
           success: false,
           durationMs,
-          error: err.message,
+          error: errMsg,
         });
       }
     }
 
     throw new Error(
       `All ${attempts.length} AI service attempts failed for type="${request.type}". ` +
-      `Last error: ${lastError?.message ?? 'unknown'}`
+      `Last error: ${lastError instanceof Error ? lastError.message : String(lastError ?? 'unknown')}`
     );
   }
 

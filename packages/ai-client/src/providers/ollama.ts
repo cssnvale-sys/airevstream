@@ -114,8 +114,8 @@ export class OllamaProvider implements AiProvider {
       const client = this.getClient(endpoint);
       await client.list();
       return { healthy: true, latencyMs: Date.now() - start };
-    } catch (err: any) {
-      return { healthy: false, latencyMs: Date.now() - start, error: err.message };
+    } catch (err) {
+      return { healthy: false, latencyMs: Date.now() - start, error: err instanceof Error ? err.message : String(err) };
     }
   }
 

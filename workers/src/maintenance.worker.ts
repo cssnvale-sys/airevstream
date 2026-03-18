@@ -32,30 +32,24 @@ async function handleCleanup(data: MaintenanceCleanupJob) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - olderThanDays);
 
-  // Clean up expired refresh tokens
-  const deletedTokens = await db.refreshToken.deleteMany({
-    where: { expiresAt: { lt: new Date() } },
-  });
-
-  // Clean up old resolved alerts
-  const deletedAlerts = await db.alert.deleteMany({
-    where: { status: 'resolved', resolvedAt: { lt: cutoff } },
-  });
-
-  // Clean up old system metrics
-  const deletedMetrics = await db.systemMetric.deleteMany({
-    where: { createdAt: { lt: cutoff } },
-  });
-
-  // Clean up stale knowledge base entries
-  const deletedKb = await db.knowledgeBaseEntry.deleteMany({
-    where: { isCurrent: false, updatedAt: { lt: cutoff } },
-  });
-
-  // Archive old completed workflow jobs
-  const archivedJobs = await db.workflowJob.deleteMany({
-    where: { status: { in: ['completed', 'cancelled'] }, completedAt: { lt: cutoff } },
-  });
+  // Run all cleanup deletes in a transaction for atomicity
+  const [deletedTokens, deletedAlerts, deletedMetrics, deletedKb, archivedJobs] = await db.$transaction([
+    db.refreshToken.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    }),
+    db.alert.deleteMany({
+      where: { status: 'resolved', resolvedAt: { lt: cutoff } },
+    }),
+    db.systemMetric.deleteMany({
+      where: { createdAt: { lt: cutoff } },
+    }),
+    db.knowledgeBaseEntry.deleteMany({
+      where: { isCurrent: false, updatedAt: { lt: cutoff } },
+    }),
+    db.workflowJob.deleteMany({
+      where: { status: { in: ['completed', 'cancelled'] }, completedAt: { lt: cutoff } },
+    }),
+  ]);
 
   const result = {
     deletedRefreshTokens: deletedTokens.count,

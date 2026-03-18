@@ -1,5 +1,6 @@
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import type { ApiContext } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { chat, createServiceRegistry } from '@airevstream/ai-client';
@@ -24,6 +25,11 @@ const ChatSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const rl = checkRateLimit(`chat:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+  if (!rl.allowed) {
+    return error('RATE_LIMITED', 'Too many chat requests', 429);
+  }
 
   try {
     const body = await req.json();
@@ -109,14 +115,19 @@ export async function POST(req: NextRequest) {
       orderBy: [{ fallbackOrder: 'asc' }, { healthScore: 'desc' }],
     });
 
-    // Build ChatMessage array from conversation history
-    const refreshedHistory = await ctx.db.conversationMessage.findMany({
-      where: { conversationId: conversation.id },
-      orderBy: { createdAt: 'asc' },
-      take: 50,
-    });
+    // Build ChatMessage array from existing history (avoid redundant DB query)
+    // Update or insert system message in the in-memory list
+    const updatedHistory = [...history];
+    if (systemContext) {
+      const systemIdx = updatedHistory.findIndex((m) => m.role === 'system');
+      if (systemIdx >= 0) {
+        updatedHistory[systemIdx] = { ...updatedHistory[systemIdx], content: systemContext };
+      } else {
+        updatedHistory.unshift({ role: 'system', content: systemContext } as typeof history[0]);
+      }
+    }
 
-    const chatMessages: ChatMessage[] = refreshedHistory.map((m) => ({
+    const chatMessages: ChatMessage[] = updatedHistory.map((m) => ({
       role: m.role as 'system' | 'user' | 'assistant',
       content: m.content,
     }));

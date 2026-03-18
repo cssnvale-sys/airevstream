@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 
 const GenerateContentSchema = z.object({
@@ -18,6 +19,11 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    const rl = checkRateLimit(`generate:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+    if (!rl.allowed) {
+      return error('RATE_LIMITED', 'Too many generation requests', 429);
+    }
 
     const body = await req.json();
     const parsed = GenerateContentSchema.safeParse(body);

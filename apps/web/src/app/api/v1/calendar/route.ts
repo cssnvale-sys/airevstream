@@ -29,6 +29,26 @@ export async function GET(req: NextRequest) {
       return validationError('start and end must be valid ISO dates');
     }
 
+    if (endDate <= startDate) {
+      return validationError('end must be after start');
+    }
+
+    // Enforce max 90-day range to prevent unbounded queries
+    const maxRangeMs = 90 * 24 * 60 * 60 * 1000;
+    if (endDate.getTime() - startDate.getTime() > maxRangeMs) {
+      return validationError('Date range must not exceed 90 days');
+    }
+
+    // Validate enum params
+    const validPlatforms = ['youtube', 'tiktok', 'instagram', 'facebook'];
+    const validStatuses = ['scheduled', 'posting', 'posted', 'failed', 'cancelled'];
+    if (platform && !validPlatforms.includes(platform)) {
+      return validationError(`Invalid platform. Must be one of: ${validPlatforms.join(', ')}`);
+    }
+    if (status && !validStatuses.includes(status)) {
+      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+
     const where: Record<string, unknown> = {
       scheduledAt: { gte: startDate, lte: endDate },
       // Scope to tenant via the Channel -> SocialAccount -> EmailAccount chain
@@ -68,6 +88,7 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: { scheduledAt: 'asc' },
+      take: 1000,
     });
 
     return success(events);

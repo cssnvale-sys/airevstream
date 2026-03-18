@@ -8,7 +8,7 @@ import { exportToCSV } from '@/lib/export';
 import { cn, formatRelativeTime, statusColor, platformIcon } from '@/lib/utils';
 import {
   Plus, Upload, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  X, Mail, Shield, Activity, Hash, Globe, Tag, Palette, User, Trash2,
+  X, Mail, Activity, Hash, Globe, Tag, Palette, User, Trash2,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';

@@ -48,8 +48,6 @@ export default function WorkflowsPage() {
     return parts.join('&');
   }, [statusFilter, jobTypeFilter, page]);
 
-  // Auto-refresh: 5s when viewing running/queued jobs, 30s otherwise
-  const hasActiveJobs = statusFilter === 'running' || statusFilter === 'queued' || statusFilter === 'all';
   const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows(queryParams);
 
   const jobs = (jobsRes?.data as unknown as WorkflowJob[]) ?? [];

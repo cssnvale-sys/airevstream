@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -8,6 +9,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    const rl = checkRateLimit(`generate:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+    if (!rl.allowed) {
+      return error('RATE_LIMITED', 'Too many regeneration requests', 429);
+    }
 
     const { id } = await params;
 

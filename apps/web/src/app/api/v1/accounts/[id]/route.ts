@@ -1,7 +1,14 @@
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+const UpdateAccountSchema = z.object({
+  status: z.enum(['active', 'disabled', 'flagged', 'pending']).optional(),
+  tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
+  notes: z.string().max(2000).optional().nullable(),
+});
 
 /**
  * GET /api/v1/accounts/[id]
@@ -70,17 +77,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (!existing) return notFound('Email account not found');
 
     const body = await req.json();
-    const { status, tier, notes } = body;
-
-    const validStatuses = ['active', 'disabled', 'flagged', 'pending'];
-    if (status && !validStatuses.includes(status)) {
-      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    const parsed = UpdateAccountSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
     }
-
-    const validTiers = ['tier1', 'tier2', 'tier3'];
-    if (tier && !validTiers.includes(tier)) {
-      return validationError(`Invalid tier. Must be one of: ${validTiers.join(', ')}`);
-    }
+    const { status, tier, notes } = parsed.data;
 
     const data: Record<string, unknown> = {};
     if (status !== undefined) data.status = status;

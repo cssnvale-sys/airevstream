@@ -1,7 +1,20 @@
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+const UpdateChannelSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  niches: z.array(z.string()).optional(),
+  primaryLanguage: z.string().min(2).max(10).optional(),
+  tone: z.string().max(500).optional().nullable(),
+  personality: z.string().max(500).optional().nullable(),
+  targetAudience: z.string().max(500).optional().nullable(),
+  postingCadence: z.record(z.unknown()).optional(),
+  status: z.enum(['active', 'paused', 'disabled', 'archived']).optional(),
+  familyId: z.string().uuid().optional().nullable(),
+});
 
 /**
  * GET /api/v1/channels/[id]
@@ -86,26 +99,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (!existing) return notFound('Channel not found');
 
     const body = await req.json();
-    const {
-      name,
-      niches,
-      primaryLanguage,
-      tone,
-      personality,
-      targetAudience,
-      postingCadence,
-      status,
-      familyId,
-    } = body;
-
-    if (niches !== undefined && !Array.isArray(niches)) {
-      return validationError('niches must be an array of strings');
+    const parsed = UpdateChannelSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
     }
-
-    const validStatuses = ['active', 'paused', 'disabled', 'archived'];
-    if (status && !validStatuses.includes(status)) {
-      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
-    }
+    const { name, niches, primaryLanguage, tone, personality, targetAudience, postingCadence, status, familyId } = parsed.data;
 
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;
@@ -114,7 +112,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (tone !== undefined) data.tone = tone;
     if (personality !== undefined) data.personality = personality;
     if (targetAudience !== undefined) data.targetAudience = targetAudience;
-    if (postingCadence !== undefined) data.postingCadence = postingCadence;
+    if (postingCadence !== undefined) data.postingCadence = postingCadence as any;
     if (status !== undefined) data.status = status;
     if (familyId !== undefined) data.familyId = familyId;
 

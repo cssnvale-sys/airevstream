@@ -1,9 +1,24 @@
 import { authenticate, success, error, notFound, validationError, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+const UpdateAiServiceSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  endpoint: z.string().url().optional().nullable(),
+  apiKey: z.string().optional().nullable(),
+  capabilities: z.record(z.unknown()).optional(),
+  costPerUnit: z.record(z.unknown()).optional(),
+  rateLimits: z.record(z.unknown()).optional(),
+  status: z.enum(['active', 'degraded', 'down', 'disabled']).optional(),
+  fallbackGroup: z.string().optional().nullable(),
+  fallbackOrder: z.number().int().min(0).optional(),
+  isLocal: z.boolean().optional(),
+  isFree: z.boolean().optional(),
+});
 
 /**
  * GET /api/v1/ai-services/[id]
@@ -52,15 +67,14 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (!existing) return notFound('AI service not found');
 
     const body = await req.json();
+    const parsed = UpdateAiServiceSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+    }
     const {
       name, endpoint, apiKey, capabilities, costPerUnit, rateLimits,
       status, fallbackGroup, fallbackOrder, isLocal, isFree,
-    } = body;
-
-    const validStatuses = ['active', 'degraded', 'down', 'disabled'];
-    if (status && !validStatuses.includes(status)) {
-      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
-    }
+    } = parsed.data;
 
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;

@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
+
+const UpdateContentSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  status: z.enum([
+    'draft', 'generating', 'generated', 'pending_approval',
+    'approved', 'scheduled', 'posted', 'archived', 'failed',
+  ]).optional(),
+  prompt: z.string().max(10000).optional(),
+  platformMetadata: z.record(z.unknown()).optional(),
+});
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
@@ -96,27 +107,17 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     const body = await req.json();
-    const { title, status, prompt, platformMetadata } = body as {
-      title?: string;
-      status?: string;
-      prompt?: string;
-      platformMetadata?: Record<string, unknown>;
-    };
-
-    // Validate status if provided
-    const validStatuses = [
-      'draft', 'generating', 'generated', 'pending_approval',
-      'approved', 'scheduled', 'posted', 'archived', 'failed',
-    ];
-    if (status && !validStatuses.includes(status)) {
-      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    const parsed = UpdateContentSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
     }
+    const { title, status, prompt, platformMetadata } = parsed.data;
 
     const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
     if (status !== undefined) updateData.status = status;
     if (prompt !== undefined) updateData.prompt = prompt;
-    if (platformMetadata !== undefined) updateData.platformMetadata = platformMetadata;
+    if (platformMetadata !== undefined) updateData.platformMetadata = platformMetadata as any;
 
     const updated = await ctx.db.contentItem.update({
       where: { id },

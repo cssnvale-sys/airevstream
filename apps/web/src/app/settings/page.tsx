@@ -31,6 +31,7 @@ import {
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -158,19 +159,29 @@ function GeneralTab() {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedChanges(dirty);
 
   useEffect(() => {
     const settings = settingsRes?.data as unknown as GeneralSettings | undefined;
     if (settings) {
       setForm(settings);
+      setDirty(false);
     }
   }, [settingsRes]);
+
+  const updateForm = (update: Partial<GeneralSettings>) => {
+    setForm((prev) => ({ ...prev, ...update }));
+    setDirty(true);
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await apiPut('/settings/general', form);
       setSaved(true);
+      setDirty(false);
       toast.success('Settings saved');
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -199,7 +210,7 @@ function GeneralTab() {
         <label className="block text-sm font-medium text-text-secondary mb-1.5">System Name</label>
         <input
           value={form.systemName}
-          onChange={(e) => setForm({ ...form, systemName: e.target.value })}
+          onChange={(e) => updateForm({ systemName: e.target.value })}
           className="input w-full"
           placeholder="AiRevStream"
         />
@@ -209,7 +220,7 @@ function GeneralTab() {
         <label className="block text-sm font-medium text-text-secondary mb-1.5">Timezone</label>
         <select
           value={form.timezone}
-          onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+          onChange={(e) => updateForm({ timezone: e.target.value })}
           className="input w-full"
         >
           {TIMEZONES.map((tz) => (
@@ -224,7 +235,7 @@ function GeneralTab() {
         <label className="block text-sm font-medium text-text-secondary mb-1.5">Default Language</label>
         <select
           value={form.defaultLanguage}
-          onChange={(e) => setForm({ ...form, defaultLanguage: e.target.value })}
+          onChange={(e) => updateForm({ defaultLanguage: e.target.value })}
           className="input w-full"
         >
           {LANGUAGES.map((lang) => (
@@ -235,14 +246,17 @@ function GeneralTab() {
         </select>
       </div>
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="btn-primary flex items-center gap-2"
-      >
-        {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
-        {saved ? 'Saved' : 'Save Changes'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="btn-primary flex items-center gap-2"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+          {saved ? 'Saved' : 'Save Changes'}
+        </button>
+        {dirty && <span className="text-xs text-accent-amber">Unsaved changes</span>}
+      </div>
     </div>
   );
 }

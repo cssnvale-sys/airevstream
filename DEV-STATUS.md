@@ -146,6 +146,7 @@
 | 5.96 | Rate limiting (operations) | Done | contentGeneration (20/hr), bulkOperation (5/hr), analyticsExport (10/hr) on 4 routes |
 | 5.97 | Zod validation (auth+more) | Done | Schemas on accounts POST, variants POST, login, register, forgot-password, reset-password |
 | 5.98 | Accounts unsafe cast fix | Done | Removed non-existent .channels access, use socialAccountsCount |
+| 5.99 | Prisma transactions | Done | Multi-step writes wrapped in $transaction() on 5 routes |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

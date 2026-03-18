@@ -671,6 +671,14 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `.channels` property doesn't exist in API response — was always returning undefined
 - Replaced with direct use of `socialAccountsCount` field
 
+**Batch 85: Prisma Transactions on Multi-Step Writes**
+- Wrapped multi-step write operations in `$transaction()` to prevent race conditions:
+  - content/[id]/approve: update status + create audit log
+  - content/[id]/reject: update status + create audit log
+  - approvals/bulk: updateMany statuses + createMany audit logs (both approve and reject)
+  - channels/[id]/avatars POST: unset existing primary + create new primary
+  - subscriptions/[id] PATCH: update subscription plan + update tenant plan/limits
+
 ### Commits (continued)
 - `e403391` — docs: tracking docs round 19
 - `f10425d` — fix: SWR revalidation after job retry on system page
@@ -678,6 +686,8 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `b864acb` — fix: rate limiting on content generation, bulk import, analytics export
 - `e503f99` — fix: Zod validation on 6 routes (auth, accounts, variants)
 - `6115cf9` — fix: accounts page unsafe .channels type cast
+- `bd16672` — docs: tracking docs round 20
+- `692f556` — fix: Prisma transactions on multi-step writes (5 routes)
 
 ### Open Items
 - E2E testing (Playwright) not started

@@ -43,6 +43,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 28 (Session 7) — Prisma Transactions**
+- Wrapped multi-step writes in `$transaction()` on 5 routes to prevent race conditions: content approve/reject, bulk approvals, avatar assignment, subscription plan changes
+
 **Audit Round 27 (Session 7) — Zod Validation, Rate Limiting, Security, Data Quality**
 - Zod validation schemas on 6 more routes: accounts POST, content variants POST, auth/login, auth/register, auth/forgot-password, auth/reset-password
 - Rate limiting on expensive operations: content generation (20/hr), bulk import (5/hr), analytics export (10/hr)

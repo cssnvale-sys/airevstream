@@ -1030,13 +1030,16 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab navigation */}
-      <div className="flex border-b border-border mb-6 overflow-x-auto">
+      <div role="tablist" aria-label="Settings sections" className="flex border-b border-border mb-6 overflow-x-auto">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`tabpanel-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
@@ -1053,7 +1056,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab content */}
-      <div>{renderTab()}</div>
+      <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-label={TABS.find(t => t.id === activeTab)?.label}>{renderTab()}</div>
     </AppLayout>
   );
 }

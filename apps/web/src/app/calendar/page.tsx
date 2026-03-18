@@ -364,6 +364,7 @@ export default function CalendarPage() {
                         <button
                           key={item.id}
                           onClick={() => router.push(`/content/${item.content?.id ?? item.id}`)}
+                          aria-label={`${item.channel?.name ?? 'Unknown'} on ${item.platform} — ${item.content?.status ?? item.status}`}
                           className={cn(
                             'w-full text-left px-2 py-1.5 rounded-md text-caption transition-colors',
                             'bg-bg-tertiary hover:bg-bg-primary border border-border',

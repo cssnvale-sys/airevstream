@@ -768,10 +768,12 @@ export default function AnalyticsPage() {
           </div>
 
           {/* ---- Tabs ---- */}
-          <div className="flex gap-1 border-b border-border mb-6">
+          <div role="tablist" aria-label="Analytics sections" className="flex gap-1 border-b border-border mb-6">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
+                role="tab"
+                aria-selected={activeTab === tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
                   'px-4 py-2.5 text-body font-medium transition-colors border-b-2 -mb-px',
@@ -794,7 +796,7 @@ export default function AnalyticsPage() {
               <Download size={16} />
               Export CSV
             </button>
-            <button onClick={handleExportPDF} className="btn-secondary flex items-center gap-2">
+            <button onClick={handleExportPDF} className="btn-secondary flex items-center gap-2 opacity-50 cursor-not-allowed" title="PDF export not yet implemented">
               <Download size={16} />
               Export PDF
             </button>

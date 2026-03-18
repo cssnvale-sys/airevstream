@@ -209,6 +209,7 @@ model BrandingPackage {
 
   channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
+  @@index([channelId])
   @@map("branding_packages")
 }
 
@@ -324,7 +325,7 @@ model AiServiceUsage {
 
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  service AiService    @relation(fields: [serviceId], references: [id])
+  service AiService    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   content ContentItem? @relation(fields: [contentId], references: [id], onDelete: SetNull)
   channel Channel?     @relation(fields: [channelId], references: [id], onDelete: SetNull)
 
@@ -532,6 +533,7 @@ model AffiliateProduct {
   clicks          AffiliateClick[]
   contentItems    ContentItem[]
 
+  @@index([status])
   @@map("affiliate_products")
 }
 
@@ -561,7 +563,7 @@ model AffiliateClick {
   revenue    Decimal? @db.Decimal(10, 2)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  product AffiliateProduct @relation(fields: [productId], references: [id])
+  product AffiliateProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   content ContentItem?     @relation(fields: [contentId], references: [id], onDelete: SetNull)
   channel Channel?         @relation(fields: [channelId], references: [id], onDelete: SetNull)
 
@@ -834,6 +836,7 @@ model CostBudget {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([status])
   @@map("cost_budgets")
 }
 

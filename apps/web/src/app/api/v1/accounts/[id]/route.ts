@@ -14,8 +14,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const account = await ctx.db.emailAccount.findUnique({
-      where: { id },
+    const account = await ctx.db.emailAccount.findFirst({
+      where: { id, tenantId: ctx.tenantId },
       include: {
         socialAccounts: {
           include: {
@@ -66,7 +66,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const existing = await ctx.db.emailAccount.findUnique({ where: { id } });
+    const existing = await ctx.db.emailAccount.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) return notFound('Email account not found');
 
     const body = await req.json();
@@ -111,7 +111,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const existing = await ctx.db.emailAccount.findUnique({ where: { id } });
+    const existing = await ctx.db.emailAccount.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) return notFound('Email account not found');
 
     await ctx.db.emailAccount.delete({ where: { id } });

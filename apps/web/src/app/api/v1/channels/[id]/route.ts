@@ -14,8 +14,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const channel = await ctx.db.channel.findUnique({
-      where: { id },
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
       include: {
         socialAccount: {
           include: {
@@ -77,7 +80,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const existing = await ctx.db.channel.findUnique({ where: { id } });
+    const existing = await ctx.db.channel.findFirst({
+      where: { id, socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+    });
     if (!existing) return notFound('Channel not found');
 
     const body = await req.json();

@@ -194,6 +194,15 @@
 | 5.144 | Type-safe API hooks | Done | 16 generic hooks, 29 `as unknown as` casts eliminated across 9 pages |
 | 5.145 | UUID validation | Done | isUUID() + validation on 69 handlers across 37 files, 2 tests |
 | 5.146 | Error response caching + rate limiting | Done | Cache-Control: no-store on errors, standardWrite on 27 handlers (18 files) |
+| 5.147 | Zod .strict() + API helper dedup | Done | 64 schemas + shared apiMutate(), removed dead hook |
+| 5.148 | Explicit select clauses | Done | alerts + workflows list queries |
+| 5.149 | Double .strict() cleanup | Done | 6 duplicate calls removed |
+| 5.150 | Security hardening round 2 | Done | Tenant checks on generate-*, admin role on settings PUT, state validation on approve, TOCTOU slug fix, enum constraints |
+| 5.151 | N+1 query elimination | Done | system/health (4→1), system/metrics (6→1), workflows + analytics parallelized |
+| 5.152 | Filter param allowlisting | Done | Product status, alert category, error status + severity fix + redirect atomicity |
+| 5.153 | Frontend error handling + a11y | Done | Error states, ARIA roles (switch/tab/tablist), img alt, aria-label, topic validation |
+| 5.154 | Silent catch logging | Done | 4 settings catches + system page polish |
+| 5.155 | Dashboard + calendar a11y | Done | Activity icon aria-hidden, calendar day/month disabled |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

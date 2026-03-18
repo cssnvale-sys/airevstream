@@ -52,6 +52,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 45 (Session 7) — Security, N+1 Queries, Accessibility, Validation**
+- Tenant ownership checks added to generate-script, generate-storyboard, generate-shot (channelId verification)
+- Admin role guards added to settings PUT endpoints (general, appearance, notifications)
+- Content approve: state validation — only allows generated/review/pending_approval status
+- Storefront slug TOCTOU: handle P2002 unique constraint instead of check-then-create
+- Wrong HTTP status codes: validationError → notFound for missing resources, → CONFLICT for duplicates
+- Enum constraints on content POST schema (contentType, status)
+- Affiliate-pool DELETE: added UUID validation + tenant ownership check
+- Affiliate links POST: added rate limiting
+- N+1 queries eliminated: system/health (4→1 query), system/metrics (6→1 query)
+- DB call parallelization: system/workflows (2 sequential → Promise.all), affiliate/analytics (2 groupBy → Promise.all)
+- system/health uses success() instead of raw json()
+- Filter params allowlisted: product status, alert category, error status
+- system/errors severity fixed from 'warning' to 'error' (matching comment)
+- Affiliate redirect click+counter atomized with $transaction
+- Content POST validation shows all errors instead of just first
+- Approvals page: error state with retry button for failed fetches
+- Workflows page: retry button added to error banner
+- ARIA accessibility: role=switch on settings toggles, role=tab/tablist on accounts/affiliate tabs
+- Product images: alt="" → alt={product.name}
+- Library delete button: title → aria-label
+- Dashboard activity icons: aria-hidden="true"
+- System status dot: aria-hidden="true"
+- Console.error added to 4 silent settings catch blocks
+- Calendar: day/month buttons disabled (not implemented) with "Coming soon"
+- Create wizard: topic minLength >= 3 enforcement in canGoNext()
+
 **Audit Round 43 (Session 7) — Type Safety, Input Validation, Security Hardening**
 - 11 `err.message` leaks removed from frontend toast/error handlers (library, approvals, settings, accounts, affiliate)
 - Content versions response wrapped in `{ versions, total }` for consistency

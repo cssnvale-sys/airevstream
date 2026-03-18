@@ -1063,6 +1063,27 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `c8bd413` — fix: add UUID validation to all 69 dynamic route handlers across 37 files
 - `270a4e2` — fix: add Cache-Control to error responses + rate limiting to 27 write handlers
 
+### Batches 147-149 (Context Window 6, continued)
+- **Batch 147**: Added `.strict()` to 64 Zod schemas across 62 files. Deduplicated apiPost/apiPut/apiDelete into shared `apiMutate()` helper. Removed unused `useContentItem` hook.
+- **Batch 148**: Added explicit `select` clauses to system/alerts and system/workflows list queries.
+- **Batch 149**: Cleaned up 6 duplicate `.strict().strict()` calls.
+
+### Batches 150-155 (Context Window 7)
+- **Batch 150**: Security hardening — added tenant ownership checks to generate-script/storyboard/shot, admin role guards to settings PUT (general/appearance/notifications), state validation to content approve, UUID+tenant check to affiliate-pool DELETE, rate limiting to affiliate links POST. Fixed TOCTOU on storefront slug (handle P2002). Fixed wrong HTTP status codes (validationError → notFound/CONFLICT). Added enum constraints to content POST schema.
+- **Batch 151**: Eliminated N+1 queries — replaced 4-query loop in system/health with single findMany, replaced 6-query loop in system/metrics with single findMany, parallelized tenant scope queries in system/workflows, parallelized groupBy queries in affiliate/analytics. Replaced raw `json()` with `success()` in system/health.
+- **Batch 152**: Allowlisted filter params (product status, alert category, error status). Fixed system/errors severity filter from 'warning' to 'error'. Atomized affiliate redirect click+counter with $transaction. Fixed content POST validation to show all errors.
+- **Batch 153**: Added error state with retry to approvals page, retry button to workflows error banner. Added ARIA roles (role=switch/tab/tablist, aria-selected, aria-checked) to settings toggles, accounts tabs, affiliate tabs. Fixed img alt="" to use product.name. Added aria-label to library delete buttons. Enforced topic minLength >= 3 in create wizard.
+- **Batch 154**: Added console.error to 4 silent settings catch blocks. Extracted magic number 3600 to named constant. Added aria-hidden to system status dot.
+- **Batch 155**: Added aria-hidden to dashboard activity feed icons. Disabled non-functional day/month calendar view buttons with "Coming soon" tooltip.
+
+### Commits (Context Window 7)
+- `b3db79c` — fix: security hardening — tenant checks, role guards, state validation, TOCTOU fixes
+- `ff67960` — fix: eliminate N+1 queries and parallelize independent DB calls
+- `4af1f47` — fix: allowlist filter params, fix error severity, atomize redirect click tracking
+- `bac9e89` — fix: frontend error handling, accessibility, and validation improvements
+- `6559d05` — fix: add console.error to 4 silent settings catches, accessibility polish
+- `23e9b82` — fix: dashboard activity icons aria-hidden, calendar day/month buttons disabled
+
 ### Open Items
 - E2E testing (Playwright) not started
 - Platform posting adapters untested against real APIs

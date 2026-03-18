@@ -172,14 +172,16 @@ function activityIcon(type: string) {
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
-  const { data: approvalsRes, isLoading: approvalsLoading, mutate: mutateApprovals } = useApprovals('status=pending_approval&limit=5');
-  const { data: contentRes, isLoading: contentLoading } = useContent('limit=100');
-  const { data: workflowsRes, isLoading: workflowsLoading } = useWorkflows();
-  const { data: healthRes, isLoading: healthLoading } = useSystemHealth();
-  const { data: metricsRes, isLoading: metricsLoading } = useSystemMetrics();
-  const { data: activityRes, isLoading: activityLoading } = useApi<ActivityItem[]>('/activity?limit=10');
-  const { data: revenueRes, isLoading: revenueLoading } = useApi<RevenueData>('/analytics/revenue');
-  const { data: accountStatsRes, isLoading: accountStatsLoading } = useApi<AccountStats>('/accounts/stats');
+  const { data: approvalsRes, isLoading: approvalsLoading, error: approvalsError, mutate: mutateApprovals } = useApprovals('status=pending_approval&limit=5');
+  const { data: contentRes, isLoading: contentLoading, error: contentError } = useContent('limit=100');
+  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError } = useWorkflows();
+  const { data: healthRes, isLoading: healthLoading, error: healthError } = useSystemHealth();
+  const { data: metricsRes, isLoading: metricsLoading, error: metricsError } = useSystemMetrics();
+  const { data: activityRes, isLoading: activityLoading, error: activityError } = useApi<ActivityItem[]>('/activity?limit=10');
+  const { data: revenueRes, isLoading: revenueLoading, error: revenueError } = useApi<RevenueData>('/analytics/revenue');
+  const { data: accountStatsRes, isLoading: accountStatsLoading, error: accountStatsError } = useApi<AccountStats>('/accounts/stats');
+
+  const fetchError = approvalsError || contentError || workflowsError || healthError || metricsError || activityError || revenueError || accountStatsError;
 
   const [actionInFlight, setActionInFlight] = useState<string | null>(null);
 
@@ -232,6 +234,11 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
+      {fetchError && (
+        <div className="mb-4 rounded-lg border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red">
+          Some dashboard data failed to load. Please try refreshing the page.
+        </div>
+      )}
       {/* 1. Greeting Row */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-text-primary">{getGreeting()}</h1>

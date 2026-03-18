@@ -50,7 +50,7 @@ export default function WorkflowsPage() {
 
   // Auto-refresh: 5s when viewing running/queued jobs, 30s otherwise
   const hasActiveJobs = statusFilter === 'running' || statusFilter === 'queued' || statusFilter === 'all';
-  const { data: jobsRes, isLoading, mutate } = useWorkflows(queryParams);
+  const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows(queryParams);
 
   const jobs = (jobsRes?.data as unknown as WorkflowJob[]) ?? [];
   const meta = jobsRes?.meta;
@@ -83,6 +83,11 @@ export default function WorkflowsPage() {
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
+        {fetchError && (
+          <div className="mb-4 rounded-lg border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red">
+            Failed to load workflow data. Please try refreshing the page.
+          </div>
+        )}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-text-primary">Workflows</h1>
           <div className="flex items-center gap-3">

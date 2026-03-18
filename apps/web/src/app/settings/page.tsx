@@ -264,7 +264,7 @@ function GeneralTab() {
 
 function AiServicesTab() {
   const { data: servicesRes, isLoading, mutate } = useAiServices();
-  const { data: chainsRes } = useApi<FallbackChain[]>('/settings/ai/fallback-chains');
+  const { data: chainsRes, error: chainsError } = useApi<FallbackChain[]>('/settings/ai/fallback-chains');
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newService, setNewService] = useState({ name: '', type: 'text', endpoint: '' });
@@ -457,7 +457,9 @@ function AiServicesTab() {
       {/* Fallback Chains */}
       <div>
         <h3 className="text-base font-semibold text-text-primary mb-4">Fallback Chains</h3>
-        {fallbackChains.length === 0 ? (
+        {chainsError ? (
+          <p className="text-accent-red text-sm py-4 text-center">Failed to load fallback chains</p>
+        ) : fallbackChains.length === 0 ? (
           <p className="text-text-secondary text-sm py-4 text-center">No fallback chains configured</p>
         ) : (
           <div className="space-y-3">

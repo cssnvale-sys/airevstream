@@ -210,10 +210,12 @@ const DEFAULT_SERVICES: ServiceDisplay[] = [
 // ---------------------------------------------------------------------------
 
 export default function SystemPage() {
-  const { data: healthRes, isLoading: healthLoading, mutate: mutateHealth } = useSystemHealth();
-  const { data: metricsRes, isLoading: metricsLoading, mutate: mutateMetrics } = useSystemMetrics();
-  const { data: alertsRes, isLoading: alertsLoading, mutate: mutateAlerts } = useAlerts();
-  const { data: workflowsRes, isLoading: workflowsLoading, mutate: mutateWorkflows } = useWorkflows();
+  const { data: healthRes, isLoading: healthLoading, error: healthError, mutate: mutateHealth } = useSystemHealth();
+  const { data: metricsRes, isLoading: metricsLoading, error: metricsError, mutate: mutateMetrics } = useSystemMetrics();
+  const { data: alertsRes, isLoading: alertsLoading, error: alertsError, mutate: mutateAlerts } = useAlerts();
+  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError, mutate: mutateWorkflows } = useWorkflows();
+
+  const fetchError = healthError || metricsError || alertsError || workflowsError;
 
   const refreshAll = () => {
     mutateHealth();
@@ -294,6 +296,11 @@ export default function SystemPage() {
 
   return (
     <AppLayout>
+      {fetchError && (
+        <div className="mb-4 rounded-lg border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red">
+          Some system data failed to load. Please try refreshing the page.
+        </div>
+      )}
       {/* 1. Header */}
       <div className="flex items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold text-text-primary">System Health</h1>

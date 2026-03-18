@@ -143,8 +143,10 @@ export default function CalendarPage() {
   }, [weekStart, weekEnd, filters.channelId, filters.platform, filters.status]);
 
   // API hooks
-  const { data: calendarData, isLoading } = useCalendar(rangeParams);
-  const { data: channelsData } = useChannels();
+  const { data: calendarData, isLoading, error: calendarError } = useCalendar(rangeParams);
+  const { data: channelsData, error: channelsError } = useChannels();
+
+  const fetchError = calendarError || channelsError;
 
   const items: CalendarItem[] = (calendarData?.data as CalendarItem[] | undefined) ?? [];
   const channels: Channel[] = (channelsData?.data as Channel[] | undefined) ?? [];
@@ -179,6 +181,11 @@ export default function CalendarPage() {
 
   return (
     <AppLayout>
+      {fetchError && (
+        <div className="mb-4 rounded-lg border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red">
+          Failed to load calendar data. Please try refreshing the page.
+        </div>
+      )}
       {/* ---- Header ---- */}
       <div className="flex items-center justify-between mb-6">
         <div>

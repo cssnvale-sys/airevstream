@@ -283,6 +283,7 @@ export default function SystemPage() {
     try {
       await apiPost(`/system/errors/${id}/retry`);
       toast.success('Retry queued');
+      mutateWorkflows();
     } catch (err) {
       console.error('Failed to retry job:', err);
       toast.error('Failed to retry job');

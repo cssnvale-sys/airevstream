@@ -47,11 +47,18 @@ async function pollAlerts(ctx: ApiContext, lastCheck: Date): Promise<SystemEvent
 }
 
 /**
- * Poll real workflow job updates.
+ * Poll real workflow job updates (tenant-scoped).
  */
-async function pollWorkflows(ctx: ApiContext): Promise<SystemEvent | null> {
+async function pollWorkflows(ctx: ApiContext, _lastCheck: Date, tenantChannelIds?: string[]): Promise<SystemEvent | null> {
+  const where: Record<string, unknown> = { status: { in: ['queued', 'running'] } };
+  if (tenantChannelIds) {
+    where.OR = [
+      { channelId: { in: tenantChannelIds } },
+      { channelId: null },
+    ];
+  }
   const job = await ctx.db.workflowJob.findFirst({
-    where: { status: { in: ['queued', 'running'] } },
+    where,
     orderBy: { updatedAt: 'desc' },
   });
 
@@ -73,14 +80,18 @@ async function pollWorkflows(ctx: ApiContext): Promise<SystemEvent | null> {
 }
 
 /**
- * Poll real content status changes.
+ * Poll real content status changes (tenant-scoped).
  */
-async function pollContent(ctx: ApiContext, lastCheck: Date): Promise<SystemEvent | null> {
+async function pollContent(ctx: ApiContext, lastCheck: Date, tenantChannelIds?: string[]): Promise<SystemEvent | null> {
+  const where: Record<string, unknown> = {
+    updatedAt: { gt: lastCheck },
+    status: { in: ['generating', 'generated', 'pending_approval'] },
+  };
+  if (tenantChannelIds) {
+    where.channelId = { in: tenantChannelIds };
+  }
   const content = await ctx.db.contentItem.findFirst({
-    where: {
-      updatedAt: { gt: lastCheck },
-      status: { in: ['generating', 'generated', 'pending_approval'] },
-    },
+    where,
     orderBy: { updatedAt: 'asc' },
     select: {
       id: true,
@@ -131,10 +142,10 @@ async function pollMetrics(ctx: ApiContext): Promise<SystemEvent | null> {
   };
 }
 
-type PollFn = (ctx: ApiContext, lastCheck: Date) => Promise<SystemEvent | null>;
+type PollFn = (ctx: ApiContext, lastCheck: Date, tenantChannelIds?: string[]) => Promise<SystemEvent | null>;
 const pollers: Array<{ type: string; fn: PollFn }> = [
   { type: 'alert', fn: pollAlerts },
-  { type: 'workflow-update', fn: (ctx) => pollWorkflows(ctx) },
+  { type: 'workflow-update', fn: pollWorkflows },
   { type: 'content-status', fn: pollContent },
   { type: 'system-metric', fn: (ctx) => pollMetrics(ctx) },
 ];
@@ -149,6 +160,13 @@ const pollers: Array<{ type: string; fn: PollFn }> = [
 export async function GET(req: NextRequest) {
   const ctx = await authenticateSSE(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  // Pre-fetch tenant channel IDs for scoping pollers
+  const tenantChannels = await ctx.db.channel.findMany({
+    where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+    select: { id: true },
+  });
+  const tenantChannelIds = tenantChannels.map((c) => c.id);
 
   const signal = req.signal;
   let cycleIndex = 0;
@@ -179,7 +197,7 @@ export async function GET(req: NextRequest) {
           const poller = pollers[cycleIndex % pollers.length];
           cycleIndex++;
 
-          const event = await poller.fn(ctx, lastCheck);
+          const event = await poller.fn(ctx, lastCheck, tenantChannelIds);
           if (event) {
             controller.enqueue(sseMessage(event.type, event));
           }

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }));
 
     return success({ shots });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[POST /content/generate-storyboard]', err);
     return error('INTERNAL_ERROR', 'Failed to generate storyboard', 500);
   }

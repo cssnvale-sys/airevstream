@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       status: 'generating',
       message: 'Shot generation queued',
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[POST /content/generate-shot]', err);
     return error('INTERNAL_ERROR', 'Failed to queue shot generation', 500);
   }

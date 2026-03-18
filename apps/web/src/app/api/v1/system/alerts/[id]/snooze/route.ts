@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
 
     return success({ id, snoozedUntil: new Date(Date.now() + duration * 1000).toISOString() });
-  } catch (err: any) {
+  } catch (err) {
     console.error(`[POST /system/alerts/${id}/snooze]`, err);
     return error('INTERNAL_ERROR', 'Failed to snooze alert', 500);
   }

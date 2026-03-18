@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     });
 
     return success({ message: 'Password changed successfully' });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[POST /auth/change-password]', err);
     return error('INTERNAL_ERROR', 'Failed to change password', 500);
   }

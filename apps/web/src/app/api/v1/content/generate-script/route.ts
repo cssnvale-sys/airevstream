@@ -58,7 +58,7 @@ Return ONLY the script text, no extra commentary.`;
     }
 
     return success({ script, model });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[POST /content/generate-script]', err);
     return error('INTERNAL_ERROR', 'Failed to generate script', 500);
   }

@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     }));
 
     return success(chains);
-  } catch (err: any) {
+  } catch (err) {
     console.error('[GET /settings/ai/fallback-chains]', err);
     return error('INTERNAL_ERROR', 'Failed to load fallback chains', 500);
   }

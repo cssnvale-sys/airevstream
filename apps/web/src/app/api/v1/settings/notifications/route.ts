@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest) {
     });
 
     return success(row.value);
-  } catch (err: any) {
+  } catch (err) {
     console.error('PUT /api/v1/settings/notifications failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update notification settings', 500);
   }

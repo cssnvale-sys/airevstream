@@ -39,7 +39,7 @@ export async function PUT(req: NextRequest) {
     });
 
     return success(row.value);
-  } catch (err: any) {
+  } catch (err) {
     console.error('PUT /api/v1/settings/security failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update security settings', 500);
   }

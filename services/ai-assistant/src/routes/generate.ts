@@ -121,7 +121,13 @@ Return a JSON array of objects with: title, description, contentType, estimatedE
           format: 'json',
           systemPrompt: 'You are a social media strategist. Return valid JSON only.',
         });
-        const ideas = JSON.parse(result.content);
+        let ideas;
+        try {
+          ideas = JSON.parse(result.content);
+        } catch {
+          genLogger.error({ content: result.content.slice(0, 200) }, 'Failed to parse AI idea response as JSON');
+          return reply.status(502).send({ success: false, error: { code: 'AI_PARSE_ERROR', message: 'AI service returned invalid JSON' } });
+        }
         return reply.send({ success: true, data: { ideas, serviceId: result.serviceId } });
       }
 

@@ -1,10 +1,19 @@
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const SchedulePostSchema = z.object({
+  contentId: z.string().uuid(),
+  channelId: z.string().uuid(),
+  scheduledAt: z.string().refine((v) => !isNaN(new Date(v).getTime()), 'Must be a valid ISO date'),
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']),
+  socialAccountId: z.string().uuid().optional().nullable(),
+  publishConfig: z.record(z.unknown()).optional().default({}),
+});
 
 /**
  * POST /api/v1/schedule
  * Schedule content for posting.
- * Body: { contentId, channelId, scheduledAt, platform, socialAccountId?, publishConfig? }
  */
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
@@ -12,24 +21,17 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { contentId, channelId, scheduledAt, platform, socialAccountId, publishConfig } = body;
-
-    if (!contentId || !channelId || !scheduledAt || !platform) {
-      return validationError('contentId, channelId, scheduledAt, and platform are required');
+    const parsed = SchedulePostSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
+
+    const { contentId, channelId, scheduledAt, platform, socialAccountId, publishConfig } = parsed.data;
 
     const scheduledDate = new Date(scheduledAt);
-    if (isNaN(scheduledDate.getTime())) {
-      return validationError('scheduledAt must be a valid ISO date');
-    }
 
     if (scheduledDate <= new Date()) {
       return validationError('scheduledAt must be in the future');
-    }
-
-    const validPlatforms = ['youtube', 'tiktok', 'instagram', 'facebook'];
-    if (!validPlatforms.includes(platform)) {
-      return validationError(`Invalid platform. Must be one of: ${validPlatforms.join(', ')}`);
     }
 
     // Verify content and channel exist and belong to tenant
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest) {
         scheduledAt: scheduledDate,
         platform,
         socialAccountId: socialAccountId ?? null,
-        publishConfig: publishConfig ?? {},
+        publishConfig: (publishConfig ?? {}) as any,
         status: 'scheduled',
       },
       include: {

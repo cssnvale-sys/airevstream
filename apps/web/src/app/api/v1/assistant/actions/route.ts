@@ -52,7 +52,8 @@ const executors: Record<string, ActionExecutor> = {
 
   'analytics.query': async (params, ctx) => {
     const reportType = (params.reportType as string) ?? 'content';
-    const days = Number(params.days ?? 30);
+    const rawDays = Number(params.days ?? 30);
+    const days = isNaN(rawDays) || rawDays < 1 ? 30 : Math.min(rawDays, 365);
     const since = new Date();
     since.setDate(since.getDate() - days);
 

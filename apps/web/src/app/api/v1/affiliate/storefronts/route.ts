@@ -30,6 +30,14 @@ export async function GET(req: NextRequest) {
     const status = params.get('status') ?? undefined;
 
     const where: Record<string, unknown> = {};
+
+    // Tenant scoping through channel → socialAccount → emailAccount chain
+    if (ctx.tenantId) {
+      where.channel = {
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      };
+    }
+
     if (channelId) where.channelId = channelId;
     if (status) where.status = status;
     if (search) {
@@ -82,6 +90,18 @@ export async function POST(req: NextRequest) {
     }
 
     const { channelId, name, slug, description, logoUrl, bannerUrl, theme, customDomain } = parsed.data;
+
+    // Verify channel exists and belongs to tenant
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id: channelId,
+        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+      },
+      select: { id: true },
+    });
+    if (!channel) {
+      return validationError('Channel not found');
+    }
 
     // Check slug uniqueness
     const existing = await ctx.db.storefront.findUnique({ where: { slug } });

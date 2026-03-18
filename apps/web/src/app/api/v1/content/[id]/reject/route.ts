@@ -27,7 +27,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return notFound('Content item not found');
     }
 
-    const body = await req.json().catch(() => ({}));
+    let body: unknown = {};
+    try {
+      body = await req.json();
+    } catch {
+      // Empty body is acceptable for rejection (feedback is optional)
+    }
     const parsed = RejectSchema.safeParse(body);
     const feedback = parsed.success ? parsed.data.feedback : undefined;
 

@@ -84,3 +84,13 @@
 **Date**: 2026-03-18
 **Decision**: Organize large uncommitted changesets into 4 logical commits: (1) backend packages/services, (2) frontend pages/components/API routes, (3) docs/configs, (4) build artifacts/.gitignore.
 **Rationale**: After multiple audit rounds and feature additions, a large number of files were uncommitted. A single commit would be unreviable. The 4-commit structure groups changes by concern: backend logic is reviewable independently of frontend UI, docs are separate from code, and gitignore changes are isolated. This makes `git log` and `git blame` more useful for understanding what changed and why.
+
+## D018: Reusable UI Component Library Pattern
+**Date**: 2026-03-18
+**Decision**: Create shared UI primitives (`ConfirmDialog`, `EmptyState`, `CopyButton`, `KeyboardShortcutsModal`) in `apps/web/src/components/ui/` and a `toast` wrapper in `apps/web/src/lib/toast.ts`.
+**Rationale**: Multiple pages needed the same patterns (confirmation before destructive actions, empty state displays, clipboard copy). Extracting to shared components ensures consistent UX, reduces duplication, and makes it trivial to add these patterns to new pages. The toast wrapper standardizes sonner usage with pre-configured styles.
+
+## D019: Forgot Password via JWT Reset Tokens (No Email Service)
+**Date**: 2026-03-18
+**Decision**: Implement forgot password using short-lived JWT tokens (15min expiry) with `purpose: 'password-reset'` claim. In dev mode, the token is logged to console rather than emailed.
+**Rationale**: The system doesn't have an email service configured yet. JWT tokens provide a secure, stateless reset mechanism that doesn't require a database table for reset tokens. The `purpose` claim prevents token reuse for authentication. When an email service is added later, the only change needed is sending the token via email instead of logging it.

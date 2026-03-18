@@ -8,6 +8,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - `.claude/rules/` — 6 modular rules files codifying development patterns
+- **Reusable UI Components** (Session 7): `ConfirmDialog`, `EmptyState`, `CopyButton`, `KeyboardShortcutsModal`, toast wrapper
+- **Forgot Password Flow** (Session 7): forgot-password + reset-password API routes and frontend pages
+- **Job Status Polling** (Session 7): `GET /api/v1/jobs/:id` endpoint + `useJobStatus` SWR hook (KI-006)
+- **CSV Export** (Session 7): `exportToCSV()` utility, analytics export per tab (KI-003)
+- **Accounts Bulk Delete** (Session 7): `POST /api/v1/accounts/bulk-delete` + bulk toolbar UI
+- **Channel DELETE** (Session 7): `DELETE /api/v1/channels/:id` with cascade cleanup
+- **Content DELETE** (Session 7): `DELETE /api/v1/content/:id` for draft/archived/failed content
+- **Keyboard Shortcuts** (Session 7): Global shortcuts (? N L A), shortcuts modal, sidebar help button
+- **Copy-to-Clipboard** (Session 7): Copy buttons on affiliate short URLs, API key prefixes, job IDs
+- **Empty States** (Session 7): Actionable empty states with CTAs on library, workflows, approvals, accounts pages
+- **Server-Side Calendar Filters** (Session 7): channelId, platform, status query params (KI-004)
+- **Error Toasts** (Session 7): Toast notifications replacing silent catches on settings, approvals, accounts, affiliate
+- **Confirmation Dialogs** (Session 7): ConfirmDialog on API key revocation, content rejection, content deletion, bulk delete
 
 ### Fixed
 

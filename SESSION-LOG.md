@@ -244,3 +244,86 @@ Created `.claude/rules/` behavioral rules, then ran 5 deep sequential audit roun
 - PM2 production config is partial
 - Platform posting adapters untested against real APIs
 - Browser automation untested in production
+
+---
+
+## Session 7 — 2026-03-18
+
+### Summary
+Autonomous deep improvement sprint: 11 batches implementing UX improvements, new features, and frontend polish. Created 13 new files, modified 15 existing files.
+
+### What Was Done
+
+**Batch 1: Reusable UI Components**
+- Created `ConfirmDialog` component (danger/warning/info variants, focus trap, escape key, click-outside)
+- Created `toast` wrapper around sonner (success/error/info/warning)
+- Created `EmptyState` component (icon, title, description, CTA button)
+
+**Batch 2: Frontend Error Handling & User Feedback**
+- Replaced silent catches with `toast.error()` across settings, approvals, accounts, affiliate pages
+- Added `ConfirmDialog` for API key revocation (settings) and content rejection (approvals)
+
+**Batch 3: Empty States with CTAs**
+- Added `EmptyState` component to library, workflows, approvals, and accounts pages
+- CTAs: "Create Content" on library, "Add Email Account" on accounts
+
+**Batch 4: Missing DELETE Endpoints**
+- Channel DELETE with cascade (scheduledPost, channelAffiliatePool, channelAvatar, brandingPackage, cinemaBible)
+- Content DELETE (only for draft/archived/failed) with cascade (storyboardShot, storyboard, scheduledPost)
+- Delete button in library page with ConfirmDialog
+
+**Batch 5: Job Status Polling Endpoint (KI-006)**
+- `GET /api/v1/jobs/:id` — returns job status from WorkflowJob model
+- `useJobStatus(jobId)` SWR hook with 2s polling until terminal state
+
+**Batch 6: CSV Export Implementation (KI-003)**
+- `exportToCSV()` utility with escaping, nested field access, Blob URL download
+- Replaced `window.alert` stubs in analytics with real CSV export per tab
+
+**Batch 7: Forgot Password Flow**
+- API routes: forgot-password (JWT token, 15min expiry) + reset-password (validate + update)
+- Frontend pages: forgot-password (email form) + reset-password (new password form with Suspense)
+- "Forgot password?" link on login page
+
+**Batch 8: Accounts Bulk Actions**
+- `POST /api/v1/accounts/bulk-delete` — bulk delete with tenant scoping, max 100
+- Bulk toolbar on accounts page (delete, export CSV, clear selection)
+
+**Batch 9: Server-Side Calendar Filters (KI-004)**
+- Calendar page now passes channelId, platform, status as query params to API
+- Removed client-side filtering in favor of server-side
+
+**Batch 10: Keyboard Shortcuts Modal**
+- `KeyboardShortcutsModal` with sections (Navigation: ?/Esc, Content: N/L/A)
+- Global keyboard handlers on sidebar (?, N, L, A keys)
+- Shortcuts help button in sidebar footer
+
+**Batch 11: Copy-to-Clipboard**
+- `CopyButton` component with check animation and toast feedback
+- Copy buttons on: affiliate short URLs, API key prefixes, workflow job IDs
+
+### Commits
+- `21a51f4` — feat: add reusable UI components (confirm dialog, toast helper, empty state)
+- `b50f085` — fix: add error toasts and confirmation dialogs across all pages
+- `13c4af0` — feat: add actionable empty states with CTAs across all pages
+- `5851363` — feat: add channel and content DELETE endpoints with frontend integration
+- `43ae02c` — feat: add job status polling endpoint and useJobStatus hook (KI-006)
+- `738fd47` — feat: implement CSV export for analytics (KI-003)
+- `77c9ad8` — feat: add forgot password and reset password flow
+- `32e7e43` — feat: add accounts bulk actions toolbar with bulk delete
+- `7d35962` — fix: add server-side calendar filters for platform, channel, status (KI-004)
+- `dcd045c` — feat: add keyboard shortcuts modal and global navigation shortcuts
+- `31877b3` — feat: add copy-to-clipboard buttons for identifiers
+
+### Issues Resolved
+- KI-003: CSV export — IMPLEMENTED (batch 6)
+- KI-004: Calendar server-side filters — IMPLEMENTED (batch 9)
+- KI-006: Job status polling — IMPLEMENTED (batch 5)
+
+### Open Items
+- E2E testing (Playwright) not started
+- PM2 production config is partial
+- Platform posting adapters untested against real APIs
+- Browser automation untested in production
+- PDF export not yet implemented (CSV only)
+- Forgot password email sending requires email service setup

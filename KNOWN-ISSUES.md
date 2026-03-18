@@ -24,9 +24,9 @@ Playwright is not installed. No end-to-end browser tests exist. All 93 tests are
 
 ### KI-003: CSV/PDF Export Buttons Are Stubs
 **Severity**: Low
-**Status**: Open
-Analytics export buttons trigger `window.alert("Export coming soon")` instead of generating actual files.
-**Action**: Implement CSV generation (client-side) and PDF generation (server-side via puppeteer or @react-pdf/renderer).
+**Status**: Partially Fixed (Session 7)
+CSV export implemented via `exportToCSV()` utility — all 5 analytics tabs export to CSV. PDF export remains unimplemented.
+**Action**: Implement PDF generation (server-side via puppeteer or @react-pdf/renderer).
 
 ---
 
@@ -34,9 +34,8 @@ Analytics export buttons trigger `window.alert("Export coming soon")` instead of
 
 ### KI-004: Calendar Filters Are Client-Side Only
 **Severity**: Low
-**Status**: Open
-Platform/channel/status filters in the calendar view filter the already-fetched data client-side. The API receives `start`/`end` date params but not the filter criteria.
-**Action**: Add `platform`, `channelId`, and `status` query params to the calendar API route for server-side filtering.
+**Status**: Fixed (Session 7)
+Calendar page now passes channelId, platform, and status as query params to the API for server-side filtering.
 
 ---
 
@@ -50,9 +49,8 @@ The `generate-storyboard` API route returns hardcoded placeholder shots rather t
 
 ### KI-006: Generate-Shot Async Job Has No Completion Polling
 **Severity**: Medium
-**Status**: Open
-The `generate-shot` endpoint creates an async BullMQ job but provides no mechanism for the client to poll for completion or receive a webhook notification. The frontend shows a loading state but has no way to know when the shot is ready.
-**Action**: Add job status polling endpoint (`GET /api/v1/content/jobs/:jobId`) or implement SSE notification for job completion.
+**Status**: Fixed (Session 7)
+Added `GET /api/v1/jobs/:id` endpoint returning job status from WorkflowJob model, plus `useJobStatus(jobId)` SWR hook that polls every 2s until terminal state (completed/failed/cancelled).
 
 ---
 

@@ -66,6 +66,17 @@
 | 5.16 | Audit fixes (round 7) | Done | Frontend↔API shape fixes: create page channel/product fields, dashboard phantom fields, settings ApiKey/AiService fields, affiliate pool DELETE handler |
 | 5.17 | Audit fixes (round 8) | Done | **CRITICAL security:** tenant/user/schedule/calendar access control. Auth hardening: deleted user rejection, NaN param handling, 401 redirect, AI panel stale closure, SSE poll order |
 | 5.18 | Audit fixes (round 9) | Done | Decimal in 9 more routes, 5 settings routes err.message leak prevention |
+| 5.19 | UI components (session 7) | Done | ConfirmDialog, EmptyState, CopyButton, KeyboardShortcutsModal, toast wrapper |
+| 5.20 | Error toasts + confirmations | Done | Toast notifications + ConfirmDialog on destructive actions across 4 pages |
+| 5.21 | Empty states with CTAs | Done | Actionable empty states on library, workflows, approvals, accounts |
+| 5.22 | DELETE endpoints | Done | Channel DELETE (cascade), Content DELETE (draft/archived/failed), library delete UI |
+| 5.23 | Job status polling (KI-006) | Done | GET /api/v1/jobs/:id + useJobStatus hook (2s polling) |
+| 5.24 | CSV export (KI-003) | Done | exportToCSV utility, analytics export per tab |
+| 5.25 | Forgot password flow | Done | API routes + frontend pages for forgot/reset password |
+| 5.26 | Accounts bulk actions | Done | POST /api/v1/accounts/bulk-delete + bulk toolbar (delete/export/clear) |
+| 5.27 | Calendar server filters (KI-004) | Done | channelId, platform, status query params passed to API |
+| 5.28 | Keyboard shortcuts | Done | Global shortcuts (?/N/L/A), modal, sidebar help button |
+| 5.29 | Copy-to-clipboard | Done | CopyButton on affiliate short URLs, API key prefixes, job IDs |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 
@@ -93,8 +104,8 @@
 ## Architecture Highlights
 - **Prisma Schema**: 33 models (+ SystemSetting) with full-text search GIN indexes on key tables
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: 102 server-side route handlers with JWT auth (jose + scrypt), Prisma queries, pagination, validation
-- **Dashboard**: 14 views (+ workflows, approvals, affiliate) + notification center + SSE real-time updates
+- **Next.js API Routes**: 106 server-side route handlers with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Dashboard**: 16 views (+ workflows, approvals, affiliate, forgot/reset password) + notification center + SSE real-time updates
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 3 compositions (short 9:16, long 16:9, thumbnail still) with H.I.C.C. beat timing
 - **ComfyUI**: 4 SDXL workflow templates with {{placeholder}} syntax + client API wrapper + template renderer

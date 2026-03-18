@@ -690,6 +690,17 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - AI health check: clear timeout on error path (was only cleared on success)
 - Rate limiter: warn when in-memory store exceeds 10k entries
 
+**Batch 89: API Helper JSON Parse Error Handling**
+- apiPost/apiPut/apiDelete: wrap res.json() in try-catch with clean fallback
+- Prevents raw parse error messages from leaking when API returns non-JSON (502/503)
+- Matches existing fetcher() pattern for consistency
+
+**Batch 90: Service/Worker Error Handling and Security**
+- 3 service entry points: add .catch() to main() for unhandled promise rejections
+- 3 service global error handlers: replaced error.message leak with static safe messages
+- Research worker: wrapped 2 JSON.parse calls in try-catch for AI-generated content
+- AI assistant chat/generate routes: logged silent registry initialization failures
+
 ### Commits (continued)
 - `e403391` — docs: tracking docs round 19
 - `f10425d` — fix: SWR revalidation after job retry on system page
@@ -702,6 +713,9 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `61bca45` — docs: tracking docs round 21
 - `7a79e75` — fix: code quality (CSV bounds, duration validation, parseInt radix)
 - `a2e4b9d` — fix: SSE error logging, health check timeout, rate limiter bounds
+- `cf33c79` — docs: tracking docs round 22
+- `c85803b` — fix: API helper JSON parse error handling
+- `c8cd7e5` — fix: service/worker error handling and security hardening
 
 ### Open Items
 - E2E testing (Playwright) not started

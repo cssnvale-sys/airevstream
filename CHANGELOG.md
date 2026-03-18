@@ -43,6 +43,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 32 (Session 7) — Service/Worker Hardening**
+- 3 service entry points: .catch() on main() to handle startup failures
+- 3 service global error handlers: static safe error messages (no error.message leaks)
+- Research worker: try-catch on JSON.parse for AI-generated responses
+- AI assistant: logged silent registry initialization failures
+- apiPost/apiPut/apiDelete: handle non-JSON responses (502/503) with clean fallback
+
 **Audit Round 30 (Session 7) — Resource Cleanup & Code Quality**
 - SSE stream: log unexpected close errors instead of swallowing
 - AI health check: clear fetch timeout on error path (was leaking on failure)

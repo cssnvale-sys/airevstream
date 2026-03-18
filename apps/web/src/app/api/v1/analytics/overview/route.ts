@@ -86,10 +86,12 @@ export async function GET(req: NextRequest) {
           createdAt: { gte: new Date(start.getTime() - (end.getTime() - start.getTime())), lt: start },
         },
       }),
-      // Revenue clicks (for daily aggregation)
+      // Revenue clicks (for daily aggregation, capped at 5000)
       ctx.db.affiliateClick.findMany({
         where: { converted: true, ...channelScope, ...dateFilter },
         select: { createdAt: true, revenue: true },
+        take: 5000,
+        orderBy: { createdAt: 'desc' },
       }),
       // Revenue by channel
       ctx.db.affiliateClick.groupBy({
@@ -111,10 +113,11 @@ export async function GET(req: NextRequest) {
         where: { ...channelScope, ...dateFilter },
         _count: { id: true },
       }),
-      // Quality scores
+      // Quality scores (capped at 5000)
       ctx.db.contentItem.findMany({
         where: { ...channelScope, ...dateFilter, qualityScore: { not: null } },
         select: { qualityScore: true },
+        take: 5000,
       }),
       // Cost by service
       ctx.db.aiServiceUsage.groupBy({

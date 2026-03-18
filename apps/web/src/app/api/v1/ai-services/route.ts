@@ -1,6 +1,7 @@
 import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { encrypt } from '@airevstream/crypto';
+import { getConfig } from '@airevstream/shared';
 
 /**
  * GET /api/v1/ai-services
@@ -63,7 +64,12 @@ export async function GET(req: NextRequest) {
       ctx.db.aiService.count({ where }),
     ]);
 
-    return paginated(items, total, page, limit);
+    const converted = items.map((s) => ({
+      ...s,
+      successRate: s.successRate != null ? Number(s.successRate) : null,
+      avgQualityScore: s.avgQualityScore != null ? Number(s.avgQualityScore) : null,
+    }));
+    return paginated(converted, total, page, limit);
   } catch (err) {
     console.error('GET /api/v1/ai-services error:', err);
     return error('INTERNAL_ERROR', 'Failed to list AI services', 500);
@@ -95,13 +101,22 @@ export async function POST(req: NextRequest) {
       return validationError(`Invalid serviceType. Must be one of: ${validTypes.join(', ')}`);
     }
 
+    let apiKeyEnc: string | null = null;
+    if (apiKey) {
+      const config = getConfig();
+      if (!config.ENCRYPTION_KEY) {
+        return error('CONFIG_ERROR', 'Encryption key not configured', 500);
+      }
+      apiKeyEnc = encrypt(apiKey, config.ENCRYPTION_KEY);
+    }
+
     const service = await ctx.db.aiService.create({
       data: {
         name,
         provider,
         serviceType,
         endpoint: endpoint ?? null,
-        apiKeyEnc: apiKey ? encrypt(apiKey, process.env.ENCRYPTION_KEY!) : null,
+        apiKeyEnc,
         capabilities: capabilities ?? {},
         costPerUnit: costPerUnit ?? {},
         rateLimits: rateLimits ?? {},
@@ -112,9 +127,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Strip apiKeyEnc from response
+    // Strip apiKeyEnc from response and convert Decimal fields
     const { apiKeyEnc: _, ...safe } = service;
-    return success(safe);
+    return success({
+      ...safe,
+      successRate: safe.successRate != null ? Number(safe.successRate) : null,
+      avgQualityScore: safe.avgQualityScore != null ? Number(safe.avgQualityScore) : null,
+    });
   } catch (err) {
     console.error('POST /api/v1/ai-services error:', err);
     return error('INTERNAL_ERROR', 'Failed to register AI service', 500);

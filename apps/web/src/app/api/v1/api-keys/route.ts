@@ -61,7 +61,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     return paginated(keys, total, page, limit);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/api-keys failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list API keys', 500);
   }
 }
@@ -126,7 +127,8 @@ export async function POST(req: NextRequest) {
       ...apiKey,
       key: rawKey,
     });
-  } catch {
+  } catch (err) {
+    console.error('POST /api/v1/api-keys failed:', err);
     return error('INTERNAL_ERROR', 'Failed to create API key', 500);
   }
 }

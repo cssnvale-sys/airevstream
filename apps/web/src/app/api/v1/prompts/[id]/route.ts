@@ -35,7 +35,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return notFound('Prompt template not found');
     }
 
-    return success(template);
+    return success({
+      ...template,
+      avgScore: template.avgScore != null ? Number(template.avgScore) : null,
+    });
   } catch (err) {
     console.error('GET /api/v1/prompts/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch prompt template', 500);
@@ -91,7 +94,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       data,
     });
 
-    return success(updated);
+    return success({
+      ...updated,
+      avgScore: updated.avgScore != null ? Number(updated.avgScore) : null,
+    });
   } catch (err) {
     console.error('PATCH /api/v1/prompts/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to update prompt template', 500);

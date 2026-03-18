@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     return json({
       success: true,
       data: {
-        status: healthyServices === totalServices ? 'healthy' : 'degraded',
+        status: totalServices === 0 ? 'unknown' : (healthyServices === totalServices ? 'healthy' : 'degraded'),
         timestamp: new Date().toISOString(),
         metrics: latestMetrics,
         services: {

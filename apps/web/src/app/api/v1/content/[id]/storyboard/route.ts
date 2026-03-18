@@ -34,7 +34,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     // Return the most recent storyboard (first after desc ordering)
-    return success(storyboards[0]);
+    const storyboard = storyboards[0];
+    const converted = {
+      ...storyboard,
+      totalDurationSec: storyboard.totalDurationSec != null ? Number(storyboard.totalDurationSec) : null,
+      shots: storyboard.shots?.map(shot => ({
+        ...shot,
+        startSec: Number(shot.startSec),
+        endSec: Number(shot.endSec),
+        qualityScore: shot.qualityScore != null ? Number(shot.qualityScore) : null,
+        generationCost: shot.generationCost != null ? Number(shot.generationCost) : null,
+      })) ?? [],
+    };
+    return success(converted);
   } catch (err) {
     console.error('GET /api/v1/content/[id]/storyboard error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
@@ -100,7 +112,18 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    return success(updated);
+    const converted = {
+      ...updated,
+      totalDurationSec: updated.totalDurationSec != null ? Number(updated.totalDurationSec) : null,
+      shots: updated.shots?.map(shot => ({
+        ...shot,
+        startSec: Number(shot.startSec),
+        endSec: Number(shot.endSec),
+        qualityScore: shot.qualityScore != null ? Number(shot.qualityScore) : null,
+        generationCost: shot.generationCost != null ? Number(shot.generationCost) : null,
+      })) ?? [],
+    };
+    return success(converted);
   } catch (err) {
     console.error('PUT /api/v1/content/[id]/storyboard error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

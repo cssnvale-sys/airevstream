@@ -1,6 +1,7 @@
 import { authenticate, success, error, notFound, validationError, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { encrypt } from '@airevstream/crypto';
+import { getConfig } from '@airevstream/shared';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -25,7 +26,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!service) return notFound('AI service not found');
 
     const { apiKeyEnc: _, ...safe } = service;
-    return success(safe);
+    return success({
+      ...safe,
+      successRate: safe.successRate != null ? Number(safe.successRate) : null,
+      avgQualityScore: safe.avgQualityScore != null ? Number(safe.avgQualityScore) : null,
+    });
   } catch (err) {
     console.error('GET /api/v1/ai-services/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch AI service', 500);
@@ -60,7 +65,17 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;
     if (endpoint !== undefined) data.endpoint = endpoint;
-    if (apiKey !== undefined) data.apiKeyEnc = apiKey ? encrypt(apiKey, process.env.ENCRYPTION_KEY!) : null;
+    if (apiKey !== undefined) {
+      if (apiKey) {
+        const config = getConfig();
+        if (!config.ENCRYPTION_KEY) {
+          return error('CONFIG_ERROR', 'Encryption key not configured', 500);
+        }
+        data.apiKeyEnc = encrypt(apiKey, config.ENCRYPTION_KEY);
+      } else {
+        data.apiKeyEnc = null;
+      }
+    }
     if (capabilities !== undefined) data.capabilities = capabilities;
     if (costPerUnit !== undefined) data.costPerUnit = costPerUnit;
     if (rateLimits !== undefined) data.rateLimits = rateLimits;
@@ -76,7 +91,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     });
 
     const { apiKeyEnc: _, ...safe } = updated;
-    return success(safe);
+    return success({
+      ...safe,
+      successRate: safe.successRate != null ? Number(safe.successRate) : null,
+      avgQualityScore: safe.avgQualityScore != null ? Number(safe.avgQualityScore) : null,
+    });
   } catch (err) {
     console.error('PUT /api/v1/ai-services/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to update AI service', 500);

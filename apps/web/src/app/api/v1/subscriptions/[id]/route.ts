@@ -54,7 +54,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     return success(subscription);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/subscriptions/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch subscription', 500);
   }
 }
@@ -156,7 +157,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     });
 
     return success(updated);
-  } catch {
+  } catch (err) {
+    console.error('PATCH /api/v1/subscriptions/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update subscription', 500);
   }
 }

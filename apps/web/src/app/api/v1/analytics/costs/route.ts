@@ -74,10 +74,10 @@ export async function GET(req: NextRequest) {
     return success({
       period: { start: start ?? null, end: end ?? null },
       totals: {
-        totalCost: totals._sum.cost ?? 0,
+        totalCost: Number(totals._sum.cost ?? 0),
         totalTokens: totals._sum.tokensUsed ?? 0,
         totalRequests: totals._count.id,
-        avgCostPerRequest: totals._avg.cost ?? 0,
+        avgCostPerRequest: Number(totals._avg.cost ?? 0),
         avgResponseMs: totals._avg.responseMs ?? 0,
       },
       byService: byService.map((row) => {
@@ -89,15 +89,15 @@ export async function GET(req: NextRequest) {
           serviceType: svc?.serviceType ?? 'Unknown',
           isLocal: svc?.isLocal ?? false,
           isFree: svc?.isFree ?? false,
-          totalCost: row._sum.cost ?? 0,
+          totalCost: Number(row._sum.cost ?? 0),
           tokensUsed: row._sum.tokensUsed ?? 0,
           requests: row._count.id,
-          avgCostPerRequest: row._avg.cost ?? 0,
+          avgCostPerRequest: Number(row._avg.cost ?? 0),
         };
       }),
       byRequestType: byRequestType.map((row) => ({
         requestType: row.requestType ?? 'unknown',
-        totalCost: row._sum.cost ?? 0,
+        totalCost: Number(row._sum.cost ?? 0),
         tokensUsed: row._sum.tokensUsed ?? 0,
         requests: row._count.id,
       })),

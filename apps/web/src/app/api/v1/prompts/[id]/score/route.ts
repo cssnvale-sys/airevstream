@@ -69,7 +69,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return success({
       id: updated.id,
       name: updated.name,
-      avgScore: updated.avgScore,
+      avgScore: Number(updated.avgScore),
       usageCount: updated.usageCount,
       recordedScore: score,
     });

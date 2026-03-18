@@ -43,6 +43,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success({
       ...budget,
+      limitAmount: Number(budget.limitAmount),
+      currentSpend: Number(budget.currentSpend),
+      alertThreshold: budget.alertThreshold != null ? Number(budget.alertThreshold) : null,
       percentUsed: Math.round(percentUsed * 10000) / 100, // e.g. 85.50 for 85.50%
       isOverThreshold,
       isExceeded,
@@ -113,7 +116,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       data,
     });
 
-    return success(updated);
+    const converted = {
+      ...updated,
+      limitAmount: Number(updated.limitAmount),
+      currentSpend: Number(updated.currentSpend),
+      alertThreshold: updated.alertThreshold != null ? Number(updated.alertThreshold) : null,
+    };
+
+    return success(converted);
   } catch (err) {
     console.error('PATCH /api/v1/budgets/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to update budget', 500);

@@ -82,7 +82,8 @@ export async function POST(req: NextRequest) {
       user,
       message: 'User invited successfully. A password reset should be initiated for first login.',
     });
-  } catch {
+  } catch (err) {
+    console.error('POST /api/v1/users/invite failed:', err);
     return error('INTERNAL_ERROR', 'Failed to invite user', 500);
   }
 }

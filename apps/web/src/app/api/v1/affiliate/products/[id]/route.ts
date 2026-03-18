@@ -28,7 +28,17 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!product) return notFound('Affiliate product not found');
 
-    return success(product);
+    const converted = {
+      ...product,
+      commissionRate: product.commissionRate != null ? Number(product.commissionRate) : null,
+      totalRevenue: Number(product.totalRevenue),
+      channelPools: product.channelPools?.map(pool => ({
+        ...pool,
+        performanceScore: Number(pool.performanceScore),
+      })),
+    };
+
+    return success(converted);
   } catch (err) {
     console.error('GET /api/v1/affiliate/products/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch affiliate product', 500);
@@ -74,7 +84,13 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       data,
     });
 
-    return success(updated);
+    const converted = {
+      ...updated,
+      commissionRate: updated.commissionRate != null ? Number(updated.commissionRate) : null,
+      totalRevenue: Number(updated.totalRevenue),
+    };
+
+    return success(converted);
   } catch (err) {
     console.error('PUT /api/v1/affiliate/products/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to update affiliate product', 500);

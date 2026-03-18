@@ -57,7 +57,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     return paginated(users, total, page, limit);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/users failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list users', 500);
   }
 }

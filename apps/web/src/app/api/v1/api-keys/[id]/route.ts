@@ -50,7 +50,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     return success(apiKey);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/api-keys/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch API key', 500);
   }
 }
@@ -110,7 +111,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     });
 
     return success(updated);
-  } catch {
+  } catch (err) {
+    console.error('PATCH /api/v1/api-keys/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update API key', 500);
   }
 }
@@ -157,7 +159,8 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     });
 
     return success(updated);
-  } catch {
+  } catch (err) {
+    console.error('DELETE /api/v1/api-keys/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to revoke API key', 500);
   }
 }

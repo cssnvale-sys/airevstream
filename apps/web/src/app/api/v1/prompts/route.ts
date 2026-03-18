@@ -86,7 +86,12 @@ export async function GET(req: NextRequest) {
       ctx.db.promptTemplate.count({ where }),
     ]);
 
-    return paginated(templates, total, page, limit);
+    const converted = templates.map(t => ({
+      ...t,
+      avgScore: t.avgScore != null ? Number(t.avgScore) : null,
+    }));
+
+    return paginated(converted, total, page, limit);
   } catch (err) {
     console.error('GET /api/v1/prompts error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch prompt templates', 500);
@@ -127,7 +132,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return success(promptTemplate);
+    const converted = {
+      ...promptTemplate,
+      avgScore: promptTemplate.avgScore != null ? Number(promptTemplate.avgScore) : null,
+    };
+
+    return success(converted);
   } catch (err) {
     console.error('POST /api/v1/prompts error:', err);
     return error('INTERNAL_ERROR', 'Failed to create prompt template', 500);

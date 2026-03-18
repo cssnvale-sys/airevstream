@@ -83,7 +83,14 @@ export async function GET(req: NextRequest) {
       ctx.db.costBudget.count({ where }),
     ]);
 
-    return paginated(budgets, total, page, limit);
+    const converted = budgets.map(b => ({
+      ...b,
+      limitAmount: Number(b.limitAmount),
+      currentSpend: Number(b.currentSpend),
+      alertThreshold: b.alertThreshold != null ? Number(b.alertThreshold) : null,
+    }));
+
+    return paginated(converted, total, page, limit);
   } catch (err) {
     console.error('GET /api/v1/budgets error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch budgets', 500);
@@ -129,7 +136,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return success(budget);
+    const converted = {
+      ...budget,
+      limitAmount: Number(budget.limitAmount),
+      currentSpend: Number(budget.currentSpend),
+      alertThreshold: budget.alertThreshold != null ? Number(budget.alertThreshold) : null,
+    };
+
+    return success(converted);
   } catch (err) {
     console.error('POST /api/v1/budgets error:', err);
     return error('INTERNAL_ERROR', 'Failed to create budget', 500);

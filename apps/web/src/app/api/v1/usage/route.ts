@@ -152,7 +152,8 @@ export async function GET(req: NextRequest) {
       periodEnd: end.toISOString(),
       metrics,
     });
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/usage failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch usage metrics', 500);
   }
 }

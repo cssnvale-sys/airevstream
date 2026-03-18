@@ -15,12 +15,17 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const product = await ctx.db.affiliateProduct.findUnique({
+    const rawProduct = await ctx.db.affiliateProduct.findUnique({
       where: { id },
       select: { id: true, name: true, totalClicks: true, totalConversions: true, totalRevenue: true },
     });
 
-    if (!product) return notFound('Affiliate product not found');
+    if (!rawProduct) return notFound('Affiliate product not found');
+
+    const product = {
+      ...rawProduct,
+      totalRevenue: Number(rawProduct.totalRevenue),
+    };
 
     const url = new URL(req.url);
     const start = url.searchParams.get('start');
@@ -57,7 +62,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       channelId: row.channelId,
       channelName: row.channelId ? channelMap.get(row.channelId) ?? 'Unknown' : 'Direct',
       clicks: row._count.id,
-      revenue: row._sum.revenue,
+      revenue: row._sum.revenue != null ? Number(row._sum.revenue) : 0,
     }));
 
     // Total clicks and conversions in range
@@ -78,7 +83,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         totalClicks,
         conversions,
         conversionRate: totalClicks > 0 ? conversions / totalClicks : 0,
-        totalRevenue: totalRevenue._sum.revenue ?? 0,
+        totalRevenue: totalRevenue._sum.revenue != null ? Number(totalRevenue._sum.revenue) : 0,
       },
       byChannel: channelBreakdown,
     });

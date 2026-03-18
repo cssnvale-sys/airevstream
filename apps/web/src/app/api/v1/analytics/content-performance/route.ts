@@ -74,9 +74,9 @@ export async function GET(req: NextRequest) {
       summary: {
         totalContent,
         qualityScore: {
-          average: qualityStats._avg.qualityScore,
-          min: qualityStats._min.qualityScore,
-          max: qualityStats._max.qualityScore,
+          average: qualityStats._avg.qualityScore != null ? Number(qualityStats._avg.qualityScore) : null,
+          min: qualityStats._min.qualityScore != null ? Number(qualityStats._min.qualityScore) : null,
+          max: qualityStats._max.qualityScore != null ? Number(qualityStats._max.qualityScore) : null,
           scoredCount: qualityStats._count.qualityScore,
         },
       },
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
       byContentType: byType.map((row) => ({
         contentType: row.contentType,
         count: row._count.id,
-        avgQualityScore: row._avg.qualityScore,
+        avgQualityScore: row._avg.qualityScore != null ? Number(row._avg.qualityScore) : null,
       })),
       byModel: byModel.map((row) => {
         const svc = row.aiServiceId ? serviceMap.get(row.aiServiceId) : null;
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
           serviceName: svc?.name ?? 'Unknown',
           provider: svc?.provider ?? 'Unknown',
           count: row._count.id,
-          avgQualityScore: row._avg.qualityScore,
+          avgQualityScore: row._avg.qualityScore != null ? Number(row._avg.qualityScore) : null,
         };
       }),
     });

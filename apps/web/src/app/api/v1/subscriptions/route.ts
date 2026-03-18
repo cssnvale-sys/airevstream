@@ -56,7 +56,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     return paginated(subscriptions, total, page, limit);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/subscriptions failed:', err);
     return error('INTERNAL_ERROR', 'Failed to list subscriptions', 500);
   }
 }
@@ -133,7 +134,8 @@ export async function POST(req: NextRequest) {
     });
 
     return success(subscription);
-  } catch {
+  } catch (err) {
+    console.error('POST /api/v1/subscriptions failed:', err);
     return error('INTERNAL_ERROR', 'Failed to create subscription', 500);
   }
 }

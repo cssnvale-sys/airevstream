@@ -72,9 +72,9 @@ export async function GET(req: NextRequest) {
       totals: {
         requests: totals._count.id,
         tokensUsed: totals._sum.tokensUsed ?? 0,
-        totalCost: totals._sum.cost ?? 0,
+        totalCost: Number(totals._sum.cost ?? 0),
         avgResponseMs: totals._avg.responseMs ?? 0,
-        avgQualityScore: totals._avg.qualityScore ?? null,
+        avgQualityScore: totals._avg.qualityScore != null ? Number(totals._avg.qualityScore) : null,
         successRate: totals._count.id > 0 ? successCount / totals._count.id : 1,
       },
       byService: byService.map((row) => ({
@@ -84,14 +84,14 @@ export async function GET(req: NextRequest) {
         serviceType: serviceMap.get(row.serviceId)?.serviceType ?? 'Unknown',
         requests: row._count.id,
         tokensUsed: row._sum.tokensUsed ?? 0,
-        totalCost: row._sum.cost ?? 0,
+        totalCost: Number(row._sum.cost ?? 0),
         avgResponseMs: row._avg.responseMs ?? 0,
       })),
       byRequestType: byRequestType.map((row) => ({
         requestType: row.requestType ?? 'unknown',
         requests: row._count.id,
         tokensUsed: row._sum.tokensUsed ?? 0,
-        totalCost: row._sum.cost ?? 0,
+        totalCost: Number(row._sum.cost ?? 0),
         avgResponseMs: row._avg.responseMs ?? 0,
       })),
     });

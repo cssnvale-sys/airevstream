@@ -65,7 +65,13 @@ export async function GET(req: NextRequest) {
       ctx.db.contentItem.count({ where }),
     ]);
 
-    return paginated(items, total, page, limit);
+    const converted = items.map((item) => ({
+      ...item,
+      qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+      durationSec: item.durationSec != null ? Number(item.durationSec) : null,
+      approvalGateWindowHrs: item.approvalGateWindowHrs != null ? Number(item.approvalGateWindowHrs) : null,
+    }));
+    return paginated(converted, total, page, limit);
   } catch (err) {
     console.error('GET /api/v1/content error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
@@ -131,7 +137,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return success(item);
+    return success({
+      ...item,
+      qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+      durationSec: item.durationSec != null ? Number(item.durationSec) : null,
+      approvalGateWindowHrs: item.approvalGateWindowHrs != null ? Number(item.approvalGateWindowHrs) : null,
+    });
   } catch (err) {
     console.error('POST /api/v1/content error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

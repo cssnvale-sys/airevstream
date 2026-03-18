@@ -52,7 +52,25 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return notFound('Content item not found');
     }
 
-    return success(item);
+    // Convert Decimal fields to numbers
+    const converted = {
+      ...item,
+      qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+      durationSec: item.durationSec != null ? Number(item.durationSec) : null,
+      approvalGateWindowHrs: item.approvalGateWindowHrs != null ? Number(item.approvalGateWindowHrs) : null,
+      storyboards: item.storyboards.map((sb) => ({
+        ...sb,
+        shots: sb.shots.map((shot) => ({
+          ...shot,
+          startSec: Number(shot.startSec),
+          endSec: Number(shot.endSec),
+          qualityScore: shot.qualityScore != null ? Number(shot.qualityScore) : null,
+          generationCost: shot.generationCost != null ? Number(shot.generationCost) : null,
+        })),
+      })),
+    };
+
+    return success(converted);
   } catch (err) {
     console.error('GET /api/v1/content/[id] error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
@@ -113,7 +131,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    return success(updated);
+    return success({
+      ...updated,
+      qualityScore: updated.qualityScore != null ? Number(updated.qualityScore) : null,
+      durationSec: updated.durationSec != null ? Number(updated.durationSec) : null,
+      approvalGateWindowHrs: updated.approvalGateWindowHrs != null ? Number(updated.approvalGateWindowHrs) : null,
+    });
   } catch (err) {
     console.error('PUT /api/v1/content/[id] error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

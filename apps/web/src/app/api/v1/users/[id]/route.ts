@@ -47,7 +47,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!user) return notFound('User not found');
 
     return success(user);
-  } catch {
+  } catch (err) {
+    console.error('GET /api/v1/users/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch user', 500);
   }
 }
@@ -131,7 +132,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     });
 
     return success(updated);
-  } catch {
+  } catch (err) {
+    console.error('PUT /api/v1/users/[id] failed:', err);
     return error('INTERNAL_ERROR', 'Failed to update user', 500);
   }
 }

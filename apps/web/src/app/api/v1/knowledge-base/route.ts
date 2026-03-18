@@ -69,7 +69,12 @@ export async function GET(req: NextRequest) {
       ctx.db.knowledgeBaseEntry.count({ where }),
     ]);
 
-    return paginated(entries, total, page, limit);
+    const converted = entries.map(e => ({
+      ...e,
+      relevanceScore: e.relevanceScore != null ? Number(e.relevanceScore) : null,
+    }));
+
+    return paginated(converted, total, page, limit);
   } catch (err) {
     console.error('GET /api/v1/knowledge-base error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch knowledge base entries', 500);
@@ -109,7 +114,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return success(entry);
+    const converted = {
+      ...entry,
+      relevanceScore: entry.relevanceScore != null ? Number(entry.relevanceScore) : null,
+    };
+
+    return success(converted);
   } catch (err) {
     console.error('POST /api/v1/knowledge-base error:', err);
     return error('INTERNAL_ERROR', 'Failed to create knowledge base entry', 500);

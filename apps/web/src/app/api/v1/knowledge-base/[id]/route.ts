@@ -33,7 +33,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return notFound('Knowledge base entry not found');
     }
 
-    return success(entry);
+    return success({
+      ...entry,
+      relevanceScore: entry.relevanceScore != null ? Number(entry.relevanceScore) : null,
+    });
   } catch (err) {
     console.error('GET /api/v1/knowledge-base/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to fetch knowledge base entry', 500);
@@ -89,7 +92,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       data,
     });
 
-    return success(updated);
+    return success({
+      ...updated,
+      relevanceScore: updated.relevanceScore != null ? Number(updated.relevanceScore) : null,
+    });
   } catch (err) {
     console.error('PATCH /api/v1/knowledge-base/[id] error:', err);
     return error('INTERNAL_ERROR', 'Failed to update knowledge base entry', 500);

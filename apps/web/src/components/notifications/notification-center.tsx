@@ -128,8 +128,8 @@ export function NotificationCenter() {
           },
           { revalidate: false },
         );
-      } catch {
-        // Revalidate on error to restore state
+      } catch (err) {
+        console.error('Failed to dismiss notification:', err);
         mutate();
       }
     },
@@ -159,7 +159,8 @@ export function NotificationCenter() {
         },
         { revalidate: false },
       );
-    } catch {
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err);
       mutate();
     }
   }, [mutate]);

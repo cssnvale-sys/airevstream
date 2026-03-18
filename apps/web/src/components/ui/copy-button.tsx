@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
@@ -15,14 +15,21 @@ interface CopyButtonProps {
 
 export function CopyButton({ value, label, className, size = 14, showToast = true }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
 
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
       if (showToast) toast.success('Copied!');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Copy to clipboard failed:', err);
       toast.error('Failed to copy');
     }
   }, [value, showToast]);

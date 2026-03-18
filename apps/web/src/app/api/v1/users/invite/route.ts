@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { randomBytes, scryptSync } from 'node:crypto';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 const inviteUserSchema = z.object({
   email: z.string().email(),
@@ -26,6 +27,12 @@ export async function POST(req: NextRequest) {
   if (ctx instanceof NextResponse) return ctx;
 
   try {
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`invite:${ip}`, { maxAttempts: 10, windowMs: 60 * 60 * 1000 });
+    if (!rl.allowed) {
+      return error('RATE_LIMITED', 'Too many invites. Please try again later.', 429);
+    }
+
     const currentUser = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
     if (!currentUser || currentUser.role !== 'admin') {
       return error('FORBIDDEN', 'Admin access required', 403);

@@ -10,6 +10,7 @@ import {
   apiPost,
 } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
+import { toast } from '@/lib/toast';
 import {
   Activity,
   Cpu,
@@ -247,8 +248,10 @@ export default function SystemPage() {
     try {
       await apiPost(`/system/alerts/${id}/acknowledge`);
       mutateAlerts();
-    } catch {
-      // ignore
+      toast.success('Alert acknowledged');
+    } catch (err) {
+      console.error('Failed to acknowledge alert:', err);
+      toast.error('Failed to acknowledge alert');
     } finally {
       setAlertActionInFlight(null);
     }
@@ -259,8 +262,10 @@ export default function SystemPage() {
     try {
       await apiPost(`/system/alerts/${id}/snooze`, { duration: 3600 });
       mutateAlerts();
-    } catch {
-      // ignore
+      toast.success('Alert snoozed for 1 hour');
+    } catch (err) {
+      console.error('Failed to snooze alert:', err);
+      toast.error('Failed to snooze alert');
     } finally {
       setAlertActionInFlight(null);
     }
@@ -269,8 +274,10 @@ export default function SystemPage() {
   const handleRetryError = async (id: string) => {
     try {
       await apiPost(`/system/errors/${id}/retry`);
-    } catch {
-      // ignore
+      toast.success('Retry queued');
+    } catch (err) {
+      console.error('Failed to retry job:', err);
+      toast.error('Failed to retry job');
     }
   };
 

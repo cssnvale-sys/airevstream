@@ -13,6 +13,7 @@ import {
 } from '@/hooks/use-api';
 import { Youtube, Instagram, Facebook, Music2 } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
+import { toast } from '@/lib/toast';
 import {
   ClipboardCheck,
   Send,
@@ -219,8 +220,9 @@ export default function DashboardPage() {
     try {
       await apiPost(`/approvals/${id}/${action}`);
       mutateApprovals();
-    } catch {
-      // toast or ignore
+    } catch (err) {
+      console.error(`Failed to ${action} content:`, err);
+      toast.error(`Failed to ${action} content`);
     } finally {
       setActionInFlight(null);
     }

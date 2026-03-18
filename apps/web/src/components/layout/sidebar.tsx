@@ -37,8 +37,21 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sidebar_collapsed') === '1';
+    }
+    return false;
+  });
   const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('sidebar_collapsed', next ? '1' : '0');
+      return next;
+    });
+  };
 
   const handleLogout = () => {
     removeToken();
@@ -133,7 +146,7 @@ export function Sidebar() {
           {!collapsed && 'Shortcuts'}
         </button>
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',

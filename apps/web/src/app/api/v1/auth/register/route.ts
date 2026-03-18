@@ -1,22 +1,16 @@
 import { NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
-import { randomBytes, scryptSync } from 'node:crypto';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { hashPassword } from '@/lib/password';
 
 const RegisterSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(256),
   name: z.string().max(200).optional().nullable(),
 });
-
-function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const derivedKey = scryptSync(password, salt, 64);
-  return `${salt}:${derivedKey.toString('hex')}`;
-}
 
 export async function POST(req: NextRequest) {
   try {

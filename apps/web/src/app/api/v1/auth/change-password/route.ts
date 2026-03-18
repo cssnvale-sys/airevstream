@@ -1,29 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { SignJWT } from 'jose';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { hashPassword, verifyPassword } from '@/lib/password';
 
 const ChangePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'currentPassword is required'),
-  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+  currentPassword: z.string().min(1, 'currentPassword is required').max(256),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters').max(256),
 });
-
-function verifyPassword(password: string, hash: string): boolean {
-  const parts = hash.split(':');
-  if (parts.length !== 2) return false;
-  const [salt, key] = parts;
-  if (!salt || !key) return false;
-  const derived = scryptSync(password, salt, 64).toString('hex');
-  return timingSafeEqual(Buffer.from(key, 'hex'), Buffer.from(derived, 'hex'));
-}
-
-function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const hash = scryptSync(password, salt, 64).toString('hex');
-  return `${salt}:${hash}`;
-}
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

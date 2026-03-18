@@ -1,21 +1,15 @@
 import { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import { scryptSync, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { hashPassword } from '@/lib/password';
 
 const ResetPasswordSchema = z.object({
-  token: z.string().min(1),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  token: z.string().min(1).max(2048),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters').max(256),
 });
-
-function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const hash = scryptSync(password, salt, 64).toString('hex');
-  return `${salt}:${hash}`;
-}
 
 /**
  * POST /api/v1/auth/reset-password

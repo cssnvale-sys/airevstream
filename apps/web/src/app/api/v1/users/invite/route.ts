@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { randomBytes, scryptSync } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { hashPassword } from '@/lib/password';
 
 const inviteUserSchema = z.object({
   email: z.string().email(),
@@ -10,12 +11,6 @@ const inviteUserSchema = z.object({
   role: z.enum(['admin', 'operator', 'viewer']).default('viewer'),
   tenantId: z.string().uuid().optional(),
 });
-
-function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const derivedKey = scryptSync(password, salt, 64);
-  return `${salt}:${derivedKey.toString('hex')}`;
-}
 
 /**
  * POST /api/v1/users/invite

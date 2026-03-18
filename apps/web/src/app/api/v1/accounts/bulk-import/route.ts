@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const AccountEntrySchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1),
+  password: z.string().min(1).max(256),
   tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
   notes: z.string().max(1000).optional(),
 });

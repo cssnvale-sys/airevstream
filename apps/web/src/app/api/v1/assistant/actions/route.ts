@@ -34,7 +34,7 @@ const ACTION_TIERS: Record<string, number> = {
 // ---------------------------------------------------------------------------
 
 const actionRequestSchema = z.object({
-  actionType: z.string().min(1),
+  actionType: z.string().min(1).max(50),
   parameters: z.record(z.unknown()).default({}),
   conversationId: z.string().uuid().optional().nullable(),
   confirmed: z.boolean().default(false),

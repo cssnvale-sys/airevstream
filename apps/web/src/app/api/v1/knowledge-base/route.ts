@@ -7,7 +7,7 @@ const createEntrySchema = z.object({
   domain: z.enum(['platform_ops', 'civitai', 'remotion', 'huggingface', 'comfyui', 'video_production']),
   category: z.string().max(100).optional().nullable(),
   title: z.string().min(1).max(500),
-  content: z.string().min(1),
+  content: z.string().min(1).max(50000),
   sourceUrl: z.string().url().optional().nullable(),
   relevanceScore: z.number().min(0).max(10).optional().nullable(),
 });

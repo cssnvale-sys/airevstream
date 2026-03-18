@@ -8,7 +8,7 @@ const updateEntrySchema = z.object({
   domain: z.enum(['platform_ops', 'civitai', 'remotion', 'huggingface', 'comfyui', 'video_production']).optional(),
   category: z.string().max(100).optional().nullable(),
   title: z.string().min(1).max(500).optional(),
-  content: z.string().min(1).optional(),
+  content: z.string().min(1).max(50000).optional(),
   sourceUrl: z.string().url().optional().nullable(),
   relevanceScore: z.number().min(0).max(10).optional().nullable(),
   isCurrent: z.boolean().optional(),

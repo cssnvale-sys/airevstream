@@ -8,8 +8,8 @@ const createPromptSchema = z.object({
   category: z.string().min(1).max(50),
   platform: z.string().max(20).optional().nullable(),
   contentType: z.string().max(30).optional().nullable(),
-  template: z.string().min(1),
-  negativePrompt: z.string().optional().nullable(),
+  template: z.string().min(1).max(50000),
+  negativePrompt: z.string().max(10000).optional().nullable(),
   tags: z.array(z.string()).optional().default([]),
   metadata: z.record(z.unknown()).optional().default({}),
 });

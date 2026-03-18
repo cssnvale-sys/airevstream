@@ -1,26 +1,15 @@
 import { NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
-import { scryptSync, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { verifyPassword } from '@/lib/password';
 
 const LoginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1),
+  password: z.string().min(1).max(256),
 });
-
-function verifyPassword(password: string, storedHash: string): boolean {
-  const parts = storedHash.split(':');
-  if (parts.length !== 2) return false;
-  const [salt, hash] = parts;
-  if (!salt || !hash) return false;
-  const derivedKey = scryptSync(password, salt, 64);
-  const storedKey = Buffer.from(hash, 'hex');
-  if (derivedKey.length !== storedKey.length) return false;
-  return timingSafeEqual(derivedKey, storedKey);
-}
 
 export async function POST(req: NextRequest) {
   try {

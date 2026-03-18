@@ -42,13 +42,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Create Wizard Progress Bar** (Session 7): "Step X of 6" text + animated percentage bar
 - **System Refresh Button** (Session 7): Manual re-fetch of all health/metrics data with toast feedback
 
-- **Unit Tests** (Session 7): 101 new web tests — password (11), rate-limit (14), api-server (30), utils-behavior (28), auth (10), export (8). Total: 107 web tests
+- **Type-safe API hooks** (Session 7): All 16 convenience hooks generic (`useApprovals<T>`, etc.), eliminating 29 unsafe type casts
+- **UUID validation** (Session 7): `isUUID()` utility + validation on 69 dynamic route handlers across 37 files
+- **Unit Tests** (Session 7): 103 new web tests — password (11), rate-limit (15), api-server (32), utils-behavior (28), auth (10), export (8). Total: 110 web tests
 - **API Key Access on Read Endpoints** (Session 7): 13 GET routes accept both JWT and API key via authenticateAny()
 - **Prisma Indexes** (Session 7): @@index on WorkflowJob, Alert, BrandingPackage, AffiliateProduct, CostBudget
 - **Graceful Shutdown** (Session 7): SIGTERM/SIGINT handlers on all 3 Fastify services (drain connections)
 - **PM2 Hardening** (Session 7): Memory limits, restart policies, structured log files, crash detection
 
 ### Fixed
+
+**Audit Round 43 (Session 7) — Type Safety, Input Validation, Security Hardening**
+- 11 `err.message` leaks removed from frontend toast/error handlers (library, approvals, settings, accounts, affiliate)
+- Content versions response wrapped in `{ versions, total }` for consistency
+- `Cache-Control: no-store` added to all API error responses
+- Rate limiting added to 27 unprotected POST/PUT/PATCH/DELETE handlers (standardWrite 60/min)
+- UUID validation on all 69 `[id]` route handlers (defense-in-depth)
+- 29 `as unknown as` double casts eliminated via generic API hooks
 
 **Audit Round 42 (Session 7) — Security, Transactions, Rate Limiting, Workers**
 - SSRF prevention: block private/loopback IPs in AI health-check (exception for Ollama localhost:11434)

@@ -1051,6 +1051,18 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `c90781c` — fix: frontend perf, server-side date filters, responsive mobile scrolling
 - `0b80205` — fix: worker robustness — unknown action throw, progress reporting, parallel health checks
 
+### Batches 143-146 (Context Window 6)
+- **Batch 143**: Removed 11 `err.message` leaks from toast/error handlers across 6 pages (library, approvals, settings×4, accounts×2, affiliate×3). Improved content versions response to `{ versions, total }`.
+- **Batch 144**: Made all 16 API convenience hooks generic (`useApprovals<T>`, `useContent<T>`, etc.). Eliminated 29 `as unknown as` double casts across 9 pages (dashboard, approvals, affiliate, settings, workflows, calendar, create, system).
+- **Batch 145**: Added `isUUID()` utility to api-server.ts. Applied UUID validation to 69 dynamic route handlers across 37 files (all `[id]` routes). Added 2 isUUID unit tests.
+- **Batch 146**: Added `Cache-Control: no-store` to all error responses. Added `standardWrite` rate limiting (60/min per user) to 27 unprotected POST/PUT/PATCH/DELETE handlers across 18 files.
+
+### Commits (Context Window 6)
+- `5a95e5a` — fix: remove err.message leaks from 11 toast/error handlers, improve versions response
+- `b3086c6` — refactor: add generics to API hooks, eliminate 29 unsafe type casts across 9 pages
+- `c8bd413` — fix: add UUID validation to all 69 dynamic route handlers across 37 files
+- `270a4e2` — fix: add Cache-Control to error responses + rate limiting to 27 write handlers
+
 ### Open Items
 - E2E testing (Playwright) not started
 - Platform posting adapters untested against real APIs

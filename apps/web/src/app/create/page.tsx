@@ -229,7 +229,8 @@ export default function CreatePage() {
       });
       const shots = res.data?.shots ?? [];
       update('shots', shots);
-    } catch {
+    } catch (err) {
+      console.error('Failed to generate storyboard:', err);
       // Provide placeholder shots based on script sections
       const placeholder: ShotCard[] = HICC_SECTIONS.map((section, i) => ({
         id: i + 1,
@@ -275,7 +276,8 @@ export default function CreatePage() {
           ...prev,
           shotStatuses: { ...prev.shotStatuses, [String(shot.id)]: (isAccepted ? 'complete' : 'generating') as ShotStatus },
         }));
-      } catch {
+      } catch (err) {
+        console.error(`Failed to generate shot ${shot.id}:`, err);
         setFormData((prev) => ({
           ...prev,
           shotStatuses: { ...prev.shotStatuses, [String(shot.id)]: 'failed' as ShotStatus },

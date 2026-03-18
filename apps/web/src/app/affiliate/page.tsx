@@ -587,14 +587,24 @@ function ChannelPoolsTab({
 
   const handleAdd = async (productId: string) => {
     setAddingId(productId);
-    await onAddToPool(productId);
-    setAddingId(null);
+    try {
+      await onAddToPool(productId);
+    } catch (err) {
+      console.error('Failed to add to pool:', err);
+    } finally {
+      setAddingId(null);
+    }
   };
 
   const handleRemove = async (productId: string) => {
     setRemovingId(productId);
-    await onRemoveFromPool(productId);
-    setRemovingId(null);
+    try {
+      await onRemoveFromPool(productId);
+    } catch (err) {
+      console.error('Failed to remove from pool:', err);
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   return (

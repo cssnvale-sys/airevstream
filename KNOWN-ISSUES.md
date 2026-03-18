@@ -88,9 +88,9 @@ Added `console.error` logging to 28 silent catch blocks across settings (4), aut
 
 ### KI-011: PM2 Production Config Is Partial
 **Severity**: Low
-**Status**: Open
-`ecosystem.config.js` exists but may not cover all services/workers or have optimal resource allocation settings.
-**Action**: Complete PM2 config with all processes, memory limits, restart policies, and log rotation.
+**Status**: Partially Fixed (Session 7)
+`ecosystem.config.js` now covers all 4 services + 6 workers (worker-production was missing, fixed in batch 125). Still needs memory limits, restart policies, and log rotation for production deployment.
+**Action**: Add memory limits, restart policies, and log rotation to PM2 config.
 
 ---
 

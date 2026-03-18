@@ -48,6 +48,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 41 (Session 7) — Input Validation, Accessibility, Worker Safety**
+- Zod validation on 4 Fastify PUT/bulk routes (content update, content bulk approvals, account update, bulk import with max 500)
+- Sort field allowlists on content + workflow GET routes (prevent Prisma injection)
+- Worker shutdown: Promise.allSettled with per-worker try-catch
+- Posting worker: JSON.parse wrapped in try-catch for decrypted credentials
+- Account route: warn log when ENCRYPTION_KEY missing (plaintext fallback)
+- ComfyUI error response truncated to 500 chars, prompt_id validated
+- Storage listObjects: configurable timeout (default 60s) with stream cleanup
+- ARIA roles on settings tabs (role=tablist/tab, aria-selected, aria-controls)
+- ARIA roles on analytics tabs (role=tablist/tab, aria-selected)
+- Calendar item buttons: descriptive aria-label (channel, platform, status)
+- Analytics PDF export button: visual disabled state
+- Create wizard: block step 2 when affiliate enabled but no product selected
+- Content worker: error logging before status update, nested try-catch for DB errors
+- Account worker: 4 closeContext() calls wrapped in .catch() to prevent error masking
+
 **Audit Round 40 (Session 7) — Security, Config, Transactions**
 - Open redirect vulnerability fixed on login page (validate redirect param is relative path)
 - Affiliate short URL matching: `contains` → `endsWith /code` (prevents false positive matches)

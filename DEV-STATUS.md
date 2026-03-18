@@ -178,6 +178,18 @@
 | 5.128 | String length limits | Done | .max() constraints on 9 unbounded Zod string fields |
 | 5.129 | Rate limiting (write endpoints) | Done | standardWrite (60/min), adminWrite (30/min) on 6 high-risk routes |
 | 5.130 | API key authentication (KI-022) | Done | authenticateApiKey(), authenticateAny(), scope enforcement, per-key RPM |
+| 5.131 | Unit tests (password, rate-limit, api-server) | Done | 55 new web tests — password (11), rate-limit (14), api-server (30). Total: 61 |
+| 5.132 | IP validation, fetch timeouts | Done | IP format regex in getClientIp(), 30s AbortSignal on all frontend fetches |
+| 5.133 | API key access on read endpoints | Done | 13 GET routes accept both JWT and API key |
+| 5.134 | Admin role checks (AI services) | Done | 5 ai-services routes require admin role (KI-023) |
+| 5.135 | Open redirect fix | Done | Login page validates redirect param is relative path (KI-024) |
+| 5.136 | Fastify route validation | Done | Zod on 4 PUT/bulk routes, sort allowlists, order param clamping |
+| 5.137 | Worker shutdown safety | Done | Promise.allSettled, per-worker try-catch, credential JSON.parse guard |
+| 5.138 | ComfyUI + storage robustness | Done | Error truncation, prompt_id validation, listObjects timeout |
+| 5.139 | Frontend ARIA improvements | Done | Tab roles on settings/analytics, aria-labels on calendar items |
+| 5.140 | Create wizard validation | Done | Block step 2 when affiliate enabled without product selection |
+| 5.141 | Content worker error logging | Done | Error details logged before status update, nested try-catch |
+| 5.142 | Browser context cleanup safety | Done | 4 closeContext() calls wrapped in .catch() to prevent masking |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

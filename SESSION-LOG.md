@@ -919,6 +919,59 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `e2f6865` — fix: add missing Prisma indexes for common query patterns
 - `09bf110` — fix: extract hardcoded config values to environment variables
 - `2f5972b` — fix: wrap maintenance cleanup deletes in Prisma transaction
+- `16813fa` — docs: tracking docs round 30
+- `80c716a` — fix: remove unused RATE_LIMITS from shared, add production worker to PM2
+- `6e9fdf8` — fix: add Zod validation to Fastify PUT/bulk routes, sort field allowlists, shutdown safety
+- `6600699` — fix: truncate ComfyUI error responses, add storage listObjects timeout
+- `b60ea1a` — fix: add ARIA roles to tab navigation and calendar buttons
+- `c52c45b` — fix: validate affiliate product selection in create wizard, improve content worker error logging
+- `570d66b` — fix: prevent browser context cleanup errors from masking original errors
+
+**Batch 125: Dead Code Removal + PM2 Fix**
+- Removed unused RATE_LIMITS from shared constants (never imported)
+- Added missing worker-production to PM2 ecosystem.config.js
+
+**Batch 126: Fastify Route Input Validation + Shutdown Safety**
+- Content PUT: Zod validation schema (title, status enum, prompt, platformMetadata)
+- Content bulk approvals: Zod validation (UUID array, action enum)
+- Account PUT: Zod validation schema (status, tier, notes)
+- Account bulk import: Zod validation with max 500 items limit
+- Sort field allowlists on content/workflow GET routes (prevent Prisma injection)
+- Order param clamped to 'asc'/'desc' only
+- Worker shutdown uses Promise.allSettled with per-worker try-catch
+- Posting worker: JSON.parse wrapped in try-catch for decrypted credentials
+- Account route: warn when ENCRYPTION_KEY missing (plaintext fallback)
+
+**Batch 127: ComfyUI + Storage Robustness**
+- ComfyUI: truncate error response text to 500 chars
+- ComfyUI: validate prompt_id exists in response
+- Storage listObjects: configurable timeout (default 60s), stream destroyed on timeout
+
+**Batch 128: Frontend Accessibility**
+- Settings tabs: role=tablist, role=tab, aria-selected, aria-controls
+- Analytics tabs: role=tablist, role=tab, aria-selected
+- Calendar items: aria-label with channel name, platform, status
+- Analytics PDF export button: disabled visual state
+
+**Batch 129: Create Wizard + Content Worker**
+- Create page: block advancement when affiliate enabled but no product selected
+- Content worker: log error details before marking content as failed
+- Content worker: wrap status update in nested try-catch
+
+**Batch 130: Browser Context Cleanup Safety**
+- Account worker: all 4 mgr.closeContext() calls wrapped in .catch() to prevent masking errors
+
+### Issues Resolved
+- KI-003: CSV export — IMPLEMENTED (batch 6)
+- KI-004: Calendar server-side filters — IMPLEMENTED (batch 9)
+- KI-006: Job status polling — IMPLEMENTED (batch 5)
+- KI-016: Analytics tenant scoping — FIXED (batch 21)
+- KI-017: Approvals tenant scoping — FIXED (batch 39)
+- KI-018: accounts/channels tenant scoping — FIXED (batch 42)
+- KI-019: system/activity/affiliate tenant scoping — FIXED (batch 43)
+- KI-022: API key authentication — IMPLEMENTED (batch 111)
+- KI-023: Admin role checks on AI services — FIXED (batch 116)
+- KI-024: Open redirect on login — FIXED (batch 118)
 
 ### Open Items
 - E2E testing (Playwright) not started

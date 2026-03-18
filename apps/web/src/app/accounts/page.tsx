@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useDebounce } from '@/hooks/use-debounce';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAccounts, useAccount, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
 import { exportToCSV } from '@/lib/export';
@@ -590,6 +591,7 @@ function DetailPanel({
 export default function AccountsPage() {
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPlatform, setFilterPlatform] = useState('');
   const [filterTier, setFilterTier] = useState('');
@@ -617,11 +619,11 @@ export default function AccountsPage() {
     p.set('limit', String(perPage));
     p.set('sort', sortField === 'socialAccountsCount' ? 'createdAt' : sortField);
     p.set('order', sortOrder);
-    if (search) p.set('search', search);
+    if (debouncedSearch) p.set('search', debouncedSearch);
     if (filterStatus) p.set('status', filterStatus);
     if (filterTier) p.set('tier', filterTier);
     return p.toString();
-  }, [page, perPage, sortField, sortOrder, search, filterStatus, filterTier]);
+  }, [page, perPage, sortField, sortOrder, debouncedSearch, filterStatus, filterTier]);
 
   const { data, isLoading, error, mutate } = useAccounts(queryParams);
 

@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from '@/lib/toast';
 import { apiDelete } from '@/hooks/use-api';
+import { useDebounce } from '@/hooks/use-debounce';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -321,6 +322,9 @@ export default function LibraryPage() {
   const channels = (channelsData?.data ?? []) as Channel[];
   const aiServices = (servicesData?.data ?? []) as AiService[];
 
+  // Debounce search to avoid excessive API calls
+  const debouncedSearch = useDebounce(search, 300);
+
   // Parse sort
   const [sortField, sortOrder] = useMemo(() => {
     const [field, order] = sortValue.split(':');
@@ -334,12 +338,12 @@ export default function LibraryPage() {
     p.set('limit', String(perPage));
     p.set('sort', sortField);
     p.set('order', sortOrder);
-    if (search) p.set('search', search);
+    if (debouncedSearch) p.set('search', debouncedSearch);
     if (filterType) p.set('contentType', filterType);
     if (filterStatus) p.set('status', filterStatus);
     if (filterChannel) p.set('channelId', filterChannel);
     return p.toString();
-  }, [page, perPage, sortField, sortOrder, search, filterType, filterStatus, filterChannel]);
+  }, [page, perPage, sortField, sortOrder, debouncedSearch, filterType, filterStatus, filterChannel]);
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);

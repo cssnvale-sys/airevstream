@@ -102,6 +102,9 @@
 | 5.52 | Tenant scoping round 2 | Done | **CRITICAL:** accounts/[id], channels/[id] detail routes tenant-scoped |
 | 5.53 | Tenant scoping round 3 | Done | system/workflows, activity, affiliate/revenue, affiliate/clicks tenant-scoped |
 | 5.54 | Tenant scoping gaps documented | Done | KI-020: 7 models need tenantId schema migration |
+| 5.55 | Tenant scoping round 4 | Done | **CRITICAL:** channels/families, accounts/stats, bulk-import, subscriptions auth |
+| 5.56 | SSE tenant scoping | Done | Workflow/content pollers scoped by tenant channels |
+| 5.57 | err:any cleanup | Done | Removed all 11 remaining err:any types across API routes |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

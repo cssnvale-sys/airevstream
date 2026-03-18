@@ -62,6 +62,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed `err: any` type in activity route
 - Documented 7 models needing `tenantId` schema migration (KI-020)
 
+**Audit Round 16 (Session 7) — Comprehensive Tenant Scoping & Type Safety**
+- **CRITICAL:** Tenant scoping on channels/families GET (returned all tenants' channels)
+- **CRITICAL:** Tenant scoping on channels/families POST (could group any tenant's channels)
+- **CRITICAL:** Tenant scoping on accounts/stats (returned system-wide statistics)
+- **CRITICAL:** Tenant scoping on accounts/bulk-import (email enumeration across tenants)
+- Authorization check on subscriptions POST (could create subscription for any tenant)
+- SSE event stream: workflow/content pollers scoped by tenant channels
+- Removed all 11 remaining `err: any` types across API routes
+
 **Audit Round 12 (Session 7) — Validation & Polish**
 - Added password minLength and submit disabled state to accounts add-email modal
 - Added required/minLength/maxLength to create page topic field

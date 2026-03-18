@@ -476,6 +476,19 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Documented KI-020: 7 models need tenantId schema migration
 - Updated SESSION-LOG, CHANGELOG, DEV-STATUS, KNOWN-ISSUES
 
+**Batch 45: Tenant Scoping — channels/families, accounts/stats, bulk-import, subscriptions**
+- channels/families GET/POST: tenant scope via channel chain
+- accounts/stats: all 7 queries scoped by tenantId
+- accounts/bulk-import: duplicate check + createMany scoped by tenant
+- subscriptions POST: authorization check (own tenant or admin)
+
+**Batch 46: SSE Tenant Scoping + err:any Cleanup**
+- events/stream: workflow/content pollers scoped by tenant channel IDs
+- Removed all 11 remaining err:any types across API routes
+
+**Batch 47: Tracking Docs Update (round 10)**
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS
+
 ### Commits
 - `e721ffd` — docs: tracking docs round 5
 - `7db01f5` — feat: auth middleware
@@ -489,7 +502,10 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `34ec381` — docs: tracking docs round 8
 - `1f69d4a` — fix: accounts/channels tenant scoping
 - `5fc329b` — fix: system/activity/affiliate tenant scoping
-- (this commit) — docs: tracking docs round 9
+- `0d67a9e` — docs: tracking docs round 9
+- `7250343` — fix: families/stats/bulk-import/subscriptions tenant scoping
+- `7ab58be` — fix: SSE tenant scoping + err:any cleanup
+- (this commit) — docs: tracking docs round 10
 
 ### Open Items
 - E2E testing (Playwright) not started

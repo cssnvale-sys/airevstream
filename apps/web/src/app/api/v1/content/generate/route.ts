@@ -73,12 +73,22 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await addJob('content', 'content:generate', {
-      contentId: contentItem.id,
-      channelId,
-      contentType,
-      prompt: prompt ?? undefined,
-    });
+    try {
+      await addJob('content', 'content:generate', {
+        contentId: contentItem.id,
+        channelId,
+        contentType,
+        prompt: prompt ?? undefined,
+      });
+    } catch (jobErr) {
+      // If job enqueue fails, roll back content status so it doesn't stay stuck in 'generating'
+      console.error('Failed to enqueue content generation job:', jobErr);
+      await ctx.db.contentItem.update({
+        where: { id: contentItem.id },
+        data: { status: 'failed' },
+      });
+      return error('QUEUE_ERROR', 'Failed to start content generation', 500);
+    }
 
     return success(contentItem, { queued: true });
   } catch (err) {

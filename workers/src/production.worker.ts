@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, unlink } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -312,6 +312,9 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     const key = `videos/${data.contentId}/${Date.now()}.mp4`;
     await uploadBuffer(BUCKET, key, videoBuffer, 'video/mp4');
 
+    // Clean up temp file after successful upload
+    await unlink(outputPath).catch(() => {});
+
     // Update storyboard with result
     await db.storyboard.update({
       where: { id: data.storyboardId },
@@ -331,6 +334,9 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
 
     logger.info({ key, compositionId, stdout: stdout?.slice(0, 200) }, 'Video render complete');
   } catch (error) {
+    // Clean up temp file on failure
+    await unlink(outputPath).catch(() => {});
+
     const msg = error instanceof Error ? error.message : String(error);
     logger.error({ error: msg }, 'Remotion render failed');
 
@@ -422,28 +428,30 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
   const script = (metadata?.script as string) ?? '';
   const sections = parseScriptSections(script);
 
-  // Create storyboard
-  const storyboard = await db.storyboard.create({
-    data: {
-      contentId: data.contentId,
-      scriptJson: data.scriptJson as any,
-      status: 'draft',
-      totalDurationSec: estimateDuration(script, content.contentType),
-    },
-  });
-
-  // Create shots for each section
+  // Create storyboard + shots in a transaction for atomicity
   const beatTags = (content.beatTags as Array<{ section: string; preset: string }>) ?? [];
 
-  for (let i = 0; i < sections.length; i++) {
-    const section = sections[i];
+  // Pre-compute shot data
+  const shotDataList = sections.map((section, i) => {
     const beat = beatTags.find((b) => b.section === section.type) ?? { preset: 'CALM' };
     const durationSec = Math.max(3, Math.round(section.text.split(/\s+/).length / 2.5));
     const startSec = sections.slice(0, i).reduce((sum, s) => sum + Math.max(3, Math.round(s.text.split(/\s+/).length / 2.5)), 0);
+    return { section, beat, durationSec, startSec };
+  });
 
-    await db.storyboardShot.create({
+  const storyboard = await db.$transaction(async (tx) => {
+    const sb = await tx.storyboard.create({
       data: {
-        storyboardId: storyboard.id,
+        contentId: data.contentId,
+        scriptJson: data.scriptJson as any,
+        status: 'draft',
+        totalDurationSec: estimateDuration(script, content.contentType),
+      },
+    });
+
+    await tx.storyboardShot.createMany({
+      data: shotDataList.map(({ section, beat, durationSec, startSec }, i) => ({
+        storyboardId: sb.id,
         shotNumber: i + 1,
         startSec,
         endSec: startSec + durationSec,
@@ -455,9 +463,11 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
           transition: i === 0 ? 'fade' : 'cut',
         } as any,
         status: 'pending',
-      },
+      })),
     });
-  }
+
+    return sb;
+  });
 
   logger.info({ storyboardId: storyboard.id, shotCount: sections.length }, 'Storyboard generated');
 }

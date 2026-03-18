@@ -19,17 +19,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return notFound('Content item not found');
     }
 
-    // Walk up to find the root of the version chain
-    let rootId = item.parentId ?? item.id;
-    if (item.parentId) {
+    // Walk up to find the root of the version chain (handles arbitrary depth)
+    let rootId = item.id;
+    let currentParentId = item.parentId;
+    const maxDepth = 50; // Safety limit to prevent infinite loops
+    let depth = 0;
+    while (currentParentId && depth < maxDepth) {
+      rootId = currentParentId;
       const parent = await ctx.db.contentItem.findUnique({
-        where: { id: item.parentId },
-        select: { id: true, parentId: true },
+        where: { id: currentParentId },
+        select: { parentId: true },
       });
-      // If the parent itself has a parent, walk up further
-      if (parent?.parentId) {
-        rootId = parent.parentId;
-      }
+      currentParentId = parent?.parentId ?? null;
+      depth++;
     }
 
     // Fetch the root item and all children pointing to the root

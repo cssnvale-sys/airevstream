@@ -76,18 +76,16 @@ Return a JSON array of objects with: topic, relevanceScore (0-10), platform, rea
       });
     }
 
-    // Save to knowledge base
-    for (const trend of trends) {
-      await db.knowledgeBaseEntry.create({
-        data: {
-          domain: 'platform_ops',
-          category: 'trends',
-          title: trend.topic,
-          content: `${trend.reason}\n\nSuggested content types: ${trend.suggestedContentTypes.join(', ')}`,
-          relevanceScore: trend.relevanceScore,
-        },
-      });
-    }
+    // Save to knowledge base in bulk
+    await db.knowledgeBaseEntry.createMany({
+      data: trends.map((trend) => ({
+        domain: 'platform_ops',
+        category: 'trends',
+        title: trend.topic,
+        content: `${trend.reason}\n\nSuggested content types: ${trend.suggestedContentTypes.join(', ')}`,
+        relevanceScore: trend.relevanceScore,
+      })),
+    });
 
     logger.info({ count: trends.length }, 'Trends researched');
     return { count: trends.length };
@@ -133,16 +131,14 @@ Return a JSON array of objects with: topic, description, targetAudience, content
       });
     }
 
-    for (const topic of topics) {
-      await db.knowledgeBaseEntry.create({
-        data: {
-          domain: 'platform_ops',
-          category: `niche:${data.niche}`,
-          title: topic.topic,
-          content: `${topic.description}\n\nTarget audience: ${topic.targetAudience}\nContent types: ${topic.contentTypes.join(', ')}`,
-        },
-      });
-    }
+    await db.knowledgeBaseEntry.createMany({
+      data: topics.map((topic) => ({
+        domain: 'platform_ops',
+        category: `niche:${data.niche}`,
+        title: topic.topic,
+        content: `${topic.description}\n\nTarget audience: ${topic.targetAudience}\nContent types: ${topic.contentTypes.join(', ')}`,
+      })),
+    });
 
     logger.info({ niche: data.niche, count: topics.length }, 'Topics generated');
     return { count: topics.length };
@@ -183,46 +179,45 @@ async function handlePopulateKnowledge(data: ResearchPopulateKnowledgeJob, job: 
   try {
     // Process explicit URLs if provided
     if (urls && urls.length > 0) {
-      for (const url of urls) {
-        // Check for duplicate by sourceUrl
-        const existing = await db.knowledgeBaseEntry.findFirst({
-          where: { sourceUrl: url },
-        });
+      // Batch duplicate check — single query instead of N queries
+      const existingEntries = await db.knowledgeBaseEntry.findMany({
+        where: { sourceUrl: { in: urls } },
+        select: { sourceUrl: true },
+      });
+      const existingUrls = new Set(existingEntries.map((e) => e.sourceUrl));
 
-        if (existing) {
+      const newEntries = [];
+      for (const url of urls) {
+        if (existingUrls.has(url)) {
           logger.info({ url }, 'Skipping duplicate URL');
           skippedCount++;
           continue;
         }
 
-        // Placeholder content extraction.
-        // In production, this would use a web scraper (e.g., Puppeteer, Cheerio)
-        // to fetch and parse the URL content.
         const title = `Knowledge from ${new URL(url).hostname}: ${topic}`;
         const contentSummary = `Placeholder content for URL: ${url}. ` +
           `Topic: ${topic}. Domain: ${domain}. ` +
           `In production, this would contain the first 2000 characters of scraped content from the URL.`;
 
-        // Compute a simple relevance score heuristic:
-        // Base score of 5.0, adjusted by content length and freshness
         const contentLength = contentSummary.length;
-        const lengthBonus = Math.min(contentLength / 1000, 2.0); // Up to +2.0 for longer content
-        const freshnessBonus = 1.0; // Newly added entries are considered fresh
+        const lengthBonus = Math.min(contentLength / 1000, 2.0);
+        const freshnessBonus = 1.0;
         const relevanceScore = Math.min(Math.round((5.0 + lengthBonus + freshnessBonus) * 10) / 10, 10.0);
 
-        await db.knowledgeBaseEntry.create({
-          data: {
-            domain,
-            category: `research:${topic}`,
-            title,
-            content: contentSummary.substring(0, 2000),
-            sourceUrl: url,
-            relevanceScore,
-            isCurrent: true,
-          },
+        newEntries.push({
+          domain,
+          category: `research:${topic}`,
+          title,
+          content: contentSummary.substring(0, 2000),
+          sourceUrl: url,
+          relevanceScore,
+          isCurrent: true,
         });
+      }
 
-        createdCount++;
+      if (newEntries.length > 0) {
+        await db.knowledgeBaseEntry.createMany({ data: newEntries });
+        createdCount += newEntries.length;
       }
 
       await job.updateProgress(urls.length > 0 ? 50 : 0);
@@ -280,39 +275,43 @@ Return a JSON array of objects with: title, content (informative summary, max 50
       entries = [entries];
     }
 
-    for (const entry of entries) {
-      // Check for duplicate by sourceUrl if one is provided
-      if (entry.sourceUrl) {
-        const existing = await db.knowledgeBaseEntry.findFirst({
-          where: { sourceUrl: entry.sourceUrl },
-        });
+    // Batch duplicate check for entries with sourceUrls
+    const entryUrls = entries.filter((e) => e.sourceUrl).map((e) => e.sourceUrl!);
+    const existingKbEntries = entryUrls.length > 0
+      ? await db.knowledgeBaseEntry.findMany({
+          where: { sourceUrl: { in: entryUrls } },
+          select: { sourceUrl: true },
+        })
+      : [];
+    const existingKbUrls = new Set(existingKbEntries.map((e) => e.sourceUrl));
 
-        if (existing) {
-          logger.info({ sourceUrl: entry.sourceUrl }, 'Skipping duplicate knowledge entry');
-          skippedCount++;
-          continue;
-        }
+    const newKbEntries = [];
+    for (const entry of entries) {
+      if (entry.sourceUrl && existingKbUrls.has(entry.sourceUrl)) {
+        logger.info({ sourceUrl: entry.sourceUrl }, 'Skipping duplicate knowledge entry');
+        skippedCount++;
+        continue;
       }
 
-      // Compute relevance score with freshness heuristic
       const baseScore = entry.relevanceScore ?? 5.0;
       const contentLength = (entry.content ?? '').length;
       const lengthBonus = Math.min(contentLength / 500, 1.5);
       const relevanceScore = Math.min(Math.round((baseScore + lengthBonus) * 10) / 10, 10.0);
 
-      await db.knowledgeBaseEntry.create({
-        data: {
-          domain,
-          category: `research:${topic}`,
-          title: entry.title,
-          content: (entry.content ?? '').substring(0, 2000),
-          sourceUrl: entry.sourceUrl ?? null,
-          relevanceScore,
-          isCurrent: true,
-        },
+      newKbEntries.push({
+        domain,
+        category: `research:${topic}`,
+        title: entry.title,
+        content: (entry.content ?? '').substring(0, 2000),
+        sourceUrl: entry.sourceUrl ?? null,
+        relevanceScore,
+        isCurrent: true,
       });
+    }
 
-      createdCount++;
+    if (newKbEntries.length > 0) {
+      await db.knowledgeBaseEntry.createMany({ data: newKbEntries });
+      createdCount += newKbEntries.length;
     }
 
     await job.updateProgress(100);

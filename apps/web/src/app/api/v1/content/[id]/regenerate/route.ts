@@ -58,12 +58,21 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    await addJob('content', 'content:generate', {
-      contentId: newVersion.id,
-      channelId: existing.channelId,
-      contentType: existing.contentType,
-      prompt: existing.prompt ?? undefined,
-    });
+    try {
+      await addJob('content', 'content:generate', {
+        contentId: newVersion.id,
+        channelId: existing.channelId,
+        contentType: existing.contentType,
+        prompt: existing.prompt ?? undefined,
+      });
+    } catch (jobErr) {
+      console.error('Failed to enqueue regeneration job:', jobErr);
+      await ctx.db.contentItem.update({
+        where: { id: newVersion.id },
+        data: { status: 'failed' },
+      });
+      return error('QUEUE_ERROR', 'Failed to start content regeneration', 500);
+    }
 
     return success(newVersion, { queued: true });
   } catch (err) {

@@ -111,26 +111,26 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
       throw new Error(result.error ?? `Platform adapter returned failure for ${platform}`);
     }
 
-    // Mark as posted
-    await db.scheduledPost.update({
-      where: { id: scheduledPost.id },
-      data: {
-        status: 'posted',
-        postedAt: new Date(),
-        platformPostId: result.platformPostId ?? null,
-      },
-    });
-
-    await db.contentItem.update({
-      where: { id: contentId },
-      data: { status: 'posted' },
-    });
-
-    // Update social account last post time
-    await db.socialAccount.update({
-      where: { id: socialAccount.id },
-      data: { lastPostAt: new Date() },
-    });
+    // Mark as posted — wrap in transaction for consistency
+    const postedAt = new Date();
+    await db.$transaction([
+      db.scheduledPost.update({
+        where: { id: scheduledPost.id },
+        data: {
+          status: 'posted',
+          postedAt,
+          platformPostId: result.platformPostId ?? null,
+        },
+      }),
+      db.contentItem.update({
+        where: { id: contentId },
+        data: { status: 'posted' },
+      }),
+      db.socialAccount.update({
+        where: { id: socialAccount.id },
+        data: { lastPostAt: postedAt },
+      }),
+    ]);
 
     logger.info({
       contentId,

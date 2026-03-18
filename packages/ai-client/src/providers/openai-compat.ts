@@ -46,6 +46,7 @@ export class OpenAICompatProvider implements AiProvider {
     const res = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
       headers,
+      signal: AbortSignal.timeout(120_000),
       body: JSON.stringify({
         model: request.model ?? 'gpt-4o-mini',
         messages,
@@ -92,6 +93,7 @@ export class OpenAICompatProvider implements AiProvider {
     const res = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
       headers,
+      signal: AbortSignal.timeout(300_000),
       body: JSON.stringify({
         model: request.model ?? 'gpt-4o-mini',
         messages,

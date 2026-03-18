@@ -33,6 +33,7 @@ export class HttpProvider implements AiProvider {
     const res = await fetch(endpoint, {
       method: 'POST',
       headers,
+      signal: AbortSignal.timeout(120_000),
       body: JSON.stringify({
         prompt: request.prompt,
         model: request.model,

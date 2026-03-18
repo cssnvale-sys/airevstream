@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
 
         responseMs = Date.now() - start;
         healthy = res.ok;
-      } catch (err: any) {
-        errorMsg = err.name === 'AbortError' ? 'Timeout (5s)' : (err.message ?? 'Connection failed');
+      } catch (err) {
+        errorMsg = err instanceof Error && err.name === 'AbortError' ? 'Timeout (5s)' : 'Connection failed';
         healthy = false;
       }
 

@@ -1,9 +1,16 @@
 import { NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
 import { randomBytes, scryptSync } from 'node:crypto';
+import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+
+const RegisterSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().max(200).optional().nullable(),
+});
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
@@ -22,19 +29,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { email, password, name } = body as {
-      email?: string;
-      password?: string;
-      name?: string;
-    };
-
-    if (!email || !password) {
-      return validationError('Email and password are required');
+    const parsed = RegisterSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
-
-    if (password.length < 8) {
-      return validationError('Password must be at least 8 characters');
-    }
+    const { email, password, name } = parsed.data;
 
     const db = getDb();
 

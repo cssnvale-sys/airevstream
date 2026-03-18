@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound } from '@/lib/api-server';
+import { z } from 'zod';
+import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+
+const CreateVariantSchema = z.object({
+  title: z.string().max(500).optional(),
+  prompt: z.string().max(50000).optional(),
+  modifications: z.record(z.unknown()).optional(),
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -73,11 +80,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const body = (await req.json()) as {
-      title?: string;
-      prompt?: string;
-      modifications?: Record<string, unknown>;
-    };
+    const rawBody = await req.json();
+    const parsed = CreateVariantSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+    }
+    const body = parsed.data;
 
     // Load the source content item
     const source = await ctx.db.contentItem.findFirst({

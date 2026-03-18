@@ -2,6 +2,14 @@ import { authenticate, success, error, paginated, parseQuery, validationError } 
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const CreateAccountSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+  tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
+  notes: z.string().max(1000).optional().nullable(),
+});
 
 /**
  * GET /api/v1/accounts
@@ -84,16 +92,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { email, password, tier, notes } = body;
-
-    if (!email || !password) {
-      return validationError('Email and password are required');
+    const parsed = CreateAccountSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
 
-    const validTiers = ['tier1', 'tier2', 'tier3'];
-    if (tier && !validTiers.includes(tier)) {
-      return validationError(`Invalid tier. Must be one of: ${validTiers.join(', ')}`);
-    }
+    const { email, password, tier, notes } = parsed.data;
 
     // Check for duplicate email
     const existing = await ctx.db.emailAccount.findUnique({ where: { email } });

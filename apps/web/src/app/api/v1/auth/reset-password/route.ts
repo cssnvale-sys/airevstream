@@ -1,9 +1,15 @@
 import { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { scryptSync, randomBytes } from 'node:crypto';
+import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+
+const ResetPasswordSchema = z.object({
+  token: z.string().min(1),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
@@ -26,15 +32,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { token, newPassword } = body as { token?: string; newPassword?: string };
-
-    if (!token || !newPassword) {
-      return validationError('Token and newPassword are required');
+    const parsed = ResetPasswordSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
-
-    if (newPassword.length < 8) {
-      return validationError('Password must be at least 8 characters');
-    }
+    const { token, newPassword } = parsed.data;
 
     // Verify the reset token
     let userId: string;

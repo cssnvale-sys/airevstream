@@ -54,6 +54,10 @@ export async function GET(req: NextRequest) {
 
     const data = accounts.map(({ passwordEnc, ...account }) => ({
       ...account,
+      socialAccounts: account.socialAccounts.map((sa) => ({
+        ...sa,
+        healthScore: sa.healthScore != null ? Number(sa.healthScore) : null,
+      })),
       socialAccountsCount: account._count.socialAccounts,
       _count: undefined,
     }));

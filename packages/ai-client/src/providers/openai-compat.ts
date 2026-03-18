@@ -6,12 +6,12 @@ import type { AiProvider, TextRequest, ChatRequest, TextResponse, StreamChunk, H
  */
 export class OpenAICompatProvider implements AiProvider {
   readonly name: string;
-  readonly providerType: any;
-  readonly supportedTypes = ['text' as const];
+  readonly providerType: AiProvider['providerType'];
+  readonly supportedTypes: AiProvider['supportedTypes'] = ['text'];
 
   constructor(
     name: string,
-    providerType: string,
+    providerType: AiProvider['providerType'],
   ) {
     this.name = name;
     this.providerType = providerType;

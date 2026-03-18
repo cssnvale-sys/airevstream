@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useContent, useChannels, useApi } from '@/hooks/use-api';
+import { useContent, useChannels, useApi, apiDelete } from '@/hooks/use-api';
 import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
 import {
   Search, LayoutGrid, List, ChevronLeft, ChevronRight,
@@ -13,7 +13,6 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from '@/lib/toast';
-import { apiDelete } from '@/hooks/use-api';
 import { useDebounce } from '@/hooks/use-debounce';
 
 // ---------------------------------------------------------------------------

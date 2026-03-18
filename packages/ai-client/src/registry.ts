@@ -45,7 +45,7 @@ function createProvider(providerType: string): AiProvider {
     case 'sora':
       return new HttpProvider('sora', 'sora', ['video']);
     default:
-      return new HttpProvider(providerType, providerType, ['text']);
+      return new HttpProvider(providerType, providerType as AiProvider['providerType'], ['text']);
   }
 }
 

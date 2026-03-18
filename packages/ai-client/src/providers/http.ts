@@ -7,17 +7,17 @@ import type { AiProvider, TextRequest, ChatRequest, TextResponse, HealthCheckRes
  */
 export class HttpProvider implements AiProvider {
   readonly name: string;
-  readonly providerType: any;
-  readonly supportedTypes: any[];
+  readonly providerType: AiProvider['providerType'];
+  readonly supportedTypes: AiProvider['supportedTypes'];
 
   constructor(
     name: string,
-    providerType: string,
-    supportedTypes: string[],
+    providerType: AiProvider['providerType'],
+    supportedTypes: AiProvider['supportedTypes'],
   ) {
     this.name = name;
     this.providerType = providerType;
-    this.supportedTypes = supportedTypes as any[];
+    this.supportedTypes = supportedTypes;
   }
 
   async generateText(request: TextRequest & { endpoint?: string; apiKey?: string }): Promise<TextResponse> {

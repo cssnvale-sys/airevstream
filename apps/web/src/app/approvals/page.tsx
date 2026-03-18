@@ -73,7 +73,8 @@ export default function ApprovalsPage() {
       try {
         await apiPost(`/approvals/${id}/${action}`);
         successCount++;
-      } catch {
+      } catch (err) {
+        console.error(`Bulk ${action} failed for item ${id}:`, err);
         failCount++;
       }
     }

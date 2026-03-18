@@ -70,7 +70,7 @@ export default function ApprovalsPage() {
                     </div>
                     <div className="text-xs text-text-secondary mt-0.5">
                       {item.channel?.name ?? 'No channel'} | {item.contentType} | {formatRelativeTime(item.createdAt)}
-                      {item.qualityScore != null && ` | Quality: ${item.qualityScore}/10`}
+                      {item.qualityScore != null && ` | Quality: ${Number(item.qualityScore)}/10`}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

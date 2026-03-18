@@ -299,7 +299,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-text-secondary">Revenue</p>
                 <p className="text-2xl font-bold text-text-primary mt-1">
-                  {revenue ? formatCurrency(revenue.totals.totalRevenue) : '--'}
+                  {revenue ? formatCurrency(Number(revenue.totals.totalRevenue)) : '--'}
                 </p>
                 {revenue && (
                   <div className="flex items-center gap-1 mt-1 text-xs text-text-secondary">

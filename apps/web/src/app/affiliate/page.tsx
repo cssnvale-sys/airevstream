@@ -529,14 +529,14 @@ function ProductsTab({
                   </td>
                   <td className="px-4 py-3 text-text-primary">
                     {product.commissionRate != null
-                      ? `${product.commissionRate}%`
+                      ? `${Number(product.commissionRate)}%`
                       : '--'}
                   </td>
                   <td className="px-4 py-3 text-right text-text-primary">
                     {formatNumber(product.totalClicks)}
                   </td>
                   <td className="px-4 py-3 text-right text-accent-green font-medium">
-                    {formatCurrency(product.totalRevenue)}
+                    {formatCurrency(Number(product.totalRevenue))}
                   </td>
                   <td className="px-4 py-3">
                     <span className={cn('text-xs px-2 py-0.5 rounded', statusColor(product.status))}>
@@ -651,9 +651,9 @@ function ChannelPoolsTab({
                       <div className="flex items-center gap-3 text-xs text-text-secondary mt-1">
                         <span>{product.category ?? 'Uncategorized'}</span>
                         {product.commissionRate != null && (
-                          <span>{product.commissionRate}% commission</span>
+                          <span>{Number(product.commissionRate)}% commission</span>
                         )}
-                        <span>Score: {product.performanceScore ?? 0}</span>
+                        <span>Score: {Number(product.performanceScore ?? 0)}</span>
                       </div>
                     </div>
                     <button
@@ -697,9 +697,9 @@ function ChannelPoolsTab({
                       <div className="flex items-center gap-3 text-xs text-text-secondary mt-1">
                         <span>{product.category ?? 'Uncategorized'}</span>
                         {product.commissionRate != null && (
-                          <span>{product.commissionRate}%</span>
+                          <span>{Number(product.commissionRate)}%</span>
                         )}
-                        <span>{formatCurrency(product.totalRevenue)} rev</span>
+                        <span>{formatCurrency(Number(product.totalRevenue))} rev</span>
                       </div>
                     </div>
                     <button
@@ -841,7 +841,7 @@ function PerformanceTab({
       productId: p.productId,
       productName: p.productName,
       category: p.category,
-      totalRevenue: p.revenue,
+      totalRevenue: Number(p.revenue),
     }));
 
     // We don't have a cross-product-channel breakdown from the API,
@@ -970,7 +970,7 @@ function PerformanceTab({
                                     isBest ? 'text-accent-yellow' : 'text-accent-green',
                                   )}
                                 >
-                                  {formatCurrency(row.totalRevenue)}
+                                  {formatCurrency(Number(row.totalRevenue))}
                                 </span>
                               </div>
                             </td>
@@ -991,7 +991,7 @@ function PerformanceTab({
                                 isBestProduct ? 'text-accent-yellow' : 'text-accent-green',
                               )}
                             >
-                              {formatCurrency(row.totalRevenue)}
+                              {formatCurrency(Number(row.totalRevenue))}
                             </span>
                           </div>
                         </td>
@@ -1014,7 +1014,7 @@ function PerformanceTab({
           <div className="card">
             <p className="text-sm text-text-secondary">Total Revenue</p>
             <p className="text-2xl font-bold text-accent-green mt-1">
-              {formatCurrency(summary.totalRevenue)}
+              {formatCurrency(Number(summary.totalRevenue))}
             </p>
           </div>
           <div className="card">
@@ -1054,7 +1054,7 @@ function PerformanceTab({
                   </p>
                 </div>
                 <p className="text-lg font-semibold text-accent-green">
-                  {formatCurrency(ch.revenue)}
+                  {formatCurrency(Number(ch.revenue))}
                 </p>
               </div>
             ))}
@@ -1425,7 +1425,7 @@ function ProductDetailModal({
                 <div className="text-center">
                   <p className="text-xs text-text-secondary">Commission</p>
                   <p className="text-lg font-bold text-text-primary">
-                    {product.commissionRate != null ? `${product.commissionRate}%` : '--'}
+                    {product.commissionRate != null ? `${Number(product.commissionRate)}%` : '--'}
                   </p>
                 </div>
                 <div className="text-center">
@@ -1437,7 +1437,7 @@ function ProductDetailModal({
                 <div className="text-center">
                   <p className="text-xs text-text-secondary">Revenue</p>
                   <p className="text-lg font-bold text-accent-green">
-                    {formatCurrency(product.totalRevenue)}
+                    {formatCurrency(Number(product.totalRevenue))}
                   </p>
                 </div>
               </div>

@@ -19,12 +19,12 @@ async function processResearchJob(job: Job<ResearchTrendsJob | ResearchTopicsJob
 
   if (job.name === 'research:trends') {
     const data = job.data as ResearchTrendsJob;
-    return handleTrends(data);
+    return handleTrends(data, job);
   }
 
   if (job.name === 'research:topics') {
     const data = job.data as ResearchTopicsJob;
-    return handleTopics(data);
+    return handleTopics(data, job);
   }
 
   if (job.name === 'research:knowledge-update') {
@@ -40,7 +40,7 @@ async function processResearchJob(job: Job<ResearchTrendsJob | ResearchTopicsJob
   logger.warn({ jobName: job.name }, 'Unknown job name');
 }
 
-async function handleTrends(data: ResearchTrendsJob) {
+async function handleTrends(data: ResearchTrendsJob, job: Job) {
   const db = getDb();
 
   try {
@@ -76,6 +76,8 @@ Return a JSON array of objects with: topic, relevanceScore (0-10), platform, rea
       });
     }
 
+    await job.updateProgress(50);
+
     // Save to knowledge base in bulk
     await db.knowledgeBaseEntry.createMany({
       data: trends.map((trend) => ({
@@ -87,6 +89,7 @@ Return a JSON array of objects with: topic, relevanceScore (0-10), platform, rea
       })),
     });
 
+    await job.updateProgress(100);
     logger.info({ count: trends.length }, 'Trends researched');
     return { count: trends.length };
   } catch (error) {
@@ -95,7 +98,7 @@ Return a JSON array of objects with: topic, relevanceScore (0-10), platform, rea
   }
 }
 
-async function handleTopics(data: ResearchTopicsJob) {
+async function handleTopics(data: ResearchTopicsJob, job: Job) {
   const db = getDb();
   const count = data.count ?? 5;
 
@@ -131,6 +134,8 @@ Return a JSON array of objects with: topic, description, targetAudience, content
       });
     }
 
+    await job.updateProgress(50);
+
     await db.knowledgeBaseEntry.createMany({
       data: topics.map((topic) => ({
         domain: 'platform_ops',
@@ -140,6 +145,7 @@ Return a JSON array of objects with: topic, description, targetAudience, content
       })),
     });
 
+    await job.updateProgress(100);
     logger.info({ niche: data.niche, count: topics.length }, 'Topics generated');
     return { count: topics.length };
   } catch (error) {

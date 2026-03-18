@@ -191,6 +191,8 @@ async function handleApprove(data: ContentApproveJob) {
       where: { id: data.contentId },
       data: { status: 'generating' },
     });
+  } else {
+    throw new Error(`Unknown approval action: ${data.action}`);
   }
 
   logger.info({ contentId: data.contentId, action: data.action }, 'Content approval processed');

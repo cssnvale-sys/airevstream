@@ -66,55 +66,30 @@ export async function POST(req: NextRequest) {
     });
 
     const now = new Date();
-    const results = [];
 
-    for (const service of services) {
-      let healthy = false;
-      let responseMs: number | null = null;
-      let errorMsg: string | null = null;
+    // Parallelize all health checks with Promise.allSettled
+    const checkResults = await Promise.allSettled(
+      services.map(async (service) => {
+        let healthy = false;
+        let responseMs: number | null = null;
+        let errorMsg: string | null = null;
 
-      try {
         // Determine the health check URL based on provider
-        let healthUrl: string;
+        let healthUrl: string | null = null;
         if (service.provider === 'ollama') {
           healthUrl = `${service.endpoint ?? 'http://localhost:11434'}/api/tags`;
         } else if (service.endpoint) {
-          // For generic endpoints, try a simple GET
           healthUrl = service.endpoint;
-        } else {
-          // No endpoint to ping — mark as unknown
-          healthy = service.status === 'active';
-          results.push({
-            id: service.id,
-            name: service.name,
-            provider: service.provider,
-            status: healthy ? 'active' : service.status,
-            checkedAt: now.toISOString(),
-            healthy,
-            responseMs: null,
-          });
-          await ctx.db.aiService.update({
-            where: { id: service.id },
-            data: { lastHealthCheck: now },
-          });
-          continue;
         }
 
-        // SSRF protection: block requests to private/internal networks
+        if (!healthUrl) {
+          healthy = service.status === 'active';
+          return { service, healthy, responseMs: null, errorMsg: null, status: healthy ? 'active' : service.status };
+        }
+
+        // SSRF protection
         if (isPrivateUrl(healthUrl)) {
-          healthy = false;
-          errorMsg = 'Blocked: endpoint points to private/internal address';
-          results.push({
-            id: service.id,
-            name: service.name,
-            provider: service.provider,
-            status: 'down',
-            checkedAt: now.toISOString(),
-            healthy: false,
-            responseMs: null,
-            error: errorMsg,
-          });
-          continue;
+          return { service, healthy: false, responseMs: null, errorMsg: 'Blocked: endpoint points to private/internal address', status: 'down' };
         }
 
         const start = Date.now();
@@ -131,21 +106,18 @@ export async function POST(req: NextRequest) {
           errorMsg = fetchErr instanceof Error && fetchErr.name === 'AbortError' ? 'Timeout (5s)' : 'Connection failed';
           healthy = false;
         }
-      } catch (err) {
-        healthy = false;
-        errorMsg = 'Health check setup failed';
-      }
 
-      const newStatus = healthy ? 'active' : 'down';
-      await ctx.db.aiService.update({
-        where: { id: service.id },
-        data: {
-          lastHealthCheck: now,
-          status: newStatus,
-          avgResponseMs: responseMs ?? undefined,
-          healthScore: healthy ? 100 : 0,
-        },
-      });
+        return { service, healthy, responseMs, errorMsg, status: healthy ? 'active' : 'down' };
+      }),
+    );
+
+    // Collect results and batch DB updates in a transaction
+    const results: Array<Record<string, unknown>> = [];
+    const dbUpdates = [];
+
+    for (const settled of checkResults) {
+      if (settled.status === 'rejected') continue;
+      const { service, healthy, responseMs, errorMsg, status: newStatus } = settled.value;
 
       results.push({
         id: service.id,
@@ -155,8 +127,25 @@ export async function POST(req: NextRequest) {
         checkedAt: now.toISOString(),
         healthy,
         responseMs,
-        error: errorMsg,
+        ...(errorMsg ? { error: errorMsg } : {}),
       });
+
+      dbUpdates.push(
+        ctx.db.aiService.update({
+          where: { id: service.id },
+          data: {
+            lastHealthCheck: now,
+            status: newStatus,
+            ...(responseMs != null ? { avgResponseMs: responseMs } : {}),
+            healthScore: healthy ? 100 : 0,
+          },
+        }),
+      );
+    }
+
+    // Batch all DB updates in one transaction
+    if (dbUpdates.length > 0) {
+      await ctx.db.$transaction(dbUpdates);
     }
 
     return success({

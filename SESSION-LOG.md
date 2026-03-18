@@ -855,6 +855,37 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `62f0a55` — fix: add rate limiting to high-risk write endpoints
 - `1b9dd8f` — feat: add API key authentication middleware (KI-022)
 
+**Batch 112: Unit Tests for Critical Utilities**
+- password.test.ts: 11 tests (hash format, salt randomness, correct/wrong/malformed/unicode verification)
+- rate-limit.test.ts: 11 tests (allow/block/window expiry, independent keys, getClientIp, presets)
+- Total tests: 31 web app tests (up from 6)
+
+**Batch 113: Security Hardening**
+- IP format validation in getClientIp() to prevent rate-limit key pollution
+- 30s AbortSignal.timeout on all frontend fetch calls (fetcher, apiPost, apiPut, apiDelete)
+- Logged silent catch on apiKey lastUsedAt update
+- 3 new IP validation tests (invalid, oversized, IPv6)
+
+**Batch 114: Wire authenticateAny() on Read-Only Endpoints**
+- 13 GET endpoints now accept both JWT Bearer and X-API-Key auth
+- Analytics (7), content list/detail (2), channels list/detail (2), system health/metrics (2), calendar (1), jobs (1)
+- POST/PUT/DELETE handlers on multi-method routes remain JWT-only
+
+**Batch 115: Frontend Input Validation**
+- Commission rate clamped to 0-100 range on affiliate product create/edit forms
+- Defensive client-side validation matching server-side Zod schema
+
+**Batch 116: Admin Role Checks on AI Service Routes**
+- Added admin-only guards to 5 ai-services routes: POST (create), PUT (update), POST health-check, GET costs, GET usage
+- Previously any authenticated user could register/modify services or view cost data
+
+### Commits (continued)
+- `d35865a` — test: add unit tests for password hashing and rate limiting utilities
+- `6ec66c0` — fix: security hardening — IP validation, fetch timeouts, silent catch logging
+- `fbeb602` — feat: wire authenticateAny() on 13 read-only GET endpoints for API key access
+- `565bab6` — fix: clamp commission rate to 0-100 range on affiliate product forms
+- `95dcc2c` — fix: add admin role checks to 5 AI service management routes
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

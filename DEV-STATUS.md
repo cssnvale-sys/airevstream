@@ -199,7 +199,7 @@
 - Packages: 64 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3)
 - Services: 18 tests (workflow-engine: 8, ai-assistant: 5, production-pipeline: 5)
 - Workers: 5 tests
-- Web: 6 tests + Next.js build (102 API routes, 14 dashboard pages)
+- Web: 31 tests (lib: 6, password: 11, rate-limit: 14) + Next.js build (106 API routes, 14 dashboard pages)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 
 ## Architecture Highlights
@@ -224,5 +224,6 @@
 - **Subscriptions**: Plan management with period tracking, usage metering (accounts/channels/content/API calls/storage)
 - **Database Seed**: Full seed script with admin user, AI services, sample content, channels, accounts
 - **Real-time**: SSE endpoint with DB-polled events (alerts, workflow-updates, content-status, system-metrics), auto-reconnect with exponential backoff
-- **Security**: AI service API keys encrypted (AES-256-GCM), invite flow hides temp password, API keys SHA-256 hashed with revocation support
+- **Security**: AI service API keys encrypted (AES-256-GCM), invite flow hides temp password, API keys SHA-256 hashed with revocation support, admin role checks on all AI service management routes, IP format validation on rate limiter, 30s fetch timeouts on frontend
+- **API Key Access**: 13 read-only GET endpoints accept both JWT and API key via authenticateAny() (analytics, content, channels, system, calendar, jobs)
 - **Settings**: DB-backed via SystemSetting model (general, notifications, appearance) — persists across restarts

@@ -42,7 +42,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Create Wizard Progress Bar** (Session 7): "Step X of 6" text + animated percentage bar
 - **System Refresh Button** (Session 7): Manual re-fetch of all health/metrics data with toast feedback
 
+- **Unit Tests** (Session 7): 22 new tests for password.ts (11) and rate-limit.ts (11) — total 31 web tests
+- **API Key Access on Read Endpoints** (Session 7): 13 GET routes accept both JWT and API key via authenticateAny()
+
 ### Fixed
+
+**Audit Round 39 (Session 7) — Security Hardening, Role Checks**
+- IP format validation in getClientIp() — prevents rate-limit key pollution from spoofed X-Forwarded-For headers
+- 30s fetch timeouts on all frontend API calls (fetcher, apiPost, apiPut, apiDelete)
+- Silent catch on apiKey lastUsedAt update now logs errors
+- Commission rate clamped to 0-100 on affiliate product create/edit forms
+- Admin role checks added to 5 AI service routes (POST create, PUT update, POST health-check, GET costs, GET usage)
 
 **Audit Round 38 (Session 7) — Centralization, Validation, Tenant Scoping**
 - Centralized JWT_SECRET into lazy `getJwtSecret()` in api-server.ts (prevents build-time crash, removes 5 duplicates)

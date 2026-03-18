@@ -164,6 +164,11 @@ Old JWTs remain valid after password change until they naturally expire (7 days)
 **Status**: Fixed (Session 7, Batch 111)
 Added `authenticateApiKey()` and `authenticateAny()` functions in api-server.ts. Validates X-API-Key header, verifies hash against DB, checks status/expiry, enforces scope requirements, and applies per-key rate limiting (rateLimitRpm). Routes can use `authenticateAny()` to accept either JWT or API key.
 
+### KI-023: Missing Admin Role Checks on AI Service Routes
+**Severity**: High
+**Status**: Fixed (Session 7, Batch 116)
+5 AI service management routes had no role check — any authenticated user could register/modify services or view infrastructure cost data. Fixed by adding `ctx.role !== 'admin'` guards to POST create, PUT update, POST health-check, GET costs, GET usage. DELETE already had the check.
+
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium
 **Status**: Fixed (Session 6, Round 8)

@@ -270,7 +270,8 @@ export default function SystemPage() {
   const handleSnoozeAlert = async (id: string) => {
     setAlertActionInFlight(id);
     try {
-      await apiPost(`/system/alerts/${id}/snooze`, { duration: 3600 });
+      const SNOOZE_DURATION_SECS = 3600; // 1 hour
+      await apiPost(`/system/alerts/${id}/snooze`, { duration: SNOOZE_DURATION_SECS });
       mutateAlerts();
       toast.success('Alert snoozed for 1 hour');
     } catch (err) {
@@ -307,7 +308,7 @@ export default function SystemPage() {
         <div className="flex items-center gap-2">
           <span
             className={cn('h-3 w-3 rounded-full', overallStatusColor(overallStatus))}
-            title={overallStatus}
+            aria-hidden="true"
           />
           <span className="text-sm text-text-secondary capitalize">{overallStatus}</span>
         </div>

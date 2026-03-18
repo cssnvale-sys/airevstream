@@ -186,6 +186,7 @@ function GeneralTab() {
       toast.success('Settings saved');
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
+      console.error('Failed to save general settings:', err);
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
@@ -289,6 +290,7 @@ function AiServicesTab() {
       mutate();
       toast.success('AI service added');
     } catch (err) {
+      console.error('Failed to add AI service:', err);
       toast.error('Failed to add service');
     } finally {
       setAdding(false);
@@ -522,6 +524,7 @@ function NotificationsTab() {
       toast.success('Notification settings saved');
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
+      console.error('Failed to save notification settings:', err);
       toast.error('Failed to save notification settings');
     } finally {
       setSaving(false);
@@ -903,6 +906,7 @@ function AppearanceTab() {
       toast.success('Appearance settings saved');
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
+      console.error('Failed to save appearance settings:', err);
       toast.error('Failed to save appearance settings');
     } finally {
       setSaving(false);

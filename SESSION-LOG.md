@@ -1084,6 +1084,28 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `6559d05` — fix: add console.error to 4 silent settings catches, accessibility polish
 - `23e9b82` — fix: dashboard activity icons aria-hidden, calendar day/month buttons disabled
 
+### Session 8 — Integration Audit (2026-03-18)
+
+**Post-Sprint Integrity Check**: Audited all Session 7 components for integration completeness.
+
+**Findings**:
+- ConfirmDialog: 5/5 expected pages ✓
+- toast wrapper: 10/10 dashboard pages ✓
+- CopyButton: 3/3 applicable pages ✓
+- exportToCSV: 2/2 expected pages ✓
+- useDebounce: 2/2 expected pages ✓
+- KeyboardShortcutsModal: fully wired in sidebar ✓
+- useUnsavedChanges: used in settings ✓
+- No window.alert/window.confirm calls ✓
+- No silent catch blocks ✓
+
+**Gaps Fixed**:
+- Added `EmptyState` to affiliate page (products table) — was using plain `<td>` text
+- Added `EmptyState` to settings page (AI Services + API Keys sections) — was using plain `<p>` text
+- Documented `useJobStatus` hook as intentionally unused (create page uses local simulation)
+
+**Build/Test**: 14 packages building, 222 tests passing (135 web + 87 packages/services)
+
 ### Open Items
 - E2E testing (Playwright) not started
 - Platform posting adapters untested against real APIs

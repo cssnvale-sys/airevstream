@@ -52,6 +52,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Integration Audit (Session 8)**
+- Added EmptyState component to affiliate products table (was plain text)
+- Added EmptyState component to settings AI Services and API Keys sections (was plain text)
+- Documented useJobStatus hook as intentionally unused (create page uses per-shot local state)
+
 **Audit Round 45 (Session 7) — Security, N+1 Queries, Accessibility, Validation**
 - Tenant ownership checks added to generate-script, generate-storyboard, generate-shot (channelId verification)
 - Admin role guards added to settings PUT endpoints (general, appearance, notifications)

@@ -220,12 +220,11 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Total tests**: 142 (all passing across 27 test tasks)
-- Packages: 64 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3)
-- Services: 18 tests (workflow-engine: 8, ai-assistant: 5, production-pipeline: 5)
-- Workers: 5 tests
-- Web: 110 tests (lib: 6, password: 11, rate-limit: 15, api-server: 32, utils-behavior: 28, auth: 10, export: 8) + Next.js build (106 API routes, 14 dashboard pages)
+- **Total tests**: 222 (all passing across 27 test tasks)
+- Packages: 87 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3, workflow-engine: 8, ai-assistant: 5, production-pipeline: 5, workers: 5)
+- Web: 135 tests (lib: 6, password: 11, rate-limit: 15, api-server: 57, utils-behavior: 28, auth: 10, export: 8) + Next.js build (106 API routes, 14 dashboard pages)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
+- Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
 
 ## Architecture Highlights
 - **Prisma Schema**: 33 models (+ SystemSetting) with full-text search GIN indexes on key tables

@@ -50,7 +50,7 @@ The `generate-storyboard` API route returns hardcoded placeholder shots rather t
 ### KI-006: Generate-Shot Async Job Has No Completion Polling
 **Severity**: Medium
 **Status**: Fixed (Session 7)
-Added `GET /api/v1/jobs/:id` endpoint returning job status from WorkflowJob model, plus `useJobStatus(jobId)` SWR hook that polls every 2s until terminal state (completed/failed/cancelled).
+Added `GET /api/v1/jobs/:id` endpoint returning job status from WorkflowJob model, plus `useJobStatus(jobId)` SWR hook that polls every 2s until terminal state (completed/failed/cancelled). **Note**: The create page uses per-shot local state simulation instead of the hook — the hook is available for future features (e.g. video rendering progress) but has zero current importers.
 
 ---
 

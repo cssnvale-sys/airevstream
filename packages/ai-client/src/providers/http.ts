@@ -55,11 +55,14 @@ export class HttpProvider implements AiProvider {
   }
 
   async generateChat(request: ChatRequest & { endpoint?: string; apiKey?: string }): Promise<TextResponse> {
+    if (!request.messages || request.messages.length === 0) {
+      throw new Error('Messages array cannot be empty');
+    }
     // For non-text services, convert chat to single prompt
     const lastMessage = request.messages[request.messages.length - 1];
     return this.generateText({
       ...request,
-      prompt: lastMessage?.content ?? '',
+      prompt: lastMessage.content,
     });
   }
 

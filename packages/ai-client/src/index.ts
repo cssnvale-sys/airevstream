@@ -129,7 +129,11 @@ export async function generateJSON<T = unknown>(
   options: Omit<GenerateOptions, 'format'> = {},
 ): Promise<T> {
   const result = await generateText(prompt, { ...options, format: 'json' });
-  return JSON.parse(result.content) as T;
+  try {
+    return JSON.parse(result.content) as T;
+  } catch {
+    throw new Error(`AI returned invalid JSON: ${result.content.substring(0, 100)}`);
+  }
 }
 
 /** @deprecated Use OllamaProvider.listModels() */

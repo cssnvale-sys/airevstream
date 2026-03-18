@@ -35,6 +35,11 @@ export function decrypt(ciphertextHex: string, keyHex: string): string {
 
   const data = Buffer.from(ciphertextHex, 'hex');
 
+  const MIN_LENGTH = IV_LENGTH + AUTH_TAG_LENGTH;
+  if (data.length < MIN_LENGTH) {
+    throw new Error(`Ciphertext too short: expected at least ${MIN_LENGTH * 2} hex chars, got ${ciphertextHex.length}`);
+  }
+
   const iv = data.subarray(0, IV_LENGTH);
   const authTag = data.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
   const encrypted = data.subarray(IV_LENGTH + AUTH_TAG_LENGTH);

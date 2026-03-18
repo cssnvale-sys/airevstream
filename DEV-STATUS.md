@@ -169,6 +169,13 @@
 | 5.119 | catch err:any elimination | Done | All 6 remaining files fixed (zero left in codebase) |
 | 5.120 | Production JWT guard | Done | All 3 services throw on missing JWT_SECRET in prod |
 | 5.121 | Prisma indexes | Done | 4 new indexes on storyboards, conversations, audit log, cinema bibles |
+| 5.122 | Lazy JWT_SECRET init | Done | api-server.ts getJwtSecret() prevents build-time crash |
+| 5.123 | Assistant tenant scoping | Done | analytics/content queries + content queue stats scoped to tenant |
+| 5.124 | Assistant error message leak | Done | Static error message in action executor failure |
+| 5.125 | Zod validation (last 4) | Done | schedule PUT, change-password, snooze, approvals action |
+| 5.126 | JWT_SECRET centralization | Done | Exported getJwtSecret(), removed 5 duplicate declarations |
+| 5.127 | Password hashing centralization | Done | Shared password.ts, removed 5 duplicate hashPassword/verifyPassword |
+| 5.128 | String length limits | Done | .max() constraints on 9 unbounded Zod string fields |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

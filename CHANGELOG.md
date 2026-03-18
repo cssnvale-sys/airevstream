@@ -43,6 +43,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 38 (Session 7) — Centralization, Validation, Tenant Scoping**
+- Centralized JWT_SECRET into lazy `getJwtSecret()` in api-server.ts (prevents build-time crash, removes 5 duplicates)
+- Centralized password hashing into `password.ts` (removes 5 duplicate hashPassword/verifyPassword functions)
+- Added Zod validation to last 4 unvalidated routes (schedule PUT, change-password, snooze, approvals action)
+- Tenant-scoped assistant analytics queries (contentItem, scheduledPost, affiliateClick, content queue stats)
+- Fixed error message leak in assistant action executor failure response
+- Added `.max()` string length limits to 9 unbounded Zod schema fields
+- Fixed publishConfig Prisma InputJsonValue cast in schedule/[id]
+
 **Audit Round 37 (Session 7) — Type Safety, Production Guards, Indexes**
 - Eliminated all `catch (err: any)` across codebase — 6 files fixed with `instanceof Error` guards
 - All 3 services: JWT_SECRET required in production mode (throws at startup)

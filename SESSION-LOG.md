@@ -801,6 +801,44 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - All 3 services: removed (error as any).code cast (FastifyError already has .code)
 - Prisma schema: 4 new indexes — storyboards(contentId), conversations(updatedAt), action_audit_log(conversationId,createdAt), cinema_bibles(channelId,version)
 
+**Batch 105: Lazy JWT_SECRET Init**
+- api-server.ts: moved JWT_SECRET from module-level const to lazy getJwtSecret() function
+- Prevents build-time crash when Next.js sets NODE_ENV=production during `next build`
+
+**Batch 106: Assistant Route Tenant Scoping + Error Message Leaks**
+- analytics.query: added tenant channel filter to contentItem, scheduledPost, affiliateClick queries
+- getContentQueueStats: scoped contentItem groupBy to current tenant
+- Fixed error message leak in action executor failure response
+- Documented KI-020 gaps (conversation, knowledge base ownership)
+
+**Batch 107: Zod Validation on Last 4 Routes**
+- schedule/[id] PUT: RescheduleSchema with datetime validation
+- auth/change-password POST: ChangePasswordSchema with min-length
+- system/alerts/[id]/snooze POST: SnoozeSchema for duration bounds
+- approvals/[id]/[action] POST: RejectBodySchema for feedback
+
+**Batch 108: Centralize JWT_SECRET**
+- Exported getJwtSecret() from api-server.ts
+- Removed duplicate JWT_SECRET declarations from 5 auth routes (login, register, forgot-password, reset-password, change-password)
+- Fixed publishConfig Prisma InputJsonValue cast in schedule/[id]
+
+**Batch 109: Centralize Password Hashing + String Length Limits**
+- Created shared password.ts with hashPassword() and verifyPassword()
+- Removed duplicate password functions from 5 auth routes
+- Added .max() constraints to 9 unbounded string fields in Zod schemas
+
+### Commits (continued)
+- `3e8939c` — docs: tracking docs round 25
+- `6377655` — fix: replace catch (err: any) with catch (err: unknown) in ai-client providers
+- `969a8fd` — fix: replace remaining catch (err: any) in chat route and posting worker
+- `65a30a5` — fix: production JWT_SECRET guard, Prisma indexes, error handler type safety
+- `d8fd782` — docs: tracking docs round 26
+- `c8fbdd9` — fix: use lazy JWT_SECRET init in api-server to avoid build-time crash
+- `f567b0d` — fix: tenant-scope assistant analytics/content queries and stop error message leaks
+- `7fa5ed0` — fix: add Zod validation to 4 remaining routes, tenant-scope assistant queries
+- `23a4b78` — fix: centralize JWT_SECRET via getJwtSecret() and fix publishConfig cast
+- `d11afe2` — fix: centralize password hashing and add string length limits to Zod schemas
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

@@ -607,12 +607,26 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - **CRITICAL:** assistant/actions: 5 findUnique calls → findFirst with tenant scoping
   (content.generate, content.schedule, content.approve, account.create, account.delete)
 
+**Batch 74: Critical Fixes — Zod on Schedule, Tenant on Storefronts**
+- schedule POST: replaced manual validation with Zod schema (uuid, date, platform enum)
+- **CRITICAL:** affiliate/storefronts GET+POST: added tenant scoping through channel ownership chain
+- content/[id]/reject: replaced silent .catch(() => ({})) with explicit try/catch
+- assistant/actions: NaN guard on analytics.query days param (clamp 1-365)
+
+**Batch 75: Create Page Toast Notifications**
+- Added toast.error to script generation, storyboard generation, and shot generation failures
+- Added toast.success on successful content save + schedule
+- Create page was the only mutation page without toast integration
+
 ### Commits (continued)
 - `97da66b` — docs: tracking docs round 15
 - `e550c0e` — fix: tenant scoping on channel/content sub-routes, _count cleanup
 - `7a7a181` — fix: Zod validation + tenant scoping on approvals, variants, regenerate
 - `208ab3e` — docs: tracking docs round 16
 - `8c62e9a` — fix: tenant scoping on channels POST, content/generate, schedule, jobs, socials, assistant/actions
+- `bf074a4` — docs: tracking docs round 17
+- `d25c460` — fix: Zod on schedule POST, tenant scoping on storefronts, validation hardening
+- `32ebec5` — fix: add toast notifications to create page
 
 ### Open Items
 - E2E testing (Playwright) not started

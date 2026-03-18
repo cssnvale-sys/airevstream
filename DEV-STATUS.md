@@ -134,6 +134,10 @@
 | 5.84 | Jobs tenant verification | Done | Channel/account ownership check after findUnique |
 | 5.85 | Socials tenant scoping | Done | emailAccount findFirst with tenantId in GET+POST |
 | 5.86 | Assistant actions tenant scoping | Done | **CRITICAL:** 5 executors scoped via findFirst |
+| 5.87 | Schedule POST Zod validation | Done | Replaced manual checks with uuid, date, platform enum |
+| 5.88 | Storefronts tenant scoping | Done | **CRITICAL:** Channel ownership verified on GET+POST |
+| 5.89 | Create page toasts | Done | Toast notifications on all mutation outcomes |
+| 5.90 | Validation hardening | Done | NaN guard on analytics days, silent JSON catch fix |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

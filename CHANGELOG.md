@@ -43,6 +43,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 24 (Session 7) — Validation, Tenant Scoping & UX**
+- **CRITICAL:** Tenant scoping on affiliate/storefronts GET+POST (channel ownership check)
+- Zod validation schema on schedule POST (was manual string checks)
+- NaN guard on assistant/actions analytics.query days parameter
+- Fixed silent JSON catch on content/[id]/reject
+- Added toast notifications to create page (script, storyboard, shot, save mutations)
+
 **Audit Round 23 (Session 7) — Final findUnique Sweep**
 - **CRITICAL:** Tenant scoping on channels POST (socialAccount ownership check)
 - **CRITICAL:** Tenant scoping on content/generate (channel ownership check)

@@ -13,7 +13,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const content = await ctx.db.contentItem.findUnique({ where: { id } });
+    // Tenant-scoped lookup: only allow approve/reject on this tenant's content
+    const content = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      },
+    });
     if (!content) return error('NOT_FOUND', 'Content not found', 404);
 
     if (action === 'approve') {
@@ -41,8 +47,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     return success({ id, action, status: action === 'approve' ? 'approved' : 'draft' });
-  } catch (err: any) {
-    console.error(`[POST /approvals/${id}/${action}]`, err);
+  } catch (err) {
+    console.error(`POST /approvals/${id}/${action} failed:`, err);
     return error('INTERNAL_ERROR', `Failed to ${action} content`, 500);
   }
 }

@@ -12,6 +12,8 @@ export async function GET(req: NextRequest) {
     const validStatuses = ['draft', 'generating', 'generated', 'pending_approval', 'approved', 'scheduled', 'posted', 'archived', 'failed'];
     const where: Record<string, unknown> = {
       status: statusParam && validStatuses.includes(statusParam) ? statusParam : 'pending_approval',
+      // Tenant scoping: only show content from this tenant's channels
+      channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
     };
 
     const allowedSortFields = ['createdAt', 'updatedAt', 'title', 'contentType'];

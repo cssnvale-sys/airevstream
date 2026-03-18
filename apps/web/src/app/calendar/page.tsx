@@ -130,7 +130,17 @@ export default function CalendarPage() {
 
   // Derived date range
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-  const rangeParams = `start=${format(weekStart, 'yyyy-MM-dd')}&end=${format(weekEnd, 'yyyy-MM-dd')}`;
+
+  // Build query params — pass filters server-side instead of client-side
+  const rangeParams = useMemo(() => {
+    const p = new URLSearchParams();
+    p.set('start', format(weekStart, 'yyyy-MM-dd'));
+    p.set('end', format(weekEnd, 'yyyy-MM-dd'));
+    if (filters.channelId !== 'all') p.set('channelId', filters.channelId);
+    if (filters.platform !== 'all') p.set('platform', filters.platform);
+    if (filters.status !== 'all') p.set('status', filters.status);
+    return p.toString();
+  }, [weekStart, weekEnd, filters.channelId, filters.platform, filters.status]);
 
   // API hooks
   const { data: calendarData, isLoading } = useCalendar(rangeParams);
@@ -139,15 +149,8 @@ export default function CalendarPage() {
   const items: CalendarItem[] = (calendarData?.data as CalendarItem[] | undefined) ?? [];
   const channels: Channel[] = (channelsData?.data as Channel[] | undefined) ?? [];
 
-  // Filter items
-  const filtered = useMemo(() => {
-    return items.filter((item) => {
-      if (filters.channelId !== 'all' && item.channel?.id !== filters.channelId) return false;
-      if (filters.platform !== 'all' && item.platform !== filters.platform) return false;
-      if (filters.status !== 'all' && item.status !== filters.status) return false;
-      return true;
-    });
-  }, [items, filters]);
+  // Items are already filtered server-side
+  const filtered = items;
 
   // Build week days array (Mon-Sun)
   const weekDays = useMemo(() => {

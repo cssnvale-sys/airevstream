@@ -94,3 +94,8 @@
 **Date**: 2026-03-18
 **Decision**: Implement forgot password using short-lived JWT tokens (15min expiry) with `purpose: 'password-reset'` claim. In dev mode, the token is logged to console rather than emailed.
 **Rationale**: The system doesn't have an email service configured yet. JWT tokens provide a secure, stateless reset mechanism that doesn't require a database table for reset tokens. The `purpose` claim prevents token reuse for authentication. When an email service is added later, the only change needed is sending the token via email instead of logging it.
+
+## D020: Session Indicator Cookie for Middleware Auth
+**Date**: 2026-03-18
+**Decision**: Use a non-sensitive `airevstream_auth=1` cookie as a session indicator for Next.js middleware, while keeping the actual JWT in localStorage.
+**Rationale**: Next.js middleware runs on the edge and cannot access localStorage. Rather than moving the JWT to an HttpOnly cookie (which would require CSRF protection), we set a lightweight indicator cookie alongside the localStorage token. The middleware checks this cookie to gate protected routes — preventing HTML leakage of dashboard pages to unauthenticated users. The actual JWT remains in localStorage for API calls via Authorization header. This avoids CSRF complexity while providing server-side route protection.

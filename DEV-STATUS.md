@@ -93,6 +93,8 @@
 | 5.43 | Form validation | Done | Password minLength, submit disabled, topic validation, error leak fixes |
 | 5.44 | Error boundaries | Done | error.tsx for global app + all 11 page segments |
 | 5.45 | AI service health check | Done | "Test All" button on settings AI services tab |
+| 5.46 | Auth middleware | Done | Server-side route protection via Next.js middleware, session indicator cookie, redirect after login |
+| 5.47 | Custom 404 + loading skeletons | Done | Branded not-found.tsx, loading.tsx for all 11 page segments |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

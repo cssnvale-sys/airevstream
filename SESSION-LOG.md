@@ -420,6 +420,27 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Calls POST /api/v1/ai-services/health-check and shows results via toast
 - Loading spinner during test, disabled when no services
 
+**Batch 32: Tracking Docs Update (round 5)**
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS, MEMORY.md
+
+**Batch 33: Auth Middleware**
+- Created `apps/web/src/middleware.ts` — checks `airevstream_auth` cookie on protected routes
+- Updated `lib/auth.ts` to set/clear session indicator cookie alongside localStorage token
+- Updated login page to read `redirect` query param after successful login
+
+**Batch 34: Custom 404 + Loading Skeletons**
+- Created `apps/web/src/app/not-found.tsx` — branded 404 page with dashboard link
+- Created loading.tsx skeletons for all 11 page segments (dashboard, accounts, library, analytics, calendar, settings, create, workflows, approvals, affiliate, system)
+
+**Batch 35: Tracking Docs Update (round 6)**
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS, DECISIONS, KNOWN-ISSUES
+
+### Commits
+- `e721ffd` — docs: tracking docs round 5
+- `7db01f5` — feat: auth middleware
+- `aa24053` — feat: 404 + loading skeletons
+- (this commit) — docs: tracking docs round 6
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

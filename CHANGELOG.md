@@ -30,6 +30,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Page Metadata** (Session 7): SEO titles for all 11 dashboard pages via layout.tsx files + root title template
 - **Error Boundaries** (Session 7): error.tsx for global app and all 11 page segments
 - **AI Service Health Check** (Session 7): "Test All" button on settings AI services tab
+- **Auth Middleware** (Session 7): Server-side route protection via Next.js middleware with session indicator cookie
+- **Custom 404 Page** (Session 7): Branded not-found.tsx with dashboard link
+- **Loading Skeletons** (Session 7): Pulse-animated loading.tsx for all 11 dashboard page segments
 
 ### Fixed
 

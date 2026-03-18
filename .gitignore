@@ -8,6 +8,7 @@ dist/
 prisma/migrations/**/migration_lock.toml
 coverage/
 .playwright/
+logs/
 test-results/
 playwright-report/
 *.log

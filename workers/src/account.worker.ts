@@ -159,7 +159,7 @@ async function handleCreate(data: AccountCreateJob, job: Job) {
           data: { status: 'failed', error: String(err) },
         });
       } finally {
-        await mgr.closeContext(contextEntry.id);
+        await mgr.closeContext(contextEntry.id).catch((closeErr) => logger.error({ closeErr }, 'Failed to close browser context'));
       }
     }
   }
@@ -234,7 +234,7 @@ async function handleSync(data: AccountSyncJob, job: Job) {
       } catch (err) {
         logger.error({ err, socialAccountId: data.socialAccountId }, 'Account sync automation failed');
       } finally {
-        await mgr.closeContext(contextEntry.id);
+        await mgr.closeContext(contextEntry.id).catch((closeErr) => logger.error({ closeErr }, 'Failed to close browser context'));
       }
     }
   }
@@ -286,7 +286,7 @@ async function handleHealthCheck(data: AccountHealthCheckJob, job: Job) {
         logger.error({ err, socialAccountId: data.socialAccountId }, 'Health check automation failed');
         issues.push('Health check automation error');
       } finally {
-        await mgr.closeContext(contextEntry.id);
+        await mgr.closeContext(contextEntry.id).catch((closeErr) => logger.error({ closeErr }, 'Failed to close browser context'));
       }
     }
   }
@@ -432,7 +432,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
       } catch (err) {
         logger.error({ err, socialAccountId: data.socialAccountId }, 'Account warming automation failed');
       } finally {
-        await mgr.closeContext(contextEntry.id);
+        await mgr.closeContext(contextEntry.id).catch((closeErr) => logger.error({ closeErr }, 'Failed to close browser context'));
       }
     }
   }

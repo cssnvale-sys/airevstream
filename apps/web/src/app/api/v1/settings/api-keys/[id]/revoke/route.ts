@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, forbidden, isUUID, validationError } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -12,6 +12,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.apiKey.findUnique({ where: { id } });

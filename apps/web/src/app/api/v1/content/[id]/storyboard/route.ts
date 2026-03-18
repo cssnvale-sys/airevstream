@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 
 const UpdateStoryboardSchema = z.object({
   status: z.enum(['draft', 'approved', 'in_production']).optional(),
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (ctx instanceof NextResponse) return ctx;
 
     const { id } = await params;
+    if (!isUUID(id)) return validationError('Invalid ID format');
 
     // Verify the content item exists
     const item = await ctx.db.contentItem.findFirst({
@@ -72,6 +73,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (ctx instanceof NextResponse) return ctx;
 
     const { id } = await params;
+    if (!isUUID(id)) return validationError('Invalid ID format');
 
     // Verify the content item exists
     const item = await ctx.db.contentItem.findFirst({

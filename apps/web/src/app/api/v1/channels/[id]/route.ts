@@ -1,4 +1,4 @@
-import { authenticate, authenticateAny, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -25,6 +25,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const channel = await ctx.db.channel.findFirst({
@@ -91,6 +92,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.channel.findFirst({
@@ -146,6 +148,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const channel = await ctx.db.channel.findUnique({

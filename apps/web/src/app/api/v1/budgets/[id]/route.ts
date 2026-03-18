@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -23,6 +23,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const budget = await ctx.db.costBudget.findUnique({
@@ -67,6 +68,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.costBudget.findUnique({ where: { id } });
@@ -139,6 +141,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.costBudget.findUnique({ where: { id } });

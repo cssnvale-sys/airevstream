@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -26,6 +26,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const product = await ctx.db.affiliateProduct.findUnique({
@@ -68,6 +69,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.affiliateProduct.findUnique({ where: { id } });

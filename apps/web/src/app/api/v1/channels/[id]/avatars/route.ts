@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     // Verify channel exists
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     // Verify channel exists

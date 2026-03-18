@@ -50,6 +50,7 @@ import {
   requireAdmin,
   parseQuery,
   getJwtSecret,
+  isUUID,
   type ApiContext,
 } from '../lib/api-server';
 import { NextRequest } from 'next/server';
@@ -253,6 +254,22 @@ describe('api-server', () => {
       // The function caches, so we test the return type
       const secret = getJwtSecret();
       expect(secret).toBeInstanceOf(Uint8Array);
+    });
+  });
+
+  describe('isUUID', () => {
+    it('accepts valid v4 UUIDs', () => {
+      expect(isUUID('550e8400-e29b-41d4-a716-446655440000')).toBe(true);
+      expect(isUUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')).toBe(true);
+      expect(isUUID('F47AC10B-58CC-4372-A567-0E02B2C3D479')).toBe(true);
+    });
+
+    it('rejects invalid strings', () => {
+      expect(isUUID('')).toBe(false);
+      expect(isUUID('not-a-uuid')).toBe(false);
+      expect(isUUID('550e8400-e29b-41d4-a716')).toBe(false);
+      expect(isUUID('../../etc/passwd')).toBe(false);
+      expect(isUUID("'; DROP TABLE users;--")).toBe(false);
     });
   });
 });

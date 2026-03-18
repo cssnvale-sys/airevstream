@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, forbidden, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
@@ -32,6 +32,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const service = await ctx.db.aiService.findUnique({
@@ -68,6 +69,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.aiService.findUnique({ where: { id } });
@@ -136,6 +138,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.aiService.findUnique({ where: { id } });

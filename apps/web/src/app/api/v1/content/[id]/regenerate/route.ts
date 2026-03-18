@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 
@@ -16,6 +16,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
+    if (!isUUID(id)) return validationError('Invalid ID format');
 
     const existing = await ctx.db.contentItem.findFirst({
       where: {

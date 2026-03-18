@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticate, success, error, isUUID, validationError } from '@/lib/api-server';
 
 const SnoozeSchema = z.object({
   duration: z.number().positive().max(86400).optional(),
@@ -13,6 +13,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const alert = await ctx.db.alert.findUnique({ where: { id } });

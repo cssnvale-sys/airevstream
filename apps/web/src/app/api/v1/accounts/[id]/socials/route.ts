@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, paginated, parseQuery, validationError, isUUID } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
@@ -22,6 +22,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
   const { page, limit, skip, sort, order, params: queryParams } = parseQuery(req);
   const platform = queryParams.get('platform') ?? undefined;
   const status = queryParams.get('status') ?? undefined;
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     // Verify email account exists and belongs to tenant

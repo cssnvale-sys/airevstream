@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -9,6 +9,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (ctx instanceof NextResponse) return ctx;
 
     const { id } = await params;
+    if (!isUUID(id)) return validationError('Invalid ID format');
 
     const item = await ctx.db.contentItem.findFirst({
       where: {

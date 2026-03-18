@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -12,6 +12,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const conversation = await ctx.db.conversation.findUnique({
@@ -61,6 +62,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const existing = await ctx.db.conversation.findUnique({ where: { id } });

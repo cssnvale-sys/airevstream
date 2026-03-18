@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticate, success, error, isUUID } from '@/lib/api-server';
 
 const RejectBodySchema = z.object({
   feedback: z.string().max(2000).optional(),
@@ -13,6 +13,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
 
   const { id, action } = await params;
+  if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
   if (!['approve', 'reject'].includes(action)) {
     return error('VALIDATION_ERROR', 'Action must be approve or reject', 400);
   }

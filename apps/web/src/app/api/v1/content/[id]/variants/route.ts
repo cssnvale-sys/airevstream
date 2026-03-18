@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 
 const CreateVariantSchema = z.object({
   title: z.string().max(500).optional(),
@@ -17,6 +17,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (ctx instanceof NextResponse) return ctx;
 
     const { id } = await params;
+    if (!isUUID(id)) return validationError('Invalid ID format');
 
     // Find the root content item (check if this item IS the root, or has a parentId)
     const contentItem = await ctx.db.contentItem.findFirst({
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (ctx instanceof NextResponse) return ctx;
 
     const { id } = await params;
+    if (!isUUID(id)) return validationError('Invalid ID format');
 
     const rawBody = await req.json();
     const parsed = CreateVariantSchema.safeParse(rawBody);

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAccounts, useAccount, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
+import { exportToCSV } from '@/lib/export';
 import { cn, formatRelativeTime, statusColor, platformIcon } from '@/lib/utils';
 import {
   Plus, Upload, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
@@ -668,6 +669,37 @@ export default function AccountsPage() {
     mutate();
   }, [mutate]);
 
+  // Bulk actions
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDelete = useCallback(async () => {
+    setBulkDeleting(true);
+    try {
+      await apiPost('/accounts/bulk-delete', { ids: Array.from(selectedIds) });
+      setSelectedIds(new Set());
+      setShowBulkDelete(false);
+      mutate();
+      toast.success(`Deleted ${selectedIds.size} accounts`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete accounts');
+    } finally {
+      setBulkDeleting(false);
+    }
+  }, [selectedIds, mutate]);
+
+  const handleBulkExport = useCallback(() => {
+    const selected = filteredAccounts.filter((a) => selectedIds.has(a.id));
+    exportToCSV(selected, [
+      { header: 'Email', accessor: 'email' },
+      { header: 'Status', accessor: 'status' },
+      { header: 'Tier', accessor: 'tier' },
+      { header: 'Social Accounts', accessor: (a) => a.socialAccounts?.length ?? 0 },
+      { header: 'Created', accessor: 'createdAt' },
+    ], 'accounts-export.csv');
+    toast.success(`Exported ${selected.length} accounts`);
+  }, [filteredAccounts, selectedIds]);
+
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ChevronDown size={12} className="opacity-30" />;
     return sortOrder === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
@@ -740,6 +772,31 @@ export default function AccountsPage() {
           </select>
         </div>
       </div>
+
+      {/* Bulk Action Toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-3 bg-accent-blue/10 border border-accent-blue/20 rounded-lg">
+          <span className="text-sm font-medium text-accent-blue">
+            {selectedIds.size} selected
+          </span>
+          <div className="flex-1" />
+          <button onClick={handleBulkExport} className="btn-secondary btn-sm flex items-center gap-1.5">
+            <Upload size={14} /> Export CSV
+          </button>
+          <button
+            onClick={() => setShowBulkDelete(true)}
+            className="btn-danger btn-sm flex items-center gap-1.5"
+          >
+            <Trash2 size={14} /> Delete Selected
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-text-secondary hover:text-text-primary text-sm"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* Account Table */}
       <div className="card overflow-hidden">
@@ -912,6 +969,18 @@ export default function AccountsPage() {
           </>
         )}
       </div>
+
+      {/* Bulk Delete Confirm */}
+      <ConfirmDialog
+        open={showBulkDelete}
+        title="Delete Selected Accounts"
+        message={`Are you sure you want to delete ${selectedIds.size} account(s)? This will also remove all connected social accounts. This action cannot be undone.`}
+        confirmLabel={`Delete ${selectedIds.size} Account(s)`}
+        variant="danger"
+        onConfirm={handleBulkDelete}
+        onCancel={() => setShowBulkDelete(false)}
+        loading={bulkDeleting}
+      />
 
       {/* Modals */}
       <AddEmailModal

@@ -161,9 +161,8 @@ Old JWTs remain valid after password change until they naturally expire (7 days)
 
 ### KI-022: API Key Authentication Not Implemented
 **Severity**: Medium
-**Status**: Open (Feature Gap)
-API keys (ars_ prefix, SHA-256 hashed) are created and managed via CRUD endpoints, but there's no middleware that actually authenticates incoming requests using API keys. Scopes (read/write/admin) and rate limits (rateLimitRpm) are stored but not enforced.
-**Action**: Add `authenticateApiKey()` function in api-server.ts that validates API key headers, enforces scopes, and applies per-key rate limiting.
+**Status**: Fixed (Session 7, Batch 111)
+Added `authenticateApiKey()` and `authenticateAny()` functions in api-server.ts. Validates X-API-Key header, verifies hash against DB, checks status/expiry, enforces scope requirements, and applies per-key rate limiting (rateLimitRpm). Routes can use `authenticateAny()` to accept either JWT or API key.
 
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium

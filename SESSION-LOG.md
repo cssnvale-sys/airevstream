@@ -839,6 +839,22 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `23a4b78` — fix: centralize JWT_SECRET via getJwtSecret() and fix publishConfig cast
 - `d11afe2` — fix: centralize password hashing and add string length limits to Zod schemas
 
+**Batch 110: Rate Limiting on Write Endpoints**
+- Added standardWrite (60/min) and adminWrite (30/min) rate limit presets
+- Applied to: assistant actions, bulk-delete, API key create, content create, channel create, account create
+
+**Batch 111: API Key Authentication (KI-022)**
+- Created authenticateApiKey() in api-server.ts
+- Validates X-API-Key header, hash lookup, status/expiry check, scope enforcement
+- Per-key rate limiting using rateLimitRpm from DB
+- authenticateAny() tries JWT first, falls back to API key
+- Resolves KI-022
+
+### Commits (continued)
+- `24b3dab` — docs: tracking docs round 27
+- `62f0a55` — fix: add rate limiting to high-risk write endpoints
+- `1b9dd8f` — feat: add API key authentication middleware (KI-022)
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

@@ -8,7 +8,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - `.claude/rules/` — 6 modular rules files codifying development patterns
-- **Rate Limiting** (Session 7): In-memory sliding window rate limiter on login, register, forgot-password, reset-password routes
+- **API Key Authentication** (Session 7): `authenticateApiKey()` and `authenticateAny()` in api-server.ts — validates X-API-Key header, enforces scopes and per-key rate limiting (KI-022)
+- **Rate Limiting** (Session 7): In-memory sliding window rate limiter on login, register, forgot-password, reset-password routes; standardWrite/adminWrite presets on 6 high-risk write endpoints
 - **Security Headers** (Session 7): X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy via next.config.js
 - **Reusable UI Components** (Session 7): `ConfirmDialog`, `EmptyState`, `CopyButton`, `KeyboardShortcutsModal`, toast wrapper
 - **Forgot Password Flow** (Session 7): forgot-password + reset-password API routes and frontend pages

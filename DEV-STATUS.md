@@ -176,6 +176,8 @@
 | 5.126 | JWT_SECRET centralization | Done | Exported getJwtSecret(), removed 5 duplicate declarations |
 | 5.127 | Password hashing centralization | Done | Shared password.ts, removed 5 duplicate hashPassword/verifyPassword |
 | 5.128 | String length limits | Done | .max() constraints on 9 unbounded Zod string fields |
+| 5.129 | Rate limiting (write endpoints) | Done | standardWrite (60/min), adminWrite (30/min) on 6 high-risk routes |
+| 5.130 | API key authentication (KI-022) | Done | authenticateApiKey(), authenticateAny(), scope enforcement, per-key RPM |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

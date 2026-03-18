@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound } from '@/lib/api-server';
+import { authenticateAny, success, error, notFound } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -8,7 +8,7 @@ type RouteParams = { params: Promise<{ id: string }> };
  * Get job status by ID. Used for polling job progress.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
-  const ctx = await authenticate(req);
+  const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;

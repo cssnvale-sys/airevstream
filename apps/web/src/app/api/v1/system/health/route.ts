@@ -1,4 +1,4 @@
-import { authenticate, error, json } from '@/lib/api-server';
+import { authenticateAny, error, json } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Returns latest metrics, service counts, queue depth.
  */
 export async function GET(req: NextRequest) {
-  const ctx = await authenticate(req);
+  const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
   try {

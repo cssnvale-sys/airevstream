@@ -1,4 +1,4 @@
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticateAny, success, error, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Query: type (revenue|engagement|content|costs|audience), format? (json), start?, end?
  */
 export async function GET(req: NextRequest) {
-  const ctx = await authenticate(req);
+  const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
   const rl = checkRateLimit(`analytics:export:${ctx.userId}`, RATE_LIMITS.analyticsExport);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, notFound, validationError } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -16,7 +16,7 @@ const UpdateContentSchema = z.object({
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
-    const ctx = await authenticate(req);
+    const ctx = await authenticateAny(req, 'read');
     if (ctx instanceof NextResponse) return ctx;
 
     const { id } = await params;

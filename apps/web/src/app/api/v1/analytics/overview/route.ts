@@ -1,4 +1,4 @@
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
 function getDateRange(period: string): { start: Date; end: Date } {
@@ -18,7 +18,7 @@ function getDateRange(period: string): { start: Date; end: Date } {
  * Query: period (7d, 30d, 90d, all)
  */
 export async function GET(req: NextRequest) {
-  const ctx = await authenticate(req);
+  const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
   try {

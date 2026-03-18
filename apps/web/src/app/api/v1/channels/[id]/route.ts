@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -21,7 +21,7 @@ const UpdateChannelSchema = z.object({
  * Get channel detail with full identity and relations
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
-  const ctx = await authenticate(req);
+  const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
   const { id } = await params;

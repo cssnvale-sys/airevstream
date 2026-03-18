@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, paginated, parseQuery } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await authenticate(req);
+    const ctx = await authenticateAny(req, 'read');
     if (ctx instanceof NextResponse) return ctx;
 
     const { page, limit, skip, sort, order, search, params } = parseQuery(req);

@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -19,7 +19,7 @@ const CreateChannelSchema = z.object({
  * List channels (filterable by niche, platform, language, status, search)
  */
 export async function GET(req: NextRequest) {
-  const ctx = await authenticate(req);
+  const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
   const { page, limit, skip, sort, order, search, params } = parseQuery(req);

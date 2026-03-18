@@ -1,4 +1,4 @@
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Query: channelId?, start?, end?
  */
 export async function GET(req: NextRequest) {
-  const ctx = await authenticate(req);
+  const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
   try {

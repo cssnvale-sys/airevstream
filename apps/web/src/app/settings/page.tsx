@@ -33,6 +33,7 @@ import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -416,7 +417,14 @@ function AiServicesTab() {
         )}
 
         {services.length === 0 ? (
-          <p className="text-text-secondary text-sm py-4 text-center">No AI services registered</p>
+          <EmptyState
+            icon={Cpu}
+            title="No AI services registered"
+            description="Register an AI service to enable content generation."
+            actionLabel="Add Service"
+            onAction={() => setShowAddForm(true)}
+            className="py-8"
+          />
         ) : (
           <div className="space-y-3">
             {services.map((svc) => (
@@ -835,7 +843,12 @@ function SecurityTab() {
             ))}
           </div>
         ) : apiKeys.length === 0 ? (
-          <p className="text-text-secondary text-sm py-4 text-center">No API keys created</p>
+          <EmptyState
+            icon={Shield}
+            title="No API keys created"
+            description="Use the form above to create an API key for programmatic access."
+            className="py-8"
+          />
         ) : (
           <div className="space-y-2">
             {apiKeys.map((key) => (

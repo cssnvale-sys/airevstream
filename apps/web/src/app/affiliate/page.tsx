@@ -20,6 +20,7 @@ import {
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -498,8 +499,12 @@ function ProductsTab({
               <TableSkeleton rows={6} cols={7} />
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-text-secondary">
-                  No products found. Add your first affiliate product to get started.
+                <td colSpan={7}>
+                  <EmptyState
+                    icon={Package}
+                    title="No products found"
+                    description="Add your first affiliate product to get started."
+                  />
                 </td>
               </tr>
             ) : (

@@ -1,5 +1,9 @@
 'use client';
 
+// Note: Currently unused — the create page uses per-shot local state tracking
+// instead of job polling. This hook is available for future features that need
+// to poll a single BullMQ job status (e.g. video rendering progress).
+
 import { useApi } from './use-api';
 
 interface JobStatus {

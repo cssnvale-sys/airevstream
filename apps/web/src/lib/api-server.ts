@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { getDb } from '@airevstream/db';
+import { sha256 } from '@airevstream/crypto';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 let _jwtSecret: Uint8Array | null = null;
 export function getJwtSecret(): Uint8Array {
@@ -112,6 +114,91 @@ export async function authenticateSSE(req: NextRequest): Promise<ApiContext | Ne
   } catch {
     return error('UNAUTHORIZED', 'Invalid or expired token', 401);
   }
+}
+
+/**
+ * Authenticate via API key (X-API-Key header).
+ * Validates the key hash, checks expiry/status, enforces per-key rate limit,
+ * and verifies the key has the required scope.
+ *
+ * @param requiredScope - The scope needed for this operation ('read', 'write', or 'admin')
+ */
+export async function authenticateApiKey(
+  req: NextRequest,
+  requiredScope: 'read' | 'write' | 'admin' = 'read',
+): Promise<ApiContext | NextResponse> {
+  const apiKey = req.headers.get('x-api-key');
+  if (!apiKey || !apiKey.startsWith('ars_')) {
+    return error('UNAUTHORIZED', 'Missing or invalid API key', 401);
+  }
+
+  try {
+    const keyHash = sha256(apiKey);
+    const db = getDb();
+    const key = await db.apiKey.findUnique({
+      where: { keyHash },
+      include: { tenant: { select: { id: true } } },
+    });
+
+    if (!key) {
+      return error('UNAUTHORIZED', 'Invalid API key', 401);
+    }
+
+    if (key.status !== 'active') {
+      return error('UNAUTHORIZED', 'API key has been revoked', 401);
+    }
+
+    if (key.expiresAt && key.expiresAt < new Date()) {
+      return error('UNAUTHORIZED', 'API key has expired', 401);
+    }
+
+    // Check scope
+    if (!key.scopes.includes(requiredScope) && !key.scopes.includes('admin')) {
+      return error('FORBIDDEN', `API key lacks '${requiredScope}' scope`, 403);
+    }
+
+    // Per-key rate limiting
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`apikey:${key.id}:${ip}`, {
+      maxAttempts: key.rateLimitRpm,
+      windowMs: 60 * 1000,
+    });
+    if (!rl.allowed) {
+      return error('RATE_LIMITED', 'API key rate limit exceeded', 429);
+    }
+
+    // Update lastUsedAt (fire-and-forget)
+    db.apiKey.update({
+      where: { id: key.id },
+      data: { lastUsedAt: new Date() },
+    }).catch(() => { /* best-effort */ });
+
+    // API key context uses 'api-key' as userId and derives role from scopes
+    const role = key.scopes.includes('admin') ? 'admin' : 'operator';
+    return { userId: `apikey:${key.id}`, role, tenantId: key.tenantId, db };
+  } catch {
+    return error('UNAUTHORIZED', 'API key authentication failed', 401);
+  }
+}
+
+/**
+ * Authenticate via JWT Bearer token OR API key (X-API-Key header).
+ * Tries JWT first, falls back to API key.
+ */
+export async function authenticateAny(
+  req: NextRequest,
+  requiredScope: 'read' | 'write' | 'admin' = 'read',
+): Promise<ApiContext | NextResponse> {
+  const authHeader = req.headers.get('authorization');
+  const apiKeyHeader = req.headers.get('x-api-key');
+
+  if (authHeader?.startsWith('Bearer ')) {
+    return authenticate(req);
+  }
+  if (apiKeyHeader) {
+    return authenticateApiKey(req, requiredScope);
+  }
+  return error('UNAUTHORIZED', 'Missing authentication (Bearer token or X-API-Key)', 401);
 }
 
 export function forbidden(message = 'Insufficient permissions') {

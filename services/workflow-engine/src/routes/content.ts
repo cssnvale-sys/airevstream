@@ -1,56 +1,76 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { parsePagination, paginate } from '@airevstream/shared';
+import { addJob } from '@airevstream/queue';
+import type { Prisma } from '@prisma/client';
 
 const createContentSchema = z.object({
-  title: z.string().min(1).max(200),
-  description: z.string().optional(),
-  type: z.enum(['video', 'image', 'text', 'story', 'reel', 'short']),
-  script: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  scheduledAt: z.string().datetime().optional(),
-});
-
-const updateContentSchema = createContentSchema.partial().extend({
-  status: z.enum(['draft', 'review', 'approved', 'scheduled']).optional(),
+  channelId: z.string().uuid(),
+  title: z.string().max(500).optional(),
+  contentType: z.enum(['text', 'image', 'video_short', 'video_long', 'voice', 'thumbnail']),
+  contentPurpose: z.enum(['entertainment', 'sales', 'educational', 'comedy', 'affiliate']).optional(),
+  prompt: z.string().optional(),
+  language: z.string().default('en'),
+  affiliateProductId: z.string().uuid().optional(),
+  affiliateMode: z.enum(['dedicated', 'commercial_break', 'none']).optional(),
 });
 
 export async function contentRoutes(app: FastifyInstance) {
-  // All routes require auth
   app.addHook('onRequest', app.authenticate);
 
-  // List content
+  // List content items (paginated, filterable)
   app.get('/', async (request, reply) => {
-    const { page, limit } = parsePagination(request.query as any);
-    const db = getDb();
-    const userId = request.user.sub;
+    const {
+      page = '1', limit = '50', status, contentType, channelId, search, sort = 'createdAt', order = 'desc',
+    } = request.query as Record<string, string>;
 
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    if (contentType) where.contentType = contentType;
+    if (channelId) where.channelId = channelId;
+    if (search) where.title = { contains: search, mode: 'insensitive' };
+
+    const db = getDb();
     const [items, total] = await Promise.all([
-      db.content.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: { _count: { select: { assets: true, postings: true } } },
+      db.contentItem.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { [sort]: order },
+        include: {
+          channel: { select: { id: true, name: true, primaryLanguage: true } },
+          aiService: { select: { id: true, name: true, provider: true } },
+        },
       }),
-      db.content.count({ where: { userId } }),
+      db.contentItem.count({ where }),
     ]);
 
     return reply.send({
       success: true,
-      data: paginate(items, total, { page, limit }),
+      data: items,
+      meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
     });
   });
 
-  // Get single content
+  // Get content detail
   app.get('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const content = await db.content.findFirst({
-      where: { id, userId: request.user.sub },
-      include: { assets: true, postings: { include: { account: true } } },
+    const content = await db.contentItem.findUnique({
+      where: { id },
+      include: {
+        channel: true,
+        aiService: true,
+        affiliateProduct: true,
+        storyboards: { include: { shots: { orderBy: { shotNumber: 'asc' } } } },
+        scheduledPosts: true,
+        children: { select: { id: true, version: true, status: true, createdAt: true } },
+      },
     });
 
     if (!content) {
@@ -63,8 +83,8 @@ export async function contentRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: content });
   });
 
-  // Create content
-  app.post('/', async (request, reply) => {
+  // Start content generation
+  app.post('/generate', async (request, reply) => {
     const parsed = createContentSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
@@ -74,62 +94,198 @@ export async function contentRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const content = await db.content.create({
+    const content = await db.contentItem.create({
       data: {
-        ...parsed.data,
-        userId: request.user.sub,
-        scheduledAt: parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : undefined,
+        channelId: parsed.data.channelId,
+        title: parsed.data.title,
+        contentType: parsed.data.contentType,
+        contentPurpose: parsed.data.contentPurpose,
+        prompt: parsed.data.prompt,
+        language: parsed.data.language,
+        affiliateProductId: parsed.data.affiliateProductId,
+        affiliateMode: parsed.data.affiliateMode,
+        status: 'generating',
       },
+    });
+
+    await addJob('content', 'content:generate', {
+      contentId: content.id,
+      channelId: parsed.data.channelId,
+      contentType: parsed.data.contentType,
+      prompt: parsed.data.prompt,
     });
 
     return reply.status(201).send({ success: true, data: content });
   });
 
-  // Update content
-  app.patch('/:id', async (request, reply) => {
+  // Update content metadata
+  app.put('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const parsed = updateContentSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
-      });
-    }
-
+    const body = request.body as Record<string, unknown>;
     const db = getDb();
-    const existing = await db.content.findFirst({ where: { id, userId: request.user.sub } });
-    if (!existing) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Content not found' },
-      });
-    }
 
-    const content = await db.content.update({
+    const updateData: Record<string, unknown> = {};
+    if (body.title !== undefined) updateData.title = body.title as string;
+    if (body.status) updateData.status = body.status as string;
+    if (body.prompt !== undefined) updateData.prompt = body.prompt as string;
+    if (body.platformMetadata) updateData.platformMetadata = body.platformMetadata;
+
+    const content = await db.contentItem.update({
       where: { id },
-      data: {
-        ...parsed.data,
-        scheduledAt: parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : undefined,
-      },
+      data: updateData,
     });
 
     return reply.send({ success: true, data: content });
   });
 
-  // Delete content
-  app.delete('/:id', async (request, reply) => {
+  // Approve content
+  app.post('/:id/approve', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const existing = await db.content.findFirst({ where: { id, userId: request.user.sub } });
+    const content = await db.contentItem.update({
+      where: { id },
+      data: { status: 'approved', approvedAt: new Date(), approvedBy: (request as any).userId ?? 'system' },
+    });
+
+    return reply.send({ success: true, data: content });
+  });
+
+  // Reject content
+  app.post('/:id/reject', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { feedback } = request.body as { feedback?: string };
+    const db = getDb();
+
+    const content = await db.contentItem.update({
+      where: { id },
+      data: { status: 'draft' },
+    });
+
+    await db.actionAuditLog.create({
+      data: { actionType: 'content.reject', tier: 2, parameters: { contentId: id, feedback } as Prisma.InputJsonValue, status: 'completed' },
+    });
+
+    return reply.send({ success: true, data: content });
+  });
+
+  // Regenerate content (creates new version)
+  app.post('/:id/regenerate', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const db = getDb();
+
+    const existing = await db.contentItem.findUnique({ where: { id } });
     if (!existing) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Content not found' },
-      });
+      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Content not found' } });
     }
 
-    await db.content.delete({ where: { id } });
-    return reply.status(204).send();
+    const newContent = await db.contentItem.create({
+      data: {
+        channelId: existing.channelId,
+        title: existing.title,
+        contentType: existing.contentType,
+        contentPurpose: existing.contentPurpose,
+        prompt: existing.prompt,
+        language: existing.language,
+        affiliateProductId: existing.affiliateProductId,
+        affiliateMode: existing.affiliateMode,
+        parentId: existing.id,
+        version: existing.version + 1,
+        status: 'generating',
+      },
+    });
+
+    await addJob('content', 'content:generate', {
+      contentId: newContent.id,
+      channelId: existing.channelId,
+      contentType: existing.contentType,
+      prompt: existing.prompt ?? undefined,
+    });
+
+    return reply.status(201).send({ success: true, data: newContent });
+  });
+
+  // Get content versions
+  app.get('/:id/versions', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const db = getDb();
+
+    const content = await db.contentItem.findUnique({ where: { id } });
+    if (!content) {
+      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Content not found' } });
+    }
+
+    const rootId = content.parentId ?? content.id;
+    const versions = await db.contentItem.findMany({
+      where: { OR: [{ id: rootId }, { parentId: rootId }] },
+      orderBy: { version: 'asc' },
+      select: { id: true, version: true, status: true, qualityScore: true, createdAt: true },
+    });
+
+    return reply.send({ success: true, data: versions });
+  });
+
+  // Get storyboard for content
+  app.get('/:id/storyboard', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const db = getDb();
+
+    const storyboard = await db.storyboard.findFirst({
+      where: { contentId: id },
+      include: { shots: { orderBy: { shotNumber: 'asc' } } },
+    });
+
+    if (!storyboard) {
+      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No storyboard for this content' } });
+    }
+
+    return reply.send({ success: true, data: storyboard });
+  });
+
+  // List pending approvals
+  app.get('/approvals/pending', async (request, reply) => {
+    const { page = '1', limit = '50' } = request.query as Record<string, string>;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+    const db = getDb();
+
+    const where = { status: 'pending_approval' };
+    const [items, total] = await Promise.all([
+      db.contentItem.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          channel: { select: { id: true, name: true, primaryLanguage: true } },
+          aiService: { select: { id: true, name: true } },
+        },
+      }),
+      db.contentItem.count({ where }),
+    ]);
+
+    return reply.send({
+      success: true,
+      data: items,
+      meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
+    });
+  });
+
+  // Bulk approve/reject
+  app.post('/approvals/bulk', async (request, reply) => {
+    const { ids, action } = request.body as { ids: string[]; action: 'approve' | 'reject' };
+    const db = getDb();
+
+    const updateData = action === 'approve'
+      ? { status: 'approved', approvedAt: new Date(), approvedBy: (request as any).userId ?? 'system' }
+      : { status: 'draft' };
+
+    const result = await db.contentItem.updateMany({
+      where: { id: { in: ids }, status: 'pending_approval' },
+      data: updateData,
+    });
+
+    return reply.send({ success: true, data: { updated: result.count } });
   });
 }

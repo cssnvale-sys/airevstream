@@ -2,8 +2,9 @@ import { z } from 'zod';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load .env from monorepo root
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// Load .env from monorepo root (find project root relative to this file)
+const rootDir = path.resolve(__dirname, '../../..');
+dotenv.config({ path: path.resolve(rootDir, '.env') });
 
 const envSchema = z.object({
   // Database

@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 datasource db {
@@ -7,32 +8,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Users ───
+// ============================================================
+// OPERATOR / AUTH
+// ============================================================
+
+model Tenant {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(255)
+  slug         String   @unique @db.VarChar(100)
+  plan         String   @default("free") @db.VarChar(30) // free, starter, pro, enterprise
+  status       String   @default("active") @db.VarChar(20) // active, suspended, cancelled
+  settings     Json     @default("{}") @db.JsonB
+  limits       Json     @default("{}") @db.JsonB // { maxAccounts, maxChannels, maxContentPerMonth, storageGb }
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  users         User[]
+  emailAccounts EmailAccount[]
+  subscriptions Subscription[]
+  apiKeys       ApiKey[]
+
+  @@map("tenants")
+}
 
 model User {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
   passwordHash String   @map("password_hash")
   name         String?
   avatarUrl    String?  @map("avatar_url")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  role         String   @default("operator") @db.VarChar(20) // admin, operator, viewer
+  tenantId     String?  @map("tenant_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  accounts      Account[]
-  contents      Content[]
-  workflows     Workflow[]
-  conversations Conversation[]
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   refreshTokens RefreshToken[]
 
+  @@index([tenantId])
   @@map("users")
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid()) @db.Uuid
   token     String   @unique
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -40,205 +62,813 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-// ─── Platform Accounts ───
+// ============================================================
+// ACCOUNTS & CHANNELS
+// ============================================================
 
-model Account {
-  id              String   @id @default(cuid())
-  userId          String   @map("user_id")
-  platform        String   // youtube, tiktok, instagram, twitter, facebook
-  platformUserId  String?  @map("platform_user_id")
-  username        String?
-  displayName     String?  @map("display_name")
-  avatarUrl       String?  @map("avatar_url")
-  accessToken     String?  @map("access_token") // encrypted
-  refreshToken    String?  @map("refresh_token") // encrypted
-  tokenExpiresAt  DateTime? @map("token_expires_at")
-  status          String   @default("pending") // active, suspended, disconnected, pending
-  metadata        Json?
-  lastSyncedAt    DateTime? @map("last_synced_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+model EmailAccount {
+  id          String   @id @default(uuid()) @db.Uuid
+  email       String   @unique @db.VarChar(255)
+  passwordEnc String   @map("password_enc") // AES-256-GCM encrypted
+  status      String   @default("pending") @db.VarChar(20) // active, disabled, flagged, pending
+  tier        String   @default("tier2") @db.VarChar(10) // tier1, tier2, tier3
+  tenantId    String?  @map("tenant_id") @db.Uuid
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  postings Posting[]
+  tenant         Tenant?          @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  socialAccounts SocialAccount[]
 
-  @@unique([userId, platform, platformUserId])
-  @@index([userId])
+  @@index([tenantId])
+  @@map("email_accounts")
+}
+
+model SocialAccount {
+  id              String    @id @default(uuid()) @db.Uuid
+  emailAccountId  String    @map("email_account_id") @db.Uuid
+  platform        String    @db.VarChar(20) // youtube, tiktok, instagram, facebook
+  platformUserId  String?   @map("platform_user_id") @db.VarChar(255)
+  username        String?   @db.VarChar(255)
+  credentialsEnc  String?   @map("credentials_enc") // encrypted platform tokens/cookies
+  status          String    @default("pending") @db.VarChar(20) // active, disabled, flagged, pending, needs_signup
+  healthScore     Int       @default(100) @map("health_score")
+  lastLoginAt     DateTime? @map("last_login_at") @db.Timestamptz
+  lastPostAt      DateTime? @map("last_post_at") @db.Timestamptz
+  metadata        Json      @default("{}") @db.JsonB
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  emailAccount EmailAccount @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  channels     Channel[]
+  postings     ScheduledPost[]
+
+  @@unique([emailAccountId, platform])
+  @@index([emailAccountId])
   @@index([platform])
-  @@map("accounts")
+  @@map("social_accounts")
 }
 
-// ─── Content ───
+model Channel {
+  id                String   @id @default(uuid()) @db.Uuid
+  socialAccountId   String   @map("social_account_id") @db.Uuid
+  name              String   @db.VarChar(255)
+  platformChannelId String?  @map("platform_channel_id") @db.VarChar(255)
+  primaryLanguage   String   @default("en") @map("primary_language") @db.VarChar(10)
+  familyId          String?  @map("family_id") @db.Uuid
 
-model Content {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  title       String
-  description String?
-  type        String   // video, image, text, story, reel, short
-  status      String   @default("draft") // draft, generating, review, approved, scheduled, publishing, published, failed
-  script      String?
-  metadata    Json?
-  tags        String[] @default([])
-  scheduledAt DateTime? @map("scheduled_at")
-  publishedAt DateTime? @map("published_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  // Identity Profile
+  niches          String[]  @default([])
+  tone            String?   @db.VarChar(50) // comedic, educational, professional, etc.
+  personality     String?
+  targetAudience  String?   @map("target_audience")
+  postingCadence  Json      @default("{}") @map("posting_cadence") @db.JsonB
 
-  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assets ContentAsset[]
-  postings Posting[]
-  workflowRuns WorkflowRun[]
+  // Asset References
+  cinemaBibleId   String?   @map("cinema_bible_id") @db.Uuid
 
-  @@index([userId])
+  // Platform-Specific
+  platformMetadata Json     @default("{}") @map("platform_metadata") @db.JsonB
+
+  // Status
+  status          String    @default("active") @db.VarChar(20)
+  healthScore     Int       @default(100) @map("health_score")
+  isPrimary       Boolean   @default(false) @map("is_primary")
+
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  socialAccount      SocialAccount        @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  channelAvatars     ChannelAvatar[]
+  brandingPackages   BrandingPackage[]
+  channelScenery     ChannelScenery[]
+  cinemaBibles       CinemaBible[]
+  contentItems       ContentItem[]
+  scheduledPosts     ScheduledPost[]
+  affiliatePool      ChannelAffiliatePool[]
+  affiliateClicks    AffiliateClick[]
+  aiServiceUsage     AiServiceUsage[]
+
+  @@index([socialAccountId])
+  @@index([familyId])
+  @@map("channels")
+}
+
+// ============================================================
+// ASSETS: AVATARS, BRANDING, SCENERY, VOICES
+// ============================================================
+
+model Avatar {
+  id                String   @id @default(uuid()) @db.Uuid
+  name              String   @db.VarChar(255)
+
+  // Physical Description
+  description       Json     @db.JsonB // { physical: {}, mental: {}, emotional: {} }
+  traitLock         Json     @default("{}") @map("trait_lock") @db.JsonB
+
+  // Images (multi-angle)
+  images            Json     @default("{}") @db.JsonB // { face, waist, body_front, body_back }
+
+  // Voice
+  voiceProfiles     Json     @default("{}") @map("voice_profiles") @db.JsonB
+
+  // Generation History
+  generationHistory Json     @default("[]") @map("generation_history") @db.JsonB
+
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  channelAvatars    ChannelAvatar[]
+
+  @@map("avatars")
+}
+
+model ChannelAvatar {
+  channelId String  @map("channel_id") @db.Uuid
+  avatarId  String  @map("avatar_id") @db.Uuid
+  isPrimary Boolean @default(false) @map("is_primary")
+  role      String? @db.VarChar(50) // main_character, supporting, narrator
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  avatar  Avatar  @relation(fields: [avatarId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, avatarId])
+  @@map("channel_avatars")
+}
+
+model BrandingPackage {
+  id         String   @id @default(uuid()) @db.Uuid
+  channelId  String   @map("channel_id") @db.Uuid
+  logoUrl    String?  @map("logo_url")
+  bannerUrl  String?  @map("banner_url")
+  colors     Json     @default("{}") @db.JsonB // { primary, secondary, accent }
+  fonts      Json     @default("{}") @db.JsonB // { heading, body }
+  templates  Json     @default("[]") @db.JsonB
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@map("branding_packages")
+}
+
+model SceneryAsset {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(255)
+  category  String?  @db.VarChar(50) // city, nature, studio, fantasy
+  imageUrl  String   @map("image_url")
+  prompt    String?
+  metadata  Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  channelScenery ChannelScenery[]
+
+  @@map("scenery_assets")
+}
+
+model ChannelScenery {
+  channelId  String @map("channel_id") @db.Uuid
+  sceneryId  String @map("scenery_id") @db.Uuid
+
+  channel Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  scenery SceneryAsset @relation(fields: [sceneryId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, sceneryId])
+  @@map("channel_scenery")
+}
+
+// ============================================================
+// CINEMA BIBLES
+// ============================================================
+
+model CinemaBible {
+  id               String   @id @default(uuid()) @db.Uuid
+  channelId        String   @map("channel_id") @db.Uuid
+  version          Int      @default(1)
+
+  lookBible        Json     @default("{}") @map("look_bible") @db.JsonB
+  characterBible   Json     @default("{}") @map("character_bible") @db.JsonB
+  environmentBible Json     @default("{}") @map("environment_bible") @db.JsonB
+  promptBible      Json     @default("{}") @map("prompt_bible") @db.JsonB
+  shotspecTemplate  Json     @default("{}") @map("shotspec_template") @db.JsonB
+
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@map("cinema_bibles")
+}
+
+// ============================================================
+// AI SERVICE REGISTRY
+// ============================================================
+
+model AiService {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(100) // "openai-gpt4", "ollama-llama3", "veo3"
+  provider       String   @db.VarChar(50)  // openai, anthropic, google, ollama, comfyui
+  serviceType    String   @map("service_type") @db.VarChar(20) // text, image, video, voice
+  endpoint       String?
+  apiKeyEnc      String?  @map("api_key_enc") // encrypted
+
+  // Capabilities
+  capabilities   Json     @default("{}") @db.JsonB
+  rateLimits     Json     @default("{}") @map("rate_limits") @db.JsonB
+  costPerUnit    Json     @default("{}") @map("cost_per_unit") @db.JsonB
+
+  // Status
+  status         String   @default("active") @db.VarChar(20) // active, degraded, down, disabled
+  healthScore    Int      @default(100) @map("health_score")
+  lastHealthCheck DateTime? @map("last_health_check") @db.Timestamptz
+
+  // Performance
+  avgResponseMs  Int?     @map("avg_response_ms")
+  successRate    Decimal  @default(1.0) @map("success_rate") @db.Decimal(5, 4)
+  avgQualityScore Decimal? @map("avg_quality_score") @db.Decimal(3, 1)
+
+  // Fallback
+  fallbackOrder  Int      @default(0) @map("fallback_order")
+  fallbackGroup  String?  @map("fallback_group") @db.VarChar(50)
+
+  isLocal        Boolean  @default(false) @map("is_local")
+  isFree         Boolean  @default(false) @map("is_free")
+
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  usage          AiServiceUsage[]
+  contentItems   ContentItem[]
+  storyboardShots StoryboardShot[]
+
+  @@index([serviceType])
+  @@index([fallbackGroup, fallbackOrder])
+  @@map("ai_services")
+}
+
+model AiServiceUsage {
+  id           String   @id @default(uuid()) @db.Uuid
+  serviceId    String   @map("service_id") @db.Uuid
+  contentId    String?  @map("content_id") @db.Uuid
+  channelId    String?  @map("channel_id") @db.Uuid
+
+  requestType  String?  @map("request_type") @db.VarChar(50)
+  tokensUsed   Int?     @map("tokens_used")
+  durationSec  Decimal? @map("duration_sec") @db.Decimal(8, 2)
+  cost         Decimal? @db.Decimal(10, 4)
+  qualityScore Decimal? @map("quality_score") @db.Decimal(3, 1)
+  success      Boolean  @default(true)
+  responseMs   Int?     @map("response_ms")
+  errorMessage String?  @map("error_message")
+
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  service AiService    @relation(fields: [serviceId], references: [id])
+  content ContentItem? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+  channel Channel?     @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+  @@index([serviceId])
+  @@index([createdAt])
+  @@map("ai_service_usage")
+}
+
+// ============================================================
+// CONTENT
+// ============================================================
+
+model ContentItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  channelId       String   @map("channel_id") @db.Uuid
+
+  // Content Identity
+  title           String?  @db.VarChar(500)
+  contentType     String   @map("content_type") @db.VarChar(30) // text, image, video_short, video_long, voice, thumbnail
+  contentPurpose  String?  @map("content_purpose") @db.VarChar(30) // entertainment, sales, educational, comedy, affiliate
+
+  // Generation
+  prompt          String?
+  generationParams Json    @default("{}") @map("generation_params") @db.JsonB
+  aiServiceId     String?  @map("ai_service_id") @db.Uuid
+  qualityScore    Decimal? @map("quality_score") @db.Decimal(3, 1)
+
+  // Files
+  fileUrl         String?  @map("file_url")
+  thumbnailUrl    String?  @map("thumbnail_url")
+
+  // Metadata
+  platformMetadata Json    @default("{}") @map("platform_metadata") @db.JsonB
+  beatTags        Json     @default("[]") @map("beat_tags") @db.JsonB
+  durationSec     Decimal? @map("duration_sec") @db.Decimal(8, 2)
+  language        String   @default("en") @db.VarChar(10)
+
+  // Affiliate
+  affiliateProductId String? @map("affiliate_product_id") @db.Uuid
+  affiliateMode   String?  @map("affiliate_mode") @db.VarChar(20) // dedicated, commercial_break, none
+
+  // Versioning
+  version         Int      @default(1)
+  parentId        String?  @map("parent_id") @db.Uuid
+
+  // Language variants
+  languageFamilyId String? @map("language_family_id") @db.Uuid
+
+  // Status
+  status          String   @default("draft") @db.VarChar(20) // draft, generating, generated, pending_approval, approved, scheduled, posted, archived, failed
+
+  // Approval
+  approvalGateWindowHrs Decimal? @map("approval_gate_window_hrs") @db.Decimal(5, 1)
+  approvedAt      DateTime? @map("approved_at") @db.Timestamptz
+  approvedBy      String?  @map("approved_by") @db.VarChar(50) // operator, auto, system
+
+  // Performance
+  performance     Json     @default("{}") @db.JsonB
+
+  // Provenance
+  provenance      Json     @default("{}") @db.JsonB
+
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  channel         Channel          @relation(fields: [channelId], references: [id])
+  aiService       AiService?       @relation(fields: [aiServiceId], references: [id], onDelete: SetNull)
+  affiliateProduct AffiliateProduct? @relation(fields: [affiliateProductId], references: [id], onDelete: SetNull)
+  parent          ContentItem?     @relation("ContentVersions", fields: [parentId], references: [id], onDelete: SetNull)
+  children        ContentItem[]    @relation("ContentVersions")
+  storyboards     Storyboard[]
+  scheduledPosts  ScheduledPost[]
+  aiServiceUsage  AiServiceUsage[]
+  affiliateClicks AffiliateClick[]
+  workflowJobs    WorkflowJob[]
+
+  @@index([channelId])
   @@index([status])
-  @@index([scheduledAt])
-  @@map("contents")
+  @@index([contentType])
+  @@index([languageFamilyId])
+  @@map("content_items")
 }
 
-model ContentAsset {
-  id         String   @id @default(cuid())
-  contentId  String   @map("content_id")
-  type       String   // video, audio, image, thumbnail, subtitle
-  fileName   String   @map("file_name")
-  mimeType   String   @map("mime_type")
-  size       Int
-  bucket     String
-  key        String
-  url        String?
-  metadata   Json?
-  createdAt  DateTime @default(now()) @map("created_at")
+// ============================================================
+// VIDEO PRODUCTION
+// ============================================================
 
-  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+model Storyboard {
+  id              String   @id @default(uuid()) @db.Uuid
+  contentId       String   @map("content_id") @db.Uuid
+  status          String   @default("draft") @db.VarChar(20) // draft, approved, in_production
+  scriptJson      Json     @map("script_json") @db.JsonB
+  soundPlanJson   Json?    @map("sound_plan_json") @db.JsonB
+  totalDurationSec Decimal? @map("total_duration_sec") @db.Decimal(8, 2)
+  fps             Int      @default(24)
+  aspectRatio     String   @default("16:9") @map("aspect_ratio") @db.VarChar(10)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@index([contentId])
-  @@map("content_assets")
+  content ContentItem     @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  shots   StoryboardShot[]
+
+  @@map("storyboards")
 }
 
-// ─── Posting (cross-platform publishing) ───
+model StoryboardShot {
+  id            String   @id @default(uuid()) @db.Uuid
+  storyboardId  String   @map("storyboard_id") @db.Uuid
+  shotNumber    Int      @map("shot_number")
 
-model Posting {
-  id            String   @id @default(cuid())
-  contentId     String   @map("content_id")
-  accountId     String   @map("account_id")
-  platformPostId String? @map("platform_post_id")
-  status        String   @default("pending") // pending, publishing, published, failed
-  publishedAt   DateTime? @map("published_at")
-  errorMessage  String?   @map("error_message")
-  metadata      Json?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  // ShotSpec
+  shotspec      Json     @db.JsonB
 
-  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  // Generated Assets
+  keyframeUrls  Json     @default("[]") @map("keyframe_urls") @db.JsonB
+  plateVideoUrl String?  @map("plate_video_url")
+  matteUrls     Json     @default("[]") @map("matte_urls") @db.JsonB
+  audioStemUrls Json     @default("{}") @map("audio_stem_urls") @db.JsonB
 
-  @@index([contentId])
-  @@index([accountId])
-  @@index([status])
-  @@map("postings")
+  // Status
+  status        String   @default("pending") @db.VarChar(20) // pending, generating, generated, approved, failed
+  qualityScore  Decimal? @map("quality_score") @db.Decimal(3, 1)
+  generationCost Decimal? @map("generation_cost") @db.Decimal(10, 4)
+  aiServiceId   String?  @map("ai_service_id") @db.Uuid
+
+  // Timing
+  startSec      Decimal  @map("start_sec") @db.Decimal(8, 2)
+  endSec        Decimal  @map("end_sec") @db.Decimal(8, 2)
+
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  storyboard Storyboard @relation(fields: [storyboardId], references: [id], onDelete: Cascade)
+  aiService  AiService? @relation(fields: [aiServiceId], references: [id], onDelete: SetNull)
+
+  @@index([storyboardId, shotNumber])
+  @@map("storyboard_shots")
 }
 
-// ─── Workflows ───
+// ============================================================
+// SCHEDULING & DISTRIBUTION
+// ============================================================
 
-model Workflow {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  name        String
-  description String?
-  definition  Json     // WorkflowDefinition JSON
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model ScheduledPost {
+  id              String   @id @default(uuid()) @db.Uuid
+  contentId       String   @map("content_id") @db.Uuid
+  channelId       String   @map("channel_id") @db.Uuid
 
-  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  runs WorkflowRun[]
+  scheduledAt     DateTime @map("scheduled_at") @db.Timestamptz
+  platform        String   @db.VarChar(20)
 
-  @@index([userId])
-  @@map("workflows")
+  // Platform-specific publish data
+  publishConfig   Json     @default("{}") @map("publish_config") @db.JsonB
+
+  // Status
+  status          String   @default("scheduled") @db.VarChar(20) // scheduled, posting, posted, failed, cancelled
+  postedAt        DateTime? @map("posted_at") @db.Timestamptz
+  platformPostId  String?  @map("platform_post_id") @db.VarChar(255)
+  errorMessage    String?  @map("error_message")
+  retryCount      Int      @default(0) @map("retry_count")
+
+  // Account used for posting
+  socialAccountId String?  @map("social_account_id") @db.Uuid
+
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  content       ContentItem    @relation(fields: [contentId], references: [id])
+  channel       Channel        @relation(fields: [channelId], references: [id])
+  socialAccount SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
+
+  @@index([channelId, scheduledAt])
+  @@index([status, scheduledAt])
+  @@map("scheduled_posts")
 }
 
-model WorkflowRun {
-  id         String   @id @default(cuid())
-  workflowId String   @map("workflow_id")
-  contentId  String?  @map("content_id")
-  status     String   @default("idle") // idle, running, paused, completed, failed
-  startedAt  DateTime? @map("started_at")
-  finishedAt DateTime? @map("finished_at")
-  error      String?
-  stepResults Json?   @map("step_results")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+// ============================================================
+// AFFILIATE MARKETING
+// ============================================================
 
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  content  Content? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+model AffiliateProduct {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @db.VarChar(255)
+  url             String
+  shortUrl        String?  @map("short_url")
+  description     String?
+  salesAngle      String?  @map("sales_angle")
+  category        String?  @db.VarChar(100)
+  brand           String?  @db.VarChar(100)
+  commissionRate  Decimal? @map("commission_rate") @db.Decimal(5, 2)
+  status          String   @default("active") @db.VarChar(20) // active, inactive, expired
+  imageUrl        String?  @map("image_url")
+  metadata        Json     @default("{}") @db.JsonB
 
-  @@index([workflowId])
-  @@index([status])
-  @@map("workflow_runs")
+  // Performance
+  totalClicks     Int      @default(0) @map("total_clicks")
+  totalConversions Int     @default(0) @map("total_conversions")
+  totalRevenue    Decimal  @default(0) @map("total_revenue") @db.Decimal(12, 2)
+
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  channelPools    ChannelAffiliatePool[]
+  clicks          AffiliateClick[]
+  contentItems    ContentItem[]
+
+  @@map("affiliate_products")
 }
 
-// ─── AI Conversations ───
+model ChannelAffiliatePool {
+  channelId          String   @map("channel_id") @db.Uuid
+  affiliateProductId String   @map("affiliate_product_id") @db.Uuid
+  isAutoSuggested    Boolean  @default(false) @map("is_auto_suggested")
+  performanceScore   Decimal  @default(0) @map("performance_score") @db.Decimal(5, 2)
+  lastUsedAt         DateTime? @map("last_used_at") @db.Timestamptz
+
+  channel          Channel          @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  affiliateProduct AffiliateProduct @relation(fields: [affiliateProductId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, affiliateProductId])
+  @@map("channel_affiliate_pools")
+}
+
+model AffiliateClick {
+  id         String   @id @default(uuid()) @db.Uuid
+  productId  String   @map("product_id") @db.Uuid
+  contentId  String?  @map("content_id") @db.Uuid
+  channelId  String?  @map("channel_id") @db.Uuid
+  platform   String?  @db.VarChar(20)
+  ipHash     String?  @map("ip_hash") @db.VarChar(64)
+  userAgent  String?  @map("user_agent")
+  converted  Boolean  @default(false)
+  revenue    Decimal? @db.Decimal(10, 2)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  product AffiliateProduct @relation(fields: [productId], references: [id])
+  content ContentItem?     @relation(fields: [contentId], references: [id], onDelete: SetNull)
+  channel Channel?         @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+  @@index([productId, createdAt])
+  @@map("affiliate_clicks")
+}
+
+// ============================================================
+// APPROVAL GATES & TRUST
+// ============================================================
+
+model ApprovalTrustScore {
+  id              String   @id @default(uuid()) @db.Uuid
+  dimensionType   String   @map("dimension_type") @db.VarChar(30) // content_type, llm, workflow, tier, niche, platform
+  dimensionValue  String   @map("dimension_value") @db.VarChar(100)
+
+  trustScore      Decimal  @default(0) @map("trust_score") @db.Decimal(5, 2) // 0-100
+  gateWindowHrs   Decimal  @default(24) @map("gate_window_hrs") @db.Decimal(5, 1)
+
+  totalApproved       Int  @default(0) @map("total_approved")
+  totalRejected       Int  @default(0) @map("total_rejected")
+  totalAutoApproved   Int  @default(0) @map("total_auto_approved")
+  avgOutcomeScore     Decimal @default(0) @map("avg_outcome_score") @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([dimensionType, dimensionValue])
+  @@map("approval_trust_scores")
+}
+
+// ============================================================
+// AI ASSISTANT
+// ============================================================
 
 model Conversation {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  title     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid()) @db.Uuid
+  title        String?  @db.VarChar(255)
+  contextPage  String?  @map("context_page") @db.VarChar(100)
+  modelUsed    String?  @map("model_used") @db.VarChar(100)
+  messageCount Int      @default(0) @map("message_count")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages Message[]
+  messages ConversationMessage[]
+  actions  ActionAuditLog[]
 
-  @@index([userId])
   @@map("conversations")
 }
 
-model Message {
-  id             String   @id @default(cuid())
-  conversationId String   @map("conversation_id")
-  role           String   // user, assistant, system
+model ConversationMessage {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  role           String   @db.VarChar(10) // user, assistant, system
   content        String
-  metadata       Json?
-  createdAt      DateTime @default(now()) @map("created_at")
+  tokensUsed     Int?     @map("tokens_used")
+  actionProposed Json?    @map("action_proposed") @db.JsonB
+
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  @@index([conversationId])
-  @@map("messages")
+  @@index([conversationId, createdAt])
+  @@map("conversation_messages")
 }
 
-// ─── Research ───
+model ActionAuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  actionType     String   @map("action_type") @db.VarChar(100)
+  tier           Int
+  parameters     Json     @default("{}") @db.JsonB
+  result         Json     @default("{}") @db.JsonB
+  status         String?  @db.VarChar(20) // proposed, confirmed, executing, completed, failed, rolled_back
+  rollbackData   Json?    @map("rollback_data") @db.JsonB
+  conversationId String?  @map("conversation_id") @db.Uuid
 
-model ResearchTopic {
-  id        String   @id @default(cuid())
-  topic     String
-  platform  String?
-  trendScore Float?  @map("trend_score")
-  data      Json?
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@index([platform])
-  @@index([createdAt])
-  @@map("research_topics")
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@map("action_audit_log")
 }
 
-// ─── Job Log ───
+// ============================================================
+// WORKFLOWS & JOBS
+// ============================================================
 
-model JobLog {
-  id          String   @id @default(cuid())
-  queue       String
-  jobId       String   @map("job_id")
-  jobType     String   @map("job_type")
-  status      String   // queued, active, completed, failed
-  data        Json?
-  result      Json?
-  error       String?
-  startedAt   DateTime? @map("started_at")
-  completedAt DateTime? @map("completed_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+model WorkflowJob {
+  id             String   @id @default(uuid()) @db.Uuid
+  jobType        String   @map("job_type") @db.VarChar(50) // content_production, account_creation, warming, research, posting
+  priority       Int      @default(5) // 1=highest, 10=lowest
 
-  @@index([queue])
+  // Context
+  channelId      String?  @map("channel_id") @db.Uuid
+  contentId      String?  @map("content_id") @db.Uuid
+  emailAccountId String?  @map("email_account_id") @db.Uuid
+
+  // Execution
+  status         String   @default("queued") @db.VarChar(20) // queued, running, paused, completed, failed, cancelled
+  progress       Int      @default(0) // 0-100
+  etaSec         Int?     @map("eta_sec")
+
+  // Config
+  params         Json     @default("{}") @db.JsonB
+  result         Json     @default("{}") @db.JsonB
+  error          String?
+  retryCount     Int      @default(0) @map("retry_count")
+  maxRetries     Int      @default(3) @map("max_retries")
+
+  // HITL
+  needsHuman     Boolean  @default(false) @map("needs_human")
+  humanTaskDesc  String?  @map("human_task_desc")
+  humanLinks     Json     @default("[]") @map("human_links") @db.JsonB
+  humanCompletedAt DateTime? @map("human_completed_at") @db.Timestamptz
+
+  startedAt      DateTime? @map("started_at") @db.Timestamptz
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  content        ContentItem?  @relation(fields: [contentId], references: [id], onDelete: SetNull)
+
+  @@index([status, priority])
   @@index([jobType])
-  @@index([status])
-  @@map("job_logs")
+  @@map("workflow_jobs")
+}
+
+// ============================================================
+// MONITORING & ALERTS
+// ============================================================
+
+model Alert {
+  id             String    @id @default(uuid()) @db.Uuid
+  severity       String    @db.VarChar(10) // critical, warning, info
+  category       String    @db.VarChar(50) // account_health, system, workflow, cost, content
+  title          String    @db.VarChar(255)
+  message        String?
+  source         String?   @db.VarChar(100)
+
+  status         String    @default("open") @db.VarChar(20) // open, acknowledged, resolved, suppressed
+  acknowledgedAt DateTime? @map("acknowledged_at") @db.Timestamptz
+  resolvedAt     DateTime? @map("resolved_at") @db.Timestamptz
+
+  metadata       Json      @default("{}") @db.JsonB
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([status, severity])
+  @@map("alerts")
+}
+
+model SystemMetric {
+  id          String   @id @default(uuid()) @db.Uuid
+  metricType  String   @map("metric_type") @db.VarChar(50) // cpu, ram, disk, network, queue_depth, sessions
+  value       Decimal  @db.Decimal(10, 2)
+  unit        String?  @db.VarChar(20) // percent, bytes, count, mbps
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([metricType, createdAt])
+  @@map("system_metrics")
+}
+
+model SystemSetting {
+  key       String   @id @db.VarChar(100)
+  value     Json     @db.JsonB
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("system_settings")
+}
+
+// ============================================================
+// RESEARCH & KNOWLEDGE
+// ============================================================
+
+model KnowledgeBaseEntry {
+  id             String   @id @default(uuid()) @db.Uuid
+  domain         String   @db.VarChar(50) // platform_ops, civitai, remotion, huggingface, comfyui, video_production
+  category       String?  @db.VarChar(100)
+  title          String   @db.VarChar(500)
+  content        String
+  sourceUrl      String?  @map("source_url")
+  relevanceScore Decimal? @map("relevance_score") @db.Decimal(3, 1)
+  isCurrent      Boolean  @default(true) @map("is_current")
+
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([domain])
+  @@map("knowledge_base_entries")
+}
+
+// ============================================================
+// STOREFRONTS (EPIC 7)
+// ============================================================
+
+model Storefront {
+  id           String   @id @default(uuid()) @db.Uuid
+  channelId    String   @map("channel_id") @db.Uuid
+  name         String   @db.VarChar(255)
+  slug         String   @unique @db.VarChar(100)
+  description  String?
+  logoUrl      String?  @map("logo_url")
+  bannerUrl    String?  @map("banner_url")
+  theme        Json     @default("{}") @db.JsonB // { primaryColor, font, layout }
+  status       String   @default("draft") @db.VarChar(20) // draft, published, archived
+  customDomain String?  @map("custom_domain") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  products StorefrontProduct[]
+
+  @@index([channelId])
+  @@map("storefronts")
+}
+
+model StorefrontProduct {
+  id              String   @id @default(uuid()) @db.Uuid
+  storefrontId    String   @map("storefront_id") @db.Uuid
+  affiliateProductId String @map("affiliate_product_id") @db.Uuid
+  displayOrder    Int      @default(0) @map("display_order")
+  featured        Boolean  @default(false)
+  customTitle     String?  @map("custom_title") @db.VarChar(255)
+  customDescription String? @map("custom_description")
+  status          String   @default("active") @db.VarChar(20) // active, hidden
+
+  storefront       Storefront       @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+
+  @@index([storefrontId, displayOrder])
+  @@map("storefront_products")
+}
+
+// ============================================================
+// PROMPT LIBRARY & COST MANAGEMENT (EPIC 8)
+// ============================================================
+
+model PromptTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(255)
+  category       String   @db.VarChar(50) // hook, intro, content, cta, thumbnail, description
+  platform       String?  @db.VarChar(20) // youtube, tiktok, instagram, facebook, or null for all
+  contentType    String?  @map("content_type") @db.VarChar(30)
+  template       String   // The prompt template text with {{placeholders}}
+  negativePrompt String?  @map("negative_prompt")
+  tags           String[] @default([])
+  usageCount     Int      @default(0) @map("usage_count")
+  avgScore       Decimal? @map("avg_score") @db.Decimal(3, 1)
+  metadata       Json     @default("{}") @db.JsonB
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([category])
+  @@index([platform])
+  @@map("prompt_templates")
+}
+
+model CostBudget {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(255)
+  budgetType     String   @map("budget_type") @db.VarChar(30) // daily, weekly, monthly
+  limitAmount    Decimal  @map("limit_amount") @db.Decimal(10, 2)
+  currentSpend   Decimal  @default(0) @map("current_spend") @db.Decimal(10, 2)
+  alertThreshold Decimal  @default(0.8) @map("alert_threshold") @db.Decimal(3, 2) // 0.8 = alert at 80%
+  category       String?  @db.VarChar(50) // ai_services, storage, all
+  status         String   @default("active") @db.VarChar(20) // active, paused, exceeded
+  periodStart    DateTime @map("period_start") @db.Timestamptz
+  periodEnd      DateTime @map("period_end") @db.Timestamptz
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("cost_budgets")
+}
+
+// ============================================================
+// SAAS & BILLING (EPIC 9)
+// ============================================================
+
+model Subscription {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  plan         String    @db.VarChar(30) // free, starter, pro, enterprise
+  status       String    @default("active") @db.VarChar(20) // active, cancelled, past_due, trialing
+  currentPeriodStart DateTime @map("current_period_start") @db.Timestamptz
+  currentPeriodEnd   DateTime @map("current_period_end") @db.Timestamptz
+  cancelAtPeriodEnd  Boolean  @default(false) @map("cancel_at_period_end")
+  externalId   String?   @map("external_id") @db.VarChar(255) // Stripe subscription ID
+  metadata     Json      @default("{}") @db.JsonB
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("subscriptions")
+}
+
+model ApiKey {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  name         String    @db.VarChar(255)
+  keyHash      String    @unique @map("key_hash") @db.VarChar(128)
+  keyPrefix    String    @map("key_prefix") @db.VarChar(12) // First few chars for identification
+  scopes       String[]  @default([]) // ["read", "write", "admin"]
+  rateLimitRpm Int       @default(60) @map("rate_limit_rpm")
+  lastUsedAt   DateTime? @map("last_used_at") @db.Timestamptz
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz
+  status       String    @default("active") @db.VarChar(20) // active, revoked
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("api_keys")
 }

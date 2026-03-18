@@ -5,7 +5,7 @@ let prisma: PrismaClient | null = null;
 export function getDb(): PrismaClient {
   if (!prisma) {
     prisma = new PrismaClient({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
     });
   }
   return prisma;

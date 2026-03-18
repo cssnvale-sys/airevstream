@@ -12,12 +12,12 @@ describe('slugify', () => {
 
 describe('parsePagination', () => {
   it('returns defaults when no params provided', () => {
-    expect(parsePagination({})).toEqual({ page: 1, limit: 20 });
+    expect(parsePagination({})).toEqual({ page: 1, limit: 50 });
   });
 
   it('clamps page to minimum of 1', () => {
-    expect(parsePagination({ page: -1 })).toEqual({ page: 1, limit: 20 });
-    expect(parsePagination({ page: 0 })).toEqual({ page: 1, limit: 20 });
+    expect(parsePagination({ page: -1 })).toEqual({ page: 1, limit: 50 });
+    expect(parsePagination({ page: 0 })).toEqual({ page: 1, limit: 50 });
   });
 
   it('clamps limit to max of 100', () => {
@@ -30,11 +30,8 @@ describe('paginate', () => {
     const items = [1, 2, 3];
     const result = paginate(items, 10, { page: 1, limit: 3 });
     expect(result).toEqual({
-      items: [1, 2, 3],
-      total: 10,
-      page: 1,
-      limit: 3,
-      totalPages: 4,
+      data: [1, 2, 3],
+      meta: { total: 10, page: 1, limit: 3, pages: 4 },
     });
   });
 });

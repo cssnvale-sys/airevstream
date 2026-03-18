@@ -17,6 +17,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@airevstream/shared": "*",
     "ollama": "^0.5.0"
   },
   "devDependencies": {

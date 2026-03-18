@@ -21,11 +21,13 @@ export function parsePagination(params: Partial<PaginationParams>): PaginationPa
 /** Create a paginated result */
 export function paginate<T>(items: T[], total: number, params: PaginationParams): PaginatedResult<T> {
   return {
-    items,
-    total,
-    page: params.page,
-    limit: params.limit,
-    totalPages: Math.ceil(total / params.limit),
+    data: items,
+    meta: {
+      total,
+      page: params.page,
+      limit: params.limit,
+      pages: Math.ceil(total / params.limit),
+    },
   };
 }
 

@@ -1,155 +1,129 @@
-import { Ollama } from 'ollama';
+// ─── Re-export types ───
+export type {
+  ChatMessage,
+  GenerateOptions,
+  GenerateResult,
+  StreamChunk,
+  TextRequest,
+  TextResponse,
+  ChatRequest,
+  HealthCheckResult,
+  ServiceRecord,
+  GenerateRequest,
+  GenerateResponse,
+  AttemptRecord,
+  CircuitBreakerState,
+  AiProvider,
+} from './types.js';
 
-// ─── Types ───
+// ─── Re-export registry ───
+export { ServiceRegistry } from './registry.js';
+export type { ServiceFetcher, UsageLogger, ServiceUpdater, KeyDecryptor } from './registry.js';
+export { createServiceRegistry } from './create-registry.js';
 
-export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
+// ─── Re-export providers ───
+export { OllamaProvider } from './providers/ollama.js';
+export { OpenAICompatProvider } from './providers/openai-compat.js';
+export { HttpProvider } from './providers/http.js';
 
-export interface GenerateOptions {
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  systemPrompt?: string;
-  format?: 'json' | undefined;
-}
+// ─── Legacy API (backward-compatible) ───
+// These functions maintain the original Ollama-only interface for
+// existing consumers (ai-assistant, workers, etc.)
 
-export interface GenerateResult {
-  content: string;
-  model: string;
-  totalDuration?: number;
-  promptTokens?: number;
-  completionTokens?: number;
-}
-
-export interface StreamChunk {
-  content: string;
-  done: boolean;
-}
-
-// ─── Default Config ───
+import { OllamaProvider } from './providers/ollama.js';
+import type { GenerateOptions, GenerateResult, ChatMessage, StreamChunk } from './types.js';
 
 const DEFAULT_MODEL = 'qwen3:8b';
+let ollamaProvider: OllamaProvider | null = null;
 
-// ─── Client ───
-
-let client: Ollama | null = null;
-
-export function getAiClient(baseUrl?: string): Ollama {
-  if (!client) {
-    client = new Ollama({
-      host: baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434',
-    });
+function getOllamaProvider(): OllamaProvider {
+  if (!ollamaProvider) {
+    ollamaProvider = new OllamaProvider();
   }
-  return client;
+  return ollamaProvider;
 }
 
+/** @deprecated Use ServiceRegistry.generate() instead */
+export function getAiClient(baseUrl?: string) {
+  const { Ollama } = require('ollama');
+  return new Ollama({
+    host: baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434',
+  });
+}
+
+/** @deprecated Use ServiceRegistry instead */
 export function resetAiClient(): void {
-  client = null;
+  ollamaProvider = null;
 }
 
-// ─── Generate Text ───
-
+/** @deprecated Use ServiceRegistry.generate() with type='text' */
 export async function generateText(
   prompt: string,
   options: GenerateOptions = {},
 ): Promise<GenerateResult> {
-  const ollama = getAiClient();
-  const model = options.model ?? DEFAULT_MODEL;
-
-  const messages: ChatMessage[] = [];
-  if (options.systemPrompt) {
-    messages.push({ role: 'system', content: options.systemPrompt });
-  }
-  messages.push({ role: 'user', content: prompt });
-
-  const response = await ollama.chat({
-    model,
-    messages,
-    options: {
-      temperature: options.temperature ?? 0.7,
-      num_predict: options.maxTokens,
-    },
+  const provider = getOllamaProvider();
+  const result = await provider.generateText({
+    prompt,
+    model: options.model ?? DEFAULT_MODEL,
+    systemPrompt: options.systemPrompt,
+    temperature: options.temperature,
+    maxTokens: options.maxTokens,
     format: options.format,
   });
 
   return {
-    content: response.message.content,
-    model: response.model,
-    totalDuration: response.total_duration,
-    promptTokens: response.prompt_eval_count,
-    completionTokens: response.eval_count,
+    content: result.content,
+    model: result.model,
+    totalDuration: result.durationMs,
+    promptTokens: result.promptTokens,
+    completionTokens: result.completionTokens,
   };
 }
 
-// ─── Chat ───
-
+/** @deprecated Use ServiceRegistry.generate() with messages */
 export async function chat(
   messages: ChatMessage[],
   options: GenerateOptions = {},
 ): Promise<GenerateResult> {
-  const ollama = getAiClient();
-  const model = options.model ?? DEFAULT_MODEL;
-
-  const allMessages = options.systemPrompt
-    ? [{ role: 'system' as const, content: options.systemPrompt }, ...messages]
-    : messages;
-
-  const response = await ollama.chat({
-    model,
-    messages: allMessages,
-    options: {
-      temperature: options.temperature ?? 0.7,
-      num_predict: options.maxTokens,
-    },
+  const provider = getOllamaProvider();
+  const result = await provider.generateChat({
+    messages,
+    model: options.model ?? DEFAULT_MODEL,
+    systemPrompt: options.systemPrompt,
+    temperature: options.temperature,
+    maxTokens: options.maxTokens,
     format: options.format,
   });
 
   return {
-    content: response.message.content,
-    model: response.model,
-    totalDuration: response.total_duration,
-    promptTokens: response.prompt_eval_count,
-    completionTokens: response.eval_count,
+    content: result.content,
+    model: result.model,
+    totalDuration: result.durationMs,
+    promptTokens: result.promptTokens,
+    completionTokens: result.completionTokens,
   };
 }
 
-// ─── Streaming ───
-
+/** @deprecated Use ServiceRegistry with streaming support */
 export async function* streamText(
   prompt: string,
   options: GenerateOptions = {},
 ): AsyncGenerator<StreamChunk> {
-  const ollama = getAiClient();
-  const model = options.model ?? DEFAULT_MODEL;
-
-  const messages: ChatMessage[] = [];
-  if (options.systemPrompt) {
-    messages.push({ role: 'system', content: options.systemPrompt });
-  }
-  messages.push({ role: 'user', content: prompt });
-
-  const stream = await ollama.chat({
-    model,
-    messages,
-    stream: true,
-    options: {
-      temperature: options.temperature ?? 0.7,
-      num_predict: options.maxTokens,
-    },
+  const provider = getOllamaProvider();
+  const stream = provider.streamChat({
+    messages: [{ role: 'user', content: prompt }],
+    model: options.model ?? DEFAULT_MODEL,
+    systemPrompt: options.systemPrompt,
+    temperature: options.temperature,
+    maxTokens: options.maxTokens,
   });
 
   for await (const chunk of stream) {
-    yield {
-      content: chunk.message.content,
-      done: chunk.done,
-    };
+    yield chunk;
   }
 }
 
-// ─── Structured Output (JSON) ───
-
+/** @deprecated Use ServiceRegistry.generate() with format='json' */
 export async function generateJSON<T = unknown>(
   prompt: string,
   options: Omit<GenerateOptions, 'format'> = {},
@@ -158,27 +132,17 @@ export async function generateJSON<T = unknown>(
   return JSON.parse(result.content) as T;
 }
 
-// ─── Model Management ───
-
+/** @deprecated Use OllamaProvider.listModels() */
 export async function listModels(): Promise<Array<{ name: string; size: number }>> {
-  const ollama = getAiClient();
-  const response = await ollama.list();
-  return response.models.map((m) => ({
-    name: m.name,
-    size: m.size,
-  }));
+  return getOllamaProvider().listModels();
 }
 
+/** @deprecated Use OllamaProvider.pullModel() */
 export async function pullModel(name: string): Promise<void> {
-  const ollama = getAiClient();
-  await ollama.pull({ model: name });
+  return getOllamaProvider().pullModel(name);
 }
 
+/** @deprecated Use OllamaProvider.isModelAvailable() */
 export async function isModelAvailable(name: string): Promise<boolean> {
-  try {
-    const models = await listModels();
-    return models.some((m) => m.name === name || m.name.startsWith(name + ':'));
-  } catch {
-    return false;
-  }
+  return getOllamaProvider().isModelAvailable(name);
 }

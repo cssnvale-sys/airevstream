@@ -5,15 +5,12 @@ import { getPresignedUrl } from '@airevstream/storage';
 export async function assetRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
-  // List assets for a content item
+  // List storyboard shots (assets) for a content item
   app.get('/content/:contentId', async (request, reply) => {
     const { contentId } = request.params as { contentId: string };
     const db = getDb();
 
-    // Verify user owns the content
-    const content = await db.content.findFirst({
-      where: { id: contentId, userId: request.user.sub },
-    });
+    const content = await db.contentItem.findUnique({ where: { id: contentId } });
     if (!content) {
       return reply.status(404).send({
         success: false,
@@ -21,39 +18,43 @@ export async function assetRoutes(app: FastifyInstance) {
       });
     }
 
-    const assets = await db.contentAsset.findMany({
+    const storyboards = await db.storyboard.findMany({
       where: { contentId },
+      include: { shots: { orderBy: { shotNumber: 'asc' } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return reply.send({ success: true, data: storyboards });
+  });
+
+  // Get presigned download URL for a shot keyframe or scenery asset
+  app.get('/download', async (request, reply) => {
+    const { bucket, key } = request.query as { bucket: string; key: string };
+
+    if (!bucket || !key) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'bucket and key query params required' },
+      });
+    }
+
+    const url = await getPresignedUrl(bucket, key, 3600);
+    return reply.send({ success: true, data: { url, expiresIn: 3600 } });
+  });
+
+  // List scenery assets
+  app.get('/scenery', async (request, reply) => {
+    const { category } = request.query as { category?: string };
+    const db = getDb();
+
+    const where: Record<string, unknown> = {};
+    if (category) where.category = category;
+
+    const assets = await db.sceneryAsset.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
     });
 
     return reply.send({ success: true, data: assets });
-  });
-
-  // Get presigned download URL for an asset
-  app.get('/:id/download', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
-
-    const asset = await db.contentAsset.findUnique({ where: { id } });
-    if (!asset) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Asset not found' },
-      });
-    }
-
-    // Verify user owns the content
-    const content = await db.content.findFirst({
-      where: { id: asset.contentId, userId: request.user.sub },
-    });
-    if (!content) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Asset not found' },
-      });
-    }
-
-    const url = await getPresignedUrl(asset.bucket, asset.key, 3600);
-    return reply.send({ success: true, data: { url, expiresIn: 3600 } });
   });
 }

@@ -1,89 +1,98 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { encrypt, decrypt } from '@airevstream/crypto';
-import { getConfig, parsePagination, paginate, PLATFORMS } from '@airevstream/shared';
+import { encrypt } from '@airevstream/crypto';
+import { getConfig } from '@airevstream/shared';
 
-const createAccountSchema = z.object({
-  platform: z.enum(PLATFORMS as unknown as [string, ...string[]]),
-  username: z.string().optional(),
-  displayName: z.string().optional(),
-  accessToken: z.string().optional(),
-  refreshToken: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+const createEmailAccountSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+  tier: z.enum(['tier1', 'tier2', 'tier3']).default('tier2'),
+  notes: z.string().optional(),
 });
 
-const updateAccountSchema = createAccountSchema.partial();
+const createSocialAccountSchema = z.object({
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']),
+  platformUserId: z.string().optional(),
+  username: z.string().optional(),
+  credentials: z.string().optional(),
+});
 
 export async function accountRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
-  // List accounts
+  // List email accounts (paginated, filterable)
   app.get('/', async (request, reply) => {
-    const { page, limit } = parsePagination(request.query as any);
-    const db = getDb();
-    const userId = request.user.sub;
+    const { page = '1', limit = '50', status, tier, search } = request.query as Record<string, string>;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    if (tier) where.tier = tier;
+    if (search) where.email = { contains: search, mode: 'insensitive' };
+
+    const db = getDb();
     const [items, total] = await Promise.all([
-      db.account.findMany({
-        where: { userId },
+      db.emailAccount.findMany({
+        where,
+        skip,
+        take: limitNum,
         orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-        select: {
-          id: true,
-          platform: true,
-          username: true,
-          displayName: true,
-          avatarUrl: true,
-          status: true,
-          lastSyncedAt: true,
-          createdAt: true,
+        include: {
+          socialAccounts: {
+            select: { id: true, platform: true, username: true, status: true, healthScore: true },
+            orderBy: { platform: 'asc' },
+          },
+          _count: { select: { socialAccounts: true } },
         },
       }),
-      db.account.count({ where: { userId } }),
+      db.emailAccount.count({ where }),
     ]);
 
     return reply.send({
       success: true,
-      data: paginate(items, total, { page, limit }),
+      data: items,
+      meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
     });
   });
 
-  // Get single account
+  // Get email account detail
   app.get('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const account = await db.account.findFirst({
-      where: { id, userId: request.user.sub },
-      select: {
-        id: true,
-        platform: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        status: true,
-        metadata: true,
-        lastSyncedAt: true,
-        createdAt: true,
-        updatedAt: true,
+    const account = await db.emailAccount.findUnique({
+      where: { id },
+      include: {
+        socialAccounts: {
+          include: {
+            channels: {
+              include: {
+                channelAvatars: { include: { avatar: true } },
+                brandingPackages: true,
+                affiliatePool: { include: { affiliateProduct: true } },
+              },
+            },
+          },
+        },
       },
     });
 
     if (!account) {
       return reply.status(404).send({
         success: false,
-        error: { code: 'NOT_FOUND', message: 'Account not found' },
+        error: { code: 'NOT_FOUND', message: 'Email account not found' },
       });
     }
 
     return reply.send({ success: true, data: account });
   });
 
-  // Create account
+  // Create email account
   app.post('/', async (request, reply) => {
-    const parsed = createAccountSchema.safeParse(request.body);
+    const parsed = createEmailAccountSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
@@ -92,41 +101,90 @@ export async function accountRoutes(app: FastifyInstance) {
     }
 
     const config = getConfig();
-    const encKey = config.ENCRYPTION_KEY;
-
-    const data: any = {
-      ...parsed.data,
-      userId: request.user.sub,
-    };
-
-    // Encrypt tokens if encryption key is available
-    if (encKey && parsed.data.accessToken) {
-      data.accessToken = encrypt(parsed.data.accessToken, encKey);
-    }
-    if (encKey && parsed.data.refreshToken) {
-      data.refreshToken = encrypt(parsed.data.refreshToken, encKey);
-    }
+    const passwordEnc = config.ENCRYPTION_KEY
+      ? encrypt(parsed.data.password, config.ENCRYPTION_KEY)
+      : parsed.data.password;
 
     const db = getDb();
-    const account = await db.account.create({
-      data,
-      select: {
-        id: true,
-        platform: true,
-        username: true,
-        displayName: true,
-        status: true,
-        createdAt: true,
+    const account = await db.emailAccount.create({
+      data: {
+        email: parsed.data.email,
+        passwordEnc,
+        tier: parsed.data.tier,
+        notes: parsed.data.notes,
       },
     });
 
     return reply.status(201).send({ success: true, data: account });
   });
 
-  // Update account
-  app.patch('/:id', async (request, reply) => {
+  // Update email account
+  app.put('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const parsed = updateAccountSchema.safeParse(request.body);
+    const body = request.body as Record<string, unknown>;
+    const db = getDb();
+
+    const updateData: Record<string, unknown> = {};
+    if (body.status) updateData.status = body.status as string;
+    if (body.tier) updateData.tier = body.tier as string;
+    if (body.notes !== undefined) updateData.notes = body.notes as string | null;
+
+    const account = await db.emailAccount.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return reply.send({ success: true, data: account });
+  });
+
+  // Delete email account
+  app.delete('/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const db = getDb();
+    await db.emailAccount.delete({ where: { id } });
+    return reply.status(204).send();
+  });
+
+  // Bulk import email accounts
+  app.post('/bulk-import', async (request, reply) => {
+    const { accounts } = request.body as { accounts: Array<{ email: string; password: string; tier?: string }> };
+    const config = getConfig();
+    const db = getDb();
+
+    const results = await db.$transaction(
+      accounts.map((a) =>
+        db.emailAccount.create({
+          data: {
+            email: a.email,
+            passwordEnc: config.ENCRYPTION_KEY ? encrypt(a.password, config.ENCRYPTION_KEY) : a.password,
+            tier: a.tier || 'tier2',
+          },
+        }),
+      ),
+    );
+
+    return reply.status(201).send({ success: true, data: results, meta: { total: results.length, page: 1, limit: results.length, pages: 1 } });
+  });
+
+  // List social accounts for email
+  app.get('/:id/socials', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const db = getDb();
+
+    const socials = await db.socialAccount.findMany({
+      where: { emailAccountId: id },
+      include: {
+        channels: { select: { id: true, name: true, primaryLanguage: true, status: true } },
+      },
+    });
+
+    return reply.send({ success: true, data: socials });
+  });
+
+  // Create social account for email
+  app.post('/:id/socials', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const parsed = createSocialAccountSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
@@ -134,56 +192,22 @@ export async function accountRoutes(app: FastifyInstance) {
       });
     }
 
-    const db = getDb();
-    const existing = await db.account.findFirst({ where: { id, userId: request.user.sub } });
-    if (!existing) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Account not found' },
-      });
-    }
-
     const config = getConfig();
-    const encKey = config.ENCRYPTION_KEY;
-    const data: any = { ...parsed.data };
+    const credentialsEnc = parsed.data.credentials && config.ENCRYPTION_KEY
+      ? encrypt(parsed.data.credentials, config.ENCRYPTION_KEY)
+      : parsed.data.credentials ?? null;
 
-    if (encKey && parsed.data.accessToken) {
-      data.accessToken = encrypt(parsed.data.accessToken, encKey);
-    }
-    if (encKey && parsed.data.refreshToken) {
-      data.refreshToken = encrypt(parsed.data.refreshToken, encKey);
-    }
-
-    const account = await db.account.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        platform: true,
-        username: true,
-        displayName: true,
-        status: true,
-        updatedAt: true,
+    const db = getDb();
+    const social = await db.socialAccount.create({
+      data: {
+        emailAccountId: id,
+        platform: parsed.data.platform,
+        platformUserId: parsed.data.platformUserId,
+        username: parsed.data.username,
+        credentialsEnc,
       },
     });
 
-    return reply.send({ success: true, data: account });
-  });
-
-  // Delete account
-  app.delete('/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
-
-    const existing = await db.account.findFirst({ where: { id, userId: request.user.sub } });
-    if (!existing) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Account not found' },
-      });
-    }
-
-    await db.account.delete({ where: { id } });
-    return reply.status(204).send();
+    return reply.status(201).send({ success: true, data: social });
   });
 }

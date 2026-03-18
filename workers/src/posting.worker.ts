@@ -1,97 +1,213 @@
-import { createWorker, type ContentPublishJob } from '@airevstream/queue';
+import { createWorker, type PostingScheduleJob, type PostingPublishJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { decrypt } from '@airevstream/crypto';
 import { getConfig, createLogger } from '@airevstream/shared';
+import { getPresignedUrl } from '@airevstream/storage';
 import type { Job } from 'bullmq';
+import { getAdapter, type PostContent, type PlatformCredentials } from './platform-adapters.js';
 
 const logger = createLogger('worker:posting');
 
-async function processPostingJob(job: Job<ContentPublishJob>) {
+async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing posting job');
 
-  const { contentId, accountId } = job.data;
+  if (job.name === 'posting:schedule') {
+    const data = job.data as PostingScheduleJob;
+    return handleSchedule(data);
+  }
+
+  const { scheduledPostId, contentId, channelId, platform } = job.data as PostingPublishJob;
   const db = getDb();
 
-  // Get the posting record
-  const posting = await db.posting.findFirst({
-    where: { contentId, accountId, status: 'pending' },
-    include: { content: true, account: true },
+  // Get the scheduled post record with related data
+  const scheduledPost = await db.scheduledPost.findUnique({
+    where: { id: scheduledPostId },
+    include: {
+      content: true,
+      channel: { include: { socialAccount: true } },
+    },
   });
 
-  if (!posting) {
-    logger.warn({ contentId, accountId }, 'No pending posting found');
+  if (!scheduledPost) {
+    logger.warn({ scheduledPostId }, 'No scheduled post found');
     return;
   }
 
-  // Update status to publishing
-  await db.posting.update({
-    where: { id: posting.id },
-    data: { status: 'publishing' },
-  });
-
-  await db.content.update({
-    where: { id: contentId },
-    data: { status: 'publishing' },
+  // Update status to posting
+  await db.scheduledPost.update({
+    where: { id: scheduledPost.id },
+    data: { status: 'posting' },
   });
 
   try {
-    // Decrypt access token if available
+    // Decrypt credentials
     const config = getConfig();
-    let _accessToken: string | null = null;
-    if (posting.account.accessToken && config.ENCRYPTION_KEY) {
-      _accessToken = decrypt(posting.account.accessToken, config.ENCRYPTION_KEY);
+    const socialAccount = scheduledPost.channel.socialAccount;
+    if (!socialAccount.credentialsEnc || !config.ENCRYPTION_KEY) {
+      throw new Error(`No credentials available for social account ${socialAccount.id}`);
     }
 
-    // Placeholder: In production, this would use platform-specific APIs
-    // to publish the content (YouTube Data API, TikTok API, etc.)
+    const decryptedJson = decrypt(socialAccount.credentialsEnc, config.ENCRYPTION_KEY);
+    const credentials: PlatformCredentials = JSON.parse(decryptedJson);
+
+    // Use channelId from the platform if not in credentials
+    if (!credentials.channelId && scheduledPost.channel.platformChannelId) {
+      credentials.channelId = scheduledPost.channel.platformChannelId;
+    }
+
+    // Build PostContent from content item and publish config
+    const content = scheduledPost.content;
+    const publishConfig = (scheduledPost.publishConfig ?? {}) as Record<string, unknown>;
+    const platformMeta = (content.platformMetadata ?? {}) as Record<string, unknown>;
+
+    // Resolve file URLs — convert MinIO storage paths to presigned URLs
+    let videoUrl: string | undefined;
+    let imageUrl: string | undefined;
+    let thumbnailUrl: string | undefined;
+
+    if (content.fileUrl) {
+      const isVideo = content.contentType.startsWith('video');
+      const isImage = content.contentType === 'image' || content.contentType === 'thumbnail';
+      const presignedUrl = content.fileUrl.startsWith('http')
+        ? content.fileUrl
+        : await getPresignedUrl('content', content.fileUrl, 3600);
+
+      if (isVideo) videoUrl = presignedUrl;
+      if (isImage) imageUrl = presignedUrl;
+    }
+
+    if (content.thumbnailUrl) {
+      thumbnailUrl = content.thumbnailUrl.startsWith('http')
+        ? content.thumbnailUrl
+        : await getPresignedUrl('content', content.thumbnailUrl, 3600);
+    }
+
+    const postContent: PostContent = {
+      title: content.title ?? 'Untitled',
+      description: (publishConfig.description as string)
+        ?? (platformMeta.description as string)
+        ?? content.prompt
+        ?? '',
+      videoUrl,
+      imageUrl,
+      thumbnailUrl,
+      tags: (publishConfig.tags as string[])
+        ?? (platformMeta.tags as string[])
+        ?? undefined,
+      scheduledAt: scheduledPost.scheduledAt.toISOString(),
+    };
+
+    // Publish via platform adapter
+    const adapter = getAdapter(platform);
+    logger.info({ contentId, channelId, platform }, 'Publishing content via platform adapter');
+    const result = await adapter.publish(postContent, credentials);
+
+    if (!result.success) {
+      throw new Error(result.error ?? `Platform adapter returned failure for ${platform}`);
+    }
+
+    // Mark as posted
+    await db.scheduledPost.update({
+      where: { id: scheduledPost.id },
+      data: {
+        status: 'posted',
+        postedAt: new Date(),
+        platformPostId: result.platformPostId ?? null,
+      },
+    });
+
+    await db.contentItem.update({
+      where: { id: contentId },
+      data: { status: 'posted' },
+    });
+
+    // Update social account last post time
+    await db.socialAccount.update({
+      where: { id: socialAccount.id },
+      data: { lastPostAt: new Date() },
+    });
+
     logger.info({
       contentId,
-      accountId,
-      platform: posting.account.platform,
-    }, 'Publishing content (placeholder)');
+      channelId,
+      platform,
+      platformPostId: result.platformPostId,
+      platformUrl: result.platformUrl,
+    }, 'Content posted successfully');
 
-    // Simulate publishing delay
-    // In production, replace with actual API calls
-
-    // Mark as published
-    await db.posting.update({
-      where: { id: posting.id },
-      data: {
-        status: 'published',
-        publishedAt: new Date(),
-        platformPostId: `placeholder_${Date.now()}`,
-      },
-    });
-
-    await db.content.update({
-      where: { id: contentId },
-      data: {
-        status: 'published',
-        publishedAt: new Date(),
-      },
-    });
-
-    logger.info({ contentId, accountId, platform: posting.account.platform }, 'Content published (placeholder)');
-    return { postingId: posting.id, status: 'published' };
+    return {
+      scheduledPostId: scheduledPost.id,
+      status: 'posted',
+      platformPostId: result.platformPostId,
+      platformUrl: result.platformUrl,
+    };
   } catch (error: any) {
-    await db.posting.update({
-      where: { id: posting.id },
-      data: { status: 'failed', errorMessage: error.message },
+    const retryCount = (scheduledPost.retryCount || 0) + 1;
+
+    await db.scheduledPost.update({
+      where: { id: scheduledPost.id },
+      data: {
+        status: 'failed',
+        errorMessage: error.message,
+        retryCount,
+      },
     });
 
-    await db.content.update({
-      where: { id: contentId },
-      data: { status: 'failed' },
-    });
+    if (retryCount >= 3) {
+      await db.contentItem.update({
+        where: { id: contentId },
+        data: { status: 'failed' },
+      });
+
+      // Create alert for persistent failure
+      await db.alert.create({
+        data: {
+          severity: 'warning',
+          category: 'content',
+          title: `Posting failed after ${retryCount} retries`,
+          message: `Content "${scheduledPost.content.title}" failed to post to ${platform}: ${error.message}`,
+          source: 'posting-worker',
+          metadata: { contentId, channelId, platform, error: error.message },
+        },
+      });
+    }
 
     throw error;
   }
 }
 
+async function handleSchedule(data: PostingScheduleJob) {
+  const db = getDb();
+
+  const content = await db.contentItem.findUnique({
+    where: { id: data.contentId },
+    include: { channel: { include: { socialAccount: true } } },
+  });
+
+  if (!content) {
+    logger.warn({ contentId: data.contentId }, 'Content not found for scheduling');
+    return;
+  }
+
+  const post = await db.scheduledPost.create({
+    data: {
+      contentId: data.contentId,
+      channelId: data.channelId,
+      scheduledAt: new Date(data.scheduledAt),
+      platform: data.platform,
+      socialAccountId: content.channel.socialAccount.id,
+      status: 'scheduled',
+    },
+  });
+
+  logger.info({ scheduledPostId: post.id, scheduledAt: data.scheduledAt }, 'Post scheduled');
+  return { scheduledPostId: post.id, status: 'scheduled' };
+}
+
 export function startPostingWorker() {
   const worker = createWorker('posting', processPostingJob, {
     concurrency: 1,
-    limiter: { max: 5, duration: 60000 }, // Rate limit: 5 posts per minute
+    limiter: { max: 5, duration: 60000 },
   });
 
   worker.on('completed', (job) => {

@@ -4,24 +4,39 @@ import { Queue, Worker, QueueEvents, Job, type ConnectionOptions } from 'bullmq'
 
 export interface ContentGenerateJob {
   contentId: string;
-  userId: string;
-  type: string;
+  channelId: string;
+  contentType: string;
   prompt?: string;
 }
 
 export interface ContentPublishJob {
   contentId: string;
-  accountId: string;
-  userId: string;
+  channelId: string;
+  scheduledPostId?: string;
+}
+
+export interface ContentApproveJob {
+  contentId: string;
+  action: 'approve' | 'reject' | 'regenerate';
+  feedback?: string;
+}
+
+export interface AccountCreateJob {
+  emailAccountId: string;
+  platform: string;
 }
 
 export interface AccountSyncJob {
-  accountId: string;
-  userId: string;
+  socialAccountId: string;
 }
 
 export interface AccountHealthCheckJob {
-  accountId: string;
+  socialAccountId: string;
+}
+
+export interface AccountWarmJob {
+  socialAccountId: string;
+  durationMinutes?: number;
 }
 
 export interface ResearchTrendsJob {
@@ -34,6 +49,17 @@ export interface ResearchTopicsJob {
   count?: number;
 }
 
+export interface ResearchKnowledgeUpdateJob {
+  domain: string;
+  sourceUrl?: string;
+}
+
+export interface ResearchPopulateKnowledgeJob {
+  domain: string;
+  urls?: string[];
+  topic: string;
+}
+
 export interface MaintenanceCleanupJob {
   olderThanDays?: number;
 }
@@ -42,15 +68,21 @@ export interface MaintenanceBackupJob {
   target: 'database' | 'storage' | 'all';
 }
 
+export interface MaintenanceMetricsJob {
+  metricTypes?: string[];
+}
+
 export interface ProductionRenderVideoJob {
   contentId: string;
-  compositionId: string;
-  props: Record<string, unknown>;
+  storyboardId: string;
+  channelId: string;
 }
 
 export interface ProductionGenerateImageJob {
-  contentId: string;
-  workflowId: string;
+  contentId?: string;
+  channelId?: string;
+  shotId?: string;
+  workflowType: string;
   params: Record<string, unknown>;
 }
 
@@ -58,17 +90,38 @@ export interface ProductionGenerateAudioJob {
   contentId: string;
   text: string;
   voice?: string;
+  language?: string;
+}
+
+export interface ProductionStoryboardJob {
+  contentId: string;
+  channelId: string;
+  scriptJson: Record<string, unknown>;
+}
+
+export interface PostingScheduleJob {
+  contentId: string;
+  channelId: string;
+  scheduledAt: string;
+  platform: string;
+}
+
+export interface PostingPublishJob {
+  scheduledPostId: string;
+  contentId: string;
+  channelId: string;
+  platform: string;
 }
 
 // ─── Queue Name → Job Data Mapping ───
 
 export interface QueueJobMap {
-  content: ContentGenerateJob | ContentPublishJob;
-  account: AccountSyncJob | AccountHealthCheckJob;
-  posting: ContentPublishJob;
-  research: ResearchTrendsJob | ResearchTopicsJob;
-  maintenance: MaintenanceCleanupJob | MaintenanceBackupJob;
-  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob;
+  content: ContentGenerateJob | ContentPublishJob | ContentApproveJob;
+  account: AccountCreateJob | AccountSyncJob | AccountHealthCheckJob | AccountWarmJob;
+  posting: PostingScheduleJob | PostingPublishJob;
+  research: ResearchTrendsJob | ResearchTopicsJob | ResearchKnowledgeUpdateJob | ResearchPopulateKnowledgeJob;
+  maintenance: MaintenanceCleanupJob | MaintenanceBackupJob | MaintenanceMetricsJob;
+  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob;
 }
 
 export type QueueName = keyof QueueJobMap;

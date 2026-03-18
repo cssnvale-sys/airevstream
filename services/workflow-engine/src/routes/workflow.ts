@@ -1,80 +1,72 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { parsePagination, paginate } from '@airevstream/shared';
-import { addJob } from '@airevstream/queue';
+import type { Prisma } from '@prisma/client';
 
-const workflowStepSchema = z.object({
-  id: z.string(),
-  type: z.enum(['research', 'script', 'voiceover', 'image_generation', 'video_assembly', 'review', 'publish']),
-  name: z.string(),
-  config: z.record(z.unknown()),
-  dependsOn: z.array(z.string()).optional(),
-});
-
-const createWorkflowSchema = z.object({
-  name: z.string().min(1).max(200),
-  description: z.string().optional(),
-  definition: z.object({
-    id: z.string(),
-    name: z.string(),
-    steps: z.array(workflowStepSchema),
-  }),
-});
-
-const updateWorkflowSchema = createWorkflowSchema.partial().extend({
-  isActive: z.boolean().optional(),
+const createJobSchema = z.object({
+  jobType: z.enum(['content_production', 'account_creation', 'warming', 'research', 'posting', 'maintenance', 'health_check']),
+  priority: z.number().min(1).max(10).default(5),
+  channelId: z.string().uuid().optional(),
+  contentId: z.string().uuid().optional(),
+  emailAccountId: z.string().uuid().optional(),
+  params: z.record(z.unknown()).default({}),
 });
 
 export async function workflowRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
-  // List workflows
+  // List workflow jobs (paginated, filterable)
   app.get('/', async (request, reply) => {
-    const { page, limit } = parsePagination(request.query as any);
+    const { page = '1', limit = '50', status, jobType, sort = 'createdAt', order = 'desc' } = request.query as Record<string, string>;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
     const db = getDb();
-    const userId = request.user.sub;
+
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    if (jobType) where.jobType = jobType;
 
     const [items, total] = await Promise.all([
-      db.workflow.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: { _count: { select: { runs: true } } },
+      db.workflowJob.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { [sort]: order },
+        include: {
+          content: { select: { id: true, title: true, contentType: true } },
+        },
       }),
-      db.workflow.count({ where: { userId } }),
+      db.workflowJob.count({ where }),
     ]);
 
     return reply.send({
       success: true,
-      data: paginate(items, total, { page, limit }),
+      data: items,
+      meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
     });
   });
 
-  // Get single workflow
+  // Get job detail
   app.get('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const workflow = await db.workflow.findFirst({
-      where: { id, userId: request.user.sub },
-      include: { runs: { orderBy: { createdAt: 'desc' }, take: 10 } },
+    const job = await db.workflowJob.findUnique({
+      where: { id },
+      include: { content: true },
     });
 
-    if (!workflow) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Workflow not found' },
-      });
+    if (!job) {
+      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Job not found' } });
     }
 
-    return reply.send({ success: true, data: workflow });
+    return reply.send({ success: true, data: job });
   });
 
-  // Create workflow
+  // Create workflow job
   app.post('/', async (request, reply) => {
-    const parsed = createWorkflowSchema.safeParse(request.body);
+    const parsed = createJobSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
@@ -83,123 +75,90 @@ export async function workflowRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const workflow = await db.workflow.create({
+    const job = await db.workflowJob.create({
       data: {
-        name: parsed.data.name,
-        description: parsed.data.description,
-        definition: parsed.data.definition as any,
-        userId: request.user.sub,
+        jobType: parsed.data.jobType,
+        priority: parsed.data.priority,
+        channelId: parsed.data.channelId,
+        contentId: parsed.data.contentId,
+        emailAccountId: parsed.data.emailAccountId,
+        params: parsed.data.params as Prisma.InputJsonValue,
       },
     });
 
-    return reply.status(201).send({ success: true, data: workflow });
+    return reply.status(201).send({ success: true, data: job });
   });
 
-  // Update workflow
-  app.patch('/:id', async (request, reply) => {
+  // Cancel job
+  app.post('/:id/cancel', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const parsed = updateWorkflowSchema.safeParse(request.body);
-    if (!parsed.success) {
+    const db = getDb();
+
+    const job = await db.workflowJob.findUnique({ where: { id } });
+    if (!job) {
+      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Job not found' } });
+    }
+
+    if (job.status === 'completed' || job.status === 'cancelled') {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'INVALID_STATE', message: `Cannot cancel job in ${job.status} state` },
       });
     }
 
-    const db = getDb();
-    const existing = await db.workflow.findFirst({ where: { id, userId: request.user.sub } });
-    if (!existing) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Workflow not found' },
-      });
-    }
-
-    const data: any = { ...parsed.data };
-    if (parsed.data.definition) {
-      data.definition = parsed.data.definition as any;
-    }
-
-    const workflow = await db.workflow.update({ where: { id }, data });
-    return reply.send({ success: true, data: workflow });
-  });
-
-  // Delete workflow
-  app.delete('/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
-
-    const existing = await db.workflow.findFirst({ where: { id, userId: request.user.sub } });
-    if (!existing) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Workflow not found' },
-      });
-    }
-
-    await db.workflow.delete({ where: { id } });
-    return reply.status(204).send();
-  });
-
-  // Execute workflow
-  app.post('/:id/run', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
-
-    const workflow = await db.workflow.findFirst({ where: { id, userId: request.user.sub } });
-    if (!workflow) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Workflow not found' },
-      });
-    }
-
-    // Create a workflow run
-    const run = await db.workflowRun.create({
-      data: {
-        workflowId: id,
-        status: 'running',
-        startedAt: new Date(),
-      },
+    const updated = await db.workflowJob.update({
+      where: { id },
+      data: { status: 'cancelled' },
     });
 
-    // Queue the first step for processing
-    await addJob('content', 'content:generate', {
-      contentId: run.id,
-      userId: request.user.sub,
-      type: 'workflow',
-    });
-
-    return reply.status(202).send({ success: true, data: run });
+    return reply.send({ success: true, data: updated });
   });
 
-  // Get workflow runs
-  app.get('/:id/runs', async (request, reply) => {
+  // Complete HITL task
+  app.post('/:id/human-complete', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { page, limit } = parsePagination(request.query as any);
     const db = getDb();
 
-    const workflow = await db.workflow.findFirst({ where: { id, userId: request.user.sub } });
-    if (!workflow) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Workflow not found' },
-      });
+    const job = await db.workflowJob.findUnique({ where: { id } });
+    if (!job || !job.needsHuman) {
+      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No HITL task found' } });
     }
 
-    const [items, total] = await Promise.all([
-      db.workflowRun.findMany({
-        where: { workflowId: id },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      db.workflowRun.count({ where: { workflowId: id } }),
+    const updated = await db.workflowJob.update({
+      where: { id },
+      data: { needsHuman: false, humanCompletedAt: new Date(), status: 'running' },
+    });
+
+    return reply.send({ success: true, data: updated });
+  });
+
+  // Get active workflows summary
+  app.get('/summary/active', async (request, reply) => {
+    const db = getDb();
+
+    const [running, queued, paused, needsHuman] = await Promise.all([
+      db.workflowJob.count({ where: { status: 'running' } }),
+      db.workflowJob.count({ where: { status: 'queued' } }),
+      db.workflowJob.count({ where: { status: 'paused' } }),
+      db.workflowJob.count({ where: { needsHuman: true, humanCompletedAt: null } }),
     ]);
+
+    // Count by job type
+    const byType = await db.workflowJob.groupBy({
+      by: ['jobType'],
+      where: { status: { in: ['running', 'queued'] } },
+      _count: true,
+    });
 
     return reply.send({
       success: true,
-      data: paginate(items, total, { page, limit }),
+      data: {
+        running,
+        queued,
+        paused,
+        needsHuman,
+        byType: byType.map((t) => ({ jobType: t.jobType, count: t._count })),
+      },
     });
   });
 }

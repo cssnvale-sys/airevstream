@@ -1,11 +1,27 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { generateText, generateJSON } from '@airevstream/ai-client';
+import { getDb } from '@airevstream/db';
+import { createServiceRegistry, generateText, generateJSON } from '@airevstream/ai-client';
+
+// Lazy-init registry (only when DB is available)
+let _registry: ReturnType<typeof createServiceRegistry> | null = null;
+
+function getRegistry() {
+  if (!_registry) {
+    try {
+      const db = getDb();
+      _registry = createServiceRegistry(db);
+    } catch {
+      return null;
+    }
+  }
+  return _registry;
+}
 
 const generateScriptSchema = z.object({
   topic: z.string().min(1),
-  platform: z.enum(['youtube', 'tiktok', 'instagram', 'twitter', 'facebook']),
-  contentType: z.enum(['video', 'image', 'text', 'story', 'reel', 'short']),
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']),
+  contentType: z.enum(['text', 'image', 'video_short', 'video_long', 'voice', 'thumbnail']),
   tone: z.string().optional(),
   length: z.enum(['short', 'medium', 'long']).optional(),
   model: z.string().optional(),
@@ -13,14 +29,14 @@ const generateScriptSchema = z.object({
 
 const generateIdeasSchema = z.object({
   niche: z.string().min(1),
-  platform: z.enum(['youtube', 'tiktok', 'instagram', 'twitter', 'facebook']).optional(),
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']).optional(),
   count: z.number().min(1).max(20).optional(),
   model: z.string().optional(),
 });
 
 const generateCaptionSchema = z.object({
   description: z.string().min(1),
-  platform: z.enum(['youtube', 'tiktok', 'instagram', 'twitter', 'facebook']),
+  platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']),
   hashtags: z.boolean().optional(),
   model: z.string().optional(),
 });
@@ -46,6 +62,23 @@ Include an attention-grabbing hook, main content, and a call to action.
 Format the script with clear sections.`;
 
     try {
+      const registry = getRegistry();
+      if (registry) {
+        // Use registry with fallback chain
+        const result = await registry.generate({
+          type: 'text',
+          task: 'script_generation',
+          prompt,
+          model,
+          systemPrompt: 'You are an expert content creator and scriptwriter.',
+        });
+        return reply.send({
+          success: true,
+          data: { script: result.content, model: result.model, serviceId: result.serviceId },
+        });
+      }
+
+      // Fallback to legacy direct Ollama call
       const result = await generateText(prompt, {
         model,
         systemPrompt: 'You are an expert content creator and scriptwriter.',
@@ -74,6 +107,21 @@ Format the script with clear sections.`;
 Return a JSON array of objects with: title, description, contentType, estimatedEngagement (low/medium/high).`;
 
     try {
+      const registry = getRegistry();
+      if (registry) {
+        const result = await registry.generate({
+          type: 'text',
+          task: 'idea_generation',
+          prompt,
+          model,
+          format: 'json',
+          systemPrompt: 'You are a social media strategist. Return valid JSON only.',
+        });
+        const ideas = JSON.parse(result.content);
+        return reply.send({ success: true, data: { ideas, serviceId: result.serviceId } });
+      }
+
+      // Fallback
       const result = await generateJSON<Array<{
         title: string;
         description: string;
@@ -108,6 +156,22 @@ ${hashtags ? 'Include relevant hashtags.' : 'Do not include hashtags.'}
 Keep it within the platform's character limit.`;
 
     try {
+      const registry = getRegistry();
+      if (registry) {
+        const result = await registry.generate({
+          type: 'text',
+          task: 'caption_generation',
+          prompt,
+          model,
+          systemPrompt: 'You are a social media copywriter. Write engaging captions.',
+        });
+        return reply.send({
+          success: true,
+          data: { caption: result.content, model: result.model, serviceId: result.serviceId },
+        });
+      }
+
+      // Fallback
       const result = await generateText(prompt, {
         model,
         systemPrompt: 'You are a social media copywriter. Write engaging captions.',

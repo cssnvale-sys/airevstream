@@ -16,7 +16,9 @@
     "@airevstream/queue": "*",
     "@airevstream/ai-client": "*",
     "@airevstream/storage": "*",
-    "@airevstream/crypto": "*"
+    "@airevstream/crypto": "*",
+    "@airevstream/browser-automation": "*",
+    "@airevstream/audio-engine": "*"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

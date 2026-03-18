@@ -1,43 +1,64 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { chat as aiChat, type ChatMessage } from '@airevstream/ai-client';
-import { parsePagination, paginate } from '@airevstream/shared';
+import { chat as aiChat, createServiceRegistry, type ChatMessage } from '@airevstream/ai-client';
+
+let _registry: ReturnType<typeof createServiceRegistry> | null = null;
+function getRegistry() {
+  if (!_registry) {
+    try { _registry = createServiceRegistry(getDb()); } catch { return null; }
+  }
+  return _registry;
+}
 
 const sendMessageSchema = z.object({
   content: z.string().min(1).max(10000),
   model: z.string().optional(),
+  contextPage: z.string().optional(),
 });
 
-const SYSTEM_PROMPT = `You are an AI content creation assistant for AiRevStream. You help users:
-- Plan content strategies across multiple platforms
-- Write scripts, captions, and descriptions
-- Suggest topics based on trends
-- Optimize content for different platforms (YouTube, TikTok, Instagram, Twitter, Facebook)
-- Provide creative direction for video and image content
-Be concise, creative, and actionable in your responses.`;
+const SYSTEM_PROMPT = `You are an AI assistant for AiRevStream, a multi-platform content automation system. You help the operator:
+- Manage 1,200+ email accounts and social media channels
+- Plan and generate cinematic content across YouTube, TikTok, Instagram, Facebook
+- Monitor system health, account health, and workflow status
+- Manage affiliate products and revenue tracking
+- Provide strategic content and business advice
+You have full awareness of the system state. Be concise, actionable, and proactive in suggestions.`;
 
 export async function chatRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
   // List conversations
   app.get('/conversations', async (request, reply) => {
-    const { page, limit } = parsePagination(request.query as any);
+    const { page = '1', limit = '50' } = request.query as Record<string, string>;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
     const db = getDb();
-    const userId = request.user.sub;
 
     const [items, total] = await Promise.all([
       db.conversation.findMany({
-        where: { userId },
         orderBy: { updatedAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: { _count: { select: { messages: true } } },
+        skip,
+        take: limitNum,
+        select: {
+          id: true,
+          title: true,
+          contextPage: true,
+          modelUsed: true,
+          messageCount: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
-      db.conversation.count({ where: { userId } }),
+      db.conversation.count(),
     ]);
 
-    return reply.send({ success: true, data: paginate(items, total, { page, limit }) });
+    return reply.send({
+      success: true,
+      data: items,
+      meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
+    });
   });
 
   // Get conversation with messages
@@ -45,8 +66,8 @@ export async function chatRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const conversation = await db.conversation.findFirst({
-      where: { id, userId: request.user.sub },
+    const conversation = await db.conversation.findUnique({
+      where: { id },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
 
@@ -62,11 +83,13 @@ export async function chatRoutes(app: FastifyInstance) {
 
   // Create new conversation
   app.post('/conversations', async (request, reply) => {
+    const body = request.body as { contextPage?: string } | undefined;
     const db = getDb();
+
     const conversation = await db.conversation.create({
       data: {
-        userId: request.user.sub,
         title: 'New conversation',
+        contextPage: body?.contextPage,
       },
     });
 
@@ -85,8 +108,8 @@ export async function chatRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const conversation = await db.conversation.findFirst({
-      where: { id, userId: request.user.sub },
+    const conversation = await db.conversation.findUnique({
+      where: { id },
       include: { messages: { orderBy: { createdAt: 'asc' }, take: 50 } },
     });
 
@@ -98,7 +121,7 @@ export async function chatRoutes(app: FastifyInstance) {
     }
 
     // Save user message
-    const userMessage = await db.message.create({
+    const userMessage = await db.conversationMessage.create({
       data: {
         conversationId: id,
         role: 'user',
@@ -114,45 +137,63 @@ export async function chatRoutes(app: FastifyInstance) {
     history.push({ role: 'user', content: parsed.data.content });
 
     try {
-      const aiResponse = await aiChat(history, {
-        model: parsed.data.model,
-        systemPrompt: SYSTEM_PROMPT,
-      });
+      let aiContent: string;
+      let aiModel: string;
+      let tokensUsed: number | null = null;
+
+      const registry = getRegistry();
+      if (registry) {
+        const result = await registry.generate({
+          type: 'text',
+          task: 'chat',
+          prompt: parsed.data.content,
+          messages: history,
+          model: parsed.data.model,
+          systemPrompt: SYSTEM_PROMPT,
+        });
+        aiContent = result.content;
+        aiModel = result.model;
+        tokensUsed = result.tokensUsed ?? null;
+      } else {
+        const result = await aiChat(history, {
+          model: parsed.data.model,
+          systemPrompt: SYSTEM_PROMPT,
+        });
+        aiContent = result.content;
+        aiModel = result.model;
+        tokensUsed = result.totalDuration ? Math.round(result.totalDuration / 1000) : null;
+      }
 
       // Save assistant message
-      const assistantMessage = await db.message.create({
+      const assistantMessage = await db.conversationMessage.create({
         data: {
           conversationId: id,
           role: 'assistant',
-          content: aiResponse.content,
-          metadata: {
-            model: aiResponse.model,
-            totalDuration: aiResponse.totalDuration,
-          },
+          content: aiContent,
+          tokensUsed,
         },
       });
 
-      // Update conversation title from first message if it's the default
-      if (conversation.title === 'New conversation' && conversation.messages.length === 0) {
-        const title = parsed.data.content.slice(0, 100);
-        await db.conversation.update({ where: { id }, data: { title } });
-      }
+      // Update conversation metadata
+      await db.conversation.update({
+        where: { id },
+        data: {
+          messageCount: { increment: 2 },
+          modelUsed: aiModel,
+          ...(conversation.title === 'New conversation' && conversation.messageCount === 0
+            ? { title: parsed.data.content.slice(0, 100) }
+            : {}),
+        },
+      });
 
       return reply.send({
         success: true,
-        data: {
-          userMessage,
-          assistantMessage,
-        },
+        data: { userMessage, assistantMessage },
       });
     } catch (error: any) {
-      // If Ollama is not available, return a helpful error
       return reply.status(502).send({
         success: false,
-        error: {
-          code: 'EXTERNAL_SERVICE_ERROR',
-          message: `AI service unavailable: ${error.message}`,
-        },
+        error: { code: 'EXTERNAL_SERVICE_ERROR', message: `AI service unavailable: ${error.message}` },
       });
     }
   });
@@ -162,7 +203,7 @@ export async function chatRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const existing = await db.conversation.findFirst({ where: { id, userId: request.user.sub } });
+    const existing = await db.conversation.findUnique({ where: { id } });
     if (!existing) {
       return reply.status(404).send({
         success: false,
@@ -172,5 +213,29 @@ export async function chatRoutes(app: FastifyInstance) {
 
     await db.conversation.delete({ where: { id } });
     return reply.status(204).send();
+  });
+
+  // List discovered capabilities
+  app.get('/capabilities', async (_request, reply) => {
+    // Self-discovering architecture: list available system capabilities
+    return reply.send({
+      success: true,
+      data: {
+        actions: [
+          { type: 'content.generate', tier: 2, description: 'Generate content for a channel' },
+          { type: 'content.approve', tier: 2, description: 'Approve pending content' },
+          { type: 'content.reject', tier: 2, description: 'Reject content with feedback' },
+          { type: 'content.schedule', tier: 2, description: 'Schedule content for posting' },
+          { type: 'account.create', tier: 3, description: 'Create new email account' },
+          { type: 'account.update', tier: 2, description: 'Update account settings' },
+          { type: 'channel.create', tier: 3, description: 'Create new channel identity' },
+          { type: 'workflow.start', tier: 2, description: 'Start a workflow job' },
+          { type: 'workflow.cancel', tier: 3, description: 'Cancel a running workflow' },
+          { type: 'system.health', tier: 1, description: 'Check system health' },
+          { type: 'analytics.query', tier: 1, description: 'Query analytics data' },
+          { type: 'affiliate.add', tier: 2, description: 'Add affiliate product' },
+        ],
+      },
+    });
   });
 }

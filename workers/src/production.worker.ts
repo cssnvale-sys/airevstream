@@ -17,7 +17,7 @@ const logger = createLogger('production-worker');
 
 const BUCKET = 'airevstream-production';
 const COMFYUI_URL = process.env.COMFYUI_URL ?? 'http://localhost:8188';
-const COMFYUI_TIMEOUT = 120_000;
+const COMFYUI_TIMEOUT = parseInt(process.env.COMFYUI_TIMEOUT_MS ?? '120000', 10);
 const TEMPLATES_DIR = resolve(__dirname, '../../comfyui-workflows');
 
 // ─── Inline ComfyUI Client ───

@@ -245,7 +245,7 @@ export class TikTokAdapter extends BasePlatformAdapter {
  */
 export class InstagramAdapter extends BasePlatformAdapter {
   readonly platform = 'instagram';
-  private readonly API_BASE = 'https://graph.instagram.com/v18.0';
+  private readonly API_BASE = `https://graph.instagram.com/${process.env.INSTAGRAM_API_VERSION ?? 'v18.0'}`;
 
   async publish(content: PostContent, credentials: PlatformCredentials): Promise<PostResult> {
     this.logger.info({ title: content.title }, 'Publishing to Instagram');
@@ -371,7 +371,7 @@ export class InstagramAdapter extends BasePlatformAdapter {
  */
 export class FacebookAdapter extends BasePlatformAdapter {
   readonly platform = 'facebook';
-  private readonly API_BASE = 'https://graph.facebook.com/v18.0';
+  private readonly API_BASE = `https://graph.facebook.com/${process.env.FACEBOOK_API_VERSION ?? 'v18.0'}`;
 
   async publish(content: PostContent, credentials: PlatformCredentials): Promise<PostResult> {
     this.logger.info({ title: content.title }, 'Publishing to Facebook');

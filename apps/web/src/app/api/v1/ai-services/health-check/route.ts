@@ -55,14 +55,19 @@ export async function POST(req: NextRequest) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
 
-        const res = await fetch(healthUrl, { signal: controller.signal });
-        clearTimeout(timeout);
-
-        responseMs = Date.now() - start;
-        healthy = res.ok;
+        try {
+          const res = await fetch(healthUrl, { signal: controller.signal });
+          clearTimeout(timeout);
+          responseMs = Date.now() - start;
+          healthy = res.ok;
+        } catch (fetchErr) {
+          clearTimeout(timeout);
+          errorMsg = fetchErr instanceof Error && fetchErr.name === 'AbortError' ? 'Timeout (5s)' : 'Connection failed';
+          healthy = false;
+        }
       } catch (err) {
-        errorMsg = err instanceof Error && err.name === 'AbortError' ? 'Timeout (5s)' : 'Connection failed';
         healthy = false;
+        errorMsg = 'Health check setup failed';
       }
 
       const newStatus = healthy ? 'active' : 'down';

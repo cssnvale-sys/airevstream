@@ -213,8 +213,11 @@ export async function GET(req: NextRequest) {
         clearInterval(eventInterval);
         try {
           controller.close();
-        } catch {
-          // Stream already closed
+        } catch (err) {
+          // Stream may already be closed — log only unexpected errors
+          if (err instanceof Error && err.message !== 'Controller is already closed') {
+            console.error('SSE stream close error:', err.message);
+          }
         }
       });
     },

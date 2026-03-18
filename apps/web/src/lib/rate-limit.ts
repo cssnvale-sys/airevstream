@@ -21,6 +21,9 @@ function ensureCleanup(windowMs: number) {
       entry.timestamps = entry.timestamps.filter((t) => now - t < windowMs);
       if (entry.timestamps.length === 0) store.delete(key);
     }
+    if (store.size > 10000) {
+      console.warn(`Rate limiter store has ${store.size} entries — possible memory issue`);
+    }
   }, CLEANUP_INTERVAL);
   // Don't prevent process exit
   if (cleanupTimer && typeof cleanupTimer === 'object' && 'unref' in cleanupTimer) {

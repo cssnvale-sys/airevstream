@@ -257,6 +257,7 @@ model CinemaBible {
 
   channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
+  @@index([channelId, version])
   @@map("cinema_bibles")
 }
 
@@ -426,6 +427,7 @@ model Storyboard {
   content ContentItem     @relation(fields: [contentId], references: [id], onDelete: Cascade)
   shots   StoryboardShot[]
 
+  @@index([contentId])
   @@map("storyboards")
 }
 
@@ -607,6 +609,7 @@ model Conversation {
   messages ConversationMessage[]
   actions  ActionAuditLog[]
 
+  @@index([updatedAt])
   @@map("conversations")
 }
 
@@ -640,6 +643,7 @@ model ActionAuditLog {
 
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
+  @@index([conversationId, createdAt])
   @@map("action_audit_log")
 }
 

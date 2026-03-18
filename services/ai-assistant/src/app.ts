@@ -14,6 +14,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
 
   await app.register(cors, { origin: true, credentials: true });
+
+  if (!config.JWT_SECRET && config.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET is required in production');
+  }
   await app.register(fjwt, {
     secret: config.JWT_SECRET ?? 'dev-jwt-secret-change-in-production',
   });
@@ -44,7 +48,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     reply.status(statusCode).send({
       success: false,
       error: {
-        code: (error as any).code ?? 'INTERNAL_ERROR',
+        code: error.code ?? 'INTERNAL_ERROR',
         message: safeMessages[statusCode] ?? 'An error occurred',
       },
     });

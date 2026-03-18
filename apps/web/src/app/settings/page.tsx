@@ -611,9 +611,9 @@ function SecurityTab() {
       });
       setPasswordMessage({ type: 'success', text: 'Password changed successfully.' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to change password.';
-      setPasswordMessage({ type: 'error', text: message });
+    } catch (err) {
+      console.error('Failed to change password:', err);
+      setPasswordMessage({ type: 'error', text: 'Failed to change password.' });
     } finally {
       setPasswordSaving(false);
     }
@@ -629,7 +629,8 @@ function SecurityTab() {
       mutateKeys();
       toast.success('API key generated');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to generate API key');
+      console.error('Failed to generate API key:', err);
+      toast.error('Failed to generate API key');
     } finally {
       setCreatingKey(false);
     }
@@ -642,7 +643,8 @@ function SecurityTab() {
       setRevokeTarget(null);
       toast.success('API key revoked');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to revoke key');
+      console.error('Failed to revoke key:', err);
+      toast.error('Failed to revoke key');
     }
   };
 

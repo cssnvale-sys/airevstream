@@ -462,6 +462,9 @@ export default function CreatePage() {
               onChange={(e) => update('topic', e.target.value)}
               placeholder="e.g. Top 5 AI Tools for Productivity"
               className="input w-full"
+              required
+              minLength={3}
+              maxLength={500}
             />
           </div>
 

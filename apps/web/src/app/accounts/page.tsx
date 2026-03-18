@@ -140,8 +140,9 @@ function AddEmailModal({
       onSuccess();
       onClose();
       toast.success('Account added successfully');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to add account');
+    } catch (err) {
+      console.error('Failed to add account:', err);
+      setError('Failed to add account');
     } finally {
       setSubmitting(false);
     }
@@ -177,7 +178,9 @@ function AddEmailModal({
               className="input w-full"
               placeholder="Account password"
               required
+              minLength={8}
             />
+            <p className="text-xs text-text-secondary mt-1">Minimum 8 characters</p>
           </div>
           <div>
             <label className="block text-sm text-text-secondary mb-1">Tier</label>
@@ -189,7 +192,7 @@ function AddEmailModal({
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
           <div className="flex gap-2 pt-2">
-            <button type="submit" disabled={submitting} className="btn-primary flex-1">
+            <button type="submit" disabled={submitting || !email.trim() || !password.trim()} className="btn-primary flex-1">
               {submitting ? 'Adding...' : 'Add Account'}
             </button>
             <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>

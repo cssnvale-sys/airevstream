@@ -3,6 +3,7 @@ import { jwtVerify } from 'jose';
 import { scryptSync, randomBytes } from 'node:crypto';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
@@ -18,6 +19,12 @@ function hashPassword(password: string): string {
  */
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`reset:${ip}`, RATE_LIMITS.resetPassword);
+    if (!rl.allowed) {
+      return error('RATE_LIMITED', 'Too many attempts. Please try again later.', 429);
+    }
+
     const body = await req.json();
     const { token, newPassword } = body as { token?: string; newPassword?: string };
 

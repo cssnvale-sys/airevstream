@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
 
@@ -12,6 +13,12 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secre
  */
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`forgot:${ip}`, RATE_LIMITS.forgotPassword);
+    if (!rl.allowed) {
+      return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+    }
+
     const body = await req.json();
     const { email } = body as { email?: string };
 

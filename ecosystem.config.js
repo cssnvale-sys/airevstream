@@ -50,5 +50,10 @@ module.exports = {
       cwd: '.',
       script: 'dist/workers/maintenance.worker.js',
     },
+    {
+      name: 'worker-production',
+      cwd: '.',
+      script: 'dist/workers/production.worker.js',
+    },
   ],
 };

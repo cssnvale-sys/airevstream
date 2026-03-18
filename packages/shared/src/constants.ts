@@ -29,14 +29,6 @@ export const DEFAULT_PAGE = 1;
 export const DEFAULT_LIMIT = 50;
 export const MAX_LIMIT = 100;
 
-// ─── Rate Limits ───
-export const RATE_LIMITS = {
-  API_GENERAL: { max: 100, window: '15m' },
-  API_AUTH: { max: 10, window: '1m' },
-  AI_ASSISTANT: { max: 60, window: '1m' },
-  CONTENT_GENERATION: { max: 10, window: '1h' },
-} as const;
-
 // ─── Platform Limits ───
 export const PLATFORM_LIMITS = {
   youtube: { titleMaxLength: 100, descriptionMaxLength: 5000, hashtagMax: 15 },

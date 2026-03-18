@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
+import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 
 /**
  * GET /api/v1/users

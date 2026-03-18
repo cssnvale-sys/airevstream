@@ -1,6 +1,7 @@
 import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -110,7 +111,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    if ((err as any)?.code === 'P2002') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       return error('CONFLICT', 'A storefront with this slug already exists', 409);
     }
     console.error('PATCH /api/v1/affiliate/storefronts/[id] error:', err);

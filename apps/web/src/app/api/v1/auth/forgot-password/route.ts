@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
     // In dev mode, log the reset token/link to console
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/reset-password?token=${resetToken}`;
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
-      console.log(`[Password Reset] Reset URL: ${resetUrl}`);
+      console.debug(`[Password Reset] Token for ${email}: ${resetToken}`);
+      console.debug(`[Password Reset] Reset URL: ${resetUrl}`);
     }
 
     return success({ message: 'If an account with that email exists, a reset link has been sent.' });

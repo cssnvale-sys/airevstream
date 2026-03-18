@@ -1,6 +1,7 @@
 import { authenticate, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const createStorefrontSchema = z.object({
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest) {
 
     return success(storefront);
   } catch (err) {
-    if ((err as any)?.code === 'P2002') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       return error('CONFLICT', 'A storefront with this slug already exists', 409);
     }
     console.error('POST /api/v1/affiliate/storefronts error:', err);

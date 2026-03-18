@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const queueName = queueMap[job.jobType] ?? 'content';
 
     // Re-queue the job
-    const newJob = await addJob(queueName, job.jobType, job.params as any, {
+    const newJob = await addJob(queueName, job.jobType, job.params as Record<string, unknown>, {
       attempts: job.maxRetries - job.retryCount,
     });
 

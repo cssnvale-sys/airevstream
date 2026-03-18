@@ -339,7 +339,22 @@ export default function CreatePage() {
   // -------------------------------------------------------------------------
 
   const renderStepIndicator = () => (
-    <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-caption text-text-secondary font-medium">
+          Step {currentStep} of {STEPS.length}
+        </span>
+        <div className="h-1.5 flex-1 mx-4 bg-bg-tertiary rounded-full overflow-hidden">
+          <div
+            className="h-full bg-accent-blue rounded-full transition-all duration-300"
+            style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
+          />
+        </div>
+        <span className="text-caption text-text-secondary">
+          {Math.round((currentStep / STEPS.length) * 100)}%
+        </span>
+      </div>
+    <div className="flex items-center gap-2 overflow-x-auto pb-2">
       {STEPS.map((step, i) => {
         const isCompleted = step.num < currentStep;
         const isCurrent = step.num === currentStep;
@@ -378,6 +393,7 @@ export default function CreatePage() {
           </div>
         );
       })}
+    </div>
     </div>
   );
 

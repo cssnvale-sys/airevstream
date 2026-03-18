@@ -210,10 +210,18 @@ const DEFAULT_SERVICES: ServiceDisplay[] = [
 // ---------------------------------------------------------------------------
 
 export default function SystemPage() {
-  const { data: healthRes, isLoading: healthLoading } = useSystemHealth();
-  const { data: metricsRes, isLoading: metricsLoading } = useSystemMetrics();
+  const { data: healthRes, isLoading: healthLoading, mutate: mutateHealth } = useSystemHealth();
+  const { data: metricsRes, isLoading: metricsLoading, mutate: mutateMetrics } = useSystemMetrics();
   const { data: alertsRes, isLoading: alertsLoading, mutate: mutateAlerts } = useAlerts();
-  const { data: workflowsRes, isLoading: workflowsLoading } = useWorkflows();
+  const { data: workflowsRes, isLoading: workflowsLoading, mutate: mutateWorkflows } = useWorkflows();
+
+  const refreshAll = () => {
+    mutateHealth();
+    mutateMetrics();
+    mutateAlerts();
+    mutateWorkflows();
+    toast.success('Refreshing health data...');
+  };
 
   const [expandedWorkflow, setExpandedWorkflow] = useState<string | null>(null);
   const [alertActionInFlight, setAlertActionInFlight] = useState<string | null>(null);
@@ -300,6 +308,13 @@ export default function SystemPage() {
             {health.queues.activeJobs} active jobs | {health.queues.pendingPosts} pending posts
           </span>
         )}
+        <button
+          onClick={refreshAll}
+          className="btn-secondary flex items-center gap-1.5 text-sm ml-2"
+          aria-label="Refresh health data"
+        >
+          <RefreshCw size={14} /> Refresh
+        </button>
       </div>
 
       {/* 2. Resource Usage */}

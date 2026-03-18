@@ -3,6 +3,7 @@ import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateAccountSchema = z.object({
   email: z.string().email(),
@@ -89,6 +90,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`account-create:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) {
+    return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+  }
 
   try {
     const body = await req.json();

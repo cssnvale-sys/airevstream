@@ -91,6 +91,10 @@ export const RATE_LIMITS = {
   bulkOperation: { maxAttempts: 5, windowMs: 60 * 60 * 1000 },
   /** Analytics export: 10 per hour per user */
   analyticsExport: { maxAttempts: 10, windowMs: 60 * 60 * 1000 },
+  /** Standard write operations: 60 per minute per user */
+  standardWrite: { maxAttempts: 60, windowMs: 60 * 1000 },
+  /** Admin operations: 30 per minute per user */
+  adminWrite: { maxAttempts: 30, windowMs: 60 * 1000 },
 } as const;
 
 /**

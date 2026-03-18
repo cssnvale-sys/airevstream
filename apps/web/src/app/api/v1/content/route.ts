@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -102,6 +103,12 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`content-create:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    if (!rl.allowed) {
+      return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+    }
 
     const body = await req.json();
     const parsed = createContentSchema.safeParse(body);

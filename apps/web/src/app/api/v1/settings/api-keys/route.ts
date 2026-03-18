@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 import { sha256 } from '@airevstream/crypto';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateApiKeySchema = z.object({
   name: z.string().min(1).max(100),
@@ -41,6 +42,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`api-key-create:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) {
+    return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+  }
 
   if (ctx.role !== 'admin') {
     return forbidden('Only admins can create API keys');

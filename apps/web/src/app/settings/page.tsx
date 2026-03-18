@@ -27,6 +27,7 @@ import {
   PanelRight,
   ArrowDownUp,
   Loader2,
+  Zap,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -268,6 +269,7 @@ function AiServicesTab() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newService, setNewService] = useState({ name: '', type: 'text', endpoint: '' });
   const [adding, setAdding] = useState(false);
+  const [testingId, setTestingId] = useState<string | null>(null);
 
   const services = (servicesRes?.data as unknown as AiService[]) ?? [];
   const fallbackChains = (chainsRes?.data as unknown as FallbackChain[]) ?? [];
@@ -299,7 +301,29 @@ function AiServicesTab() {
       mutate();
       toast.success('Service removed');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to remove service');
+      console.error('Failed to remove service:', err);
+      toast.error('Failed to remove service');
+    }
+  };
+
+  const handleTestServices = async () => {
+    setTestingId('all');
+    try {
+      const res = await apiPost<{ data: { results: { id: string; healthy: boolean; responseMs: number | null; error: string | null }[] } }>('/ai-services/health-check');
+      const results = res.data?.results ?? [];
+      const healthy = results.filter((r) => r.healthy).length;
+      const total = results.length;
+      if (healthy === total) {
+        toast.success(`All ${total} services healthy`);
+      } else {
+        toast.warning(`${healthy}/${total} services healthy`);
+      }
+      mutate();
+    } catch (err) {
+      console.error('Health check failed:', err);
+      toast.error('Failed to run health checks');
+    } finally {
+      setTestingId(null);
     }
   };
 
@@ -319,12 +343,22 @@ function AiServicesTab() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-text-primary">Registered Services</h3>
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="btn-primary btn-sm flex items-center gap-1"
-          >
-            <Plus size={14} /> Add Service
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleTestServices}
+              disabled={testingId !== null || services.length === 0}
+              className="btn-secondary btn-sm flex items-center gap-1"
+            >
+              {testingId ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+              Test All
+            </button>
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="btn-primary btn-sm flex items-center gap-1"
+            >
+              <Plus size={14} /> Add Service
+            </button>
+          </div>
         </div>
 
         {showAddForm && (

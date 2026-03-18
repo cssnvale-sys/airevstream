@@ -30,6 +30,7 @@ export function Header({ onToggleAssistant }: { onToggleAssistant: () => void })
           <input
             type="text"
             placeholder="Search... (Cmd+K)"
+            aria-label="Search"
             className="input w-full pl-9 py-1.5 text-body"
           />
         </div>
@@ -40,11 +41,12 @@ export function Header({ onToggleAssistant }: { onToggleAssistant: () => void })
           onClick={onToggleAssistant}
           className="btn-icon relative"
           title="AI Assistant (Cmd+/)"
+          aria-label="AI Assistant"
         >
           <MessageSquare size={18} />
         </button>
         <NotificationCenter />
-        <button className="btn-icon">
+        <button className="btn-icon" aria-label="User profile">
           <User size={18} />
         </button>
       </div>

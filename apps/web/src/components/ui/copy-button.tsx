@@ -41,6 +41,7 @@ export function CopyButton({ value, label, className, size = 14, showToast = tru
         handleCopy();
       }}
       title={label ?? 'Copy to clipboard'}
+      aria-label={label ?? 'Copy to clipboard'}
       className={cn(
         'inline-flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors p-1 rounded',
         copied && 'text-accent-green',

@@ -351,6 +351,7 @@ export default function DashboardPage() {
                     disabled={actionInFlight === item.id}
                     onClick={() => handleApproval(item.id, 'approve')}
                     className="btn-success btn-sm flex items-center gap-1"
+                    aria-label="Approve"
                   >
                     <CheckCircle2 size={14} />
                     <span className="hidden sm:inline">Approve</span>
@@ -359,6 +360,7 @@ export default function DashboardPage() {
                     disabled={actionInFlight === item.id}
                     onClick={() => handleApproval(item.id, 'reject')}
                     className="btn-danger btn-sm flex items-center gap-1"
+                    aria-label="Reject"
                   >
                     <XCircle size={14} />
                     <span className="hidden sm:inline">Reject</span>

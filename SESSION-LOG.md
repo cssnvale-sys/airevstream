@@ -540,6 +540,19 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 **Batch 50: Security Headers**
 - Added via next.config.js headers(): X-Content-Type-Options (nosniff), X-Frame-Options (DENY), X-XSS-Protection, Referrer-Policy, Permissions-Policy
 
+**Batch 56: Password Visibility Toggle + Sidebar State Persistence**
+- Added Eye/EyeOff password visibility toggle to login and register pages
+- Sidebar collapsed state now persisted to localStorage (survives page refresh)
+
+**Batch 57: Create Wizard Progress Bar + System Refresh Button**
+- Added "Step X of 6" text with animated progress bar to create page wizard
+- Added "Refresh" button to system page to re-fetch all health data with toast feedback
+
+### Commits (continued)
+- `f38e8b3` — docs: tracking docs round 12
+- `a0237f6` — feat: password visibility toggle + sidebar state persistence
+- `25b0b44` — feat: wizard progress bar + system refresh button
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

@@ -111,6 +111,10 @@
 | 5.61 | Image optimization | Done | next/image on create page storyboard shots |
 | 5.62 | Password change security | Done | Rate limiting + fresh JWT on change-password; invite rate limiting |
 | 5.63 | Zod validation (PUT routes) | Done | content/[id], channels/[id], accounts/[id], ai-services/[id] PUT handlers |
+| 5.64 | Password visibility toggle | Done | Eye/EyeOff toggle on login + register pages |
+| 5.65 | Sidebar state persistence | Done | Collapsed state saved to localStorage |
+| 5.66 | Create wizard progress bar | Done | "Step X of 6" text + animated percentage bar |
+| 5.67 | System refresh button | Done | Manual re-fetch all health data with toast feedback |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

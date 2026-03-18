@@ -36,6 +36,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Custom 404 Page** (Session 7): Branded not-found.tsx with dashboard link
 - **Loading Skeletons** (Session 7): Pulse-animated loading.tsx for all 11 dashboard page segments
 
+- **Password Visibility Toggle** (Session 7): Eye/EyeOff toggle on login and register password fields
+- **Sidebar State Persistence** (Session 7): Collapsed state saved to localStorage
+- **Create Wizard Progress Bar** (Session 7): "Step X of 6" text + animated percentage bar
+- **System Refresh Button** (Session 7): Manual re-fetch of all health/metrics data with toast feedback
+
 ### Fixed
 
 **Audit Round 18 (Session 7) — Password Security, PUT Validation & Image Optimization**

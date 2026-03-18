@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -63,6 +64,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`ai-services/[id]:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   if (ctx.role !== 'admin') {
     return forbidden('Only admins can update AI services');
@@ -132,6 +137,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`ai-services/[id]:delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   if (ctx.role !== 'admin') {
     return forbidden('Only admins can delete AI services');

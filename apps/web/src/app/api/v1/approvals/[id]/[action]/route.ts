@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, isUUID } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const RejectBodySchema = z.object({
   feedback: z.string().max(2000).optional(),
@@ -11,6 +12,10 @@ type RouteParams = { params: Promise<{ id: string; action: string }> };
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`approvals/[id]/[action]:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   const { id, action } = await params;
   if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);

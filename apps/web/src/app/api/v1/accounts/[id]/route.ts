@@ -1,6 +1,7 @@
 import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -71,6 +72,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`accounts/[id]:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
@@ -110,6 +115,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`accounts/[id]:delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');

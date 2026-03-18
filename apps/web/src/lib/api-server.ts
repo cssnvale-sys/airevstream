@@ -39,7 +39,10 @@ export function paginated(data: unknown[], total: number, page: number, limit: n
 }
 
 export function error(code: string, message: string, status = 400) {
-  return json({ success: false, error: { code, message } }, status);
+  return NextResponse.json(
+    { success: false, error: { code, message } },
+    { status, headers: { 'Cache-Control': 'no-store, must-revalidate' } },
+  );
 }
 
 export function notFound(message = 'Not found') {

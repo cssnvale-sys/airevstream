@@ -392,6 +392,22 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - KI-006: Job status polling — IMPLEMENTED (batch 5)
 - KI-016: Analytics tenant scoping — FIXED (batch 21)
 
+**Batch 25: Tracking Docs Update (round 3)**
+- Updated SESSION-LOG, CHANGELOG, KNOWN-ISSUES, DEV-STATUS for batches 21-24
+
+**Batch 26: Security Fixes (round 3)**
+- AI health-check: replaced `err: any` with `err: unknown`, static error string
+- Forgot-password: wrapped reset token console.log in `NODE_ENV === 'development'`
+
+**Batch 27: Page Metadata (SEO)**
+- Added `title.template` to root layout: `'%s | AiRevStream'`
+- Created layout.tsx with metadata exports for all 11 dashboard pages
+
+**Batch 28: Form Validation Improvements**
+- Accounts: password minLength=8, submit disabled when fields empty, error leak fix
+- Settings: error message leak fixes in password change, API key create/revoke
+- Create: required + minLength/maxLength on topic field
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

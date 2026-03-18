@@ -88,6 +88,9 @@
 | 5.38 | Error message leak prevention | Done | Static error strings in auth/create/affiliate pages |
 | 5.39 | Memory leak fixes | Done | CopyButton timer cleanup, notification-center error logging |
 | 5.40 | Silent catch fixes (round 2) | Done | console.error in create/affiliate catch blocks |
+| 5.41 | Security fixes (round 3) | Done | err:any leak in health-check, NODE_ENV guard on reset token log |
+| 5.42 | Page metadata (SEO) | Done | title.template + 11 layout.tsx files with page-specific titles |
+| 5.43 | Form validation | Done | Password minLength, submit disabled, topic validation, error leak fixes |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

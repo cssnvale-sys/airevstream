@@ -27,8 +27,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Analytics Error State** (Session 7): Error display card when analytics data fails to load
 - **Unsaved Changes Warning** (Session 7): useUnsavedChanges hook + dirty state tracking on settings general tab
 - **Search Debounce** (Session 7): useDebounce hook (300ms) on library and accounts search inputs
+- **Page Metadata** (Session 7): SEO titles for all 11 dashboard pages via layout.tsx files + root title template
 
 ### Fixed
+
+**Audit Round 12 (Session 7) — Validation & Polish**
+- Added password minLength and submit disabled state to accounts add-email modal
+- Added required/minLength/maxLength to create page topic field
+- Fixed error message leaks in accounts modal, settings password change, settings API key create/revoke
+- Fixed `err: any` → `err: unknown` in AI health-check route
+- Guarded reset token console.log with `NODE_ENV === 'development'`
 
 **Audit Round 10 (Session 7) — Security**
 - **CRITICAL:** Added tenant scoping to all 7 analytics routes (overview, engagement, revenue, costs, content-performance, audience, export) — any authenticated user could previously see all tenants' analytics data (KI-016)

@@ -133,3 +133,51 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return error('INTERNAL_ERROR', 'Failed to update channel', 500);
   }
 }
+
+/**
+ * DELETE /api/v1/channels/[id]
+ * Delete a channel and cascade-clean related records
+ */
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { id } = await params;
+
+  try {
+    const channel = await ctx.db.channel.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        socialAccount: {
+          select: {
+            emailAccount: { select: { tenantId: true } },
+          },
+        },
+      },
+    });
+
+    if (!channel) return notFound('Channel not found');
+
+    // Verify tenant ownership
+    if (ctx.tenantId && channel.socialAccount.emailAccount.tenantId !== ctx.tenantId) {
+      return notFound('Channel not found');
+    }
+
+    // Cascade delete: scheduled posts, affiliate pool entries, channel avatars,
+    // branding packages, cinema bibles, then the channel itself
+    await ctx.db.$transaction([
+      ctx.db.scheduledPost.deleteMany({ where: { channelId: id } }),
+      ctx.db.channelAffiliatePool.deleteMany({ where: { channelId: id } }),
+      ctx.db.channelAvatar.deleteMany({ where: { channelId: id } }),
+      ctx.db.brandingPackage.deleteMany({ where: { channelId: id } }),
+      ctx.db.cinemaBible.deleteMany({ where: { channelId: id } }),
+      ctx.db.channel.delete({ where: { id } }),
+    ]);
+
+    return success({ deleted: true });
+  } catch (err) {
+    console.error('DELETE /api/v1/channels/[id] failed:', err);
+    return error('INTERNAL_ERROR', 'Failed to delete channel', 500);
+  }
+}

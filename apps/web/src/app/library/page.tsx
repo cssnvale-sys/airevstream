@@ -8,9 +8,12 @@ import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
 import {
   Search, LayoutGrid, List, ChevronLeft, ChevronRight,
   FileText, Image, Film, Video, Mic, ImageIcon,
-  Star, Calendar, SlidersHorizontal,
+  Star, Calendar, SlidersHorizontal, Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from '@/lib/toast';
+import { apiDelete } from '@/hooks/use-api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -228,7 +231,7 @@ function ContentCard({ item }: { item: ContentItem }) {
 // List Row
 // ---------------------------------------------------------------------------
 
-function ContentRow({ item }: { item: ContentItem }) {
+function ContentRow({ item, onDelete }: { item: ContentItem; onDelete?: (id: string) => void }) {
   const Icon = contentTypeIcon(item.contentType);
 
   return (
@@ -273,6 +276,17 @@ function ContentRow({ item }: { item: ContentItem }) {
         <span className="text-xs text-text-secondary w-16 text-right flex-shrink-0">
           {formatRelativeTime(item.createdAt)}
         </span>
+
+        {/* Delete */}
+        {onDelete && ['draft', 'archived', 'failed'].includes(item.status) && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(item.id); }}
+            className="text-text-secondary hover:text-accent-red transition-colors p-1 flex-shrink-0"
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
     </Link>
   );
@@ -327,6 +341,8 @@ export default function LibraryPage() {
     return p.toString();
   }, [page, perPage, sortField, sortOrder, search, filterType, filterStatus, filterChannel]);
 
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { data, isLoading, error, mutate } = useContent(queryParams);
 
   const allItems = (data?.data ?? []) as ContentItem[];
@@ -352,6 +368,21 @@ export default function LibraryPage() {
   }, [allItems, filterModel, dateFrom, dateTo]);
 
   const handleRefresh = useCallback(() => { mutate(); }, [mutate]);
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await apiDelete(`/content/${deleteTarget}`);
+      mutate();
+      toast.success('Content deleted');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete content');
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, mutate]);
 
   const clearFilters = useCallback(() => {
     setSearch('');
@@ -538,7 +569,7 @@ export default function LibraryPage() {
             <span className="w-16 text-right flex-shrink-0">Date</span>
           </div>
           {items.map((item) => (
-            <ContentRow key={item.id} item={item} />
+            <ContentRow key={item.id} item={item} onDelete={setDeleteTarget} />
           ))}
         </div>
       )}
@@ -602,6 +633,17 @@ export default function LibraryPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Content"
+        message="This content item will be permanently deleted. This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </AppLayout>
   );
 }

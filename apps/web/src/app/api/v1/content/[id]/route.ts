@@ -142,3 +142,49 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
   }
 }
+
+/**
+ * DELETE /api/v1/content/[id]
+ * Delete a content item. Only allowed for draft or archived status.
+ */
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  try {
+    const ctx = await authenticate(req);
+    if (ctx instanceof NextResponse) return ctx;
+
+    const { id } = await params;
+
+    const item = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
+      select: { id: true, status: true },
+    });
+
+    if (!item) return notFound('Content item not found');
+
+    // Only allow deletion of draft or archived content
+    const deletableStatuses = ['draft', 'archived', 'failed'];
+    if (!deletableStatuses.includes(item.status)) {
+      return validationError(
+        `Cannot delete content with status "${item.status}". Only draft, archived, or failed content can be deleted.`,
+      );
+    }
+
+    // Cascade: storyboard shots, storyboards, scheduled posts, then content
+    await ctx.db.$transaction([
+      ctx.db.storyboardShot.deleteMany({
+        where: { storyboard: { contentId: id } },
+      }),
+      ctx.db.storyboard.deleteMany({ where: { contentId: id } }),
+      ctx.db.scheduledPost.deleteMany({ where: { contentId: id } }),
+      ctx.db.contentItem.delete({ where: { id } }),
+    ]);
+
+    return success({ deleted: true });
+  } catch (err) {
+    console.error('DELETE /api/v1/content/[id] error:', err);
+    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+  }
+}

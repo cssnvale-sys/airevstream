@@ -18,9 +18,11 @@ export async function GET(req: NextRequest) {
     const tenantId = params.get('tenantId') ?? undefined;
     const role = params.get('role') ?? undefined;
 
+    const validRoles = ['admin', 'operator', 'viewer'];
+
     const where: Record<string, unknown> = {};
     if (tenantId) where.tenantId = tenantId;
-    if (role) where.role = role;
+    if (role && validRoles.includes(role)) where.role = role;
     if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },

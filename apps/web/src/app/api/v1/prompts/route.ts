@@ -40,15 +40,19 @@ export async function GET(req: NextRequest) {
     const tagsParam = params.get('tags') ?? undefined;
     const sortBy = params.get('sortBy') ?? undefined;
 
+    const validCategories = ['hook', 'intro', 'content', 'cta', 'thumbnail', 'description'];
+    const validPlatforms = ['youtube', 'tiktok', 'instagram', 'facebook'];
+    const validContentTypes = ['video_short', 'video_long', 'image', 'text', 'voice', 'thumbnail'];
+
     const where: Prisma.PromptTemplateWhereInput = {};
 
-    if (category) {
+    if (category && validCategories.includes(category)) {
       where.category = category;
     }
-    if (platform) {
+    if (platform && validPlatforms.includes(platform)) {
       where.platform = platform;
     }
-    if (contentType) {
+    if (contentType && validContentTypes.includes(contentType)) {
       where.contentType = contentType;
     }
     if (tagsParam) {

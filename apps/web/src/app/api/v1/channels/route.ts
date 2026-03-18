@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
   const language = params.get('language') ?? undefined;
   const status = params.get('status') ?? undefined;
 
+  const validPlatforms = ['youtube', 'tiktok', 'instagram', 'facebook'];
+  const validStatuses = ['active', 'paused', 'suspended'];
+
   try {
     const where: Record<string, unknown> = {};
 
@@ -38,10 +41,10 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    if (status) where.status = status;
+    if (status && validStatuses.includes(status)) where.status = status;
     if (language) where.primaryLanguage = language;
     if (niche) where.niches = { has: niche };
-    if (platform) {
+    if (platform && validPlatforms.includes(platform)) {
       where.socialAccount = {
         ...(where.socialAccount as Record<string, unknown> ?? {}),
         platform,

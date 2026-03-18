@@ -30,10 +30,12 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const statusFilter = url.searchParams.get('status') ?? undefined;
 
+    const validStatuses = ['active', 'trialing', 'past_due', 'canceled', 'expired'];
+
     const where: Record<string, unknown> = {
       tenantId: user.tenantId,
     };
-    if (statusFilter) where.status = statusFilter;
+    if (statusFilter && validStatuses.includes(statusFilter)) where.status = statusFilter;
 
     const [subscriptions, total] = await Promise.all([
       ctx.db.subscription.findMany({

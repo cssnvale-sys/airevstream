@@ -15,9 +15,12 @@ export async function GET(req: NextRequest) {
     const status = params.get('status') ?? undefined;
     const category = params.get('category') ?? undefined;
 
+    const validSeverities = ['info', 'warning', 'error', 'critical'];
+    const validStatuses = ['open', 'acknowledged', 'resolved'];
+
     const where: Record<string, unknown> = {};
-    if (severity) where.severity = severity;
-    if (status) where.status = status;
+    if (severity && validSeverities.includes(severity)) where.severity = severity;
+    if (status && validStatuses.includes(status)) where.status = status;
     else where.status = { in: ['open', 'acknowledged'] }; // Default: show active alerts
     if (category) where.category = category;
 

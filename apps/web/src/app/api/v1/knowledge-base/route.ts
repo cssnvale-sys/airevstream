@@ -35,9 +35,11 @@ export async function GET(req: NextRequest) {
     const category = params.get('category') ?? undefined;
     const isCurrentParam = params.get('isCurrent') ?? undefined;
 
+    const validDomains = ['platform_ops', 'civitai', 'remotion', 'huggingface', 'comfyui', 'video_production'];
+
     const where: Prisma.KnowledgeBaseEntryWhereInput = {};
 
-    if (domain) {
+    if (domain && validDomains.includes(domain)) {
       where.domain = domain;
     }
     if (category) {

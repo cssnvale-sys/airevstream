@@ -15,14 +15,17 @@ export async function GET(req: NextRequest) {
   const status = params.get('status') ?? undefined;
   const tier = params.get('tier') ?? undefined;
 
+  const validStatuses = ['active', 'pending', 'warming', 'cooldown', 'suspended', 'banned'];
+  const validTiers = ['tier1', 'tier2', 'tier3'];
+
   try {
     const where: Record<string, unknown> = {};
 
     // Tenant scoping: only show accounts belonging to user's tenant
     if (ctx.tenantId) where.tenantId = ctx.tenantId;
 
-    if (status) where.status = status;
-    if (tier) where.tier = tier;
+    if (status && validStatuses.includes(status)) where.status = status;
+    if (tier && validTiers.includes(tier)) where.tier = tier;
     if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },

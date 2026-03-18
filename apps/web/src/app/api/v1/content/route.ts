@@ -14,6 +14,9 @@ export async function GET(req: NextRequest) {
     const contentType = params.get('contentType') ?? undefined;
     const channelId = params.get('channelId') ?? undefined;
 
+    const validStatuses = ['draft', 'generating', 'generated', 'review', 'approved', 'scheduled', 'posted', 'archived', 'failed'];
+    const validContentTypes = ['video_short', 'video_long', 'image', 'text', 'voice', 'thumbnail'];
+
     const where: Prisma.ContentItemWhereInput = {};
 
     // Tenant scoping through channel → socialAccount → emailAccount
@@ -25,10 +28,10 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    if (status) {
+    if (status && validStatuses.includes(status)) {
       where.status = status;
     }
-    if (contentType) {
+    if (contentType && validContentTypes.includes(contentType)) {
       where.contentType = contentType;
     }
     if (channelId) {

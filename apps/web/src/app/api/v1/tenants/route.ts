@@ -41,8 +41,12 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const statusFilter = url.searchParams.get('status');
     const planFilter = url.searchParams.get('plan');
-    if (statusFilter) where.status = statusFilter;
-    if (planFilter) where.plan = planFilter;
+
+    const validStatuses = ['active', 'suspended', 'trial'];
+    const validPlans = ['free', 'starter', 'pro', 'enterprise'];
+
+    if (statusFilter && validStatuses.includes(statusFilter)) where.status = statusFilter;
+    if (planFilter && validPlans.includes(planFilter)) where.plan = planFilter;
 
     const [tenants, total] = await Promise.all([
       ctx.db.tenant.findMany({

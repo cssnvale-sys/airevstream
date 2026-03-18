@@ -37,10 +37,14 @@ export async function GET(req: NextRequest) {
     const serviceType = params.get('serviceType') ?? undefined;
     const status = params.get('status') ?? undefined;
 
+    const validProviders = ['ollama', 'openai', 'comfyui', 'piper', 'elevenlabs', 'http'];
+    const validServiceTypes = ['text_generation', 'image_generation', 'tts', 'embedding', 'moderation'];
+    const validStatuses = ['active', 'inactive', 'disabled', 'error'];
+
     const where: Record<string, unknown> = {};
-    if (provider) where.provider = provider;
-    if (serviceType) where.serviceType = serviceType;
-    if (status) where.status = status;
+    if (provider && validProviders.includes(provider)) where.provider = provider;
+    if (serviceType && validServiceTypes.includes(serviceType)) where.serviceType = serviceType;
+    if (status && validStatuses.includes(status)) where.status = status;
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },

@@ -57,15 +57,18 @@ export async function GET(req: NextRequest) {
     const category = params.get('category') ?? undefined;
     const budgetType = params.get('budgetType') ?? undefined;
 
+    const validStatuses = ['active', 'paused', 'exceeded'];
+    const validBudgetTypes = ['daily', 'weekly', 'monthly'];
+
     const where: Prisma.CostBudgetWhereInput = {};
 
-    if (status) {
+    if (status && validStatuses.includes(status)) {
       where.status = status;
     }
     if (category) {
       where.category = category;
     }
-    if (budgetType) {
+    if (budgetType && validBudgetTypes.includes(budgetType)) {
       where.budgetType = budgetType;
     }
 

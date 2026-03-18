@@ -1,6 +1,64 @@
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, paginated, parseQuery } from '@/lib/api-server';
+import type { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
+/**
+ * GET /api/v1/schedule
+ * List scheduled posts with pagination, status, platform filters.
+ */
+export async function GET(req: NextRequest) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  try {
+    const { page, limit, skip, sort, order, params } = parseQuery(req);
+    const status = params.get('status') ?? undefined;
+    const platform = params.get('platform') ?? undefined;
+    const channelId = params.get('channelId') ?? undefined;
+
+    const validStatuses = ['scheduled', 'posting', 'posted', 'failed', 'cancelled'];
+    const validPlatforms = ['youtube', 'tiktok', 'instagram', 'facebook'];
+
+    const where: Prisma.ScheduledPostWhereInput = {};
+
+    // Tenant scoping
+    if (ctx.tenantId) {
+      where.channel = {
+        socialAccount: {
+          emailAccount: { tenantId: ctx.tenantId },
+        },
+      };
+    }
+
+    if (status && validStatuses.includes(status)) where.status = status;
+    if (platform && validPlatforms.includes(platform)) where.platform = platform;
+    if (channelId) where.channelId = channelId;
+
+    const allowedSortFields = ['scheduledAt', 'createdAt', 'status', 'platform'];
+    const sortField = allowedSortFields.includes(sort) ? sort : 'scheduledAt';
+    const sortOrder = order === 'asc' ? 'asc' : 'desc';
+
+    const [items, total] = await Promise.all([
+      ctx.db.scheduledPost.findMany({
+        where,
+        include: {
+          content: { select: { id: true, title: true, contentType: true, status: true } },
+          channel: { select: { id: true, name: true } },
+        },
+        orderBy: { [sortField]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      ctx.db.scheduledPost.count({ where }),
+    ]);
+
+    return paginated(items, total, page, limit);
+  } catch (err) {
+    console.error('GET /api/v1/schedule error:', err);
+    return error('INTERNAL_ERROR', 'Failed to list scheduled posts', 500);
+  }
+}
 
 const SchedulePostSchema = z.object({
   contentId: z.string().uuid(),

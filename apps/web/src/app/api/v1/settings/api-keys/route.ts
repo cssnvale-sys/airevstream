@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
   const keys = await ctx.db.apiKey.findMany({
     where: { tenantId: ctx.tenantId },
     orderBy: { createdAt: 'desc' },
+    take: 100,
     select: {
       id: true,
       name: true,

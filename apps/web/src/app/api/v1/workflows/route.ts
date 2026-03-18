@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
+import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import NextImage from 'next/image';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useChannels, useAffiliateProducts, apiPost } from '@/hooks/use-api';
 import { cn, platformIcon } from '@/lib/utils';
@@ -684,12 +685,14 @@ export default function CreatePage() {
             {formData.shots.map((shot, shotIdx) => (
               <div key={shot.id} className="card p-4">
                 {/* Placeholder image */}
-                <div className="aspect-video bg-bg-tertiary rounded-md flex items-center justify-center mb-3 border border-border">
+                <div className="aspect-video bg-bg-tertiary rounded-md flex items-center justify-center mb-3 border border-border relative">
                   {shot.imageUrl ? (
-                    <img
+                    <NextImage
                       src={shot.imageUrl}
                       alt={shot.description || `Storyboard shot ${shotIdx + 1}`}
-                      className="w-full h-full object-cover rounded-md"
+                      fill
+                      className="object-cover rounded-md"
+                      unoptimized
                     />
                   ) : (
                     <ImageIcon size={32} className="text-text-secondary" />

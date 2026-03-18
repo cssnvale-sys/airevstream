@@ -43,8 +43,8 @@ export default function ApprovalsPage() {
     return parts.join('&');
   }, [page, typeFilter]);
 
-  const { data: approvalsRes, isLoading, mutate } = useApi(`/approvals?${queryParams}`);
-  const items = (approvalsRes?.data as unknown as ApprovalItem[]) ?? [];
+  const { data: approvalsRes, isLoading, mutate } = useApi<ApprovalItem[]>(`/approvals?${queryParams}`);
+  const items = approvalsRes?.data ?? [];
   const meta = approvalsRes?.meta;
   const totalPages = meta?.pages ?? 1;
 

@@ -97,62 +97,62 @@ export async function apiDelete(path: string): Promise<void> {
 }
 
 // Typed hooks for common data patterns
-export function useAccounts(params?: string) {
-  return useApi(`/accounts${params ? `?${params}` : ''}`);
+export function useAccounts<T = unknown>(params?: string) {
+  return useApi<T>(`/accounts${params ? `?${params}` : ''}`);
 }
 
-export function useAccount(id: string | null) {
-  return useApi(id ? `/accounts/${id}` : null);
+export function useAccount<T = unknown>(id: string | null) {
+  return useApi<T>(id ? `/accounts/${id}` : null);
 }
 
-export function useChannels(params?: string) {
-  return useApi(`/channels${params ? `?${params}` : ''}`);
+export function useChannels<T = unknown>(params?: string) {
+  return useApi<T>(`/channels${params ? `?${params}` : ''}`);
 }
 
-export function useChannel(id: string | null) {
-  return useApi(id ? `/channels/${id}` : null);
+export function useChannel<T = unknown>(id: string | null) {
+  return useApi<T>(id ? `/channels/${id}` : null);
 }
 
-export function useContent(params?: string) {
-  return useApi(`/content${params ? `?${params}` : ''}`);
+export function useContent<T = unknown>(params?: string) {
+  return useApi<T>(`/content${params ? `?${params}` : ''}`);
 }
 
-export function useContentItem(id: string | null) {
-  return useApi(id ? `/content/${id}` : null);
+export function useContentItem<T = unknown>(id: string | null) {
+  return useApi<T>(id ? `/content/${id}` : null);
 }
 
-export function useApprovals(params?: string) {
-  return useApi(`/approvals${params ? `?${params}` : ''}`);
+export function useApprovals<T = unknown>(params?: string) {
+  return useApi<T>(`/approvals${params ? `?${params}` : ''}`);
 }
 
-export function useCalendar(params?: string) {
-  return useApi(`/calendar${params ? `?${params}` : ''}`);
+export function useCalendar<T = unknown>(params?: string) {
+  return useApi<T>(`/calendar${params ? `?${params}` : ''}`);
 }
 
-export function useAffiliateProducts(params?: string) {
-  return useApi(`/affiliate/products${params ? `?${params}` : ''}`);
+export function useAffiliateProducts<T = unknown>(params?: string) {
+  return useApi<T>(`/affiliate/products${params ? `?${params}` : ''}`);
 }
 
-export function useAiServices() {
-  return useApi('/ai-services');
+export function useAiServices<T = unknown>() {
+  return useApi<T>('/ai-services');
 }
 
-export function useSystemHealth() {
-  return useApi('/system/health', { refreshInterval: 30000 });
+export function useSystemHealth<T = unknown>() {
+  return useApi<T>('/system/health', { refreshInterval: 30000 });
 }
 
-export function useSystemMetrics() {
-  return useApi('/system/metrics', { refreshInterval: 15000 });
+export function useSystemMetrics<T = unknown>() {
+  return useApi<T>('/system/metrics', { refreshInterval: 15000 });
 }
 
-export function useAlerts(params?: string) {
-  return useApi(`/system/alerts${params ? `?${params}` : ''}`);
+export function useAlerts<T = unknown>(params?: string) {
+  return useApi<T>(`/system/alerts${params ? `?${params}` : ''}`);
 }
 
-export function useWorkflows(params?: string) {
-  return useApi(`/system/workflows${params ? `?${params}` : ''}`);
+export function useWorkflows<T = unknown>(params?: string) {
+  return useApi<T>(`/system/workflows${params ? `?${params}` : ''}`);
 }
 
-export function useAnalytics(type: string, params?: string) {
-  return useApi(`/analytics/${type}${params ? `?${params}` : ''}`);
+export function useAnalytics<T = unknown>(type: string, params?: string) {
+  return useApi<T>(`/analytics/${type}${params ? `?${params}` : ''}`);
 }

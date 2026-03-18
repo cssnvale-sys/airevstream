@@ -143,13 +143,13 @@ export default function CalendarPage() {
   }, [weekStart, weekEnd, filters.channelId, filters.platform, filters.status]);
 
   // API hooks
-  const { data: calendarData, isLoading, error: calendarError } = useCalendar(rangeParams);
-  const { data: channelsData, error: channelsError } = useChannels();
+  const { data: calendarData, isLoading, error: calendarError } = useCalendar<CalendarItem[]>(rangeParams);
+  const { data: channelsData, error: channelsError } = useChannels<Channel[]>();
 
   const fetchError = calendarError || channelsError;
 
-  const items: CalendarItem[] = (calendarData?.data as CalendarItem[] | undefined) ?? [];
-  const channels: Channel[] = (channelsData?.data as Channel[] | undefined) ?? [];
+  const items = calendarData?.data ?? [];
+  const channels = channelsData?.data ?? [];
 
   // Items are already filtered server-side
   const filtered = items;

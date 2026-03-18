@@ -232,12 +232,12 @@ export default function AffiliatePage() {
     data: productsRes,
     isLoading: productsLoading,
     mutate: mutateProducts,
-  } = useAffiliateProducts(productParams);
+  } = useAffiliateProducts<AffiliateProduct[]>(productParams);
 
   const {
     data: channelsRes,
     isLoading: channelsLoading,
-  } = useChannels();
+  } = useChannels<Channel[]>();
 
   const {
     data: linksRes,
@@ -260,11 +260,11 @@ export default function AffiliatePage() {
       : null,
   );
 
-  const products: AffiliateProduct[] = productsRes?.data as unknown as AffiliateProduct[] ?? [];
-  const channels: Channel[] = (channelsRes?.data as unknown as Channel[]) ?? [];
-  const links: AffiliateLink[] = (linksRes?.data as unknown as AffiliateLink[]) ?? [];
-  const poolProducts: PoolEntry[] = (poolRes?.data as unknown as PoolEntry[]) ?? [];
-  const revenue: RevenueData | null = (revenueRes?.data as unknown as RevenueData) ?? null;
+  const products = productsRes?.data ?? [];
+  const channels = channelsRes?.data ?? [];
+  const links = linksRes?.data ?? [];
+  const poolProducts = poolRes?.data ?? [];
+  const revenue = revenueRes?.data ?? null;
 
   // Channel pools: products not already assigned
   const unassignedProducts = useMemo(() => {

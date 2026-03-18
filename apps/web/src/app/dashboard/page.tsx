@@ -172,11 +172,11 @@ function activityIcon(type: string) {
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
-  const { data: approvalsRes, isLoading: approvalsLoading, error: approvalsError, mutate: mutateApprovals } = useApprovals('status=pending_approval&limit=5');
-  const { data: contentRes, isLoading: contentLoading, error: contentError } = useContent('limit=100');
-  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError } = useWorkflows();
-  const { data: healthRes, isLoading: healthLoading, error: healthError } = useSystemHealth();
-  const { data: metricsRes, isLoading: metricsLoading, error: metricsError } = useSystemMetrics();
+  const { data: approvalsRes, isLoading: approvalsLoading, error: approvalsError, mutate: mutateApprovals } = useApprovals<ApprovalItem[]>('status=pending_approval&limit=5');
+  const { data: contentRes, isLoading: contentLoading, error: contentError } = useContent<ContentItem[]>('limit=100');
+  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError } = useWorkflows<WorkflowItem[]>();
+  const { data: healthRes, isLoading: healthLoading, error: healthError } = useSystemHealth<HealthData>();
+  const { data: metricsRes, isLoading: metricsLoading, error: metricsError } = useSystemMetrics<MetricsData>();
   const { data: activityRes, isLoading: activityLoading, error: activityError } = useApi<ActivityItem[]>('/activity?limit=10');
   const { data: revenueRes, isLoading: revenueLoading, error: revenueError } = useApi<RevenueData>('/analytics/revenue');
   const { data: accountStatsRes, isLoading: accountStatsLoading, error: accountStatsError } = useApi<AccountStats>('/accounts/stats');
@@ -186,14 +186,14 @@ export default function DashboardPage() {
   const [actionInFlight, setActionInFlight] = useState<string | null>(null);
 
   // Derived data
-  const approvals = (approvalsRes?.data as unknown as ApprovalItem[]) ?? [];
-  const contentItems = (contentRes?.data as unknown as ContentItem[]) ?? [];
-  const workflows = (workflowsRes?.data as unknown as WorkflowItem[]) ?? [];
-  const health = healthRes?.data as unknown as HealthData | undefined;
-  const metrics = metricsRes?.data as unknown as MetricsData | undefined;
-  const activityFeed = (activityRes?.data as unknown as ActivityItem[]) ?? [];
-  const revenue = revenueRes?.data as unknown as RevenueData | undefined;
-  const accountStats = accountStatsRes?.data as unknown as AccountStats | undefined;
+  const approvals = approvalsRes?.data ?? [];
+  const contentItems = contentRes?.data ?? [];
+  const workflows = workflowsRes?.data ?? [];
+  const health = healthRes?.data;
+  const metrics = metricsRes?.data;
+  const activityFeed = activityRes?.data ?? [];
+  const revenue = revenueRes?.data;
+  const accountStats = accountStatsRes?.data;
 
   const postedTodayCount = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);

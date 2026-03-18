@@ -48,9 +48,9 @@ export default function WorkflowsPage() {
     return parts.join('&');
   }, [statusFilter, jobTypeFilter, page]);
 
-  const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows(queryParams);
+  const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows<WorkflowJob[]>(queryParams);
 
-  const jobs = (jobsRes?.data as unknown as WorkflowJob[]) ?? [];
+  const jobs = jobsRes?.data ?? [];
   const meta = jobsRes?.meta;
   const totalPages = meta?.pages ?? 1;
 

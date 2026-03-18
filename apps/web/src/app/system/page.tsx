@@ -210,10 +210,10 @@ const DEFAULT_SERVICES: ServiceDisplay[] = [
 // ---------------------------------------------------------------------------
 
 export default function SystemPage() {
-  const { data: healthRes, isLoading: healthLoading, error: healthError, mutate: mutateHealth } = useSystemHealth();
-  const { data: metricsRes, isLoading: metricsLoading, error: metricsError, mutate: mutateMetrics } = useSystemMetrics();
-  const { data: alertsRes, isLoading: alertsLoading, error: alertsError, mutate: mutateAlerts } = useAlerts();
-  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError, mutate: mutateWorkflows } = useWorkflows();
+  const { data: healthRes, isLoading: healthLoading, error: healthError, mutate: mutateHealth } = useSystemHealth<HealthData>();
+  const { data: metricsRes, isLoading: metricsLoading, error: metricsError, mutate: mutateMetrics } = useSystemMetrics<MetricsData>();
+  const { data: alertsRes, isLoading: alertsLoading, error: alertsError, mutate: mutateAlerts } = useAlerts<AlertItem[]>();
+  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError, mutate: mutateWorkflows } = useWorkflows<WorkflowRun[]>();
 
   const fetchError = healthError || metricsError || alertsError || workflowsError;
 
@@ -229,10 +229,10 @@ export default function SystemPage() {
   const [alertActionInFlight, setAlertActionInFlight] = useState<string | null>(null);
 
   // Derived data
-  const health = healthRes?.data as unknown as HealthData | undefined;
-  const metrics = metricsRes?.data as unknown as MetricsData | undefined;
-  const alerts = (alertsRes?.data as unknown as AlertItem[]) ?? [];
-  const allWorkflows = (workflowsRes?.data as unknown as WorkflowRun[]) ?? [];
+  const health = healthRes?.data;
+  const metrics = metricsRes?.data;
+  const alerts = alertsRes?.data ?? [];
+  const allWorkflows = workflowsRes?.data ?? [];
   const workflows = allWorkflows.filter((w) => w.status === 'running' || w.status === 'queued');
   // Failed jobs serve as recent errors
   const errors = allWorkflows.filter((w) => w.status === 'failed' && w.error);

@@ -129,11 +129,11 @@ export default function CreatePage() {
   const [error, setError] = useState<string | null>(null);
 
   // API hooks
-  const { data: channelsData, isLoading: channelsLoading } = useChannels();
-  const { data: productsData } = useAffiliateProducts();
+  const { data: channelsData, isLoading: channelsLoading } = useChannels<Channel[]>();
+  const { data: productsData } = useAffiliateProducts<AffiliateProduct[]>();
 
-  const channels: Channel[] = (channelsData?.data as Channel[] | undefined) ?? [];
-  const products: AffiliateProduct[] = (productsData?.data as AffiliateProduct[] | undefined) ?? [];
+  const channels = channelsData?.data ?? [];
+  const products = productsData?.data ?? [];
 
   const selectedChannel = channels.find((ch) => ch.id === formData.channelId) ?? null;
 

@@ -165,8 +165,8 @@ function GeneralTab() {
   useUnsavedChanges(dirty);
 
   useEffect(() => {
-    const settings = settingsRes?.data as unknown as GeneralSettings | undefined;
-    if (settings) {
+    if (settingsRes?.data) {
+      const settings = settingsRes.data;
       setForm(settings);
       setDirty(false);
     }
@@ -263,7 +263,7 @@ function GeneralTab() {
 }
 
 function AiServicesTab() {
-  const { data: servicesRes, isLoading, mutate } = useAiServices();
+  const { data: servicesRes, isLoading, mutate } = useAiServices<AiService[]>();
   const { data: chainsRes, error: chainsError } = useApi<FallbackChain[]>('/settings/ai/fallback-chains');
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -271,8 +271,8 @@ function AiServicesTab() {
   const [adding, setAdding] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
 
-  const services = (servicesRes?.data as unknown as AiService[]) ?? [];
-  const fallbackChains = (chainsRes?.data as unknown as FallbackChain[]) ?? [];
+  const services = servicesRes?.data ?? [];
+  const fallbackChains = chainsRes?.data ?? [];
 
   const handleAddService = async () => {
     setAdding(true);
@@ -499,9 +499,8 @@ function NotificationsTab() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const data = notifRes?.data as unknown as NotificationChannel[] | undefined;
-    if (data && data.length > 0) {
-      setChannels(data);
+    if (notifRes?.data && notifRes.data.length > 0) {
+      setChannels(notifRes.data);
     }
   }, [notifRes]);
 
@@ -624,7 +623,7 @@ function SecurityTab() {
   const [copiedKey, setCopiedKey] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
 
-  const apiKeys = (keysRes?.data as unknown as ApiKey[]) ?? [];
+  const apiKeys = keysRes?.data ?? [];
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -887,10 +886,9 @@ function AppearanceTab() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const settings = appearanceRes?.data as unknown as AppearanceSettings | undefined;
-    if (settings) {
-      setTheme(settings.theme);
-      setSidebarPosition(settings.sidebarPosition);
+    if (appearanceRes?.data) {
+      setTheme(appearanceRes.data.theme);
+      setSidebarPosition(appearanceRes.data.sidebarPosition);
     }
   }, [appearanceRes]);
 

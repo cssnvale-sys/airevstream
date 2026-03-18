@@ -10,8 +10,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const item = await ctx.db.contentItem.findUnique({
-      where: { id },
+    const item = await ctx.db.contentItem.findFirst({
+      where: {
+        id,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
       select: { id: true, status: true },
     });
 

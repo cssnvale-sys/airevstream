@@ -7,7 +7,7 @@ import type { Job } from 'bullmq';
 let _registry: ReturnType<typeof createServiceRegistry> | null = null;
 function getRegistry() {
   if (!_registry) {
-    try { _registry = createServiceRegistry(getDb()); } catch { return null; }
+    try { _registry = createServiceRegistry(getDb()); } catch (err) { logger.warn({ err }, 'Service registry init failed, using legacy AI client'); return null; }
   }
   return _registry;
 }
@@ -64,7 +64,12 @@ Return a JSON array of objects with: topic, relevanceScore (0-10), platform, rea
         format: 'json',
         systemPrompt: 'You are a social media trend analyst. Return valid JSON only.',
       });
-      trends = JSON.parse(result.content);
+      try {
+        trends = JSON.parse(result.content);
+      } catch (parseErr) {
+        logger.error({ parseErr, content: result.content.slice(0, 200) }, 'Failed to parse AI trend response as JSON');
+        throw new Error('AI service returned invalid JSON for trend research');
+      }
     } else {
       trends = await generateJSON(prompt, {
         systemPrompt: 'You are a social media trend analyst. Return valid JSON only.',
@@ -116,7 +121,12 @@ Return a JSON array of objects with: topic, description, targetAudience, content
         format: 'json',
         systemPrompt: 'You are a content strategist. Return valid JSON only.',
       });
-      topics = JSON.parse(result.content);
+      try {
+        topics = JSON.parse(result.content);
+      } catch (parseErr) {
+        logger.error({ parseErr, content: result.content.slice(0, 200) }, 'Failed to parse AI topic response as JSON');
+        throw new Error('AI service returned invalid JSON for topic generation');
+      }
     } else {
       topics = await generateJSON(prompt, {
         systemPrompt: 'You are a content strategist. Return valid JSON only.',

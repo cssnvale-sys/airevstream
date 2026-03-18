@@ -16,4 +16,7 @@ async function main() {
   }
 }
 
-main();
+main().catch((err) => {
+  logger.error(err, 'Failed to start workflow engine');
+  process.exit(1);
+});

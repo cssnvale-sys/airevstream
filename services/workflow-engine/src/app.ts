@@ -42,11 +42,20 @@ export async function buildApp(): Promise<FastifyInstance> {
     logger.error({ err: error }, 'Request error');
 
     const statusCode = error.statusCode ?? 500;
+    const safeMessages: Record<number, string> = {
+      400: 'Bad request',
+      401: 'Authentication required',
+      403: 'Access denied',
+      404: 'Not found',
+      409: 'Conflict',
+      429: 'Too many requests',
+      500: 'Internal server error',
+    };
     reply.status(statusCode).send({
       success: false,
       error: {
         code: (error as any).code ?? 'INTERNAL_ERROR',
-        message: statusCode === 500 ? 'Internal server error' : error.message,
+        message: safeMessages[statusCode] ?? 'An error occurred',
       },
     });
   });

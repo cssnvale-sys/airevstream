@@ -2,6 +2,9 @@ import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { createServiceRegistry, generateText, generateJSON } from '@airevstream/ai-client';
+import { createLogger } from '@airevstream/shared';
+
+const genLogger = createLogger('ai-assistant:generate');
 
 // Lazy-init registry (only when DB is available)
 let _registry: ReturnType<typeof createServiceRegistry> | null = null;
@@ -11,7 +14,8 @@ function getRegistry() {
     try {
       const db = getDb();
       _registry = createServiceRegistry(db);
-    } catch {
+    } catch (err) {
+      genLogger.warn({ err }, 'Service registry init failed, using legacy AI client');
       return null;
     }
   }

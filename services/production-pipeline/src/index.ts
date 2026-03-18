@@ -16,4 +16,7 @@ async function main() {
   }
 }
 
-main();
+main().catch((err) => {
+  logger.error(err, 'Failed to start production pipeline');
+  process.exit(1);
+});

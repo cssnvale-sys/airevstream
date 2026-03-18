@@ -28,6 +28,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Unsaved Changes Warning** (Session 7): useUnsavedChanges hook + dirty state tracking on settings general tab
 - **Search Debounce** (Session 7): useDebounce hook (300ms) on library and accounts search inputs
 - **Page Metadata** (Session 7): SEO titles for all 11 dashboard pages via layout.tsx files + root title template
+- **Error Boundaries** (Session 7): error.tsx for global app and all 11 page segments
+- **AI Service Health Check** (Session 7): "Test All" button on settings AI services tab
 
 ### Fixed
 

@@ -91,6 +91,8 @@
 | 5.41 | Security fixes (round 3) | Done | err:any leak in health-check, NODE_ENV guard on reset token log |
 | 5.42 | Page metadata (SEO) | Done | title.template + 11 layout.tsx files with page-specific titles |
 | 5.43 | Form validation | Done | Password minLength, submit disabled, topic validation, error leak fixes |
+| 5.44 | Error boundaries | Done | error.tsx for global app + all 11 page segments |
+| 5.45 | AI service health check | Done | "Test All" button on settings AI services tab |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

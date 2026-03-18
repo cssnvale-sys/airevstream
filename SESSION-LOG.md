@@ -408,6 +408,18 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Settings: error message leak fixes in password change, API key create/revoke
 - Create: required + minLength/maxLength on topic field
 
+**Batch 29: Tracking Docs Update (round 4)**
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS for batches 26-28
+
+**Batch 30: Error Boundaries**
+- Created global error.tsx for the app
+- Created error.tsx for all 11 page segments with "Try again" and "Dashboard" navigation
+
+**Batch 31: AI Service Health Check Button**
+- Added "Test All" button to settings AI services tab
+- Calls POST /api/v1/ai-services/health-check and shows results via toast
+- Loading spinner during test, disabled when no services
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

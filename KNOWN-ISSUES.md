@@ -125,6 +125,11 @@ Four critical authorization bypass vulnerabilities found and fixed:
 **Status**: Fixed (Session 7, Batch 21)
 All 7 analytics routes (overview, engagement, revenue, costs, content-performance, audience, export) had no tenant scoping — any authenticated user could see analytics data from all tenants. Fixed by pre-fetching tenant channel IDs and filtering all queries.
 
+### KI-017: Missing Tenant Scoping on Approvals Routes
+**Severity**: Critical
+**Status**: Fixed (Session 7, Batch 39)
+Approvals GET returned all tenants' content. Approvals POST approve/reject allowed cross-tenant actions. Fixed by adding channel→socialAccount→emailAccount→tenantId filter on GET and using findFirst with tenant scope on POST.
+
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium
 **Status**: Fixed (Session 6, Round 8)

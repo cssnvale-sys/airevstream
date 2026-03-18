@@ -449,6 +449,19 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 **Batch 38: Tracking Docs Update (round 7)**
 - Updated SESSION-LOG, CHANGELOG, DEV-STATUS
 
+**Batch 39: CRITICAL — Approvals Tenant Scoping**
+- Approvals GET: added tenant channel filter (KI-017)
+- Approvals POST: findFirst with tenant scope instead of findUnique
+- Fixed err:any → err:unknown in catch block
+
+**Batch 40: Auth + Data Quality Fixes**
+- isAuthenticated(): JWT expiry check, auto-clear expired tokens
+- accounts GET: healthScore Decimal→Number conversion
+- use-api.ts: error message extraction falls back to error.code
+
+**Batch 41: Tracking Docs Update (round 8)**
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS, KNOWN-ISSUES (KI-017)
+
 ### Commits
 - `e721ffd` — docs: tracking docs round 5
 - `7db01f5` — feat: auth middleware
@@ -456,7 +469,10 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `7acafc3` — docs: tracking docs round 6
 - `e58ff53` — fix: NaN guards + error message leak
 - `f57944a` — fix: accessibility and UI quality
-- (this commit) — docs: tracking docs round 7
+- `4393d19` — docs: tracking docs round 7
+- `aa9c7cc` — fix: approvals tenant scoping
+- `5cba1e1` — fix: JWT expiry, healthScore, error messages
+- (this commit) — docs: tracking docs round 8
 
 ### Open Items
 - E2E testing (Playwright) not started

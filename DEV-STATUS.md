@@ -97,6 +97,8 @@
 | 5.47 | Custom 404 + loading skeletons | Done | Branded not-found.tsx, loading.tsx for all 11 page segments |
 | 5.48 | NaN guards | Done | parseInt/parseFloat NaN fallbacks in analytics, metrics, usage, affiliate routes |
 | 5.49 | Accessibility round 2 | Done | aria-label on shortcuts button, NaN guard on qualityScore, descriptive alt text on shots |
+| 5.50 | Approvals tenant scoping | Done | **CRITICAL:** Tenant scoping on approvals GET + POST, err:any fix |
+| 5.51 | Auth + data quality | Done | JWT expiry check in isAuthenticated(), healthScore Decimal, use-api error fallback |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

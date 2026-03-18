@@ -45,6 +45,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added NaN guard on dashboard qualityScore display
 - Improved alt text on create page storyboard shot images
 
+**Audit Round 14 (Session 7) — Tenant Scoping & Auth**
+- **CRITICAL:** Added tenant scoping to approvals GET route (any user could see all tenants' approvals)
+- **CRITICAL:** Added tenant scoping to approvals POST approve/reject (cross-tenant action possible)
+- Fixed `err: any` type in approvals action catch block
+- Added JWT expiry check in `isAuthenticated()` — expired tokens now auto-cleared
+- Added `Number()` wrapping on `healthScore` Decimal in accounts GET route
+- Improved error message extraction in `use-api.ts` — falls back to `error.code` if `message` is missing
+
 **Audit Round 12 (Session 7) — Validation & Polish**
 - Added password minLength and submit disabled state to accounts add-email modal
 - Added required/minLength/maxLength to create page topic field

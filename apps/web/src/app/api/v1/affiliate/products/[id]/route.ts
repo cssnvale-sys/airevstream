@@ -80,6 +80,18 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const existing = await ctx.db.affiliateProduct.findUnique({ where: { id } });
     if (!existing) return notFound('Affiliate product not found');
 
+    // Verify product is in a channel pool owned by this tenant
+    if (ctx.tenantId) {
+      const ownsProduct = await ctx.db.channelAffiliatePool.findFirst({
+        where: {
+          affiliateProductId: id,
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+        select: { channelId: true },
+      });
+      if (!ownsProduct) return notFound('Affiliate product not found');
+    }
+
     const body = await req.json();
     const parsed = UpdateProductSchema.safeParse(body);
     if (!parsed.success) {

@@ -12,7 +12,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const url = new URL(req.url);
-    const metricType = url.searchParams.get('type') ?? undefined;
+    const validMetricTypes = ['cpu', 'ram', 'disk', 'network', 'queue_depth', 'sessions'];
+    const rawType = url.searchParams.get('type') ?? undefined;
+    const metricType = rawType && validMetricTypes.includes(rawType) ? rawType : undefined;
     const parsedLimit = parseInt(url.searchParams.get('limit') ?? '1', 10);
     const historyLimit = Math.min(100, Math.max(1, isNaN(parsedLimit) ? 1 : parsedLimit));
 
@@ -31,10 +33,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Get latest value for each metric type
-    const allTypes = ['cpu', 'ram', 'disk', 'network', 'queue_depth', 'sessions'];
     const latest: Record<string, unknown> = {};
 
-    for (const type of allTypes) {
+    for (const type of validMetricTypes) {
       const metrics = await ctx.db.systemMetric.findMany({
         where: { metricType: type },
         orderBy: { createdAt: 'desc' },
@@ -51,9 +52,9 @@ export async function GET(req: NextRequest) {
     // Also return flat values for dashboard consumption
     const flat: Record<string, number> = {};
     for (const [key, val] of Object.entries(latest)) {
-      if (val && typeof val === 'object' && 'value' in (val as any)) {
+      if (val && typeof val === 'object' && !Array.isArray(val) && 'value' in val) {
         const camelKey = key === 'queue_depth' ? 'queueDepth' : key;
-        flat[camelKey] = Number((val as any).value);
+        flat[camelKey] = Number((val as { value: unknown }).value);
       }
     }
 

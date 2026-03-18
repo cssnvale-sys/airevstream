@@ -1,7 +1,107 @@
 # Known Issues
 
-Tracked bugs and limitations.
+Tracked bugs, limitations, and technical debt.
 
 ---
 
-*No issues yet — will be populated as development progresses.*
+## Testing
+
+### KI-001: E2E Tests Not Set Up
+**Severity**: Medium
+**Status**: Open
+Playwright is not installed. No end-to-end browser tests exist. All 93 tests are unit/integration level via Vitest.
+**Action**: `npx playwright install` + write E2E test suite for critical flows (auth, content creation, dashboard).
+
+---
+
+## Analytics
+
+### KI-002: Analytics Endpoints Return Empty Arrays for Missing Data
+**Severity**: Low
+**Status**: By Design
+`engagement`, `roiByType`, and `audience` analytics endpoints return empty arrays when no data exists. This is intentional graceful degradation — the frontend renders "no data" states. However, these endpoints need real data models and aggregation logic to be useful.
+**Action**: Populate analytics data via posting/content workers, then verify aggregation queries.
+
+### KI-003: CSV/PDF Export Buttons Are Stubs
+**Severity**: Low
+**Status**: Open
+Analytics export buttons trigger `window.alert("Export coming soon")` instead of generating actual files.
+**Action**: Implement CSV generation (client-side) and PDF generation (server-side via puppeteer or @react-pdf/renderer).
+
+---
+
+## Calendar
+
+### KI-004: Calendar Filters Are Client-Side Only
+**Severity**: Low
+**Status**: Open
+Platform/channel/status filters in the calendar view filter the already-fetched data client-side. The API receives `start`/`end` date params but not the filter criteria.
+**Action**: Add `platform`, `channelId`, and `status` query params to the calendar API route for server-side filtering.
+
+---
+
+## Content Generation
+
+### KI-005: Generate-Storyboard Returns Hardcoded Shots
+**Severity**: Medium
+**Status**: Open
+The `generate-storyboard` API route returns hardcoded placeholder shots rather than AI-generated storyboard frames. The H.I.C.C. section parser exists but isn't connected to real AI output.
+**Action**: Wire storyboard generation to AI service via the content generation pipeline.
+
+### KI-006: Generate-Shot Async Job Has No Completion Polling
+**Severity**: Medium
+**Status**: Open
+The `generate-shot` endpoint creates an async BullMQ job but provides no mechanism for the client to poll for completion or receive a webhook notification. The frontend shows a loading state but has no way to know when the shot is ready.
+**Action**: Add job status polling endpoint (`GET /api/v1/content/jobs/:jobId`) or implement SSE notification for job completion.
+
+---
+
+## Platform Integration
+
+### KI-007: Platform Posting Adapters Untested Against Real APIs
+**Severity**: High
+**Status**: Open
+All 4 platform adapters (YouTube Data API v3, TikTok Content Posting API, Instagram Graph API, Facebook Graph API) are implemented but untested against real platform APIs. They require valid OAuth credentials.
+**Action**: Set up developer accounts, configure OAuth credentials (see OPERATOR-TODO.md #6), and test each adapter with real API calls.
+
+### KI-008: Browser Automation Untested in Production
+**Severity**: Medium
+**Status**: Open
+The `@airevstream/browser-automation` package (stealth Playwright, human behavior simulation, proxy rotation) is implemented and has 3 unit tests, but has not been tested with real browsers, real proxies, or real platform login flows.
+**Action**: Test in a controlled environment with real browser sessions and proxy infrastructure.
+
+---
+
+## API Quality
+
+### KI-009: Multiple API Routes Use getDb() Instead of ctx.db
+**Severity**: Medium
+**Status**: Open
+Several API routes call `getDb()` directly instead of using the tenant-scoped `ctx.db` from `authenticate()`. This bypasses multi-tenant data isolation — queries may return data from other tenants.
+**Action**: Audit all API routes and replace `getDb()` calls with `ctx.db` from the authenticated context.
+
+### KI-010: Silent Catch Blocks in 14+ API Routes
+**Severity**: Medium
+**Status**: Open
+At least 14 API route handlers have `catch (error) { ... }` blocks that return generic error responses without logging the actual error. This makes debugging production issues difficult.
+**Action**: Add `console.error` or pino logger calls in all catch blocks to capture error details.
+
+---
+
+## Infrastructure
+
+### KI-011: PM2 Production Config Is Partial
+**Severity**: Low
+**Status**: Open
+`ecosystem.config.js` exists but may not cover all services/workers or have optimal resource allocation settings.
+**Action**: Complete PM2 config with all processes, memory limits, restart policies, and log rotation.
+
+---
+
+## Data Types
+
+### KI-012: Prisma Decimal Fields Serialize as Strings
+**Severity**: Low
+**Status**: By Design (D013)
+Prisma `Decimal` fields (e.g., `qualityScore`, `budget`) serialize to strings in JSON responses. Frontend must use `Number()` to convert. This is a Prisma behavior, not a bug.
+**Action**: Documented in DECISIONS.md D013. Frontend already handles this via `Number()` casting.

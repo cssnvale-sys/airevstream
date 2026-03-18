@@ -59,3 +59,28 @@
 **Date**: 2026-03-17
 **Decision**: Use SWR (stale-while-revalidate) for all dashboard data fetching instead of React Query or raw fetch.
 **Rationale**: SWR is lightweight (~4KB), integrates naturally with Next.js (same team), provides automatic revalidation, deduplication, and optimistic updates. The `useApi()` hook wraps SWR with auth headers and error handling, while `apiPost/apiPut/apiDelete` helpers handle mutations with SWR cache invalidation.
+
+## D013: Prisma Decimal Fields Serialize as Strings
+**Date**: 2026-03-18
+**Decision**: Accept that Prisma `Decimal` fields serialize to strings in JSON responses and convert on the frontend with `Number()`.
+**Rationale**: Prisma uses `Decimal.js` internally for precision, which serializes to string in JSON (e.g., `"8.5"` instead of `8.5`). Changing the Prisma schema to `Float` would lose precision for financial fields (budgets, revenue). The frontend already handles this via `Number()` casting where needed (quality scores, budgets, costs). This is documented in KNOWN-ISSUES.md KI-012.
+
+## D014: Store Script/Shots in ContentItem.generationParams JSON
+**Date**: 2026-03-18
+**Decision**: Store generated scripts and storyboard shots in the `ContentItem.generationParams` JSON field rather than creating new database tables.
+**Rationale**: Scripts and shots are intermediate generation artifacts tied to a specific content item. Creating separate `Script` and `Shot` tables would add schema complexity and migration overhead for data that is: (1) always accessed with its parent content item, (2) variable in structure across content types, (3) not queried independently. The JSON field provides flexibility while keeping the schema simple.
+
+## D015: Workflow Jobs Fetched Without Status Filter
+**Date**: 2026-03-18
+**Decision**: Fetch workflow jobs without a status filter in the API, allowing the frontend to categorize by status client-side.
+**Rationale**: The system health page needs to show jobs in all states (active, completed, failed, waiting). Initially, a server-side status filter was applied which hid failed/errored jobs. Removing the filter ensures all job states are visible. Client-side categorization is acceptable because the total job count per page load is bounded (paginated to 50).
+
+## D016: Analytics Missing-Data Fields Return Empty Arrays
+**Date**: 2026-03-18
+**Decision**: Analytics endpoints return empty arrays `[]` for data fields that have no backing data (engagement, ROI by type, audience) rather than returning errors or null.
+**Rationale**: Graceful degradation — the frontend Recharts components render cleanly with empty data (showing "no data" states) without needing conditional error handling. As real analytics data accumulates from posting and engagement tracking, these arrays will populate naturally. This avoids premature optimization of analytics queries for data that doesn't exist yet.
+
+## D017: 4-Commit Git Structure for Bulk Changes
+**Date**: 2026-03-18
+**Decision**: Organize large uncommitted changesets into 4 logical commits: (1) backend packages/services, (2) frontend pages/components/API routes, (3) docs/configs, (4) build artifacts/.gitignore.
+**Rationale**: After multiple audit rounds and feature additions, a large number of files were uncommitted. A single commit would be unreviable. The 4-commit structure groups changes by concern: backend logic is reviewable independently of frontend UI, docs are separate from code, and gitignore changes are isolated. This makes `git log` and `git blame` more useful for understanding what changed and why.

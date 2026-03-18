@@ -209,22 +209,28 @@ export default function CalendarPage() {
             </button>
           </div>
 
-          {/* View mode toggle */}
+          {/* View mode toggle — only week view is implemented */}
           <div className="flex rounded-md border border-border overflow-hidden">
-            {(['day', 'week', 'month'] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={cn(
-                  'px-3 py-1.5 text-caption font-medium transition-colors capitalize',
-                  viewMode === mode
-                    ? 'bg-accent-blue text-white'
-                    : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary',
-                )}
-              >
-                {mode}
-              </button>
-            ))}
+            {(['day', 'week', 'month'] as ViewMode[]).map((mode) => {
+              const implemented = mode === 'week';
+              return (
+                <button
+                  key={mode}
+                  onClick={() => implemented && setViewMode(mode)}
+                  disabled={!implemented}
+                  title={!implemented ? 'Coming soon' : undefined}
+                  className={cn(
+                    'px-3 py-1.5 text-caption font-medium transition-colors capitalize',
+                    viewMode === mode
+                      ? 'bg-accent-blue text-white'
+                      : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary',
+                    !implemented && 'opacity-40 cursor-not-allowed',
+                  )}
+                >
+                  {mode}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

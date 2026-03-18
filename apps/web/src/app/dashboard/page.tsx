@@ -157,13 +157,13 @@ function formatDate(): string {
 function activityIcon(type: string) {
   switch (type) {
     case 'content':
-      return <ClipboardCheck size={14} className="text-accent-purple" />;
+      return <ClipboardCheck size={14} className="text-accent-purple" aria-hidden="true" />;
     case 'posting':
-      return <Send size={14} className="text-accent-green" />;
+      return <Send size={14} className="text-accent-green" aria-hidden="true" />;
     case 'alert':
-      return <XCircle size={14} className="text-accent-red" />;
+      return <XCircle size={14} className="text-accent-red" aria-hidden="true" />;
     default:
-      return <Clock size={14} className="text-text-secondary" />;
+      return <Clock size={14} className="text-text-secondary" aria-hidden="true" />;
   }
 }
 

@@ -33,10 +33,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // Look up the affiliate product by matching shortUrl.
     // The shortUrl stored in the DB may be a full URL like
     // "https://link.airevstream.local/<shortCode>" or just the code.
-    // We search with `contains` on the shortCode to handle both formats.
+    // We use `endsWith` to match the code suffix precisely (avoids false
+    // positives from `contains` on partial matches).
     const product = await db.affiliateProduct.findFirst({
       where: {
-        shortUrl: { contains: shortCode },
+        shortUrl: { endsWith: `/${shortCode}` },
         status: 'active',
       },
       select: {

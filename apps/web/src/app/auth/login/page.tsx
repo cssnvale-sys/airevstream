@@ -32,7 +32,10 @@ export default function LoginPage() {
       }
       setToken(data.data.token);
       const params = new URLSearchParams(window.location.search);
-      router.push(params.get('redirect') || '/dashboard');
+      const redirect = params.get('redirect') || '/dashboard';
+      // Only allow relative redirects to prevent open redirect attacks
+      const safeRedirect = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/dashboard';
+      router.push(safeRedirect);
     } catch (err) {
       console.error('Login failed:', err);
       setError(err instanceof Error ? err.message : 'Login failed');

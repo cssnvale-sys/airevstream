@@ -341,8 +341,10 @@ export default function LibraryPage() {
     if (filterType) p.set('contentType', filterType);
     if (filterStatus) p.set('status', filterStatus);
     if (filterChannel) p.set('channelId', filterChannel);
+    if (dateFrom) p.set('dateFrom', dateFrom);
+    if (dateTo) p.set('dateTo', dateTo);
     return p.toString();
-  }, [page, perPage, sortField, sortOrder, debouncedSearch, filterType, filterStatus, filterChannel]);
+  }, [page, perPage, sortField, sortOrder, debouncedSearch, filterType, filterStatus, filterChannel, dateFrom, dateTo]);
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -351,24 +353,11 @@ export default function LibraryPage() {
   const allItems = (data?.data ?? []) as ContentItem[];
   const meta = data?.meta ?? { total: 0, page: 1, limit: perPage, pages: 1 };
 
-  // Client-side filter for AI model (not in API)
+  // Client-side filter for AI model (not yet a server-side query param)
   const items = useMemo(() => {
-    let filtered = allItems;
-    if (filterModel) {
-      filtered = filtered.filter((item) => item.aiService?.id === filterModel);
-    }
-    // Date range filtering client-side
-    if (dateFrom) {
-      const from = new Date(dateFrom);
-      filtered = filtered.filter((item) => new Date(item.createdAt) >= from);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((item) => new Date(item.createdAt) <= to);
-    }
-    return filtered;
-  }, [allItems, filterModel, dateFrom, dateTo]);
+    if (!filterModel) return allItems;
+    return allItems.filter((item) => item.aiService?.id === filterModel);
+  }, [allItems, filterModel]);
 
   const handleRefresh = useCallback(() => { mutate(); }, [mutate]);
 
@@ -559,9 +548,9 @@ export default function LibraryPage() {
         </div>
       ) : (
         /* List View */
-        <div className="card overflow-hidden p-0">
+        <div className="card overflow-x-auto p-0">
           {/* Table Header */}
-          <div className="flex items-center gap-4 px-4 py-2.5 border-b border-border text-xs text-text-secondary font-medium">
+          <div className="flex items-center gap-4 px-4 py-2.5 border-b border-border text-xs text-text-secondary font-medium min-w-[700px]">
             <span className="w-14 flex-shrink-0">Thumb</span>
             <span className="flex-1">Title</span>
             <span className="w-20 flex-shrink-0">Type</span>

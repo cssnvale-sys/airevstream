@@ -588,6 +588,15 @@ function DetailPanel({
 }
 
 // ---------------------------------------------------------------------------
+// Sort indicator — extracted to module scope to avoid re-creation on every render
+// ---------------------------------------------------------------------------
+
+function SortIcon({ field, sortField, sortOrder }: { field: SortField; sortField: SortField; sortOrder: string }) {
+  if (sortField !== field) return <ChevronDown size={12} className="opacity-30" />;
+  return sortOrder === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
@@ -705,10 +714,6 @@ export default function AccountsPage() {
     toast.success(`Exported ${selected.length} accounts`);
   }, [filteredAccounts, selectedIds]);
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ChevronDown size={12} className="opacity-30" />;
-    return sortOrder === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
-  };
 
   // Pagination helpers
   const startItem = Math.min((meta.page - 1) * meta.limit + 1, meta.total);
@@ -830,18 +835,18 @@ export default function AccountsPage() {
                       />
                     </th>
                     <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('email')}>
-                      <span className="flex items-center gap-1">Email <SortIcon field="email" /></span>
+                      <span className="flex items-center gap-1">Email <SortIcon field="email" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
                     <th className="px-4 py-3">Socials</th>
                     <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('socialAccountsCount')}>
-                      <span className="flex items-center gap-1">Channels <SortIcon field="socialAccountsCount" /></span>
+                      <span className="flex items-center gap-1">Channels <SortIcon field="socialAccountsCount" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
                     <th className="px-4 py-3">Health</th>
                     <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('status')}>
-                      <span className="flex items-center gap-1">Status <SortIcon field="status" /></span>
+                      <span className="flex items-center gap-1">Status <SortIcon field="status" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
                     <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('tier')}>
-                      <span className="flex items-center gap-1">Tier <SortIcon field="tier" /></span>
+                      <span className="flex items-center gap-1">Tier <SortIcon field="tier" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
                   </tr>
                 </thead>

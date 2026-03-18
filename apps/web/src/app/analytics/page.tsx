@@ -768,7 +768,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* ---- Tabs ---- */}
-          <div role="tablist" aria-label="Analytics sections" className="flex gap-1 border-b border-border mb-6">
+          <div role="tablist" aria-label="Analytics sections" className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
             {TABS.map((tab) => (
               <button
                 key={tab.key}

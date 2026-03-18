@@ -14,6 +14,8 @@ export async function GET(req: NextRequest) {
     const status = params.get('status') ?? undefined;
     const contentType = params.get('contentType') ?? undefined;
     const channelId = params.get('channelId') ?? undefined;
+    const dateFrom = params.get('dateFrom') ?? undefined;
+    const dateTo = params.get('dateTo') ?? undefined;
 
     const validStatuses = ['draft', 'generating', 'generated', 'review', 'approved', 'scheduled', 'posted', 'archived', 'failed'];
     const validContentTypes = ['video_short', 'video_long', 'image', 'text', 'voice', 'thumbnail'];
@@ -43,6 +45,21 @@ export async function GET(req: NextRequest) {
         { title: { contains: search, mode: 'insensitive' } },
         { prompt: { contains: search, mode: 'insensitive' } },
       ];
+    }
+    // Date range filtering (server-side)
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        if (!isNaN(from.getTime())) (where.createdAt as Prisma.DateTimeFilter).gte = from;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        if (!isNaN(to.getTime())) {
+          to.setHours(23, 59, 59, 999);
+          (where.createdAt as Prisma.DateTimeFilter).lte = to;
+        }
+      }
     }
 
     const allowedSortFields = [

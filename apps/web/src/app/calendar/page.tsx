@@ -297,10 +297,10 @@ export default function CalendarPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
       ) : (
-        <div className="card p-0 overflow-hidden" role="grid" aria-label="Weekly calendar">
+        <div className="card p-0 overflow-x-auto" role="grid" aria-label="Weekly calendar">
           {/* Day headers */}
           <div
-            className="grid border-b border-border"
+            className="grid border-b border-border min-w-[700px]"
             style={{ gridTemplateColumns: '64px repeat(7, 1fr)' }}
             role="row"
           >
@@ -336,7 +336,7 @@ export default function CalendarPage() {
           {timeLabels.map((label, rowIndex) => (
             <div
               key={label}
-              className="grid border-b border-border last:border-b-0"
+              className="grid border-b border-border last:border-b-0 min-w-[700px]"
               style={{
                 gridTemplateColumns: '64px repeat(7, 1fr)',
                 minHeight: '72px',

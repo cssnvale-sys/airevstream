@@ -43,6 +43,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 27 (Session 7) — Zod Validation, Rate Limiting, Security, Data Quality**
+- Zod validation schemas on 6 more routes: accounts POST, content variants POST, auth/login, auth/register, auth/forgot-password, auth/reset-password
+- Rate limiting on expensive operations: content generation (20/hr), bulk import (5/hr), analytics export (10/hr)
+- Sort field allowlists on 6 GET routes to prevent sort injection
+- Date input validation on 5 analytics routes (invalid dates silently ignored instead of creating Invalid Date)
+- Content-Security-Policy header added to next.config.js
+- `parseQuery` order param now only accepts 'asc'/'desc'
+- Fixed accounts page unsafe `.channels` type cast (accessing non-existent field)
+- SWR revalidation after job retry on system page
+- Removed unused `json` import from analytics/export
+
 **Audit Round 25 (Session 7) — Query Params, Accessibility, Cleanup**
 - Enum allowlist validation on GET query params across 11 API routes (accounts, channels, content, users, alerts, subscriptions, budgets, prompts, tenants, knowledge-base, ai-services)
 - Accessibility: aria-label on header buttons, search input, copy button, dashboard actions

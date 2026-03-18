@@ -646,6 +646,39 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `b9b7d2f` — fix: accessibility — aria-labels on icon buttons
 - `03b33a4` — chore: remove unused imports
 
+**Batch 80: Security Hardening — Sort/Date Validation, CSP**
+- parseQuery: validated `order` param to only accept 'asc'/'desc'
+- Added sort field allowlists to 6 routes (accounts, channels, users, tenants, api-keys, socials)
+- Date input validation on 5 analytics routes (invalid dates silently ignored)
+- Added Content-Security-Policy header to next.config.js
+
+**Batch 81: Rate Limiting on Expensive Operations**
+- Added rate limit presets: contentGeneration (20/hr), bulkOperation (5/hr), analyticsExport (10/hr)
+- Applied to: content/generate-script, content/generate-storyboard, accounts/bulk-import, analytics/export
+- Removed unused `json` import from analytics/export
+
+**Batch 82: Zod Validation — Auth, Accounts, Variants**
+- Replaced manual validation with Zod schemas on 6 routes:
+  - accounts POST: CreateAccountSchema (email, password, tier enum, notes)
+  - content/[id]/variants POST: CreateVariantSchema (title, prompt, modifications)
+  - auth/login: LoginSchema (email, password)
+  - auth/register: RegisterSchema (email, password min 8, name)
+  - auth/forgot-password: ForgotPasswordSchema (email)
+  - auth/reset-password: ResetPasswordSchema (token, newPassword min 8)
+
+**Batch 83: Accounts Page Unsafe Cast Fix**
+- Removed unsafe `(sa as unknown as { channels?: unknown[] }).channels?.length` cast
+- `.channels` property doesn't exist in API response — was always returning undefined
+- Replaced with direct use of `socialAccountsCount` field
+
+### Commits (continued)
+- `e403391` — docs: tracking docs round 19
+- `f10425d` — fix: SWR revalidation after job retry on system page
+- `aadf240` — fix: security hardening (sort validation, date validation, CSP header)
+- `b864acb` — fix: rate limiting on content generation, bulk import, analytics export
+- `e503f99` — fix: Zod validation on 6 routes (auth, accounts, variants)
+- `6115cf9` — fix: accounts page unsafe .channels type cast
+
 ### Open Items
 - E2E testing (Playwright) not started
 - PM2 production config is partial

@@ -141,6 +141,11 @@
 | 5.91 | GET query param validation | Done | Enum allowlists on 11 GET API routes |
 | 5.92 | Accessibility improvements | Done | aria-labels on icon buttons, search, copy button |
 | 5.93 | Unused imports cleanup | Done | Removed 3 unused `success` imports |
+| 5.94 | SWR revalidation fix | Done | Added mutateWorkflows() after job retry on system page |
+| 5.95 | Sort/date/CSP security | Done | Sort allowlists (6 routes), date validation (5 routes), CSP header, order param |
+| 5.96 | Rate limiting (operations) | Done | contentGeneration (20/hr), bulkOperation (5/hr), analyticsExport (10/hr) on 4 routes |
+| 5.97 | Zod validation (auth+more) | Done | Schemas on accounts POST, variants POST, login, register, forgot-password, reset-password |
+| 5.98 | Accounts unsafe cast fix | Done | Removed non-existent .channels access, use socialAccountsCount |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

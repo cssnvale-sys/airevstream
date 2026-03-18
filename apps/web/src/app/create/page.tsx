@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import NextImage from 'next/image';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useChannels, useAffiliateProducts, apiPost } from '@/hooks/use-api';
+import { toast } from '@/lib/toast';
 import { cn, platformIcon } from '@/lib/utils';
 import {
   Check,
@@ -206,6 +207,7 @@ export default function CreatePage() {
     } catch (err) {
       console.error('Failed to generate script:', err);
       setError('Failed to generate script. Please try again.');
+      toast.error('Failed to generate script');
       // Provide a placeholder so the user can still proceed
       if (!formData.script) {
         update(
@@ -232,6 +234,7 @@ export default function CreatePage() {
       update('shots', shots);
     } catch (err) {
       console.error('Failed to generate storyboard:', err);
+      toast.error('Failed to generate storyboard — using placeholder shots');
       // Provide placeholder shots based on script sections
       const placeholder: ShotCard[] = HICC_SECTIONS.map((section, i) => ({
         id: i + 1,
@@ -279,6 +282,7 @@ export default function CreatePage() {
         }));
       } catch (err) {
         console.error(`Failed to generate shot ${shot.id}:`, err);
+        toast.error(`Shot ${shot.id} generation failed`);
         setFormData((prev) => ({
           ...prev,
           shotStatuses: { ...prev.shotStatuses, [String(shot.id)]: 'failed' as ShotStatus },
@@ -306,11 +310,13 @@ export default function CreatePage() {
         status: 'scheduled',
       });
       // Reset wizard
+      toast.success('Content approved and scheduled!');
       setFormData(INITIAL_FORM);
       setCurrentStep(1);
     } catch (err) {
       console.error('Failed to save content:', err);
       setError('Failed to save content');
+      toast.error('Failed to save content');
     } finally {
       setGenerating(false);
     }

@@ -14,16 +14,18 @@ export async function GET(req: NextRequest) {
     const status = params.get('status') ?? undefined;
     const jobType = params.get('jobType') ?? undefined;
 
-    // Tenant scoping: get tenant's channel and account IDs
-    const tenantChannels = await ctx.db.channel.findMany({
-      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-      select: { id: true },
-    });
+    // Tenant scoping: get tenant's channel and account IDs (parallel)
+    const [tenantChannels, tenantAccounts] = await Promise.all([
+      ctx.db.channel.findMany({
+        where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        select: { id: true },
+      }),
+      ctx.db.emailAccount.findMany({
+        where: { tenantId: ctx.tenantId },
+        select: { id: true },
+      }),
+    ]);
     const tenantChannelIds = tenantChannels.map((c) => c.id);
-    const tenantAccounts = await ctx.db.emailAccount.findMany({
-      where: { tenantId: ctx.tenantId },
-      select: { id: true },
-    });
     const tenantAccountIds = tenantAccounts.map((a) => a.id);
 
     const where: Record<string, unknown> = {

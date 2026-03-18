@@ -160,20 +160,20 @@ async function buildDimensionBreakdown(
     : groupBy === 'channel' ? 'channelId'
     : 'platform';
 
-  // Get click counts grouped by dimension
-  const clickGroups = await db.affiliateClick.groupBy({
-    by: [groupField],
-    where,
-    _count: { id: true },
-  });
-
-  // Get conversion counts grouped by dimension
-  const conversionGroups = await db.affiliateClick.groupBy({
-    by: [groupField],
-    where: { ...where, converted: true },
-    _count: { id: true },
-    _sum: { revenue: true },
-  });
+  // Get click and conversion counts in parallel
+  const [clickGroups, conversionGroups] = await Promise.all([
+    db.affiliateClick.groupBy({
+      by: [groupField],
+      where,
+      _count: { id: true },
+    }),
+    db.affiliateClick.groupBy({
+      by: [groupField],
+      where: { ...where, converted: true },
+      _count: { id: true },
+      _sum: { revenue: true },
+    }),
+  ]);
 
   // Build a conversion lookup
   const conversionMap = new Map(

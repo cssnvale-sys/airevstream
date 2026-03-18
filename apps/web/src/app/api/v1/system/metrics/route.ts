@@ -32,20 +32,20 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Get latest value for each metric type
+    // Fetch all metrics at once and group by type in JS
+    const allMetrics = await ctx.db.systemMetric.findMany({
+      where: { metricType: { in: validMetricTypes } },
+      orderBy: { createdAt: 'desc' },
+    });
+
     const latest: Record<string, unknown> = {};
-
     for (const type of validMetricTypes) {
-      const metrics = await ctx.db.systemMetric.findMany({
-        where: { metricType: type },
-        orderBy: { createdAt: 'desc' },
-        take: historyLimit,
-      });
+      const typeMetrics = allMetrics.filter(m => m.metricType === type).slice(0, historyLimit);
 
-      if (metrics.length > 0) {
+      if (typeMetrics.length > 0) {
         latest[type] = historyLimit === 1
-          ? { value: Number(metrics[0].value), unit: metrics[0].unit, timestamp: metrics[0].createdAt }
-          : metrics.map(m => ({ ...m, value: Number(m.value) }));
+          ? { value: Number(typeMetrics[0].value), unit: typeMetrics[0].unit, timestamp: typeMetrics[0].createdAt }
+          : typeMetrics.map(m => ({ ...m, value: Number(m.value) }));
       }
     }
 

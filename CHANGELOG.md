@@ -30,6 +30,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 10 (Session 7) — Security**
+- **CRITICAL:** Added tenant scoping to all 7 analytics routes (overview, engagement, revenue, costs, content-performance, audience, export) — any authenticated user could previously see all tenants' analytics data (KI-016)
+
+**Audit Round 11 (Session 7) — Error Handling & Quality**
+- Fixed error message leaks in login, register, create, and affiliate pages — replaced raw `err.message` with static strings
+- Fixed memory leak in CopyButton (setTimeout without cleanup on unmount)
+- Added error logging to 4 silent catch blocks in create and affiliate pages
+- Added error logging to notification-center dismiss/markAllRead catches
+
 **Audit Round 5 (Session 6)**
 - Fixed 7 API routes using `getDb()` instead of tenant-scoped `ctx.db` (KI-009)
 - Added `console.error` logging to 28 silent catch blocks across 20+ API routes (KI-010)

@@ -84,6 +84,10 @@
 | 5.34 | Analytics error state | Done | Error display card when analytics API fails |
 | 5.35 | Settings dirty state | Done | useUnsavedChanges hook + dirty tracking on general tab |
 | 5.36 | Search debounce | Done | useDebounce hook (300ms) on library + accounts search |
+| 5.37 | Analytics tenant scoping | Done | **CRITICAL:** Tenant scoping on all 7 analytics routes (KI-016) |
+| 5.38 | Error message leak prevention | Done | Static error strings in auth/create/affiliate pages |
+| 5.39 | Memory leak fixes | Done | CopyButton timer cleanup, notification-center error logging |
+| 5.40 | Silent catch fixes (round 2) | Done | console.error in create/affiliate catch blocks |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

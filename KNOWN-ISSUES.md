@@ -120,6 +120,11 @@ Four critical authorization bypass vulnerabilities found and fixed:
 **Status**: Fixed (Session 6, Round 9)
 5 settings routes returned raw `err.message` in error responses, potentially leaking internal Prisma/DB error details to clients. Replaced with static error strings.
 
+### KI-016: Missing Tenant Scoping on Analytics Routes
+**Severity**: Critical
+**Status**: Fixed (Session 7, Batch 21)
+All 7 analytics routes (overview, engagement, revenue, costs, content-performance, audience, export) had no tenant scoping — any authenticated user could see analytics data from all tenants. Fixed by pre-fetching tenant channel IDs and filtering all queries.
+
 ### KI-015: Auth Utility Bugs (Deleted Users, NaN Params, No 401 Redirect)
 **Severity**: Medium
 **Status**: Fixed (Session 6, Round 8)

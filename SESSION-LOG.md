@@ -339,6 +339,27 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Created `useDebounce` hook (300ms delay)
 - Applied to library and accounts page search inputs
 
+**Batch 20: Tracking Docs Update (round 2)**
+- Updated SESSION-LOG, CHANGELOG, DEV-STATUS for batches 13-19
+
+**Batch 21: Analytics Tenant Scoping (Critical Security)**
+- Added tenant scoping to all 7 analytics routes (overview, engagement, revenue, costs, content-performance, audience, export)
+- Pre-fetch tenant channel IDs, filter all queries by channelId
+- Prevents cross-tenant data leakage in analytics
+
+**Batch 22: Error Message Leak Prevention (round 2)**
+- Login/register pages: allowlist safe API messages, use `err: unknown` typing
+- Create page: static error message for script generation failure
+- Affiliate page: static error messages for pool add/remove
+
+**Batch 23: Memory Leak Fixes**
+- CopyButton: clear setTimeout on unmount via useRef
+- NotificationCenter: add console.error to catch blocks
+
+**Batch 24: Silent Catch Fixes (round 2)**
+- Create page: add console.error to storyboard generation and shot generation catches
+- Affiliate page: wrap handleAdd/handleRemove in try-catch-finally
+
 ### Commits
 - `21a51f4` — feat: add reusable UI components (confirm dialog, toast helper, empty state)
 - `b50f085` — fix: add error toasts and confirmation dialogs across all pages
@@ -359,11 +380,17 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `b79fef9` — feat: add error state display for analytics page
 - `146b5fe` — feat: add unsaved changes warning to settings general tab
 - `be850d0` — feat: add search debounce to library and accounts pages
+- `a9d797d` — docs: update tracking files for batches 13-19
+- `fda2f10` — fix: add tenant scoping to all 7 analytics routes (critical security)
+- `a5eaa90` — fix: prevent error message leaks in auth, create, and affiliate pages
+- `e3b9b9d` — fix: fix memory leak in copy-button timer and add error logging
+- `7dc0387` — fix: add error logging to silent catches in create and affiliate pages
 
 ### Issues Resolved
 - KI-003: CSV export — IMPLEMENTED (batch 6)
 - KI-004: Calendar server-side filters — IMPLEMENTED (batch 9)
 - KI-006: Job status polling — IMPLEMENTED (batch 5)
+- KI-016: Analytics tenant scoping — FIXED (batch 21)
 
 ### Open Items
 - E2E testing (Playwright) not started

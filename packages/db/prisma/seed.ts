@@ -26,15 +26,27 @@ function encryptPassword(password: string): string {
 async function main() {
   console.log('Seeding database...');
 
-  // ─── 1. Admin User ───
+  // ─── 1. Default Tenant + Admin User ───
+  const defaultTenant = await prisma.tenant.upsert({
+    where: { slug: 'default' },
+    update: {},
+    create: {
+      name: 'Default Workspace',
+      slug: 'default',
+      plan: 'enterprise',
+    },
+  });
+  console.log(`  Tenant: ${defaultTenant.name} (${defaultTenant.id})`);
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@airevstream.local' },
-    update: {},
+    update: { tenantId: defaultTenant.id },
     create: {
       email: 'admin@airevstream.local',
       passwordHash: hashPassword('changeme123'),
       name: 'Admin',
       role: 'admin',
+      tenantId: defaultTenant.id,
     },
   });
   console.log(`  User: ${admin.email} (${admin.id})`);

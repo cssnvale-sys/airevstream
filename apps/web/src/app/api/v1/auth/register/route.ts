@@ -41,12 +41,26 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = hashPassword(password);
 
-    const user = await db.user.create({
-      data: {
-        email,
-        passwordHash,
-        name: name ?? null,
-      },
+    // Create tenant + user in a transaction so neither is orphaned
+    const slug = email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 100)
+      + '-' + Date.now().toString(36);
+    const displayName = name ?? email.split('@')[0];
+
+    const user = await db.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: `${displayName}'s Workspace`,
+          slug,
+        },
+      });
+      return tx.user.create({
+        data: {
+          email,
+          passwordHash,
+          name: name ?? null,
+          tenantId: tenant.id,
+        },
+      });
     });
 
     const token = await new SignJWT({ sub: user.id, email: user.email, role: user.role })
@@ -55,17 +69,16 @@ export async function POST(req: NextRequest) {
       .setExpirationTime('7d')
       .sign(getJwtSecret());
 
-    return success(
-      {
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
+    return success({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        tenantId: user.tenantId,
       },
-    );
+    });
   } catch (err) {
     console.error('POST /api/v1/auth/register failed:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

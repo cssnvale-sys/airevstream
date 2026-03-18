@@ -28,7 +28,11 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) {
         const msg = data?.error?.message;
-        throw new Error(msg === 'Invalid credentials' ? msg : 'Login failed');
+        const safeMessages = [
+          'Invalid email or password',
+          'Too many login attempts. Please try again later.',
+        ];
+        throw new Error(msg && safeMessages.includes(msg) ? msg : 'Login failed');
       }
       setToken(data.data.token);
       const params = new URLSearchParams(window.location.search);

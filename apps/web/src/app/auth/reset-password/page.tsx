@@ -42,7 +42,16 @@ function ResetPasswordForm() {
         body: JSON.stringify({ token, newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message ?? 'Request failed');
+      if (!res.ok) {
+        const msg = data?.error?.message;
+        const safeMessages = [
+          'Invalid or expired reset token',
+          'Invalid reset token',
+          'Password must be at least 8 characters',
+          'Too many attempts. Please try again later.',
+        ];
+        throw new Error(msg && safeMessages.includes(msg) ? msg : 'Password reset failed');
+      }
       setSuccess(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

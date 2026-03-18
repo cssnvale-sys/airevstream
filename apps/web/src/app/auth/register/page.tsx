@@ -30,7 +30,12 @@ export default function RegisterPage() {
       if (!res.ok) {
         const msg = data?.error?.message;
         // Only allow known safe messages through
-        const safeMessages = ['Email already registered', 'Password must be at least 8 characters'];
+        const safeMessages = [
+          'A user with this email already exists',
+          'Password must be at least 8 characters',
+          'Registration is currently closed',
+          'Too many registration attempts. Please try again later.',
+        ];
         throw new Error(msg && safeMessages.includes(msg) ? msg : 'Registration failed');
       }
       setToken(data.data.token);

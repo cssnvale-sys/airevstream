@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { getDb } from '@airevstream/db';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
+let _jwtSecret: Uint8Array | null = null;
+function getJwtSecret(): Uint8Array {
+  if (!_jwtSecret) {
+    if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET environment variable is required in production');
+    }
+    _jwtSecret = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
+  }
+  return _jwtSecret;
+}
 
 export type ApiContext = {
   userId: string;
@@ -47,7 +56,7 @@ export async function authenticate(req: NextRequest): Promise<ApiContext | NextR
 
   try {
     const token = authHeader.slice(7);
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     const userId = payload.sub as string;
     if (!userId) {
       return error('UNAUTHORIZED', 'Invalid token', 401);
@@ -88,7 +97,7 @@ export async function authenticateSSE(req: NextRequest): Promise<ApiContext | Ne
   }
 
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     const userId = payload.sub as string;
     if (!userId) {
       return error('UNAUTHORIZED', 'Invalid token', 401);

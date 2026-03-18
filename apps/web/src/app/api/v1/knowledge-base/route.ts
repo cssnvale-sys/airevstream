@@ -4,7 +4,7 @@ import { authenticate, success, error, paginated, parseQuery, validationError } 
 import type { Prisma } from '@prisma/client';
 
 const createEntrySchema = z.object({
-  domain: z.string().min(1).max(50),
+  domain: z.enum(['platform_ops', 'civitai', 'remotion', 'huggingface', 'comfyui', 'video_production']),
   category: z.string().max(100).optional().nullable(),
   title: z.string().min(1).max(500),
   content: z.string().min(1),

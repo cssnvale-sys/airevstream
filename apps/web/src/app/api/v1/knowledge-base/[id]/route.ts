@@ -5,7 +5,7 @@ import { authenticate, success, error, notFound, validationError } from '@/lib/a
 type RouteParams = { params: Promise<{ id: string }> };
 
 const updateEntrySchema = z.object({
-  domain: z.string().min(1).max(50).optional(),
+  domain: z.enum(['platform_ops', 'civitai', 'remotion', 'huggingface', 'comfyui', 'video_production']).optional(),
   category: z.string().max(100).optional().nullable(),
   title: z.string().min(1).max(500).optional(),
   content: z.string().min(1).optional(),

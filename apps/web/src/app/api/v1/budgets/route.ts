@@ -6,7 +6,7 @@ import type { Prisma } from '@prisma/client';
 const createBudgetSchema = z.object({
   name: z.string().min(1).max(255),
   budgetType: z.enum(['daily', 'weekly', 'monthly']),
-  limitAmount: z.number().positive(),
+  limitAmount: z.number().positive().max(1000000),
   alertThreshold: z.number().min(0).max(1).optional().default(0.8),
   category: z.string().max(50).optional().nullable(),
 });

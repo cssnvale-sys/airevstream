@@ -7,7 +7,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 const updateBudgetSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   budgetType: z.enum(['daily', 'weekly', 'monthly']).optional(),
-  limitAmount: z.number().positive().optional(),
+  limitAmount: z.number().positive().max(1000000).optional(),
   alertThreshold: z.number().min(0).max(1).optional(),
   category: z.string().max(50).optional().nullable(),
   status: z.enum(['active', 'paused', 'exceeded']).optional(),

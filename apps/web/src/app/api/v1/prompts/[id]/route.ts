@@ -83,7 +83,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (fields.template !== undefined) data.template = fields.template;
     if (fields.negativePrompt !== undefined) data.negativePrompt = fields.negativePrompt;
     if (fields.tags !== undefined) data.tags = fields.tags;
-    if (fields.metadata !== undefined) data.metadata = fields.metadata;
+    if (fields.metadata !== undefined) data.metadata = fields.metadata as any;
 
     if (incrementUsage) {
       data.usageCount = { increment: 1 };

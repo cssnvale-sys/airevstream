@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AiRevStream — Content Automation',
+  title: {
+    template: '%s | AiRevStream',
+    default: 'AiRevStream — Content Automation',
+  },
   description: 'AI-powered multi-platform content automation system',
 };
 

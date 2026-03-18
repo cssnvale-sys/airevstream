@@ -43,6 +43,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 25 (Session 7) — Query Params, Accessibility, Cleanup**
+- Enum allowlist validation on GET query params across 11 API routes (accounts, channels, content, users, alerts, subscriptions, budgets, prompts, tenants, knowledge-base, ai-services)
+- Accessibility: aria-label on header buttons, search input, copy button, dashboard actions
+- Removed 3 unused imports
+
 **Audit Round 24 (Session 7) — Validation, Tenant Scoping & UX**
 - **CRITICAL:** Tenant scoping on affiliate/storefronts GET+POST (channel ownership check)
 - Zod validation schema on schedule POST (was manual string checks)

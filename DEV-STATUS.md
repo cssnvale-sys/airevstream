@@ -138,6 +138,9 @@
 | 5.88 | Storefronts tenant scoping | Done | **CRITICAL:** Channel ownership verified on GET+POST |
 | 5.89 | Create page toasts | Done | Toast notifications on all mutation outcomes |
 | 5.90 | Validation hardening | Done | NaN guard on analytics days, silent JSON catch fix |
+| 5.91 | GET query param validation | Done | Enum allowlists on 11 GET API routes |
+| 5.92 | Accessibility improvements | Done | aria-labels on icon buttons, search, copy button |
+| 5.93 | Unused imports cleanup | Done | Removed 3 unused `success` imports |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

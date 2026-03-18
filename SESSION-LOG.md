@@ -618,6 +618,20 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Added toast.success on successful content save + schedule
 - Create page was the only mutation page without toast integration
 
+**Batch 77: GET Query Param Validation — Enum Allowlists**
+- Added allowlist validation for enum query params across 11 GET API routes
+- Routes: accounts, channels, content, users, alerts, subscriptions, budgets, prompts, tenants, knowledge-base, ai-services
+- Prevents invalid enum values from reaching Prisma where clauses
+
+**Batch 78: Accessibility Improvements**
+- aria-label on header icon buttons (AI Assistant, User profile)
+- aria-label on search input
+- aria-label on CopyButton component
+- aria-label on dashboard approve/reject buttons (icon-only on mobile)
+
+**Batch 79: Unused Imports Cleanup**
+- Removed unused `success` import from workflows/hitl, workflows, affiliate/clicks routes
+
 ### Commits (continued)
 - `97da66b` — docs: tracking docs round 15
 - `e550c0e` — fix: tenant scoping on channel/content sub-routes, _count cleanup
@@ -627,6 +641,10 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `bf074a4` — docs: tracking docs round 17
 - `d25c460` — fix: Zod on schedule POST, tenant scoping on storefronts, validation hardening
 - `32ebec5` — fix: add toast notifications to create page
+- `d28732f` — docs: tracking docs round 18
+- `3fdf598` — fix: enum allowlist validation on GET query params (11 routes)
+- `b9b7d2f` — fix: accessibility — aria-labels on icon buttons
+- `03b33a4` — chore: remove unused imports
 
 ### Open Items
 - E2E testing (Playwright) not started

@@ -147,6 +147,8 @@
 | 5.97 | Zod validation (auth+more) | Done | Schemas on accounts POST, variants POST, login, register, forgot-password, reset-password |
 | 5.98 | Accounts unsafe cast fix | Done | Removed non-existent .channels access, use socialAccountsCount |
 | 5.99 | Prisma transactions | Done | Multi-step writes wrapped in $transaction() on 5 routes |
+| 5.100 | Code quality fixes | Done | CSV bounds, duration validation, parseInt radix, hash split defense |
+| 5.101 | Resource cleanup | Done | SSE error logging, health check timeout cleanup, rate limiter bounds warning |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

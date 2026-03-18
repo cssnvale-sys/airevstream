@@ -679,6 +679,17 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
   - channels/[id]/avatars POST: unset existing primary + create new primary
   - subscriptions/[id] PATCH: update subscription plan + update tenant plan/limits
 
+**Batch 87: Code Quality Fixes**
+- CSV bulk import: skip lines with fewer than 2 fields (bounds check)
+- Alert snooze: validate duration is finite, positive, max 24 hours
+- parseQuery: add explicit radix 10 to parseInt calls
+- Login/change-password: defensive hash split with parts.length === 2 check
+
+**Batch 88: Resource Cleanup Fixes**
+- SSE stream: log unexpected close errors instead of swallowing all
+- AI health check: clear timeout on error path (was only cleared on success)
+- Rate limiter: warn when in-memory store exceeds 10k entries
+
 ### Commits (continued)
 - `e403391` — docs: tracking docs round 19
 - `f10425d` — fix: SWR revalidation after job retry on system page
@@ -688,6 +699,9 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - `6115cf9` — fix: accounts page unsafe .channels type cast
 - `bd16672` — docs: tracking docs round 20
 - `692f556` — fix: Prisma transactions on multi-step writes (5 routes)
+- `61bca45` — docs: tracking docs round 21
+- `7a79e75` — fix: code quality (CSV bounds, duration validation, parseInt radix)
+- `a2e4b9d` — fix: SSE error logging, health check timeout, rate limiter bounds
 
 ### Open Items
 - E2E testing (Playwright) not started

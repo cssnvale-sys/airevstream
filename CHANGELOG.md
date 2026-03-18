@@ -43,6 +43,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 30 (Session 7) — Resource Cleanup & Code Quality**
+- SSE stream: log unexpected close errors instead of swallowing
+- AI health check: clear fetch timeout on error path (was leaking on failure)
+- Rate limiter: warn when in-memory store exceeds 10k entries
+- CSV bulk import: skip lines with fewer than 2 fields
+- Alert snooze: validate duration range (0-86400 seconds)
+- parseQuery: explicit radix 10 on parseInt
+- Login/change-password: defensive hash split with length check
+
 **Audit Round 28 (Session 7) — Prisma Transactions**
 - Wrapped multi-step writes in `$transaction()` on 5 routes to prevent race conditions: content approve/reject, bulk approvals, avatar assignment, subscription plan changes
 

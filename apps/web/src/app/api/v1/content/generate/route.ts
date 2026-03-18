@@ -36,9 +36,12 @@ export async function POST(req: NextRequest) {
       affiliateMode,
     } = parsed.data;
 
-    // Verify the channel exists
-    const channel = await ctx.db.channel.findUnique({
-      where: { id: channelId },
+    // Verify the channel exists and belongs to tenant
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id: channelId,
+        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+      },
       select: { id: true },
     });
     if (!channel) {

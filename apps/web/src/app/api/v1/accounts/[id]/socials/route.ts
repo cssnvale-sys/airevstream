@@ -27,8 +27,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const status = queryParams.get('status') ?? undefined;
 
   try {
-    // Verify email account exists
-    const emailAccount = await ctx.db.emailAccount.findUnique({ where: { id } });
+    // Verify email account exists and belongs to tenant
+    const emailAccount = await ctx.db.emailAccount.findFirst({
+      where: { id, ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}) },
+    });
     if (!emailAccount) return notFound('Email account not found');
 
     const where: Record<string, unknown> = { emailAccountId: id };
@@ -71,8 +73,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    // Verify email account exists
-    const emailAccount = await ctx.db.emailAccount.findUnique({ where: { id } });
+    // Verify email account exists and belongs to tenant
+    const emailAccount = await ctx.db.emailAccount.findFirst({
+      where: { id, ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}) },
+    });
     if (!emailAccount) return notFound('Email account not found');
 
     const body = await req.json();

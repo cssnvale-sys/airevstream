@@ -26,10 +26,33 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         createdAt: true,
         startedAt: true,
         completedAt: true,
+        channelId: true,
+        emailAccountId: true,
       },
     });
 
     if (!job) return notFound('Job not found');
+
+    // Tenant scoping: verify the job belongs to the requesting tenant
+    if (ctx.tenantId && (job.channelId || job.emailAccountId)) {
+      let belongsToTenant = false;
+
+      if (job.channelId) {
+        const ch = await ctx.db.channel.findFirst({
+          where: { id: job.channelId, socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+          select: { id: true },
+        });
+        belongsToTenant = !!ch;
+      } else if (job.emailAccountId) {
+        const ea = await ctx.db.emailAccount.findFirst({
+          where: { id: job.emailAccountId, tenantId: ctx.tenantId },
+          select: { id: true },
+        });
+        belongsToTenant = !!ea;
+      }
+
+      if (!belongsToTenant) return notFound('Job not found');
+    }
 
     return success({
       id: job.id,
@@ -41,6 +64,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       createdAt: job.createdAt,
       startedAt: job.startedAt,
       finishedAt: job.completedAt,
+      // channelId and emailAccountId excluded from response (used for tenant check only)
     });
   } catch (err) {
     console.error('GET /api/v1/jobs/[id] error:', err);

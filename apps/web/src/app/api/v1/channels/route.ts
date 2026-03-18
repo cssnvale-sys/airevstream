@@ -119,9 +119,12 @@ export async function POST(req: NextRequest) {
 
     const { socialAccountId, name, niches, primaryLanguage, tone, personality, targetAudience, postingCadence } = parsed.data;
 
-    // Verify social account exists
-    const socialAccount = await ctx.db.socialAccount.findUnique({
-      where: { id: socialAccountId },
+    // Verify social account exists and belongs to tenant
+    const socialAccount = await ctx.db.socialAccount.findFirst({
+      where: {
+        id: socialAccountId,
+        ...(ctx.tenantId ? { emailAccount: { tenantId: ctx.tenantId } } : {}),
+      },
     });
     if (!socialAccount) return notFound('Social account not found');
 

@@ -185,9 +185,12 @@ const executors: Record<string, ActionExecutor> = {
 
     if (!channelId) throw new Error('channelId is required');
 
-    // Verify channel exists
-    const channel = await ctx.db.channel.findUnique({
-      where: { id: channelId },
+    // Verify channel exists and belongs to tenant
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id: channelId,
+        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+      },
       select: { id: true, name: true },
     });
     if (!channel) throw new Error('Channel not found');
@@ -229,10 +232,17 @@ const executors: Record<string, ActionExecutor> = {
     const scheduledDate = new Date(scheduledAt);
     if (isNaN(scheduledDate.getTime())) throw new Error('scheduledAt must be a valid date');
 
-    // Verify content and channel exist
+    // Verify content and channel exist and belong to tenant
+    const contentTenantFilter = ctx.tenantId
+      ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
+      : {};
+    const channelTenantFilter = ctx.tenantId
+      ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } }
+      : {};
+
     const [content, channel] = await Promise.all([
-      ctx.db.contentItem.findUnique({ where: { id: contentId }, select: { id: true, title: true } }),
-      ctx.db.channel.findUnique({ where: { id: channelId }, select: { id: true, name: true } }),
+      ctx.db.contentItem.findFirst({ where: { id: contentId, ...contentTenantFilter }, select: { id: true, title: true } }),
+      ctx.db.channel.findFirst({ where: { id: channelId, ...channelTenantFilter }, select: { id: true, name: true } }),
     ]);
     if (!content) throw new Error('Content not found');
     if (!channel) throw new Error('Channel not found');
@@ -264,8 +274,11 @@ const executors: Record<string, ActionExecutor> = {
     const contentId = params.contentId as string;
     if (!contentId) throw new Error('contentId is required');
 
-    const item = await ctx.db.contentItem.findUnique({
-      where: { id: contentId },
+    const item = await ctx.db.contentItem.findFirst({
+      where: {
+        id: contentId,
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+      },
       select: { id: true, status: true, title: true },
     });
     if (!item) throw new Error('Content not found');
@@ -301,9 +314,9 @@ const executors: Record<string, ActionExecutor> = {
 
     if (!email) throw new Error('email is required');
 
-    // Check for duplicate email
-    const existing = await ctx.db.emailAccount.findUnique({
-      where: { email },
+    // Check for duplicate email within tenant
+    const existing = await ctx.db.emailAccount.findFirst({
+      where: { email, ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}) },
       select: { id: true },
     });
     if (existing) throw new Error('Email account already exists');
@@ -398,8 +411,11 @@ const executors: Record<string, ActionExecutor> = {
     const accountId = params.accountId as string;
     if (!accountId) throw new Error('accountId is required');
 
-    const account = await ctx.db.emailAccount.findUnique({
-      where: { id: accountId },
+    const account = await ctx.db.emailAccount.findFirst({
+      where: {
+        id: accountId,
+        ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}),
+      },
       select: { id: true, email: true, tier: true, status: true },
     });
     if (!account) throw new Error('Account not found');

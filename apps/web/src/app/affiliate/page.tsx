@@ -1122,7 +1122,7 @@ function AddProductModal({
         name: name.trim(),
         url: url.trim(),
         salesAngle: salesAngle.trim() || undefined,
-        commissionRate: commissionRate ? parseFloat(commissionRate) : undefined,
+        commissionRate: commissionRate ? Math.min(100, Math.max(0, parseFloat(commissionRate) || 0)) : undefined,
         category: category || undefined,
       });
       resetForm();
@@ -1288,7 +1288,7 @@ function ProductDetailModal({
       await apiPut(`/affiliate/products/${product.id}`, {
         name: name.trim(),
         salesAngle: salesAngle.trim() || null,
-        commissionRate: commissionRate ? parseFloat(commissionRate) : null,
+        commissionRate: commissionRate ? Math.min(100, Math.max(0, parseFloat(commissionRate) || 0)) : null,
         category: category || null,
         status,
       });

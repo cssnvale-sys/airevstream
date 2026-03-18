@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, parseQuery, paginated } from '@/lib/api-server';
+import { z } from 'zod';
+import { authenticate, success, error, parseQuery, paginated, validationError } from '@/lib/api-server';
+
+const CreateFamilySchema = z.object({
+  channelIds: z.array(z.string().uuid()).min(2, 'At least 2 channel IDs required').max(50),
+});
 
 /**
  * GET /api/v1/channels/families
@@ -70,11 +75,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { channelIds } = body;
-
-    if (!Array.isArray(channelIds) || channelIds.length < 2) {
-      return error('VALIDATION_ERROR', 'channelIds must be an array with at least 2 channel IDs', 400);
+    const parsed = CreateFamilySchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => e.message).join('; '));
     }
+    const { channelIds } = parsed.data;
 
     // Verify all channels exist and belong to this tenant
     const channels = await ctx.db.channel.findMany({

@@ -1,5 +1,16 @@
-import { authenticate, success, error, notFound } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const UpdateCinemaBibleSchema = z.object({
+  lookBible: z.record(z.unknown()).optional(),
+  characterBible: z.record(z.unknown()).optional(),
+  environmentBible: z.record(z.unknown()).optional(),
+  promptBible: z.record(z.unknown()).optional(),
+  shotspecTemplate: z.record(z.unknown()).optional(),
+}).refine(data => Object.values(data).some(v => v !== undefined), {
+  message: 'At least one bible section must be provided',
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -59,7 +70,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (!channel) return notFound('Channel not found');
 
     const body = await req.json();
-    const { lookBible, characterBible, environmentBible, promptBible, shotspecTemplate } = body;
+    const parsed = UpdateCinemaBibleSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => e.message).join('; '));
+    }
+    const { lookBible, characterBible, environmentBible, promptBible, shotspecTemplate } = parsed.data;
 
     // Find latest version for this channel
     const latestBible = await ctx.db.cinemaBible.findFirst({
@@ -89,11 +104,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         data: {
           channelId: id,
           version: 1,
-          lookBible: lookBible ?? {},
-          characterBible: characterBible ?? {},
-          environmentBible: environmentBible ?? {},
-          promptBible: promptBible ?? {},
-          shotspecTemplate: shotspecTemplate ?? {},
+          lookBible: (lookBible ?? {}) as any,
+          characterBible: (characterBible ?? {}) as any,
+          environmentBible: (environmentBible ?? {}) as any,
+          promptBible: (promptBible ?? {}) as any,
+          shotspecTemplate: (shotspecTemplate ?? {}) as any,
         },
       });
     }

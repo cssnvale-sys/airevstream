@@ -1,5 +1,10 @@
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const AddToPoolSchema = z.object({
+  affiliateProductId: z.string().uuid('affiliateProductId must be a valid UUID'),
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -97,11 +102,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!channel) return notFound('Channel not found');
 
     const body = await req.json();
-    const { affiliateProductId } = body;
-
-    if (!affiliateProductId) {
-      return validationError('affiliateProductId is required');
+    const parsed = AddToPoolSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => e.message).join('; '));
     }
+    const { affiliateProductId } = parsed.data;
 
     // Verify product exists
     const product = await ctx.db.affiliateProduct.findUnique({

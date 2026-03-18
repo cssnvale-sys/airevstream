@@ -1,5 +1,12 @@
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const AssignAvatarSchema = z.object({
+  avatarId: z.string().uuid(),
+  isPrimary: z.boolean().optional().default(false),
+  role: z.string().max(100).optional().nullable(),
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -65,11 +72,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!channel) return notFound('Channel not found');
 
     const body = await req.json();
-    const { avatarId, isPrimary, role } = body;
-
-    if (!avatarId) {
-      return validationError('avatarId is required');
+    const parsed = AssignAvatarSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; '));
     }
+    const { avatarId, isPrimary, role } = parsed.data;
 
     // Verify avatar exists
     const avatar = await ctx.db.avatar.findUnique({ where: { id: avatarId } });

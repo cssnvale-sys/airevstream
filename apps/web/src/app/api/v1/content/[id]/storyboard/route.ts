@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError } from '@/lib/api-server';
+
+const UpdateStoryboardSchema = z.object({
+  status: z.enum(['draft', 'approved', 'in_production']).optional(),
+  scriptJson: z.record(z.unknown()).optional(),
+  soundPlanJson: z.record(z.unknown()).optional(),
+  totalDurationSec: z.number().positive().optional(),
+  fps: z.number().int().positive().optional(),
+  aspectRatio: z.string().max(20).optional(),
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -86,27 +96,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     const body = await req.json();
-    const { status, scriptJson, soundPlanJson, totalDurationSec, fps, aspectRatio } = body as {
-      status?: string;
-      scriptJson?: Record<string, unknown>;
-      soundPlanJson?: Record<string, unknown>;
-      totalDurationSec?: number;
-      fps?: number;
-      aspectRatio?: string;
-    };
-
-    const validStatuses = ['draft', 'approved', 'in_production'];
-    if (status && !validStatuses.includes(status)) {
-      return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    const parsed = UpdateStoryboardSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationError(parsed.error.errors.map(e => e.message).join('; '));
     }
 
     const updateData: Record<string, unknown> = {};
-    if (status !== undefined) updateData.status = status;
-    if (scriptJson !== undefined) updateData.scriptJson = scriptJson;
-    if (soundPlanJson !== undefined) updateData.soundPlanJson = soundPlanJson;
-    if (totalDurationSec !== undefined) updateData.totalDurationSec = totalDurationSec;
-    if (fps !== undefined) updateData.fps = fps;
-    if (aspectRatio !== undefined) updateData.aspectRatio = aspectRatio;
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if (value !== undefined) updateData[key] = value;
+    }
 
     const updated = await ctx.db.storyboard.update({
       where: { id: storyboard.id },

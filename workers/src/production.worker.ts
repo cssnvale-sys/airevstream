@@ -39,10 +39,13 @@ async function comfyQueuePrompt(workflow: Record<string, unknown>): Promise<stri
     signal: AbortSignal.timeout(COMFYUI_TIMEOUT),
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`ComfyUI prompt failed (${res.status}): ${text}`);
+    const text = await res.text().catch(() => 'unable to read response body');
+    throw new Error(`ComfyUI prompt failed (${res.status}): ${text.slice(0, 500)}`);
   }
   const data = (await res.json()) as { prompt_id: string };
+  if (!data.prompt_id) {
+    throw new Error('ComfyUI returned response without prompt_id');
+  }
   return data.prompt_id;
 }
 

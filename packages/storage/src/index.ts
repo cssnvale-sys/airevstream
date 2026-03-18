@@ -115,11 +115,16 @@ export async function deleteObject(bucket: string, key: string): Promise<void> {
 export async function listObjects(
   bucket: string,
   prefix?: string,
+  timeoutMs = 60_000,
 ): Promise<Array<{ name: string; size: number; lastModified: Date }>> {
   const mc = getStorageClient();
   return new Promise((resolve, reject) => {
     const results: Array<{ name: string; size: number; lastModified: Date }> = [];
     const stream = mc.listObjects(bucket, prefix ?? '', true);
+    const timer = setTimeout(() => {
+      stream.destroy();
+      reject(new Error(`listObjects timed out after ${timeoutMs}ms for bucket=${bucket} prefix=${prefix ?? ''}`));
+    }, timeoutMs);
     stream.on('data', (obj) => {
       if (obj.name) {
         results.push({
@@ -129,8 +134,8 @@ export async function listObjects(
         });
       }
     });
-    stream.on('end', () => resolve(results));
-    stream.on('error', reject);
+    stream.on('end', () => { clearTimeout(timer); resolve(results); });
+    stream.on('error', (err) => { clearTimeout(timer); reject(err); });
   });
 }
 

@@ -14,10 +14,12 @@ export async function GET(req: NextRequest) {
     const { page, limit, skip, params } = parseQuery(req);
     const status = params.get('status') ?? undefined;
 
+    const validStatuses = ['open', 'acknowledged', 'resolved'];
+
     const where: Record<string, unknown> = {
-      severity: { in: ['critical', 'warning'] },
+      severity: { in: ['critical', 'error'] },
     };
-    if (status) where.status = status;
+    if (status && validStatuses.includes(status)) where.status = status;
 
     const [errors, total] = await Promise.all([
       ctx.db.alert.findMany({

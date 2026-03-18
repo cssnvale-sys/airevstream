@@ -27,9 +27,11 @@ export async function GET(req: NextRequest) {
     const category = params.get('category') ?? undefined;
     const status = params.get('status') ?? undefined;
 
+    const validStatuses = ['active', 'inactive', 'expired'];
+
     const where: Record<string, unknown> = {};
     if (category) where.category = category;
-    if (status) where.status = status;
+    if (status && validStatuses.includes(status)) where.status = status;
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },

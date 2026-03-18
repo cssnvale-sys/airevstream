@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, authenticateAny, success, error, paginated, parseQuery } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = createContentSchema.safeParse(body);
     if (!parsed.success) {
-      return error('VALIDATION_ERROR', parsed.error.errors[0].message, 400);
+      return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
 
     const { channelId, title, contentType, script, shots, status } = parsed.data;

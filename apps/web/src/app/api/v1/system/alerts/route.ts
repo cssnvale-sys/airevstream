@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
     if (severity && validSeverities.includes(severity)) where.severity = severity;
     if (status && validStatuses.includes(status)) where.status = status;
     else where.status = { in: ['open', 'acknowledged'] }; // Default: show active alerts
-    if (category) where.category = category;
+    const validCategories = ['system', 'queue', 'ai', 'auth', 'content', 'network', 'storage'];
+    if (category && validCategories.includes(category)) where.category = category;
 
     const allowedSorts = ['createdAt', 'severity', 'status', 'category'];
     const sortField = allowedSorts.includes(sort) ? sort : 'createdAt';

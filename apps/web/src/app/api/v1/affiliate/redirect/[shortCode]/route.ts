@@ -58,8 +58,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const userAgent = req.headers.get('user-agent') ?? null;
 
-    // Record the click and increment counter in parallel
-    await Promise.all([
+    // Record the click and increment counter atomically
+    await db.$transaction([
       db.affiliateClick.create({
         data: {
           productId: product.id,

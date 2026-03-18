@@ -43,6 +43,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+**Audit Round 20 (Session 7) — Tenant Scoping, Validation & Cleanup**
+- **CRITICAL:** Tenant scoping on workflows list route (was returning all tenants' jobs)
+- **CRITICAL:** Tenant scoping on content approve route (could approve any tenant's content)
+- Budget limitAmount capped at 1M max to prevent accidental huge amounts
+- Knowledge base domain validated against enum (6 allowed values)
+- Prompts metadata field `as any` cast for Prisma InputJsonValue compatibility
+- Accounts GET: properly destructured `_count` to prevent it leaking in JSON response
+- AI services routes documented as intentionally global scope (shared infra)
+
 **Audit Round 18 (Session 7) — Password Security, PUT Validation & Image Optimization**
 - Added rate limiting to change-password (5/15min) and users/invite (10/hr) routes
 - Change-password now returns fresh JWT for token rotation

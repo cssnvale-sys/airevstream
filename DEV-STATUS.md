@@ -115,6 +115,11 @@
 | 5.65 | Sidebar state persistence | Done | Collapsed state saved to localStorage |
 | 5.66 | Create wizard progress bar | Done | "Step X of 6" text + animated percentage bar |
 | 5.67 | System refresh button | Done | Manual re-fetch all health data with toast feedback |
+| 5.68 | Workflows tenant scoping | Done | WorkflowJob list scoped via tenant channel/account IDs |
+| 5.69 | Content approve tenant scoping | Done | findFirst with tenant chain instead of findUnique |
+| 5.70 | Validation improvements | Done | Budget max cap, knowledge-base domain enum, metadata cast |
+| 5.71 | AI services scope docs | Done | Documented global scope as intentional for self-hosted |
+| 5.72 | Accounts _count cleanup | Done | Proper destructuring removes _count from JSON response |
 | 5.9 | E2E testing | Not Started | Requires Playwright browser install |
 | 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
 

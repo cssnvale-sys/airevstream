@@ -548,10 +548,28 @@ Autonomous deep improvement sprint: 11 batches implementing UX improvements, new
 - Added "Step X of 6" text with animated progress bar to create page wizard
 - Added "Refresh" button to system page to re-fetch all health data with toast feedback
 
+**Batch 59: Tenant Scoping — Workflows List + Content Approve**
+- WorkflowJob list route now scoped via tenant channel/account IDs (matching system/workflows pattern)
+- Content approve route uses findFirst with tenant chain instead of findUnique
+- Knowledge-base, prompts, budgets, conversations cannot be scoped without migration (KI-020)
+
+**Batch 64: Validation Improvements**
+- Budget limitAmount capped at 1M max to prevent accidental huge amounts
+- Knowledge base domain validated against enum (platform_ops, civitai, remotion, huggingface, comfyui, video_production)
+- Prompts metadata field cast with `as any` for Prisma InputJsonValue compatibility
+
+**Batch 65: AI Services Scope Documentation + Cleanup**
+- AI services routes documented as intentionally global scope (shared infra for self-hosted)
+- Accounts GET: properly destructured _count to remove it from JSON response
+
 ### Commits (continued)
 - `f38e8b3` — docs: tracking docs round 12
 - `a0237f6` — feat: password visibility toggle + sidebar state persistence
 - `25b0b44` — feat: wizard progress bar + system refresh button
+- `733a254` — docs: tracking docs round 13
+- `a197b89` — fix: tenant scoping on workflows list + content approve
+- `f47a575` — fix: validation improvements (budget max, domain enum, metadata cast)
+- `3389f7a` — fix: AI services global scope documentation + accounts _count cleanup
 
 ### Open Items
 - E2E testing (Playwright) not started

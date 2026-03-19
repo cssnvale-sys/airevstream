@@ -38,6 +38,6 @@ CREATE INDEX IF NOT EXISTS "affiliate_products_name_search_idx"
 CREATE INDEX IF NOT EXISTS "affiliate_products_description_search_idx"
   ON "affiliate_products" USING GIN (to_tsvector('english', COALESCE("description", '')));
 
--- Alerts: search by title and message
+-- Alerts: search by title
 CREATE INDEX IF NOT EXISTS "alerts_title_search_idx"
   ON "alerts" USING GIN (to_tsvector('english', "title"));

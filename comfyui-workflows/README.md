@@ -74,10 +74,10 @@ const workflow = loadWorkflow('comfyui-workflows/thumbnail-generation.json', {
 After placeholder replacement, submit the workflow JSON to the ComfyUI API:
 
 ```typescript
-const COMFYUI_BASE_URL = process.env.COMFYUI_BASE_URL ?? 'http://localhost:8188';
+const COMFYUI_URL = process.env.COMFYUI_URL ?? 'http://localhost:8188';
 
 async function queuePrompt(workflow: object): Promise<{ prompt_id: string }> {
-  const response = await fetch(`${COMFYUI_BASE_URL}/prompt`, {
+  const response = await fetch(`${COMFYUI_URL}/prompt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: workflow }),
@@ -112,6 +112,6 @@ The following subdirectories are reserved for additional specialized workflows:
 
 ## Prerequisites
 
-- ComfyUI running and accessible at `COMFYUI_BASE_URL` (default: `http://localhost:8188`)
+- ComfyUI running and accessible at `COMFYUI_URL` (default: `http://localhost:8188`)
 - An SDXL-compatible checkpoint placed in ComfyUI's `models/checkpoints/` directory
 - The checkpoint filename in your `.env` or passed as the `model` parameter must match exactly

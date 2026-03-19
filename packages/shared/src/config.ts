@@ -30,7 +30,7 @@ const envSchema = z.object({
   OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
 
   // ComfyUI
-  COMFYUI_BASE_URL: z.string().url().default('http://localhost:8188'),
+  COMFYUI_URL: z.string().url().default('http://localhost:8188'),
 
   // App
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

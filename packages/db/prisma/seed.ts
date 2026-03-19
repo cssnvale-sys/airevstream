@@ -158,7 +158,7 @@ async function main() {
       name: 'TechVerse',
       niches: ['technology', 'AI', 'gadgets'],
       primaryLanguage: 'en',
-      tone: 'Enthusiastic and knowledgeable, like explaining tech to a curious friend',
+      tone: 'enthusiastic',
       personality: 'Tech-savvy early adopter who makes complex topics accessible',
       targetAudience: 'Tech enthusiasts 18-35, early adopters, curious learners',
       status: 'active',

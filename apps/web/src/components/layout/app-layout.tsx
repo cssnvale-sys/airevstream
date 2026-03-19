@@ -8,6 +8,8 @@ import { StatusBar } from './status-bar';
 import { AiPanel } from './ai-panel';
 import { getToken } from '@/lib/auth';
 import { Toaster } from 'sonner';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { CommandPalette } from '@/components/ui/command-palette';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -48,12 +50,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <Header onToggleAssistant={() => setAiPanelOpen(!aiPanelOpen)} />
         <main className="flex-1 overflow-auto">
           <div className="flex h-full">
-            <div className="flex-1 overflow-auto p-6">{children}</div>
+            <div className="flex-1 overflow-auto p-6">
+              <Breadcrumbs />
+              {children}
+            </div>
             <AiPanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
           </div>
         </main>
         <StatusBar />
       </div>
+      <CommandPalette />
       <Toaster position="bottom-right" theme="dark" />
     </div>
   );

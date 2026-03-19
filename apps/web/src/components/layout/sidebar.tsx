@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   HelpCircle,
+  ClipboardCheck,
 } from 'lucide-react';
 import { removeToken } from '@/lib/auth';
 import { useState, useEffect, useCallback } from 'react';
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/create', label: 'Create', icon: Sparkles },
   { href: '/library', label: 'Library', icon: Library },
+  { href: '/approvals', label: 'Approvals', icon: ClipboardCheck },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/system', label: 'System', icon: Activity },
   { href: '/affiliate', label: 'Affiliate', icon: BadgeDollarSign },

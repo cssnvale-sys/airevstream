@@ -74,8 +74,8 @@ All 3 Fastify services use `origin: true` CORS (allows any origin) and have no p
 
 ### KI-042: Zero Worker Processor Tests
 **Severity**: High
-**Status**: Partially Fixed (Session 11)
-222 unit tests + 173 E2E tests. E2E tests cover all 17 pages and exercise API routes through the browser. Worker processor unit tests and multi-tenant isolation tests still needed.
+**Status**: Partially Fixed (Session 16)
+222 unit tests + 181 E2E tests (100% pass rate). E2E tests cover all 17 pages and exercise API routes through the browser. Worker processor unit tests and multi-tenant isolation tests still needed.
 **Action**: Add worker processor unit tests and targeted multi-tenant integration tests.
 
 ### KI-046: 70 Write Handlers Missing Viewer Role Checks
@@ -110,7 +110,13 @@ The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level stati
 
 ---
 
-## Recently Fixed (Sessions 10-12)
+## Recently Fixed (Sessions 10-16)
+
+### KI-051: PostgreSQL Connection Pool Exhaustion During E2E Runs — Fixed (Session 16)
+Prisma client used a module-level singleton that leaked connections during Next.js HMR. Switched to `globalThis` pattern (D030).
+
+### KI-052: E2E Test Suite 18 Failures (90% Pass Rate) — Fixed (Session 16)
+Fixed 18 failing E2E tests across 11 spec files. Root causes: Playwright strict mode violations, HTML5 `minLength` blocking React forms, import modal dismiss, pagination resilience, ARIA role mismatches. Now 181/181 (100%).
 
 ### KI-001: E2E Tests — Fixed (Session 11)
 Playwright E2E test suite: 30 spec files, 173 test cases covering all 17 pages.

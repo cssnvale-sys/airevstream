@@ -170,6 +170,11 @@
 **Decision**: research -> script -> storyboard -> shots -> QC -> audio -> render -> review. Uses BullMQ FlowProducer with children-before-parent execution.
 **Rationale**: The 8-step DAG ensures each stage completes before its dependents start. FlowProducer handles dependency resolution, retry, and failure propagation. Each step is independently testable and replaceable.
 
+## D036: globalThis Pattern for Prisma Singleton in Next.js
+**Date**: 2026-03-19
+**Decision**: Use `globalThis.__prisma` to store the Prisma client singleton instead of a module-level variable in `packages/db/src/index.ts`.
+**Rationale**: Next.js HMR in development mode re-imports modules on every change, creating new `PrismaClient` instances while the old ones retain their connection pools. This caused PostgreSQL connection pool exhaustion during E2E test runs (100+ connections). The `globalThis` pattern survives HMR reloads because `globalThis` persists across module re-evaluations. This is the pattern recommended by the Prisma documentation for Next.js projects.
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **E2E test suite 100% pass rate** (Session 16): Fixed 18 failing tests across 11 spec files — strict mode violations, pagination resilience, modal dismiss, timing races, ARIA role mismatches
+- **PostgreSQL connection pool exhaustion** (Session 16): Switched Prisma client `getDb()` to `globalThis` singleton pattern to prevent connection leaks during Next.js HMR and E2E runs (D036)
+- **Settings password form** (Session 16): Removed `minLength={8}` from password inputs that blocked React `onSubmit` via HTML5 validation
+
 ### Added
 - Cinema-quality video production pipeline with 8-step DAG (Session 15)
 - ComfyUI workflow composer (LoRA, ControlNet, upscale, refiner) (Session 15)

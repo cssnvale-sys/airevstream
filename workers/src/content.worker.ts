@@ -1,4 +1,4 @@
-import { createWorker, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob } from '@airevstream/queue';
+import { createWorker, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob, type ContentFinalReviewJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
 import { createLogger } from '@airevstream/shared';
@@ -14,7 +14,7 @@ function getRegistry() {
 
 const logger = createLogger('worker:content');
 
-async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob>) {
+async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing content job');
 
   if (job.name === 'content:generate') {
@@ -25,6 +25,11 @@ async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob
   if (job.name === 'content:publish') {
     const data = job.data as ContentPublishJob;
     return handlePublishRequest(data);
+  }
+
+  if (job.name === 'content:final-review') {
+    const data = job.data as ContentFinalReviewJob;
+    return handleFinalReview(data);
   }
 
   if (job.name === 'content:approve') {
@@ -205,6 +210,43 @@ async function handleApprove(data: ContentApproveJob) {
     return { contentId: data.contentId, action: data.action };
   } catch (err) {
     logger.error({ err, contentId: data.contentId, action: data.action }, 'Content approval failed');
+    throw err;
+  }
+}
+
+// ─── Final Review Handler (Cinema Pipeline) ───
+
+async function handleFinalReview(data: ContentFinalReviewJob) {
+  const db = getDb();
+  logger.info({ contentId: data.contentId, storyboardId: data.storyboardId }, 'Processing final review');
+
+  try {
+    const content = await db.contentItem.findUnique({
+      where: { id: data.contentId },
+      select: { id: true, status: true },
+    });
+
+    if (!content) {
+      throw new Error(`Content item ${data.contentId} not found`);
+    }
+
+    if (data.autoApprove) {
+      await db.contentItem.update({
+        where: { id: data.contentId },
+        data: { status: 'approved' },
+      });
+      logger.info({ contentId: data.contentId }, 'Content auto-approved');
+    } else {
+      await db.contentItem.update({
+        where: { id: data.contentId },
+        data: { status: 'pending_approval' },
+      });
+      logger.info({ contentId: data.contentId }, 'Content sent for manual review');
+    }
+
+    return { contentId: data.contentId, status: data.autoApprove ? 'approved' : 'pending_approval' };
+  } catch (err) {
+    logger.error({ err, contentId: data.contentId }, 'Final review failed');
     throw err;
   }
 }

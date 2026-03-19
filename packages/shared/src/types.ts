@@ -121,6 +121,7 @@ export type JobType =
   | 'content:generate'
   | 'content:publish'
   | 'content:approve'
+  | 'content:final-review'
   | 'account:create'
   | 'account:sync'
   | 'account:health-check'
@@ -135,6 +136,9 @@ export type JobType =
   | 'production:generate-image'
   | 'production:generate-audio'
   | 'production:storyboard'
+  | 'production:generate-shots'
+  | 'production:qc-gate'
+  | 'production:mix-audio'
   | 'posting:schedule'
   | 'posting:publish';
 
@@ -192,6 +196,10 @@ export interface LookBible {
   grain?: string;
   lensKit?: string[];
   aspectRatio?: string;
+  colorPipeline?: ColorGradeSpec;
+  loras?: LoraSpec[];
+  negativePrompt?: string;
+  globalStyle?: string;
 }
 
 export interface CharacterBible {
@@ -199,12 +207,18 @@ export interface CharacterBible {
   wardrobe?: string[];
   neverChangeList?: string[];
   voiceprintConstraints?: Record<string, unknown>;
+  characterLoras?: Record<string, LoraSpec>;
+  faceRef?: string;
+  voiceId?: string;
 }
 
 export interface EnvironmentBible {
   locationMotifs?: string[];
   timeOfDayRules?: Record<string, unknown>;
   weather?: string[];
+  environmentLoras?: Record<string, LoraSpec>;
+  depthMapRef?: string;
+  lightingSetups?: Record<string, string>;
 }
 
 export interface PromptBible {
@@ -212,23 +226,131 @@ export interface PromptBible {
   characterBlocks?: Record<string, string>;
   shotBlockTemplates?: Record<string, string>;
   negativeBlock?: string;
+  qualityTokens?: string;
+  styleTokens?: string;
+  avoidTokens?: string;
+}
+
+// ─── Cinema Pipeline Types ───
+export interface CameraSpec {
+  lens?: string;        // "35mm", "85mm", "anamorphic 50mm"
+  framing?: string;     // "close-up", "wide", "medium", "extreme-close-up"
+  movement?: string;    // "static", "pan-left", "dolly-in", "crane-up"
+  dof?: 'shallow' | 'medium' | 'deep';
+  stabilization?: 'handheld' | 'steadicam' | 'tripod' | 'gimbal';
+}
+
+export interface LoraSpec {
+  name: string;           // "cinematic_v2.safetensors"
+  strength: number;       // 0.0-2.0 (typical: 0.4-0.8)
+  clipStrength?: number;  // defaults to strength
+  triggerWords?: string[];
+}
+
+export interface ControlNetSpec {
+  type: 'depth' | 'pose' | 'canny' | 'lineart' | 'softedge' | 'scribble';
+  model: string;
+  strength: number;    // 0.0-2.0
+  startPercent?: number;
+  endPercent?: number;
+  sourceImage?: string;  // MinIO key for reference image
+}
+
+export interface UpscaleSpec {
+  model: string;          // "4x-UltraSharp", "RealESRGAN_x4plus"
+  scale?: number;         // 2 or 4
+  denoiseAfter?: number;  // Low denoise pass after upscale (0.2-0.4)
+}
+
+export interface RefinerSpec {
+  model?: string;
+  switchAt?: number;     // 0.0-1.0 (when to switch from base to refiner)
+}
+
+export interface GenerationSpec {
+  provider?: string;       // "comfyui", "veo", "sora", "runway", "kling"
+  steps?: number;          // 20-50 for SDXL
+  cfg?: number;            // 5-12
+  sampler?: string;        // "euler_ancestral", "dpmpp_2m", "dpmpp_sde"
+  scheduler?: string;      // "normal", "karras", "exponential"
+  denoise?: number;        // 0.0-1.0
+  width?: number;
+  height?: number;
+  batchSize?: number;
+  loras?: LoraSpec[];
+  controlNets?: ControlNetSpec[];
+  upscale?: UpscaleSpec;
+  refiner?: RefinerSpec;
+  seedLock?: boolean;      // Reuse seed from previous shot for consistency
+}
+
+export interface PostProcessSpec {
+  sharpen?: number;        // 0-100
+  noiseReduction?: number; // 0-100
+  filmGrain?: number;      // 0-100
+  vignette?: number;       // 0-100
+}
+
+export interface ColorGradeSpec {
+  lut?: string;              // LUT filename
+  temperature?: number;      // -100 to +100
+  tint?: number;             // -100 to +100
+  contrast?: number;         // -100 to +100
+  saturation?: number;       // -100 to +100
+  highlights?: number;
+  shadows?: number;
+  blacks?: number;
+  whites?: number;
+}
+
+export interface VfxSpec {
+  depthPass?: boolean;       // Generate depth map for compositing
+  mattePasses?: string[];    // Which mattes to generate
+  motionBlur?: boolean;
+}
+
+export interface AudioLayerSpec {
+  source?: 'tts' | 'file' | 'generate';
+  text?: string;             // For TTS
+  voice?: string;            // Voice ID
+  fileKey?: string;          // MinIO key for audio file
+  volume?: number;           // 0.0-1.0
+  fadeInMs?: number;
+  fadeOutMs?: number;
+  loop?: boolean;
+}
+
+export interface AudioPlan {
+  bg?: AudioLayerSpec;       // Background bed (ambient, music)
+  mg?: AudioLayerSpec;       // Midground (effects, room tone)
+  fg?: AudioLayerSpec;       // Foreground (dialogue, foley)
+  masterVolume?: number;     // 0.0-1.0
 }
 
 // ─── ShotSpec ───
 export interface ShotSpec {
+  // --- Existing fields ---
   promptBlocks: string[];
   references?: string[];
   seed?: number;
   model?: string;
   duration?: number;
   fps?: number;
-  camera?: {
-    lens?: string;
-    framing?: string;
-    movement?: string;
-  };
   lighting?: string;
-  audioPlan?: Record<string, unknown>;
+
+  // --- Camera ---
+  camera?: CameraSpec;
+
+  // --- Audio ---
+  audioPlan?: AudioPlan;
+
+  // --- Cinema pipeline fields ---
+  generation?: GenerationSpec;
+  postProcess?: PostProcessSpec;
+  colorGrade?: ColorGradeSpec;
+  vfx?: VfxSpec;
+  aspect?: '16:9' | '9:16' | '4:3' | '2.39:1' | '1:1';
+  outputType?: 'image' | 'video' | 'image+video';
 }
 
 // ─── WebSocket Event Types ───

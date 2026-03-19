@@ -113,15 +113,40 @@ export interface PostingPublishJob {
   platform: string;
 }
 
+export interface ProductionGenerateShotsJob {
+  storyboardId: string;
+  shotIds: string[];
+  cinemaBibleId: string;
+  qualityPreset: string;
+  contentId: string;
+  channelId: string;
+}
+
+export interface ProductionQCGateJob {
+  storyboardId: string;
+  contentId: string;
+}
+
+export interface ProductionMixAudioJob {
+  storyboardId: string;
+  contentId: string;
+}
+
+export interface ContentFinalReviewJob {
+  contentId: string;
+  storyboardId: string;
+  autoApprove?: boolean;
+}
+
 // ─── Queue Name → Job Data Mapping ───
 
 export interface QueueJobMap {
-  content: ContentGenerateJob | ContentPublishJob | ContentApproveJob;
+  content: ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob;
   account: AccountCreateJob | AccountSyncJob | AccountHealthCheckJob | AccountWarmJob;
   posting: PostingScheduleJob | PostingPublishJob;
   research: ResearchTrendsJob | ResearchTopicsJob | ResearchKnowledgeUpdateJob | ResearchPopulateKnowledgeJob;
   maintenance: MaintenanceCleanupJob | MaintenanceBackupJob | MaintenanceMetricsJob;
-  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob;
+  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob | ProductionGenerateShotsJob | ProductionQCGateJob | ProductionMixAudioJob;
 }
 
 export type QueueName = keyof QueueJobMap;
@@ -227,5 +252,5 @@ export async function closeAllQueues(): Promise<void> {
 export { Queue, Worker, QueueEvents, Job };
 
 export { FlowProducer } from 'bullmq';
-export { getFlowProducer, startContentPipeline, closeFlowProducer } from './flows.js';
-export type { ContentPipelineParams } from './flows.js';
+export { getFlowProducer, startContentPipeline, startCinemaPipeline, closeFlowProducer } from './flows.js';
+export type { ContentPipelineParams, CinemaPipelineParams } from './flows.js';

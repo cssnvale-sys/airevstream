@@ -26,6 +26,19 @@ export { OllamaProvider } from './providers/ollama.js';
 export { OpenAICompatProvider } from './providers/openai-compat.js';
 export { HttpProvider } from './providers/http.js';
 
+// ─── Re-export video providers ───
+export type {
+  VideoProvider,
+  VideoGenRequest,
+  VideoGenResult,
+  VideoJobStatus,
+  VideoJobStatusType,
+} from './providers/video/index.js';
+
+export { ComfyUIVideoProvider } from './providers/video/index.js';
+export { VeoProvider } from './providers/video/index.js';
+export { SoraProvider } from './providers/video/index.js';
+
 // ─── Legacy API (backward-compatible) ───
 // These functions maintain the original Ollama-only interface for
 // existing consumers (ai-assistant, workers, etc.)

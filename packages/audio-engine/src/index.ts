@@ -9,3 +9,4 @@ export type {
 } from './types.js';
 
 export { TTSClient } from './tts-client.js';
+export { AudioMixer } from './mixer.js';

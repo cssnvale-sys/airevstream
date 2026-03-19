@@ -2,7 +2,8 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow } from '@airevstream/shared';
+import type { ShotSpec, PromptBible, ComfyUIWorkflow } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -16,93 +17,34 @@ import { uploadBuffer, ensureBucket } from '@airevstream/storage';
 const logger = createLogger('production-worker');
 
 const BUCKET = BUCKETS.PRODUCTION;
-const COMFYUI_URL = process.env.COMFYUI_URL ?? 'http://localhost:8188';
-const COMFYUI_TIMEOUT = parseInt(process.env.COMFYUI_TIMEOUT_MS ?? '120000', 10);
 const TEMPLATES_DIR = resolve(__dirname, '../../comfyui-workflows');
 
-// ─── Inline ComfyUI Client ───
+// ─── ComfyUI Client Instance ───
 
-async function comfyIsHealthy(): Promise<boolean> {
-  try {
-    const res = await fetch(`${COMFYUI_URL}/system_stats`, { signal: AbortSignal.timeout(5000) });
-    return res.ok;
-  } catch {
-    return false;
-  }
+const comfyClient = new ComfyUIClient(
+  process.env.COMFYUI_URL ?? 'http://localhost:8188',
+  parseInt(process.env.COMFYUI_TIMEOUT_MS ?? '120000', 10),
+);
+
+// ─── Temporary Types (until Phase 3 adds them to @airevstream/queue) ───
+
+interface ProductionGenerateShotsJob {
+  storyboardId: string;
+  shotIds: string[];
+  cinemaBibleId: string;
+  qualityPreset: string;
+  contentId: string;
+  channelId: string;
 }
 
-async function comfyQueuePrompt(workflow: Record<string, unknown>): Promise<string> {
-  const res = await fetch(`${COMFYUI_URL}/prompt`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: workflow }),
-    signal: AbortSignal.timeout(COMFYUI_TIMEOUT),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => 'unable to read response body');
-    throw new Error(`ComfyUI prompt failed (${res.status}): ${text.slice(0, 500)}`);
-  }
-  const data = (await res.json()) as { prompt_id: string };
-  if (!data.prompt_id) {
-    throw new Error('ComfyUI returned response without prompt_id');
-  }
-  return data.prompt_id;
+interface ProductionQCGateJob {
+  storyboardId: string;
+  contentId: string;
 }
 
-async function comfyWaitForCompletion(promptId: string): Promise<void> {
-  const startTime = Date.now();
-  while (Date.now() - startTime < COMFYUI_TIMEOUT) {
-    const res = await fetch(`${COMFYUI_URL}/history/${promptId}`, {
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as Record<string, any>;
-      if (data[promptId]) {
-        const entry = data[promptId] as { status?: { completed?: boolean; status_str?: string } };
-        if (entry.status?.completed || entry.status?.status_str === 'success') {
-          return;
-        }
-      }
-    }
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-  }
-  throw new Error(`ComfyUI prompt ${promptId} timed out`);
-}
-
-async function comfyGetOutputImages(
-  promptId: string,
-): Promise<Array<{ filename: string; subfolder: string; type: string }>> {
-  const res = await fetch(`${COMFYUI_URL}/history/${promptId}`, {
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!res.ok) throw new Error(`Failed to get history for prompt ${promptId}`);
-  const data = (await res.json()) as Record<string, any>;
-  const entry = data[promptId];
-  if (!entry?.outputs) throw new Error(`No outputs for prompt ${promptId}`);
-
-  const images: Array<{ filename: string; subfolder: string; type: string }> = [];
-  for (const nodeId of Object.keys(entry.outputs)) {
-    const nodeOutput = entry.outputs[nodeId];
-    if (nodeOutput.images) {
-      for (const img of nodeOutput.images) {
-        images.push({
-          filename: img.filename,
-          subfolder: img.subfolder ?? '',
-          type: img.type ?? 'output',
-        });
-      }
-    }
-  }
-  return images;
-}
-
-async function comfyDownloadImage(filename: string, subfolder: string, type: string): Promise<Buffer> {
-  const params = new URLSearchParams({ filename, subfolder, type });
-  const res = await fetch(`${COMFYUI_URL}/view?${params}`, {
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) throw new Error(`Failed to download image ${filename}`);
-  return Buffer.from(await res.arrayBuffer());
+interface ProductionMixAudioJob {
+  storyboardId: string;
+  contentId: string;
 }
 
 // ─── Template Renderer ───
@@ -144,7 +86,7 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
   const db = getDb();
   logger.info({ workflowType: data.workflowType, shotId: data.shotId }, 'Processing image generation job');
 
-  const healthy = await comfyIsHealthy();
+  const healthy = await comfyClient.isHealthy();
 
   if (!healthy) {
     logger.info('ComfyUI not available — recording placeholder job');
@@ -195,16 +137,16 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
 
   // Generate images via ComfyUI
   try {
-    const promptId = await comfyQueuePrompt(workflow);
-    await comfyWaitForCompletion(promptId);
-    const outputImages = await comfyGetOutputImages(promptId);
+    const promptId = await comfyClient.queuePrompt(workflow as ComfyUIWorkflow);
+    await comfyClient.waitForCompletion(promptId);
+    const outputImages = await comfyClient.getOutputImages(promptId);
 
     // Download and upload to storage
     await ensureBucket(BUCKET);
     const uploadedUrls: string[] = [];
 
     for (const img of outputImages) {
-      const imageData = await comfyDownloadImage(img.filename, img.subfolder, img.type);
+      const imageData = await comfyClient.downloadImage(img.filename, img.subfolder, img.type);
       const timestamp = Date.now();
       const key = `images/${data.workflowType}/${data.shotId ?? data.contentId ?? 'misc'}/${timestamp}-${img.filename}`;
       await uploadBuffer(BUCKET, key, imageData, 'image/png');
@@ -441,6 +383,216 @@ async function handleGenerateAudio(data: ProductionGenerateAudioJob): Promise<vo
   }
 }
 
+// ─── Cinema Shot Generation Handler ───
+
+async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<void> {
+  const db = getDb();
+  logger.info({ storyboardId: data.storyboardId, shotCount: data.shotIds.length }, 'Processing cinema shot generation');
+
+  const healthy = await comfyClient.isHealthy();
+  if (!healthy) {
+    logger.warn('ComfyUI not available for shot generation');
+    return;
+  }
+
+  // Load cinema bible
+  const bible = await db.cinemaBible.findUnique({ where: { id: data.cinemaBibleId } });
+  const promptBible = (bible?.promptBible as PromptBible | null) ?? undefined;
+
+  // Process each shot
+  for (const shotId of data.shotIds) {
+    const shot = await db.storyboardShot.findUnique({ where: { id: shotId } });
+    if (!shot) {
+      logger.warn({ shotId }, 'Shot not found, skipping');
+      continue;
+    }
+
+    await db.storyboardShot.update({ where: { id: shotId }, data: { status: 'generating' } });
+
+    try {
+      const spec = (shot.shotspec as unknown as ShotSpec) ?? { promptBlocks: ['default scene'] };
+
+      // Compose and run workflow
+      const workflow = composeWorkflow(spec, promptBible);
+      const images = await comfyClient.queueAndWait(workflow);
+
+      // Download and upload to storage
+      await ensureBucket(BUCKET);
+      const uploadedUrls: string[] = [];
+
+      for (const img of images) {
+        const imageData = await comfyClient.downloadImage(img.filename, img.subfolder, img.type);
+        const timestamp = Date.now();
+        const key = `shots/${data.storyboardId}/${shotId}/${timestamp}-${img.filename}`;
+        await uploadBuffer(BUCKET, key, imageData, 'image/png');
+        uploadedUrls.push(`${BUCKET}/${key}`);
+      }
+
+      // Update shot with generated keyframes and resolved seed
+      await db.storyboardShot.update({
+        where: { id: shotId },
+        data: {
+          keyframeUrls: uploadedUrls as any,
+          status: 'generated',
+          shotspec: { ...spec, seed: workflow.resolvedSeed } as any,
+        },
+      });
+
+      logger.info({ shotId, imageCount: images.length }, 'Shot generated successfully');
+    } catch (err) {
+      logger.error({ err, shotId }, 'Shot generation failed');
+      await db.storyboardShot.update({ where: { id: shotId }, data: { status: 'failed' } });
+    }
+  }
+}
+
+// ─── QC Gate Handler ───
+
+async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
+  const db = getDb();
+  logger.info({ storyboardId: data.storyboardId }, 'Processing QC gate');
+
+  const shots = await db.storyboardShot.findMany({
+    where: { storyboardId: data.storyboardId },
+    orderBy: { shotNumber: 'asc' },
+  });
+
+  let allApproved = true;
+
+  for (const shot of shots) {
+    const keyframeUrls = shot.keyframeUrls as string[] | null;
+
+    // Simple QC: check that the shot has keyframes
+    if (!keyframeUrls || keyframeUrls.length === 0) {
+      await db.storyboardShot.update({
+        where: { id: shot.id },
+        data: { status: 'failed' },
+      });
+      allApproved = false;
+      continue;
+    }
+
+    // Score based on whether the shot was generated successfully
+    const score = shot.status === 'generated' ? 90 : 40;
+    const qualityScore = score;
+
+    await db.storyboardShot.update({
+      where: { id: shot.id },
+      data: {
+        qualityScore,
+        status: qualityScore >= QUALITY_THRESHOLDS.AUTO_APPROVE
+          ? 'approved'
+          : qualityScore <= QUALITY_THRESHOLDS.AUTO_REJECT
+            ? 'failed'
+            : 'pending',
+      },
+    });
+
+    if (qualityScore < QUALITY_THRESHOLDS.AUTO_APPROVE) {
+      allApproved = false;
+    }
+  }
+
+  // Update storyboard status
+  if (allApproved) {
+    await db.storyboard.update({
+      where: { id: data.storyboardId },
+      data: { status: 'approved' },
+    });
+    logger.info({ storyboardId: data.storyboardId }, 'QC gate passed — all shots approved');
+  } else {
+    logger.info({ storyboardId: data.storyboardId }, 'QC gate — some shots need review');
+  }
+}
+
+// ─── Audio Mix Handler ───
+
+async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
+  const db = getDb();
+  logger.info({ storyboardId: data.storyboardId }, 'Processing audio mix');
+
+  const storyboard = await db.storyboard.findUnique({
+    where: { id: data.storyboardId },
+    include: {
+      shots: { orderBy: { shotNumber: 'asc' } },
+    },
+  });
+
+  if (!storyboard) {
+    throw new Error(`Storyboard ${data.storyboardId} not found`);
+  }
+
+  // Check if audio engine is available
+  let AudioMixer: any;
+  let TTSClient: any;
+  try {
+    const audioEngine = await import('@airevstream/audio-engine');
+    AudioMixer = audioEngine.AudioMixer;
+    TTSClient = audioEngine.TTSClient;
+  } catch {
+    logger.warn('Audio engine not available — skipping audio mix');
+    return;
+  }
+
+  const mixer = new AudioMixer();
+  const ttsClient = new TTSClient();
+  const tracks: Array<{ buffer: Buffer; startMs: number; volume: number; fadeInMs?: number; fadeOutMs?: number; loop?: boolean }> = [];
+
+  // Generate TTS for each shot's foreground audio
+  for (const shot of storyboard.shots) {
+    const spec = (shot.shotspec as unknown as ShotSpec) ?? {};
+    const audioPlan = spec.audioPlan;
+
+    if (audioPlan?.fg?.text) {
+      try {
+        const ttsResult = await ttsClient.synthesize({
+          text: audioPlan.fg.text,
+          voice: audioPlan.fg.voice,
+        });
+        tracks.push({
+          buffer: ttsResult.audioBuffer,
+          startMs: Number(shot.startSec ?? 0) * 1000,
+          volume: audioPlan.fg.volume ?? 0.9,
+          fadeInMs: audioPlan.fg.fadeInMs,
+          fadeOutMs: audioPlan.fg.fadeOutMs,
+        });
+      } catch (err) {
+        logger.warn({ err, shotId: shot.id }, 'TTS generation failed for shot');
+      }
+    }
+  }
+
+  if (tracks.length === 0) {
+    logger.info('No audio tracks to mix');
+    return;
+  }
+
+  try {
+    const mixResult = await mixer.mix({
+      tracks: tracks.map(t => ({
+        buffer: t.buffer,
+        startMs: t.startMs,
+        volume: t.volume,
+        fadeInMs: t.fadeInMs,
+        fadeOutMs: t.fadeOutMs,
+        loop: t.loop,
+      })),
+      outputFormat: 'wav',
+      totalDurationMs: Number(storyboard.totalDurationSec ?? 60) * 1000,
+    });
+
+    // Upload mixed audio
+    await ensureBucket(BUCKETS.AUDIO);
+    const key = `mixes/${data.contentId}/${Date.now()}.wav`;
+    await uploadBuffer(BUCKETS.AUDIO, key, mixResult.buffer, 'audio/wav');
+
+    logger.info({ key, durationMs: mixResult.durationMs }, 'Audio mix complete');
+  } catch (err) {
+    logger.error({ err }, 'Audio mix failed');
+    throw err;
+  }
+}
+
 // ─── Storyboard Generation Handler ───
 
 async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<void> {
@@ -581,7 +733,10 @@ type ProductionJob =
   | ProductionGenerateImageJob
   | ProductionRenderVideoJob
   | ProductionGenerateAudioJob
-  | ProductionStoryboardJob;
+  | ProductionStoryboardJob
+  | ProductionGenerateShotsJob
+  | ProductionQCGateJob
+  | ProductionMixAudioJob;
 
 export function startProductionWorker() {
   const worker = createWorker<'production'>(
@@ -601,6 +756,15 @@ export function startProductionWorker() {
           break;
         case 'production:generate-storyboard':
           await handleGenerateStoryboard(job.data as ProductionStoryboardJob);
+          break;
+        case 'production:generate-shots':
+          await handleShotGeneration(job.data as ProductionGenerateShotsJob);
+          break;
+        case 'production:qc-gate':
+          await handleQCGate(job.data as ProductionQCGateJob);
+          break;
+        case 'production:mix-audio':
+          await handleMixAudio(job.data as ProductionMixAudioJob);
           break;
         default:
           logger.warn({ jobName: job.name }, 'Unknown production job type');

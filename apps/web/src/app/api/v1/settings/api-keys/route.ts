@@ -13,31 +13,36 @@ const CreateApiKeySchema = z.object({
 }).strict();
 
 export async function GET(req: NextRequest) {
-  const ctx = await authenticate(req);
-  if (ctx instanceof NextResponse) return ctx;
+  try {
+    const ctx = await authenticate(req);
+    if (ctx instanceof NextResponse) return ctx;
 
-  if (!ctx.tenantId) {
-    return error('BAD_REQUEST', 'User must belong to a tenant to manage API keys', 400);
+    if (!ctx.tenantId) {
+      return error('BAD_REQUEST', 'User must belong to a tenant to manage API keys', 400);
+    }
+
+    const keys = await ctx.db.apiKey.findMany({
+      where: { tenantId: ctx.tenantId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: {
+        id: true,
+        name: true,
+        keyPrefix: true,
+        scopes: true,
+        rateLimitRpm: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    return success(keys);
+  } catch (err) {
+    console.error('GET /api/v1/settings/api-keys failed:', err);
+    return error('INTERNAL_ERROR', 'Failed to fetch API keys', 500);
   }
-
-  const keys = await ctx.db.apiKey.findMany({
-    where: { tenantId: ctx.tenantId },
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-    select: {
-      id: true,
-      name: true,
-      keyPrefix: true,
-      scopes: true,
-      rateLimitRpm: true,
-      lastUsedAt: true,
-      expiresAt: true,
-      status: true,
-      createdAt: true,
-    },
-  });
-
-  return success(keys);
 }
 
 export async function POST(req: NextRequest) {

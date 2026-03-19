@@ -1,4 +1,4 @@
-import { authenticate, success, error, validationError, paginated, parseQuery } from '@/lib/api-server';
+import { authenticate, success, error, validationError, paginated, parseQuery, forbidden } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -76,6 +76,9 @@ const SchedulePostSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   try {
     const body = await req.json();

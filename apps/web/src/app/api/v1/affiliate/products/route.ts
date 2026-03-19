@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -29,6 +29,9 @@ export async function GET(req: NextRequest) {
 
     const validStatuses = ['active', 'inactive', 'expired'];
 
+    // NOTE: AffiliateProduct has no tenantId field (KI-020). Products are global
+    // entities linked to tenants via ChannelAffiliatePool chain. Tenant scoping
+    // here would hide newly created products not yet assigned to pools.
     const where: Record<string, unknown> = {};
     if (category) where.category = category;
     if (status && validStatuses.includes(status)) where.status = status;
@@ -77,6 +80,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`affiliate/products:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

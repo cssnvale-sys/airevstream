@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, paginated, parseQuery, validationError, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, notFound, paginated, parseQuery, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
@@ -74,6 +74,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`accounts/[id]/socials:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

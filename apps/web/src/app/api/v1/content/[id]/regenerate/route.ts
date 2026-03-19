@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 
@@ -9,6 +9,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
 
     const rl = checkRateLimit(`generate:${ctx.userId}`, RATE_LIMITS.contentGeneration);
     if (!rl.allowed) {
@@ -81,7 +85,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return error('QUEUE_ERROR', 'Failed to start content regeneration', 500);
     }
 
-    return success(newVersion, { queued: true });
+    return success({
+      ...newVersion,
+      qualityScore: newVersion.qualityScore != null ? Number(newVersion.qualityScore) : null,
+      durationSec: newVersion.durationSec != null ? Number(newVersion.durationSec) : null,
+      approvalGateWindowHrs: newVersion.approvalGateWindowHrs != null ? Number(newVersion.approvalGateWindowHrs) : null,
+    }, { queued: true });
   } catch (err) {
     console.error('POST /api/v1/content/[id]/regenerate error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 
@@ -19,6 +19,10 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
 
     const rl = checkRateLimit(`generate:${ctx.userId}`, RATE_LIMITS.contentGeneration);
     if (!rl.allowed) {

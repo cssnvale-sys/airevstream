@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 import type { ApiContext } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -508,6 +508,16 @@ export async function POST(req: NextRequest) {
     const tier = ACTION_TIERS[actionType];
     if (tier === undefined) {
       return error('UNKNOWN_ACTION', `Unknown action type: ${actionType}`, 400);
+    }
+
+    // Tier 3+ actions require admin role
+    if (tier >= 3 && ctx.role !== 'admin') {
+      return forbidden('Admin role required for this action');
+    }
+
+    // Viewers cannot execute any actions
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot execute actions');
     }
 
     // Resolve executor

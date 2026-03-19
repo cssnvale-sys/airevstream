@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -56,6 +56,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');

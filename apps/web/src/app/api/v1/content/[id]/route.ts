@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, authenticateAny, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -95,6 +95,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
+
   const ip = getClientIp(req);
   const rl = checkRateLimit(`content/[id]:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
@@ -160,6 +164,10 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
+
   const ip = getClientIp(req);
   const rl = checkRateLimit(`content/[id]:delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
@@ -167,33 +175,41 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
-    const item = await ctx.db.contentItem.findFirst({
-      where: {
-        id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
-      },
-      select: { id: true, status: true },
+    // Use interactive transaction to prevent TOCTOU race on status check
+    const deletableStatuses = ['draft', 'archived', 'failed'];
+
+    const result = await ctx.db.$transaction(async (tx: any) => {
+      const item = await tx.contentItem.findFirst({
+        where: {
+          id,
+          ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        },
+        select: { id: true, status: true },
+      });
+
+      if (!item) return { kind: 'not_found' as const };
+
+      if (!deletableStatuses.includes(item.status)) {
+        return { kind: 'invalid_status' as const, status: item.status };
+      }
+
+      // Cascade: storyboard shots, storyboards, scheduled posts, then content
+      await tx.storyboardShot.deleteMany({
+        where: { storyboard: { contentId: id } },
+      });
+      await tx.storyboard.deleteMany({ where: { contentId: id } });
+      await tx.scheduledPost.deleteMany({ where: { contentId: id } });
+      await tx.contentItem.delete({ where: { id } });
+
+      return { kind: 'deleted' as const };
     });
 
-    if (!item) return notFound('Content item not found');
-
-    // Only allow deletion of draft or archived content
-    const deletableStatuses = ['draft', 'archived', 'failed'];
-    if (!deletableStatuses.includes(item.status)) {
+    if (result.kind === 'not_found') return notFound('Content item not found');
+    if (result.kind === 'invalid_status') {
       return validationError(
-        `Cannot delete content with status "${item.status}". Only draft, archived, or failed content can be deleted.`,
+        `Cannot delete content with status "${result.status}". Only draft, archived, or failed content can be deleted.`,
       );
     }
-
-    // Cascade: storyboard shots, storyboards, scheduled posts, then content
-    await ctx.db.$transaction([
-      ctx.db.storyboardShot.deleteMany({
-        where: { storyboard: { contentId: id } },
-      }),
-      ctx.db.storyboard.deleteMany({ where: { contentId: id } }),
-      ctx.db.scheduledPost.deleteMany({ where: { contentId: id } }),
-      ctx.db.contentItem.delete({ where: { id } }),
-    ]);
 
     return success({ deleted: true });
   } catch (err) {

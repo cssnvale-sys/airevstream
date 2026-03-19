@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -7,6 +7,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot approve content');
+    }
 
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
@@ -23,7 +27,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return notFound('Content item not found');
     }
 
-    const approvableStatuses = ['generated', 'review', 'pending_approval'];
+    const approvableStatuses = ['generated', 'pending_approval'];
     if (item.status === 'approved') {
       return error('ALREADY_APPROVED', 'Content item is already approved', 409);
     }

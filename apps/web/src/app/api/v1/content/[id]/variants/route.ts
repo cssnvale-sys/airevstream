@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateVariantSchema = z.object({
   title: z.string().max(500).optional(),
@@ -34,10 +35,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const rootId = contentItem.parentId ?? contentItem.id;
 
-    // Get the root item and all its variants
+    // Get the root item and all its variants (tenant-scoped)
     const variants = await ctx.db.contentItem.findMany({
       where: {
         OR: [{ id: rootId }, { parentId: rootId }],
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
       },
       select: {
         id: true,
@@ -51,6 +53,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         platformMetadata: true,
       },
       orderBy: { version: 'asc' },
+      take: 100,
     });
 
     return success({
@@ -79,6 +82,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
+
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`content/variants:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
@@ -103,10 +114,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const rootId = source.parentId ?? source.id;
 
-    // Determine the next version number
+    // Determine the next version number (tenant-scoped)
     const maxVersion = await ctx.db.contentItem.aggregate({
       where: {
         OR: [{ id: rootId }, { parentId: rootId }],
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
       },
       _max: { version: true },
     });

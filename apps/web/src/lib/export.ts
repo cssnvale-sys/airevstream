@@ -11,8 +11,11 @@ interface CsvColumn<T> {
 function escapeCell(value: unknown): string {
   if (value === null || value === undefined) return '';
   const str = String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`;
+  // Prevent CSV injection: prefix formula-triggering characters with a single quote
+  const needsFormulaGuard = str.length > 0 && ['=', '+', '-', '@'].includes(str[0]);
+  if (needsFormulaGuard || str.includes(',') || str.includes('"') || str.includes('\n')) {
+    const escaped = str.replace(/"/g, '""');
+    return `"${needsFormulaGuard ? `'${escaped}` : escaped}"`;
   }
   return str;
 }

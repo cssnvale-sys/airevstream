@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
@@ -90,6 +90,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`account-create:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

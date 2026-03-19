@@ -241,6 +241,7 @@ function BulkImportModal({
       onSuccess();
       toast.success(`Imported ${res.data.imported} accounts`);
     } catch (err: unknown) {
+      console.error('Bulk import failed:', err);
       if (err instanceof SyntaxError) {
         setError('Invalid JSON. Please check the format.');
       } else {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const dateFrom = params.get('dateFrom') ?? undefined;
     const dateTo = params.get('dateTo') ?? undefined;
 
-    const validStatuses = ['draft', 'generating', 'generated', 'review', 'approved', 'scheduled', 'posted', 'archived', 'failed'];
+    const validStatuses = ['draft', 'generating', 'generated', 'pending_approval', 'approved', 'scheduled', 'posted', 'archived', 'failed'];
     const validContentTypes = ['video_short', 'video_long', 'image', 'text', 'voice', 'thumbnail'];
 
     const where: Prisma.ContentItemWhereInput = {};
@@ -113,13 +113,16 @@ const createContentSchema = z.object({
   })).optional(),
   affiliateProductId: z.string().uuid().optional(),
   affiliateMode: z.string().optional(),
-  status: z.enum(['draft', 'generating', 'generated', 'review', 'approved', 'scheduled', 'posted', 'archived', 'failed']).optional(),
+  status: z.enum(['draft', 'generating', 'generated', 'pending_approval', 'approved', 'scheduled', 'posted', 'archived', 'failed']).optional(),
 }).strict();
 
 export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
 
     const ip = getClientIp(req);
     const rl = checkRateLimit(`content-create:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
@@ -133,7 +136,7 @@ export async function POST(req: NextRequest) {
       return validationError(parsed.error.errors.map(e => e.message).join(', '));
     }
 
-    const { channelId, title, contentType, script, shots, status } = parsed.data;
+    const { channelId, title, contentType, script, shots, status, affiliateProductId, affiliateMode } = parsed.data;
 
     // Verify channel exists and belongs to tenant
     const channel = await ctx.db.channel.findFirst({
@@ -156,6 +159,8 @@ export async function POST(req: NextRequest) {
         contentType,
         prompt: title,
         generationParams: { script: script ?? null, shots: shots ?? [] } as any,
+        affiliateProductId: affiliateProductId ?? null,
+        affiliateMode: affiliateMode ?? null,
         status: status ?? 'draft',
         version: 1,
       },

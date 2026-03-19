@@ -369,6 +369,7 @@ export default function LibraryPage() {
       mutate();
       toast.success('Content deleted');
     } catch (err) {
+      console.error('Failed to delete content:', err);
       toast.error('Failed to delete content');
     } finally {
       setDeleting(false);

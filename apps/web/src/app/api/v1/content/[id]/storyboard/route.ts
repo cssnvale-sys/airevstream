@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const UpdateStoryboardSchema = z.object({
   status: z.enum(['draft', 'approved', 'in_production']).optional(),
@@ -71,6 +72,14 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
+
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`content/storyboard:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');

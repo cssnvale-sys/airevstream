@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, notFound } from '@/lib/api-server';
+import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 const GenerateStoryboardSchema = z.object({
@@ -12,6 +12,10 @@ const GenerateStoryboardSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const rl = checkRateLimit(`gen:storyboard:${ctx.userId}`, RATE_LIMITS.contentGeneration);
   if (!rl.allowed) {

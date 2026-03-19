@@ -1,4 +1,4 @@
-import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, notFound, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -96,8 +96,12 @@ export async function GET(req: NextRequest) {
       ctx.db.channel.count({ where }),
     ]);
 
-    const data = channels.map(({ _count, ...channel }) => ({
+    const data = channels.map(({ _count, socialAccount, ...channel }) => ({
       ...channel,
+      socialAccount: socialAccount ? {
+        ...socialAccount,
+        healthScore: socialAccount.healthScore != null ? Number(socialAccount.healthScore) : null,
+      } : null,
       contentItemsCount: _count.contentItems,
       avatarsCount: _count.channelAvatars,
     }));
@@ -116,6 +120,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`channel-create:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

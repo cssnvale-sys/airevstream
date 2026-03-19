@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticate, success, error, forbidden } from '@/lib/api-server';
 
 /**
  * POST /api/v1/system/alerts/acknowledge-all
@@ -8,6 +8,9 @@ import { authenticate, success, error } from '@/lib/api-server';
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   try {
     const result = await ctx.db.alert.updateMany({

@@ -16,11 +16,16 @@ const DEFAULTS = {
 };
 
 export async function GET(req: NextRequest) {
-  const ctx = await authenticate(req);
-  if (ctx instanceof NextResponse) return ctx;
+  try {
+    const ctx = await authenticate(req);
+    if (ctx instanceof NextResponse) return ctx;
 
-  const row = await ctx.db.systemSetting.findUnique({ where: { key: SETTING_KEY } });
-  return success(row ? row.value : DEFAULTS);
+    const row = await ctx.db.systemSetting.findUnique({ where: { key: SETTING_KEY } });
+    return success(row ? row.value : DEFAULTS);
+  } catch (err) {
+    console.error('GET /api/v1/settings/general failed:', err);
+    return error('INTERNAL_ERROR', 'Failed to fetch general settings', 500);
+  }
 }
 
 export async function PUT(req: NextRequest) {

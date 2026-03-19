@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const RejectBodySchema = z.object({
@@ -13,6 +13,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot approve or reject content');
+  }
+
   const ip = getClientIp(req);
   const rl = checkRateLimit(`approvals/[id]/[action]:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
@@ -24,26 +28,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    // Tenant-scoped lookup: only allow approve/reject on this tenant's content
-    const content = await ctx.db.contentItem.findFirst({
-      where: {
-        id,
-        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-      },
-    });
-    if (!content) return error('NOT_FOUND', 'Content not found', 404);
-
-    if (action === 'approve') {
-      await ctx.db.contentItem.update({
-        where: { id },
-        data: {
-          status: 'approved',
-          approvedAt: new Date(),
-          approvedBy: ctx.userId,
-        },
-      });
-    } else {
-      let feedback: string | undefined;
+    // Parse reject feedback before entering transaction
+    let feedback: string | undefined;
+    if (action === 'reject') {
       try {
         const body = await req.json();
         const parsed = RejectBodySchema.safeParse(body);
@@ -53,14 +40,40 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       } catch {
         // no body
       }
-
-      await ctx.db.contentItem.update({
-        where: { id },
-        data: { status: 'draft' },
-      });
     }
 
-    return success({ id, action, status: action === 'approve' ? 'approved' : 'draft' });
+    // Use interactive transaction to prevent TOCTOU race
+    const result = await ctx.db.$transaction(async (tx: any) => {
+      const content = await tx.contentItem.findFirst({
+        where: {
+          id,
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+      });
+      if (!content) return null;
+
+      if (action === 'approve') {
+        await tx.contentItem.update({
+          where: { id },
+          data: {
+            status: 'approved',
+            approvedAt: new Date(),
+            approvedBy: ctx.userId,
+          },
+        });
+      } else {
+        await tx.contentItem.update({
+          where: { id },
+          data: { status: 'draft' },
+        });
+      }
+
+      return { id, action, status: action === 'approve' ? 'approved' : 'draft' };
+    });
+
+    if (!result) return error('NOT_FOUND', 'Content not found', 404);
+
+    return success(result);
   } catch (err) {
     console.error(`POST /approvals/${id}/${action} failed:`, err);
     return error('INTERNAL_ERROR', `Failed to ${action} content`, 500);

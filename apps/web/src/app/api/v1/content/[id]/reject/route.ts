@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -12,6 +12,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot reject content');
+    }
 
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
@@ -26,6 +30,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     if (!item) {
       return notFound('Content item not found');
+    }
+
+    const rejectableStatuses = ['generated', 'pending_approval'];
+    if (item.status === 'draft') {
+      return error('ALREADY_DRAFT', 'Content item is already a draft', 409);
+    }
+    if (!rejectableStatuses.includes(item.status)) {
+      return error('INVALID_STATE', `Cannot reject content with status "${item.status}"`, 409);
     }
 
     let body: unknown = {};

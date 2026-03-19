@@ -277,7 +277,8 @@ export default function AnalyticsPage() {
           break;
       }
       toast.success('CSV exported');
-    } catch {
+    } catch (err) {
+      console.error('CSV export failed:', err);
       toast.error('No data available to export');
     }
   };

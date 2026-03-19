@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError, notFound } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, notFound, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
@@ -81,6 +81,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`affiliate/storefronts:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

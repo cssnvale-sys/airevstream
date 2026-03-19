@@ -75,11 +75,16 @@ export async function authenticate(req: NextRequest): Promise<ApiContext | NextR
     const role = (payload.role as string) ?? 'operator';
     const db = getDb();
     // Fetch tenantId from DB (not in JWT to keep it current)
-    const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
-    if (!user) {
-      return error('UNAUTHORIZED', 'User not found', 401);
+    try {
+      const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
+      if (!user) {
+        return error('UNAUTHORIZED', 'User not found', 401);
+      }
+      return { userId, role, tenantId: user.tenantId, db };
+    } catch (dbErr) {
+      console.error('authenticate() DB lookup failed:', dbErr);
+      return error('INTERNAL_ERROR', 'Authentication service unavailable', 500);
     }
-    return { userId, role, tenantId: user.tenantId, db };
   } catch {
     return error('UNAUTHORIZED', 'Invalid or expired token', 401);
   }
@@ -115,11 +120,16 @@ export async function authenticateSSE(req: NextRequest): Promise<ApiContext | Ne
     }
     const role = (payload.role as string) ?? 'operator';
     const db = getDb();
-    const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
-    if (!user) {
-      return error('UNAUTHORIZED', 'User not found', 401);
+    try {
+      const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
+      if (!user) {
+        return error('UNAUTHORIZED', 'User not found', 401);
+      }
+      return { userId, role, tenantId: user.tenantId, db };
+    } catch (dbErr) {
+      console.error('authenticateSSE() DB lookup failed:', dbErr);
+      return error('INTERNAL_ERROR', 'Authentication service unavailable', 500);
     }
-    return { userId, role, tenantId: user.tenantId, db };
   } catch {
     return error('UNAUTHORIZED', 'Invalid or expired token', 401);
   }

@@ -38,13 +38,14 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       depth++;
     }
 
-    // Fetch the root item and all children pointing to the root
+    // Fetch the root item and all children pointing to the root (tenant-scoped)
     const versions = await ctx.db.contentItem.findMany({
       where: {
         OR: [
           { id: rootId },
           { parentId: rootId },
         ],
+        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
       },
       select: {
         id: true,
@@ -56,6 +57,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         updatedAt: true,
       },
       orderBy: { version: 'asc' },
+      take: 100,
     });
 
     const converted = versions.map(v => ({

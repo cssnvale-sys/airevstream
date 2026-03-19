@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -44,6 +44,22 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!product) return notFound('Affiliate product not found');
 
+    // Verify tenant ownership via channel pool chain
+    if (ctx.tenantId && product.channelPools.length > 0) {
+      const ownsProduct = product.channelPools.some(pool => pool.channel != null);
+      if (!ownsProduct) {
+        // Double-check via DB query with tenant chain
+        const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
+          where: {
+            affiliateProductId: id,
+            channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+          },
+          select: { channelId: true },
+        });
+        if (!tenantPool) return notFound('Affiliate product not found');
+      }
+    }
+
     const converted = {
       ...product,
       commissionRate: product.commissionRate != null ? Number(product.commissionRate) : null,
@@ -68,6 +84,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`affiliate/products/[id]:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
@@ -81,7 +100,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (!existing) return notFound('Affiliate product not found');
 
     // Verify product is in a channel pool owned by this tenant
-    if (ctx.tenantId) {
+    if (ctx.tenantId && existing.id) {
       const ownsProduct = await ctx.db.channelAffiliatePool.findFirst({
         where: {
           affiliateProductId: id,

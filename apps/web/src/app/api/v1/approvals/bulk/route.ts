@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 
 const BulkApprovalSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(100),
@@ -11,6 +11,9 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
 
     const body = await req.json();
     const parsed = BulkApprovalSchema.safeParse(body);

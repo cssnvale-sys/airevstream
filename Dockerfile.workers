@@ -1,0 +1,57 @@
+# Worker processes Dockerfile
+# Runs all BullMQ worker processes
+
+# ── Stage 1: Dependencies ──
+FROM node:20-slim AS deps
+WORKDIR /app
+
+COPY package.json package-lock.json turbo.json ./
+COPY workers/package.json ./workers/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/db/package.json ./packages/db/
+COPY packages/queue/package.json ./packages/queue/
+COPY packages/crypto/package.json ./packages/crypto/
+COPY packages/storage/package.json ./packages/storage/
+COPY packages/ai-client/package.json ./packages/ai-client/
+COPY packages/audio-engine/package.json ./packages/audio-engine/
+COPY packages/browser-automation/package.json ./packages/browser-automation/
+
+RUN npm ci --ignore-scripts
+
+# ── Stage 2: Build ──
+FROM node:20-slim AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate --schema=packages/db/prisma/schema.prisma
+
+# Build workers and all dependencies
+RUN npx turbo build --filter=@airevstream/workers...
+
+# ── Stage 3: Runtime ──
+FROM node:20-slim AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# pg_dump for database backups
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 appuser
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/workers ./workers
+COPY --from=builder /app/comfyui-workflows ./comfyui-workflows
+COPY --from=builder /app/remotion ./remotion
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/turbo.json ./turbo.json
+
+USER appuser
+
+CMD ["node", "workers/dist/index.js"]

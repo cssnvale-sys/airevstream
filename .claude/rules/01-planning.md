@@ -9,6 +9,7 @@ Before writing any code:
    - `KNOWN-ISSUES.md` — existing bugs that may relate
    - `DECISIONS.md` — past architectural decisions (avoid contradicting them)
 3. Search for similar patterns in the codebase before inventing new ones
+4. When modifying error handling, verify message strings match between API route and frontend allowlist
 
 ## Bug Fixing
 
@@ -40,3 +41,12 @@ cross-session memory — stale docs cause repeated mistakes.
 | `OPERATOR-TODO.md` | Add new operator actions needed, mark completed items done |
 
 If you forget, update them when reminded. No exceptions.
+
+## Content Limits
+
+| File | When to trim |
+|------|-------------|
+| `SESSION-LOG.md` | Archive entries older than 5 sessions to `docs/session-archive.md` |
+| `KNOWN-ISSUES.md` | Remove "Fixed" entries older than 2 sessions |
+| `DEV-STATUS.md` | Collapse completed batch items into summary counts |
+| `MEMORY.md` | Move patterns codified in `.claude/rules/` out to keep under 200 lines |

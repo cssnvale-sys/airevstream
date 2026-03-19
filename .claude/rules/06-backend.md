@@ -66,6 +66,34 @@ export async function GET(req: NextRequest) {
 }
 ```
 
+## Entity Creation Completeness
+
+When creating entities with required foreign keys:
+
+| Check | Example |
+|-------|---------|
+| Required parents exist or are created atomically | Register: create Tenant + User in `$transaction` |
+| Non-nullable FKs are set | `user.tenantId` must not be null after register |
+| Response includes all fields the frontend expects | Include `tenantId` if login response includes it |
+
+Never create a child entity without its required parent. Use `$transaction` for atomic multi-entity creation.
+
+## Error Responses
+
+Always use static message strings in `error()` calls — never `err.message`:
+
+```typescript
+// Wrong — leaks internals
+return error('INTERNAL_ERROR', err.message, 500);
+
+// Right — static string
+return error('INTERNAL_ERROR', 'Failed to create content', 500);
+```
+
+The response shape is `{ success: false, error: { code, message } }`.
+Frontend reads `data?.error?.message` and validates against an allowlist.
+If you change an error message string, update the frontend allowlist in the same commit.
+
 ## Prisma Conventions
 
 - JSON fields: cast Zod `Record<string, unknown>` as `as any` for `InputJsonValue`

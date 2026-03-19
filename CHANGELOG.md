@@ -7,6 +7,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Persistent Codebase Audit System** (Session 12): 9 Vitest-based audit tests scanning 106 API route files for 9 recurring bug classes (silent catch, getDb misuse, err.message leaks, tenant scoping, data shape, Decimal wrapping, error allowlist, role checks, rate limiting). Runs in <1s via `npm run audit` or `turbo audit`. Known pre-existing violations tracked in allowlists for regression-only detection.
+- `docs/TESTING.md` — comprehensive test infrastructure reference document
+- `turbo audit` task + `npm run audit` scripts for isolated audit test execution
+- **Playwright E2E Test Suite** (Session 11): 30 spec files with 170 test cases covering all 17 pages
+  - Infrastructure: playwright.config.ts, global setup/teardown, auth fixture (storageState), API helpers, wait helpers
+  - Auth tests: login, register, forgot-password, logout, auth guard
+  - Page tests: dashboard, navigation, accounts (list/CRUD/bulk), library (list/detail), content (wizard/approve), approvals (list/actions), calendar, analytics (tabs/export), affiliate (products/storefronts), workflows, system health, settings (general/security/appearance/AI)
+  - Cross-cutting tests: 404 page, keyboard shortcuts, notifications
+  - Added `test:e2e` and `test:e2e:ui` npm scripts
+
+### Fixed
+- Content route status enum inconsistency: replaced `'review'` with `'pending_approval'` in GET/POST schemas to match Prisma model and 15+ other route files (KI-043)
+- Content reject endpoint: added status validation to prevent rejecting already-posted/archived content (KI-044)
+- Content regenerate endpoint: added `Number()` conversion for Decimal fields (`qualityScore`, `durationSec`, `approvalGateWindowHrs`) (KI-045)
+- Content approve endpoint: removed redundant `'review'` status from approvableStatuses
+
+### Added
 - `.claude/rules/` — 6 modular rules files codifying development patterns
 - **API Key Authentication** (Session 7): `authenticateApiKey()` and `authenticateAny()` in api-server.ts — validates X-API-Key header, enforces scopes and per-key rate limiting (KI-022)
 - **Rate Limiting** (Session 7): In-memory sliding window rate limiter on login, register, forgot-password, reset-password routes; standardWrite/adminWrite presets on 6 high-risk write endpoints
@@ -50,7 +67,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Graceful Shutdown** (Session 7): SIGTERM/SIGINT handlers on all 3 Fastify services (drain connections)
 - **PM2 Hardening** (Session 7): Memory limits, restart policies, structured log files, crash detection
 
+- `.claude/rules/07-security.md` — Consolidated security checklist (tenant scoping, error sanitization, URL validation, access control)
+
 ### Fixed
+
+**Deep Audit Sprint (Session 9) — 20 rounds**
+- **CRITICAL: 53 viewer role checks** added to ALL write endpoints (POST/PUT/PATCH/DELETE) — viewers could previously create/modify/delete resources (KI-029)
+- **TOCTOU race conditions** fixed in approvals, content DELETE, HITL complete — converted to interactive transactions (KI-030)
+- **N+1 query** in budgets/check — serial per-budget aggregate loop → parallel Promise.all + batch transaction (KI-031)
+- **3 tenant scoping gaps** in content variants/versions queries — cross-tenant data leakage possible (KI-032)
+- **authenticate() DB error logging** — DB failures silently returned 401 instead of logging + returning 500 (KI-033)
+- **Service auth plugins** — JWT verification failures silently swallowed across all 3 Fastify services (KI-034)
+- **ComfyUI URL leak** — internal infrastructure URL exposed in status endpoint response (KI-035)
+- **5 settings GET handlers** wrapped in try/catch — DB errors propagated as unhandled rejections (KI-036)
+- **Rate limiting** added to content variants POST, storyboard PUT, affiliate-pool POST/DELETE (KI-037)
+- **Pagination limits** on content variants and versions findMany (`take: 100`) (KI-038)
+- **3 frontend silent catches** — analytics export, library delete, accounts bulk import now log errors (KI-039)
+- Content POST: `affiliateProductId` and `affiliateMode` now stored (validated but never saved)
+- Channels GET: `healthScore` Decimal→Number() conversion
+- Affiliate products GET: tenant ownership verification
+- CSV injection prevention in `exportToCSV` (formula guard for `=`, `+`, `-`, `@`)
+- Viewer role checks on content approve, reject, and assistant actions (Tier 3+ require admin)
+- AI-client registry: silent catches replaced with console.error logging
+- Error response shape documentation fixed in rules (`{ error: string }` → `{ error: { code, message } }`)
 
 **Integration Audit (Session 8)**
 - Added EmptyState component to affiliate products table (was plain text)

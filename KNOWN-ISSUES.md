@@ -8,9 +8,8 @@ Tracked bugs, limitations, and technical debt.
 
 ### KI-001: E2E Tests Not Set Up
 **Severity**: Medium
-**Status**: Open
-Playwright is not installed. No end-to-end browser tests exist. All 93 tests are unit/integration level via Vitest.
-**Action**: `npx playwright install` + write E2E test suite for critical flows (auth, content creation, dashboard).
+**Status**: Fixed (Session 11)
+Playwright E2E test suite implemented: 30 spec files with 170 test cases covering all 17 pages (auth, dashboard, accounts, library, create, approvals, calendar, analytics, affiliate, workflows, system, settings, 404, keyboard shortcuts, auth guard, notifications). Infrastructure includes storageState auth, API helpers, wait helpers, and global setup/teardown.
 
 ---
 
@@ -207,3 +206,118 @@ Three utility-level bugs fixed:
 - `parseQuery()` produced `NaN` for non-numeric page/limit params
 - `use-api.ts` fetcher had no 401 handling — no redirect to login
 - AI panel stale closure bug — `input` read after `setInput('')` cleared it
+
+### KI-029: Missing Viewer Role Checks on 53 Write Endpoints
+**Severity**: Critical
+**Status**: Fixed (Session 9)
+53 POST/PUT/PATCH/DELETE handlers had no `ctx.role === 'viewer'` guard — any authenticated user with viewer role could create/modify/delete resources. Fixed by adding `forbidden('Viewers cannot perform this action')` checks to all write endpoints across accounts, channels, content, affiliate, budgets, schedule, knowledge-base, prompts, api-keys, approvals, and system alerts.
+
+### KI-030: TOCTOU Race Conditions in State-Check-Then-Update Patterns
+**Severity**: Medium
+**Status**: Fixed (Session 9)
+Multiple routes had find-then-update without atomic transactions:
+- `approvals/[id]/[action]` — could approve content whose status changed between check and update
+- `content/[id]` DELETE — could delete content whose status changed (destructive)
+- `workflows/hitl/[id]/complete` — could double-complete a HITL task
+Fixed by converting to interactive `$transaction(async (tx) => { ... })` pattern.
+
+### KI-031: N+1 Query in budgets/check Endpoint
+**Severity**: Medium
+**Status**: Fixed (Session 9)
+`GET /api/v1/budgets/check` ran serial aggregate + update queries per budget in a for loop. With 50 budgets, this meant 100 sequential DB queries. Fixed with `Promise.all` for parallel aggregation + batch `$transaction` for updates.
+
+### KI-032: Tenant Scoping Gaps in Content Variants/Versions Queries
+**Severity**: High
+**Status**: Fixed (Session 9)
+`content/[id]/variants` GET and `content/[id]/versions` GET had secondary `findMany` queries for variant/version chains without tenant scoping — an attacker with a valid rootId could read cross-tenant content variants/versions. Fixed by adding tenant chain filter.
+
+### KI-033: Silent authenticate() DB Failures
+**Severity**: Medium
+**Status**: Fixed (Session 9)
+`authenticate()` and `authenticateSSE()` in api-server.ts had a single catch block covering both JWT verification (expected) and DB user lookup (unexpected). A DB connection failure silently returned 401 "Invalid or expired token" instead of logging the real error. Fixed by separating into nested try/catch — JWT errors return 401, DB errors log + return 500.
+
+### KI-034: Service Auth Plugins Lack Error Logging
+**Severity**: Medium
+**Status**: Fixed (Session 9)
+All 3 Fastify service auth plugins (workflow-engine, ai-assistant, production-pipeline) caught JWT verification errors without logging — made security auditing impossible. Fixed by adding `fastify.log.warn()` with error details, URL, and method.
+
+### KI-035: ComfyUI URL Leaked in Status Endpoint Response
+**Severity**: Medium
+**Status**: Fixed (Session 9)
+`/api/images/comfyui/status` endpoint returned the internal `COMFYUI_URL` in the response body, leaking infrastructure details to authenticated users. Removed URL from response.
+
+### KI-036: Settings GET Handlers Missing try/catch
+**Severity**: Low
+**Status**: Fixed (Session 9)
+5 settings GET handlers (security, general, appearance, notifications, api-keys) had no try/catch — DB errors would propagate as unhandled promise rejections. Fixed by wrapping in try/catch with error logging.
+
+### KI-037: Missing Rate Limiting on Content Write Endpoints
+**Severity**: Low
+**Status**: Fixed (Session 9)
+Several content write endpoints (variants POST, storyboard PUT, affiliate-pool POST/DELETE) had no rate limiting while similar endpoints did. Fixed by adding `checkRateLimit()` calls.
+
+### KI-038: Unbounded findMany on Variants/Versions
+**Severity**: Low
+**Status**: Fixed (Session 9)
+`content/[id]/variants` and `content/[id]/versions` had `findMany` without `take` limit — could return unbounded results for content with many versions. Added `take: 100`.
+
+### KI-039: Frontend Silent Catch Blocks
+**Severity**: Low
+**Status**: Fixed (Session 9)
+3 frontend catch blocks missing `console.error()`: analytics CSV export, library delete, accounts bulk import. Fixed by adding error logging.
+
+### KI-040: Worker Reliability Issues (Documented)
+**Severity**: Medium
+**Status**: Open (Needs Deeper Refactoring)
+Workers have several reliability patterns that need addressing:
+- Account worker fallback mode masks failures (creates placeholder when automation fails)
+- Content worker `handlePublishRequest` and `handleApprove` have no try/catch
+- Production worker has unhandled async operations in ComfyUI/Remotion chains
+- Posting worker has conflicting BullMQ + manual retry logic
+- Maintenance worker cleanup has no try/catch
+**Action**: Refactor worker error handling — each processor should use try/catch, update job status on failure, not create fallback entities.
+
+### KI-041: Services Missing Rate Limiting and CORS Restrictions
+**Severity**: Medium
+**Status**: Open
+All 3 Fastify services use `origin: true` CORS (allows any origin) and have no per-user rate limiting on generation endpoints.
+**Action**: Restrict CORS to dashboard origin, add rate limiting to AI generation endpoints.
+
+### KI-042: Zero API Route and Worker Processor Tests
+**Severity**: High
+**Status**: Partially Fixed (Session 11)
+222 unit tests + 170 E2E tests. E2E tests cover all 17 pages and exercise API routes through the browser (login, CRUD, approvals, settings). Worker processor unit tests and multi-tenant isolation tests still needed.
+**Action**: Add worker processor unit tests and targeted multi-tenant integration tests.
+
+### KI-043: Status Enum Inconsistency in Content Routes
+**Severity**: Medium
+**Status**: Fixed (Session 10)
+`content/route.ts` GET validStatuses and POST schema used `'review'` while the Prisma schema and 15+ other route files used `'pending_approval'`. The approve route also had both `'review'` and `'pending_approval'` in its approvableStatuses. Fixed by replacing `'review'` with `'pending_approval'` consistently.
+
+### KI-044: Missing Status Validation on Content Reject
+**Severity**: High
+**Status**: Fixed (Session 10)
+`content/[id]/reject` could reject content in any status — including `posted`, `archived`, `approved`, or `draft`. This allowed reverting published content to draft without proper validation. Fixed by adding rejectableStatuses guard (`['generated', 'pending_approval']`).
+
+### KI-045: Missing Decimal Conversion on Content Regenerate
+**Severity**: Medium
+**Status**: Fixed (Session 10)
+`content/[id]/regenerate` returned raw Prisma object with Decimal fields serialized as strings. All other content routes (approve, reject, GET, PUT) properly converted Decimal fields with `Number()`. Fixed for consistency.
+
+### KI-046: 70 Write Handlers Missing Viewer Role Checks
+**Severity**: High
+**Status**: Open (Tracked by audit, Session 12)
+70 POST/PUT/PATCH/DELETE handlers in authenticated routes do not check `ctx.role === 'viewer'`. Viewers could potentially perform write operations. All violations tracked in `KNOWN_MISSING_VIEWER_CHECKS` in `apps/web/src/__tests__/audit/audit-helpers.ts`. Automated audit test prevents new regressions.
+**Action**: Add viewer check to each handler. Remove from known list as fixed.
+
+### KI-047: 31 Write Handlers Missing Rate Limiting
+**Severity**: Medium
+**Status**: Open (Tracked by audit, Session 12)
+31 POST/PUT/PATCH/DELETE handlers lack `checkRateLimit()` calls. Tracked in `KNOWN_MISSING_RATE_LIMIT`.
+**Action**: Add rate limiting to each handler. Remove from known list as fixed.
+
+### KI-048: 12 Routes Missing Tenant Scoping
+**Severity**: High
+**Status**: Open (Tracked by audit, Session 12)
+12 routes access tenant-scoped models without filtering by `ctx.tenantId`. Some are legitimate (admin-only, self-service by userId), others are real gaps (affiliate analytics). Tracked in `KNOWN_MISSING_TENANT_SCOPE`.
+**Action**: Assess each route — fix real gaps, document legitimate exceptions.

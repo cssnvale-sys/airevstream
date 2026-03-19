@@ -99,3 +99,23 @@
 **Date**: 2026-03-18
 **Decision**: Use a non-sensitive `airevstream_auth=1` cookie as a session indicator for Next.js middleware, while keeping the actual JWT in localStorage.
 **Rationale**: Next.js middleware runs on the edge and cannot access localStorage. Rather than moving the JWT to an HttpOnly cookie (which would require CSRF protection), we set a lightweight indicator cookie alongside the localStorage token. The middleware checks this cookie to gate protected routes — preventing HTML leakage of dashboard pages to unauthenticated users. The actual JWT remains in localStorage for API calls via Authorization header. This avoids CSRF complexity while providing server-side route protection.
+
+## D021: Interactive Transactions for TOCTOU Prevention
+**Date**: 2026-03-18
+**Decision**: Use Prisma interactive transactions (`$transaction(async (tx) => { ... })`) instead of batch transactions when status checks must be atomic with subsequent mutations.
+**Rationale**: The find-then-update pattern (findFirst to check status, then separate update) creates a TOCTOU race window. For destructive operations (DELETE with status guard), state mutations (approve/reject), and idempotency checks (HITL complete), we wrap both the check and mutation in an interactive transaction. The transaction callback returns a discriminated union (`{ kind: 'not_found' | 'invalid_status' | 'success', ... }`) to avoid throwing for control flow. Batch transactions (`$transaction([...])`) are still used when no conditional logic is needed between operations.
+
+## D022: Universal Viewer Role Guard on Write Endpoints
+**Date**: 2026-03-18
+**Decision**: Every POST/PUT/PATCH/DELETE handler that goes through `authenticate()` must check `ctx.role === 'viewer'` and return `forbidden()`.
+**Rationale**: Found 53 write endpoints missing viewer checks in Session 9 audit. Rather than relying on frontend-only enforcement (hiding buttons from viewers), the backend must independently enforce role restrictions. The check goes immediately after `authenticate()` + NextResponse guard, before any rate limiting or business logic.
+
+## D024: Vitest Codebase Audit System
+**Date**: 2026-03-18
+**Decision**: Use Vitest-based tests that read source files as strings to detect recurring bug patterns, rather than custom ESLint rules, ts-morph AST analysis, or shell scripts.
+**Rationale**: Over 10 sessions, manual audits found 150+ bugs across 9 recurring bug classes. ESLint is not installed (~30 packages needed) and can't do cross-file analysis. ts-morph adds ~15MB and is overkill for regex-detectable patterns. Shell scripts lack TypeScript, Vitest integration, and are fragile. Vitest is already installed, runs via `turbo audit`, provides familiar TypeScript API, executes in <1 second, and grows by adding `it()` blocks. Pre-existing violations are tracked in known violation Sets rather than fixed all at once — this prevents regressions without blocking the build.
+
+## D023: Playwright E2E Test Architecture
+**Date**: 2026-03-19
+**Decision**: Use Playwright with sequential execution (workers: 1), storageState auth pattern, and manual dev server start.
+**Rationale**: Sequential execution avoids test conflicts on a shared real database. The storageState pattern logs in once via UI and reuses the authenticated state across all tests, avoiding per-test login overhead. Manual dev server start is more reliable than Playwright's webServer auto-start for a Turborepo monorepo with complex startup. Test-created data uses `e2e-*@e2e-test.local` emails for cleanup isolation.

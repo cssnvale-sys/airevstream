@@ -67,8 +67,9 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-body text-text-secondary mb-1">Name</label>
+            <label htmlFor="register-name" className="block text-body text-text-secondary mb-1">Name</label>
             <input
+              id="register-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -77,8 +78,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-body text-text-secondary mb-1">Email</label>
+            <label htmlFor="register-email" className="block text-body text-text-secondary mb-1">Email</label>
             <input
+              id="register-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -88,9 +90,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-body text-text-secondary mb-1">Password (min 8 characters)</label>
+            <label htmlFor="register-password" className="block text-body text-text-secondary mb-1">Password (min 8 characters)</label>
             <div className="relative">
               <input
+                id="register-password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

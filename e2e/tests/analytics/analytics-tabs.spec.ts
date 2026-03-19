@@ -8,7 +8,7 @@ test.describe('Analytics page — tabs and KPI cards', () => {
   });
 
   test('page loads with "Analytics" heading', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Analytics' })).toBeVisible();
     await expect(page.getByText('Performance metrics and insights.')).toBeVisible();
   });
 
@@ -36,7 +36,7 @@ test.describe('Analytics page — tabs and KPI cards', () => {
     await waitForDataLoad(page);
 
     // The heading should still be visible (page didn't break)
-    await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Analytics' })).toBeVisible();
 
     // KPI cards should still be rendered after period change
     await expect(page.getByText('Revenue', { exact: true }).first()).toBeVisible();

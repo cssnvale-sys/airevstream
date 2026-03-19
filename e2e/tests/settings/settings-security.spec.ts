@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN } from '../../fixtures/test-data';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Settings — Security tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
 
     // Navigate to Security tab
     await page.getByRole('tab', { name: 'Security' }).click();
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
   });
 
   test('security tab is selected after clicking', async ({ page }) => {
@@ -94,14 +94,15 @@ test.describe('Settings — Security tab', () => {
 
     // New key banner should appear with the key value and Copy button
     await expect(page.getByText('Your new API key')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Copy' })).toBeVisible();
+    const keyBanner = page.locator('.card').filter({ hasText: 'Your new API key' });
+    await expect(keyBanner.getByRole('button', { name: 'Copy' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Dismiss' }).or(page.getByText('Dismiss'))).toBeVisible();
 
-    // Click Copy
-    await page.getByRole('button', { name: 'Copy' }).click();
+    // Click Copy (scoped to the key banner)
+    await keyBanner.getByRole('button', { name: 'Copy' }).click();
 
     // Button should change to "Copied"
-    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+    await expect(keyBanner.getByRole('button', { name: 'Copied' })).toBeVisible();
   });
 
   test('revoke API key with confirmation dialog', async ({ page }) => {
@@ -115,7 +116,7 @@ test.describe('Settings — Security tab', () => {
     await page.getByText('Dismiss').click();
 
     // Wait for the key list to update
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
 
     // Find the Revoke button for the newly created key and click it
     const keyRow = page.locator('.card').filter({ hasText: keyName });

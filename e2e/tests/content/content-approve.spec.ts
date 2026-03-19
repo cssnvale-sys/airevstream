@@ -1,15 +1,19 @@
 import { test, expect } from '@playwright/test';
 import { CONTENT, CHANNEL } from '../../fixtures/test-data';
-import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad, resetContentStatus } from '../../helpers/wait.helper';
 import { apiPost, apiPut } from '../../helpers/api.helper';
 
 test.describe('Content approval flow', () => {
   test('approvals page shows seed pending_approval item', async ({ page }) => {
     await page.goto('/approvals');
     await waitForDataLoad(page);
+    // Ensure the seed item is in pending_approval state
+    await resetContentStatus(page, CONTENT.pendingApproval.id, 'pending_approval');
+    await page.reload();
+    await waitForDataLoad(page);
 
     // Page title
-    await expect(page.getByRole('heading', { name: 'Approval Queue' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Approval Queue' })).toBeVisible();
 
     // The seed pending_approval item should be listed
     await expect(page.getByText(CONTENT.pendingApproval.title).first()).toBeVisible();

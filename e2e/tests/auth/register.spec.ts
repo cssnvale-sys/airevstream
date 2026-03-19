@@ -1,12 +1,22 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { ADMIN, testEmail } from '../../fixtures/test-data';
 import { waitForToast, waitForNav } from '../../helpers/wait.helper';
+
+async function waitForHydration(page: Page) {
+  await page.waitForFunction(() => {
+    const btn = document.querySelector('button[type="submit"]');
+    return btn && Object.keys(btn).some(
+      (k) => k.startsWith('__reactFiber') || k.startsWith('__reactProps')
+    );
+  }, { timeout: 10_000 });
+}
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Register page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth/register');
+    await waitForHydration(page);
   });
 
   test('renders name, email, and password inputs', async ({ page }) => {
@@ -34,7 +44,8 @@ test.describe('Register page', () => {
     await page.getByLabel('Password (min 8 characters)').fill('TestPass123!');
     await page.getByRole('button', { name: 'Create Account' }).click();
 
-    await waitForToast(page, 'A user with this email already exists');
+    // Error is displayed inline (not as a toast)
+    await expect(page.getByText('A user with this email already exists')).toBeVisible({ timeout: 10_000 });
   });
 
   test('short password shows validation error', async ({ page }) => {

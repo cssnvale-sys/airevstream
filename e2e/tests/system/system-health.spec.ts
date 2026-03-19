@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('System health page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/system');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
   });
 
   test('page loads with "System Health" heading', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'System Health' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'System Health' })).toBeVisible();
 
     // Status dot and overall status text should be adjacent to heading
     // The status dot is a span with rounded-full class
@@ -78,6 +78,6 @@ test.describe('System health page', () => {
     await waitForToast(page, 'Refreshing health data...');
 
     // Verify the page does not error out — heading should still be visible
-    await expect(page.getByRole('heading', { name: 'System Health' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'System Health' })).toBeVisible();
   });
 });

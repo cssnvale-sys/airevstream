@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN, AI_SERVICES } from '../../fixtures/test-data';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Settings — AI Services tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
 
     // Navigate to AI Services tab
     await page.getByRole('tab', { name: 'AI Services' }).click();
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
   });
 
   test('AI Services tab is selected after clicking', async ({ page }) => {
@@ -21,14 +21,15 @@ test.describe('Settings — AI Services tab', () => {
     await expect(page.getByRole('heading', { name: 'Registered Services' })).toBeVisible();
 
     // Verify all 3 seed AI services from test-data
-    await expect(page.getByText(AI_SERVICES.ollama.name)).toBeVisible();
-    await expect(page.getByText(AI_SERVICES.comfyui.name)).toBeVisible();
-    await expect(page.getByText(AI_SERVICES.openai.name)).toBeVisible();
+    // Use .first() because service names also appear in Fallback Chains section
+    await expect(page.getByText(AI_SERVICES.ollama.name).first()).toBeVisible();
+    await expect(page.getByText(AI_SERVICES.comfyui.name).first()).toBeVisible();
+    await expect(page.getByText(AI_SERVICES.openai.name).first()).toBeVisible();
   });
 
   test('service cards show name, type badge, endpoint, and status', async ({ page }) => {
-    // Find the ollama service card and verify its contents
-    const ollamaCard = page.locator('.card').filter({ hasText: AI_SERVICES.ollama.name });
+    // Find the ollama service card (use .first() — name also appears in Fallback Chains)
+    const ollamaCard = page.locator('.card').filter({ hasText: AI_SERVICES.ollama.name }).first();
     await expect(ollamaCard).toBeVisible();
 
     // Should have a type badge (text, image, etc.)

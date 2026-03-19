@@ -1,16 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { CONTENT } from '../../fixtures/test-data';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad, resetContentStatus } from '../../helpers/wait.helper';
 
 test.describe('Approvals list page', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure the seed pending item is in pending_approval state
     await page.goto('/approvals');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
+    await resetContentStatus(page, CONTENT.pendingApproval.id, 'pending_approval');
+    await page.reload();
+    await waitForDataLoad(page);
   });
 
   test('page loads with approval queue heading', async ({ page }) => {
     await expect(
-      page.getByRole('heading', { name: 'Approval Queue' })
+      page.getByRole('main').getByRole('heading', { name: 'Approval Queue' })
     ).toBeVisible();
   });
 

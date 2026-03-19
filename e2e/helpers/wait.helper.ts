@@ -4,8 +4,32 @@ import { Page, expect } from '@playwright/test';
  * Wait for the page to finish loading data (no loading skeletons visible).
  */
 export async function waitForDataLoad(page: Page, timeout = 10_000) {
-  // Wait for any loading indicators to disappear
-  await page.waitForLoadState('networkidle', { timeout });
+  // Wait for all resources including JS bundles to load
+  await page.waitForLoadState('load', { timeout });
+  // Give SWR data fetches time to complete after hydration
+  // networkidle doesn't work with Next.js dev server (HMR WebSocket stays open)
+  await page.waitForTimeout(1500);
+}
+
+/**
+ * Reset a content item to a specific status via API.
+ * Useful for tests that depend on seed data being in a certain state.
+ */
+export async function resetContentStatus(page: Page, contentId: string, status: string) {
+  await page.evaluate(
+    async ({ contentId, status }) => {
+      const token = localStorage.getItem('airevstream_token');
+      await fetch(`/api/v1/content/${contentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status }),
+      });
+    },
+    { contentId, status },
+  );
 }
 
 /**

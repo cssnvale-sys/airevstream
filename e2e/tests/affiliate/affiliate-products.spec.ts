@@ -10,7 +10,7 @@ test.describe('Affiliate Products tab', () => {
 
   test('page loads with "Affiliate Manager" heading', async ({ page }) => {
     await expect(
-      page.getByRole('heading', { name: 'Affiliate Manager' }),
+      page.getByRole('main').getByRole('heading', { name: 'Affiliate Manager' }),
     ).toBeVisible();
     await expect(
       page.getByText('Manage products, links, and track performance'),
@@ -61,8 +61,8 @@ test.describe('Affiliate Products tab', () => {
     await page.getByPlaceholder('e.g. 15').fill('25');
     await page.locator('form select').selectOption('Software');
 
-    // Submit
-    await page.getByRole('button', { name: 'Add Product' }).click();
+    // Submit — use last() to avoid matching the toolbar "Add Product" button
+    await page.getByRole('button', { name: 'Add Product' }).last().click();
 
     // Modal should close and the product list should reload
     await waitForDataLoad(page);
@@ -78,7 +78,7 @@ test.describe('Affiliate Products tab', () => {
 
     // Verify the detail modal opens in view mode
     await expect(page.getByText('Product Details')).toBeVisible();
-    await expect(page.getByText(AFFILIATE.product.name)).toBeVisible();
+    await expect(page.getByText(AFFILIATE.product.name).first()).toBeVisible();
 
     // Click "Edit Product" to switch to edit mode
     await page.getByRole('button', { name: 'Edit Product' }).click();
@@ -110,7 +110,7 @@ test.describe('Affiliate Products tab', () => {
 
     await page.getByPlaceholder('Product name').fill(deleteName);
     await page.getByPlaceholder('https://example.com/product').fill('https://example.com/delete-test');
-    await page.getByRole('button', { name: 'Add Product' }).click();
+    await page.getByRole('button', { name: 'Add Product' }).last().click();
 
     await waitForDataLoad(page);
     await expect(page.getByText(deleteName)).toBeVisible({ timeout: 10_000 });
@@ -125,9 +125,10 @@ test.describe('Affiliate Products tab', () => {
     // Switch to edit mode to change status to inactive (simulates product management)
     await page.getByRole('button', { name: 'Edit Product' }).click();
 
-    // Change status to inactive
-    const statusSelect = page.locator('select').filter({ hasText: 'Active' });
-    if (await statusSelect.isVisible()) {
+    // Change status to inactive — scope to the modal form to avoid matching the filter dropdown
+    const modalForm = page.locator('form');
+    const statusSelect = modalForm.locator('select').filter({ hasText: 'Active' });
+    if (await statusSelect.isVisible().catch(() => false)) {
       await statusSelect.selectOption('inactive');
     }
 

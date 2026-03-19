@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { CONTENT } from '../../fixtures/test-data';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad, resetContentStatus } from '../../helpers/wait.helper';
 
 test.describe('Approvals actions', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure the seed pending item is in pending_approval state
     await page.goto('/approvals');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
+    await resetContentStatus(page, CONTENT.pendingApproval.id, 'pending_approval');
+    await page.reload();
+    await waitForDataLoad(page);
   });
 
   test('approve single item shows toast confirmation', async ({ page }) => {

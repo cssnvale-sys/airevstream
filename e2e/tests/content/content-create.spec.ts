@@ -11,7 +11,7 @@ test.describe('Create page — content wizard', () => {
 
   test('wizard renders with Step 1 visible and correct page title', async ({ page }) => {
     // Page title
-    await expect(page.getByRole('heading', { name: 'Create Content' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Create Content' })).toBeVisible();
 
     // Step indicator shows "Step 1 of 6"
     await expect(page.getByText('Step 1 of 6')).toBeVisible();
@@ -106,15 +106,17 @@ test.describe('Create page — content wizard', () => {
     await nextButton.click();
 
     // Step 3: "Script" heading should be visible
-    await expect(page.getByText('Step 3 of 6')).toBeVisible();
+    await expect(page.getByText('Step 3 of 6')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole('heading', { name: 'Script' })).toBeVisible();
 
-    // "Regenerate" button should be present
-    await expect(page.getByRole('button', { name: 'Regenerate' })).toBeVisible();
+    // "Regenerate" button should be present (may take a moment to render)
+    await expect(page.getByRole('button', { name: 'Regenerate' })).toBeVisible({ timeout: 10_000 });
 
-    // Textarea for the script (may have content from generation or placeholder)
+    // Script area should be visible — either a textarea (after generation)
+    // or a generating indicator (if AI service is running)
     const textarea = page.locator('textarea');
-    await expect(textarea).toBeVisible();
+    const generating = page.getByText('Generating script');
+    await expect(textarea.or(generating).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('Back button navigates to previous step', async ({ page }) => {

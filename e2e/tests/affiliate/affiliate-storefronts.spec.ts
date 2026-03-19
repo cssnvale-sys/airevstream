@@ -89,7 +89,8 @@ test.describe('Affiliate — Channel Pools tab (storefront management)', () => {
     await waitForDataLoad(page);
 
     // Check if there are suggested (unassigned) products to add
-    const addButtons = page.getByRole('button', { name: 'Add' });
+    // Use exact: true to avoid matching "Add Product" toolbar button
+    const addButtons = page.getByRole('button', { name: 'Add', exact: true });
     const addButtonCount = await addButtons.count();
 
     if (addButtonCount > 0) {

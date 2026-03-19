@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Workflows list page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/workflows');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
   });
 
   test('page loads with "Workflows" heading', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Workflows' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Workflows' })).toBeVisible();
   });
 
   test('status filter tabs visible and clickable', async ({ page }) => {
@@ -21,7 +21,7 @@ test.describe('Workflows list page', () => {
       // After clicking, the button should have the active style (bg-accent-blue)
       await expect(button).toHaveClass(/bg-accent-blue/);
       // Page should remain functional after each click
-      await expect(page.getByRole('heading', { name: 'Workflows' })).toBeVisible();
+      await expect(page.getByRole('main').getByRole('heading', { name: 'Workflows' })).toBeVisible();
     }
   });
 
@@ -46,7 +46,7 @@ test.describe('Workflows list page', () => {
 
     // Select a specific job type and verify the page stays functional
     await dropdown.selectOption('content_generation');
-    await expect(page.getByRole('heading', { name: 'Workflows' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Workflows' })).toBeVisible();
   });
 
   test('refresh button present and clickable', async ({ page }) => {
@@ -55,14 +55,14 @@ test.describe('Workflows list page', () => {
 
     // Click refresh and verify the page does not error out
     await refreshButton.click();
-    await expect(page.getByRole('heading', { name: 'Workflows' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Workflows' })).toBeVisible();
   });
 
   test('pagination controls visible', async ({ page }) => {
     // Pagination only renders when totalPages > 1. If there are enough jobs,
     // we see "Page X of Y (Z total)" text and Previous/Next buttons.
     // If there are no jobs or only one page, we at least verify the page is stable.
-    const heading = page.getByRole('heading', { name: 'Workflows' });
+    const heading = page.getByRole('main').getByRole('heading', { name: 'Workflows' });
     await expect(heading).toBeVisible();
 
     // Check for pagination text or empty state — one of the two must be present
@@ -86,7 +86,7 @@ test.describe('Workflows list page', () => {
     const failedTab = page.getByRole('button', { name: 'failed', exact: true });
     await expect(failedTab).toBeVisible();
     await failedTab.click();
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
 
     // If there are no failed jobs, we should see the empty state
     const emptyTitle = page.getByText('No workflow jobs found');

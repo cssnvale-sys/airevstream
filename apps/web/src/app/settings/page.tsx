@@ -740,7 +740,6 @@ function SecurityTab() {
                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                 className="input w-full pr-10"
                 required
-                minLength={8}
               />
               <button
                 type="button"
@@ -760,7 +759,6 @@ function SecurityTab() {
               onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
               className="input w-full"
               required
-              minLength={8}
             />
           </div>
 

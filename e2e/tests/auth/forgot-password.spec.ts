@@ -1,12 +1,22 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { ADMIN } from '../../fixtures/test-data';
 import { waitForNav } from '../../helpers/wait.helper';
+
+async function waitForHydration(page: Page) {
+  await page.waitForFunction(() => {
+    const btn = document.querySelector('button[type="submit"]');
+    return btn && Object.keys(btn).some(
+      (k) => k.startsWith('__reactFiber') || k.startsWith('__reactProps')
+    );
+  }, { timeout: 10_000 });
+}
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Forgot password page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth/forgot-password');
+    await waitForHydration(page);
   });
 
   test('renders email input and submit button', async ({ page }) => {

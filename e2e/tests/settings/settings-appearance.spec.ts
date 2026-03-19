@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN } from '../../fixtures/test-data';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Settings — Appearance tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
 
     // Navigate to Appearance tab
     await page.getByRole('tab', { name: 'Appearance' }).click();
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
   });
 
   test('appearance tab is selected after clicking', async ({ page }) => {

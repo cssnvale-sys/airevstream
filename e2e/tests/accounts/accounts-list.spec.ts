@@ -10,8 +10,14 @@ test.describe('Accounts list page', () => {
 
   test('page loads with seed account visible', async ({ page }) => {
     // Verify the page header
-    await expect(page.getByRole('heading', { name: 'Accounts' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Accounts' })).toBeVisible();
     await expect(page.getByText('Manage email accounts and connected socials')).toBeVisible();
+
+    // Search for the seed account (it may be on page 2+ if e2e accounts exist)
+    const searchInput = page.getByPlaceholder('Search by email or notes...');
+    await searchInput.fill('demo@airevstream');
+    await page.waitForTimeout(500);
+    await waitForDataLoad(page);
 
     // Verify the seed account row is in the table
     await expect(page.getByText(EMAIL_ACCOUNT.email)).toBeVisible();
@@ -53,7 +59,7 @@ test.describe('Accounts list page', () => {
     await waitForDataLoad(page);
 
     // The page should still be functional (either show active accounts or empty state)
-    const heading = page.getByRole('heading', { name: 'Accounts' });
+    const heading = page.getByRole('main').getByRole('heading', { name: 'Accounts' });
     await expect(heading).toBeVisible();
   });
 
@@ -67,7 +73,7 @@ test.describe('Accounts list page', () => {
     await waitForDataLoad(page);
 
     // The page should still be functional
-    const heading = page.getByRole('heading', { name: 'Accounts' });
+    const heading = page.getByRole('main').getByRole('heading', { name: 'Accounts' });
     await expect(heading).toBeVisible();
   });
 
@@ -87,7 +93,7 @@ test.describe('Accounts list page', () => {
     await waitForDataLoad(page);
 
     // Page should still render correctly
-    await expect(page.getByRole('heading', { name: 'Accounts' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Accounts' })).toBeVisible();
 
     // The "Showing X-Y of Z" text should be visible
     await expect(page.getByText(/Showing \d+-\d+ of \d+/)).toBeVisible();

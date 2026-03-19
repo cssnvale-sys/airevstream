@@ -1,16 +1,16 @@
 import { test, expect } from '@playwright/test';
 import { ADMIN } from '../../fixtures/test-data';
-import { waitForToast } from '../../helpers/wait.helper';
+import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Settings — General tab', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await waitForDataLoad(page);
   });
 
   test('page loads on General tab with fields visible', async ({ page }) => {
     // Page heading
-    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Settings' })).toBeVisible();
     await expect(page.getByText('Configure your AiRevStream instance')).toBeVisible();
 
     // General tab should be selected by default

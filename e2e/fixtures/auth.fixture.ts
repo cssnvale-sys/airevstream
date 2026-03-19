@@ -8,9 +8,9 @@ const STORAGE_STATE = path.resolve(__dirname, '../.auth/admin.json');
  * Setup project: log in as admin and save storageState.
  * This runs once before all other tests.
  */
-export const setup = base.extend({});
+export const test = base.extend({});
 
-setup('authenticate as admin', async ({ page }) => {
+test('authenticate as admin', async ({ page }) => {
   await page.goto('/auth/login');
   await page.getByLabel('Email').fill(ADMIN.email);
   await page.getByLabel('Password').fill(ADMIN.password);

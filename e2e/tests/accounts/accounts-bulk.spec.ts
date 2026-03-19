@@ -26,17 +26,18 @@ test.describe('Accounts bulk operations', () => {
     const textarea = page.locator('textarea');
     await textarea.fill(importJson);
 
-    // Submit the import
-    await page.getByRole('button', { name: 'Import', exact: true }).click();
+    // Submit the import (scope to form to avoid matching toolbar Import button)
+    await page.locator('button[type="submit"]').filter({ hasText: 'Import' }).click();
 
     // Verify success toast
     await waitForToast(page, 'Imported');
 
-    // Close the modal and verify accounts appear in the list
-    await page.keyboard.press('Escape');
+    // Close the modal via Cancel button (Escape may not work after successful import)
+    await page.getByRole('button', { name: 'Cancel' }).click();
     await waitForDataLoad(page);
-    await expect(page.getByText(email1)).toBeVisible();
-    await expect(page.getByText(email2)).toBeVisible();
+    // Scope to table rows to avoid matching text in the import modal textarea
+    await expect(page.locator('tr').filter({ hasText: email1 })).toBeVisible();
+    await expect(page.locator('tr').filter({ hasText: email2 })).toBeVisible();
   });
 
   test('selecting multiple accounts shows bulk toolbar with count', async ({ page }) => {
@@ -51,9 +52,9 @@ test.describe('Accounts bulk operations', () => {
     await page.getByRole('button', { name: 'Import' }).click();
     await expect(page.getByText('Bulk Import Accounts')).toBeVisible();
     await page.locator('textarea').fill(importJson);
-    await page.getByRole('button', { name: 'Import', exact: true }).click();
+    await page.locator('button[type="submit"]').filter({ hasText: 'Import' }).click();
     await waitForToast(page, 'Imported');
-    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Cancel' }).click();
     await waitForDataLoad(page);
 
     // Select the first account
@@ -86,9 +87,9 @@ test.describe('Accounts bulk operations', () => {
     await page.getByRole('button', { name: 'Import' }).click();
     await expect(page.getByText('Bulk Import Accounts')).toBeVisible();
     await page.locator('textarea').fill(importJson);
-    await page.getByRole('button', { name: 'Import', exact: true }).click();
+    await page.locator('button[type="submit"]').filter({ hasText: 'Import' }).click();
     await waitForToast(page, 'Imported');
-    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Cancel' }).click();
     await waitForDataLoad(page);
 
     // Select the account
@@ -120,9 +121,9 @@ test.describe('Accounts bulk operations', () => {
     await page.getByRole('button', { name: 'Import' }).click();
     await expect(page.getByText('Bulk Import Accounts')).toBeVisible();
     await page.locator('textarea').fill(importJson);
-    await page.getByRole('button', { name: 'Import', exact: true }).click();
+    await page.locator('button[type="submit"]').filter({ hasText: 'Import' }).click();
     await waitForToast(page, 'Imported');
-    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Cancel' }).click();
     await waitForDataLoad(page);
 
     // Select both accounts
@@ -137,7 +138,7 @@ test.describe('Accounts bulk operations', () => {
 
     // Verify confirm dialog
     await expect(page.getByText('Delete Selected Accounts')).toBeVisible();
-    await expect(page.getByText(/delete 2 account/i)).toBeVisible();
+    await expect(page.getByText(/Are you sure you want to delete 2 account/i)).toBeVisible();
 
     // Confirm deletion
     await page.getByRole('button', { name: /Delete 2 Account/ }).click();

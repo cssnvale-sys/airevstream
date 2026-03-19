@@ -122,13 +122,14 @@ async function main() {
   // ─── 3. Sample Email Account ───
   const emailAccount = await prisma.emailAccount.upsert({
     where: { email: 'demo@airevstream.example' },
-    update: {},
+    update: { tenantId: defaultTenant.id },
     create: {
       email: 'demo@airevstream.example',
       passwordEnc: encryptPassword('demo-password-123'),
       status: 'active',
       tier: 'tier1',
       notes: 'Demo account for development',
+      tenantId: defaultTenant.id,
     },
   });
   console.log(`  Email Account: ${emailAccount.email}`);

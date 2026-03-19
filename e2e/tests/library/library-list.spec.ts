@@ -11,7 +11,7 @@ test.describe('Library page — list, filters, and pagination', () => {
 
   test('page loads with title and seed content items visible', async ({ page }) => {
     // Page title
-    await expect(page.getByRole('heading', { name: 'Content Library' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Content Library' })).toBeVisible();
 
     // Seed content item should appear
     await expect(page.getByText(CONTENT.pendingApproval.title).first()).toBeVisible();
@@ -103,12 +103,11 @@ test.describe('Library page — list, filters, and pagination', () => {
     await waitForDataLoad(page);
 
     // After filtering, either items match "text" type or we see empty state.
-    // The page has re-rendered with filtered results.
-    const hasItems = await page.getByText('No content found').isVisible().catch(() => false);
-    if (!hasItems) {
-      // If there are items, verify they are text type (badge visible)
-      const textBadges = page.locator('text=Text').first();
-      await expect(textBadges).toBeVisible();
+    const noContent = await page.getByText('No content found').isVisible().catch(() => false);
+    if (!noContent) {
+      // Items exist — verify at least one content card shows the "Text" type badge
+      // Use link locator (content cards are links) to avoid matching dropdown <option> elements
+      await expect(page.getByRole('link').filter({ hasText: 'Text' }).first()).toBeVisible();
     }
   });
 

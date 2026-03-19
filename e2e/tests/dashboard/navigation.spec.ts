@@ -57,22 +57,23 @@ test.describe('Sidebar navigation', () => {
   });
 
   test('brand text visible when expanded, hidden when collapsed', async ({ page }) => {
-    // Brand text should be visible in expanded state
-    const brandText = page.getByText('AiRevStream');
-    await expect(brandText.first()).toBeVisible();
+    // Brand text should be visible in expanded sidebar (scope to sidebar to avoid footer match)
+    const sidebar = page.getByRole('complementary');
+    await expect(sidebar.getByText('AiRevStream')).toBeVisible();
 
     // Collapse the sidebar
     const collapseButton = page.getByRole('button', { name: 'Collapse sidebar' });
     await collapseButton.click();
 
-    // Brand text should be hidden when collapsed
-    await expect(brandText.first()).toBeHidden();
+    // Brand text is removed from DOM when collapsed (conditional rendering)
+    // Footer still has "AiRevStream MPCAS v0.1" so we scope to sidebar
+    await expect(sidebar.getByText('AiRevStream')).toHaveCount(0);
 
     // Expand again
     const expandButton = page.getByRole('button', { name: 'Expand sidebar' });
     await expandButton.click();
 
     // Brand text visible again
-    await expect(brandText.first()).toBeVisible();
+    await expect(sidebar.getByText('AiRevStream')).toBeVisible();
   });
 });

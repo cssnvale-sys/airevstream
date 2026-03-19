@@ -37,6 +37,12 @@ test.describe('Accounts CRUD operations', () => {
   });
 
   test('click row opens detail panel with Overview tab', async ({ page }) => {
+    // Search for the seed account (it may be on page 2+ if e2e accounts exist)
+    const searchInput = page.getByPlaceholder('Search by email or notes...');
+    await searchInput.fill('demo@airevstream');
+    await page.waitForTimeout(500);
+    await waitForDataLoad(page);
+
     // Click on the seed account row
     const seedRow = page.locator('tr').filter({ hasText: EMAIL_ACCOUNT.email });
     await seedRow.click();
@@ -53,7 +59,7 @@ test.describe('Accounts CRUD operations', () => {
     const tabPanel = page.getByRole('tabpanel');
     await expect(tabPanel).toBeVisible();
     await expect(tabPanel.getByText('Status')).toBeVisible();
-    await expect(tabPanel.getByText('Tier')).toBeVisible();
+    await expect(tabPanel.getByText('Tier', { exact: true })).toBeVisible();
   });
 
   test('delete an e2e-created account', async ({ page }) => {

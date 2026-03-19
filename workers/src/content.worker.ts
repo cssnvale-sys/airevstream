@@ -140,63 +140,73 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
 }
 
 async function handlePublishRequest(data: ContentPublishJob) {
-  const db = getDb();
+  try {
+    const db = getDb();
 
-  // Create a scheduled post record
-  const content = await db.contentItem.findUnique({
-    where: { id: data.contentId },
-    include: { channel: { include: { socialAccount: true } } },
-  });
+    // Create a scheduled post record
+    const content = await db.contentItem.findUnique({
+      where: { id: data.contentId },
+      include: { channel: { include: { socialAccount: true } } },
+    });
 
-  if (!content) {
-    logger.warn({ contentId: data.contentId }, 'Content not found');
-    return;
+    if (!content) {
+      logger.warn({ contentId: data.contentId }, 'Content not found');
+      return;
+    }
+
+    await db.scheduledPost.create({
+      data: {
+        contentId: data.contentId,
+        channelId: data.channelId,
+        scheduledAt: new Date(),
+        platform: content.channel.socialAccount.platform,
+        socialAccountId: content.channel.socialAccount.id,
+        status: 'scheduled',
+      },
+    });
+
+    logger.info({ contentId: data.contentId, channelId: data.channelId }, 'Publish request queued');
+    return { contentId: data.contentId, status: 'scheduled' };
+  } catch (err) {
+    logger.error({ err, contentId: data.contentId, channelId: data.channelId }, 'Publish request failed');
+    throw err;
   }
-
-  await db.scheduledPost.create({
-    data: {
-      contentId: data.contentId,
-      channelId: data.channelId,
-      scheduledAt: new Date(),
-      platform: content.channel.socialAccount.platform,
-      socialAccountId: content.channel.socialAccount.id,
-      status: 'scheduled',
-    },
-  });
-
-  logger.info({ contentId: data.contentId, channelId: data.channelId }, 'Publish request queued');
-  return { contentId: data.contentId, status: 'scheduled' };
 }
 
 async function handleApprove(data: ContentApproveJob) {
-  const db = getDb();
-  const content = await db.contentItem.findUnique({ where: { id: data.contentId } });
-  if (!content) {
-    logger.warn({ contentId: data.contentId }, 'Content not found for approval');
-    return;
-  }
+  try {
+    const db = getDb();
+    const content = await db.contentItem.findUnique({ where: { id: data.contentId } });
+    if (!content) {
+      logger.warn({ contentId: data.contentId }, 'Content not found for approval');
+      return;
+    }
 
-  if (data.action === 'approve') {
-    await db.contentItem.update({
-      where: { id: data.contentId },
-      data: { status: 'approved', approvedAt: new Date(), approvedBy: 'auto' },
-    });
-  } else if (data.action === 'reject') {
-    await db.contentItem.update({
-      where: { id: data.contentId },
-      data: { status: 'draft' },
-    });
-  } else if (data.action === 'regenerate') {
-    await db.contentItem.update({
-      where: { id: data.contentId },
-      data: { status: 'generating' },
-    });
-  } else {
-    throw new Error(`Unknown approval action: ${data.action}`);
-  }
+    if (data.action === 'approve') {
+      await db.contentItem.update({
+        where: { id: data.contentId },
+        data: { status: 'approved', approvedAt: new Date(), approvedBy: 'auto' },
+      });
+    } else if (data.action === 'reject') {
+      await db.contentItem.update({
+        where: { id: data.contentId },
+        data: { status: 'draft' },
+      });
+    } else if (data.action === 'regenerate') {
+      await db.contentItem.update({
+        where: { id: data.contentId },
+        data: { status: 'generating' },
+      });
+    } else {
+      throw new Error(`Unknown approval action: ${data.action}`);
+    }
 
-  logger.info({ contentId: data.contentId, action: data.action }, 'Content approval processed');
-  return { contentId: data.contentId, action: data.action };
+    logger.info({ contentId: data.contentId, action: data.action }, 'Content approval processed');
+    return { contentId: data.contentId, action: data.action };
+  } catch (err) {
+    logger.error({ err, contentId: data.contentId, action: data.action }, 'Content approval failed');
+    throw err;
+  }
 }
 
 export function startContentWorker() {

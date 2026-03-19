@@ -137,6 +137,37 @@ export async function workflowRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: updated });
   });
 
+  // Trigger content production pipeline
+  app.post('/pipeline/content', async (request, reply) => {
+    const pipelineSchema = z.object({
+      contentId: z.string().uuid(),
+      channelId: z.string().uuid(),
+      topic: z.string().min(1).max(1000),
+      contentType: z.string().min(1),
+      domain: z.string().optional(),
+    });
+
+    const parsed = pipelineSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+      });
+    }
+
+    try {
+      const { startContentPipeline } = await import('@airevstream/queue');
+      const result = await startContentPipeline(parsed.data);
+      return reply.status(201).send({ success: true, data: { flowJobId: result.job.id } });
+    } catch (err) {
+      request.log.error({ err }, 'Failed to start content pipeline');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to start content pipeline' },
+      });
+    }
+  });
+
   // Get active workflows summary
   app.get('/summary/active', async (request, reply) => {
     const db = getDb();

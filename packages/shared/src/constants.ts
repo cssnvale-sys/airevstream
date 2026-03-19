@@ -8,6 +8,8 @@ export const BUCKETS = {
   SCENERY: 'airevstream-scenery',
   EXPORTS: 'airevstream-exports',
   TEMP: 'airevstream-temp',
+  PRODUCTION: 'airevstream-production',
+  BACKUPS: 'airevstream-backups',
 } as const;
 
 // ─── Queue Names ───

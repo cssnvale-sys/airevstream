@@ -1,4 +1,4 @@
-import { createWorker, type PostingScheduleJob, type PostingPublishJob } from '@airevstream/queue';
+import { createWorker, getQueue, addJob, type PostingScheduleJob, type PostingPublishJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { decrypt } from '@airevstream/crypto';
 import { getConfig, createLogger } from '@airevstream/shared';
@@ -10,6 +10,10 @@ const logger = createLogger('worker:posting');
 
 async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing posting job');
+
+  if (job.name === 'posting:check-scheduled') {
+    return checkScheduledPosts();
+  }
 
   if (job.name === 'posting:schedule') {
     const data = job.data as PostingScheduleJob;
@@ -182,6 +186,45 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
   }
 }
 
+async function checkScheduledPosts() {
+  try {
+    const db = getDb();
+
+    const duePosts = await db.scheduledPost.findMany({
+      where: {
+        scheduledAt: { lte: new Date() },
+        status: 'scheduled',
+      },
+      include: {
+        content: true,
+        channel: { include: { socialAccount: true } },
+      },
+    });
+
+    if (duePosts.length === 0) {
+      return;
+    }
+
+    for (const post of duePosts) {
+      await addJob('posting', 'posting:publish', {
+        scheduledPostId: post.id,
+        contentId: post.contentId,
+        channelId: post.channelId,
+        platform: post.platform,
+      } as PostingPublishJob);
+
+      await db.scheduledPost.update({
+        where: { id: post.id },
+        data: { status: 'queued' },
+      });
+    }
+
+    logger.info({ count: duePosts.length }, 'Enqueued scheduled posts for publishing');
+  } catch (err) {
+    logger.error({ err }, 'Failed to check scheduled posts');
+  }
+}
+
 async function handleSchedule(data: PostingScheduleJob) {
   const db = getDb();
 
@@ -214,6 +257,14 @@ export function startPostingWorker() {
   const worker = createWorker('posting', processPostingJob, {
     concurrency: 1,
     limiter: { max: 5, duration: 60000 },
+  });
+
+  // Set up scheduled post checker — runs every 60 seconds
+  const postingQueue = getQueue('posting');
+  postingQueue.add('posting:check-scheduled', {} as any, {
+    repeat: { every: 60000 },
+    removeOnComplete: true,
+    removeOnFail: 100,
   });
 
   worker.on('completed', (job) => {

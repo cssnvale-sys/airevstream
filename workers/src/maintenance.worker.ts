@@ -1,4 +1,4 @@
-import { createWorker, type MaintenanceCleanupJob, type MaintenanceBackupJob, type MaintenanceMetricsJob } from '@airevstream/queue';
+import { createWorker, getQueue, type MaintenanceCleanupJob, type MaintenanceBackupJob, type MaintenanceMetricsJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { createLogger } from '@airevstream/shared';
 import type { Job } from 'bullmq';
@@ -32,41 +32,102 @@ async function handleCleanup(data: MaintenanceCleanupJob) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - olderThanDays);
 
-  // Run all cleanup deletes in a transaction for atomicity
-  const [deletedTokens, deletedAlerts, deletedMetrics, deletedKb, archivedJobs] = await db.$transaction([
-    db.refreshToken.deleteMany({
-      where: { expiresAt: { lt: new Date() } },
-    }),
-    db.alert.deleteMany({
-      where: { status: 'resolved', resolvedAt: { lt: cutoff } },
-    }),
-    db.systemMetric.deleteMany({
-      where: { createdAt: { lt: cutoff } },
-    }),
-    db.knowledgeBaseEntry.deleteMany({
-      where: { isCurrent: false, updatedAt: { lt: cutoff } },
-    }),
-    db.workflowJob.deleteMany({
-      where: { status: { in: ['completed', 'cancelled'] }, completedAt: { lt: cutoff } },
-    }),
-  ]);
+  try {
+    // Run all cleanup deletes in a transaction for atomicity
+    const [deletedTokens, deletedAlerts, deletedMetrics, deletedKb, archivedJobs] = await db.$transaction([
+      db.refreshToken.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      }),
+      db.alert.deleteMany({
+        where: { status: 'resolved', resolvedAt: { lt: cutoff } },
+      }),
+      db.systemMetric.deleteMany({
+        where: { createdAt: { lt: cutoff } },
+      }),
+      db.knowledgeBaseEntry.deleteMany({
+        where: { isCurrent: false, updatedAt: { lt: cutoff } },
+      }),
+      db.workflowJob.deleteMany({
+        where: { status: { in: ['completed', 'cancelled'] }, completedAt: { lt: cutoff } },
+      }),
+    ]);
 
-  const result = {
-    deletedRefreshTokens: deletedTokens.count,
-    deletedAlerts: deletedAlerts.count,
-    deletedMetrics: deletedMetrics.count,
-    deletedKnowledgeEntries: deletedKb.count,
-    archivedJobs: archivedJobs.count,
-  };
+    const result = {
+      deletedRefreshTokens: deletedTokens.count,
+      deletedAlerts: deletedAlerts.count,
+      deletedMetrics: deletedMetrics.count,
+      deletedKnowledgeEntries: deletedKb.count,
+      archivedJobs: archivedJobs.count,
+    };
 
-  logger.info(result, 'Cleanup completed');
-  return result;
+    logger.info(result, 'Cleanup completed');
+    return result;
+  } catch (err) {
+    logger.error({ err, olderThanDays }, 'Cleanup operation failed');
+    throw err;
+  }
 }
 
-async function handleBackup(_data: MaintenanceBackupJob) {
-  // Placeholder: In production, trigger pg_dump and/or MinIO backup
-  logger.info({ target: _data.target }, 'Backup triggered (placeholder)');
-  return { target: _data.target, status: 'placeholder' };
+async function handleBackup(data: MaintenanceBackupJob) {
+  const { execFile } = await import('node:child_process');
+  const { promisify } = await import('node:util');
+  const { readFile, unlink, mkdir } = await import('node:fs/promises');
+  const execFileAsync = promisify(execFile);
+
+  if (data.target === 'database' || data.target === 'all') {
+    const backupDir = '/tmp/airevstream/backups';
+    await mkdir(backupDir, { recursive: true });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `db-backup-${timestamp}.sql.gz`;
+    const filePath = `${backupDir}/${filename}`;
+
+    try {
+      // Run pg_dump and gzip
+      const dbUrl = process.env.DATABASE_URL ?? 'postgresql://airevstream:airevstream_dev@localhost:5432/airevstream';
+      await execFileAsync('sh', ['-c', `pg_dump "${dbUrl}" | gzip > "${filePath}"`], {
+        timeout: 300_000, // 5 min max
+      });
+
+      // Upload to MinIO
+      const { uploadBuffer, ensureBucket, listObjects, deleteObject } = await import('@airevstream/storage');
+      const { BUCKETS } = await import('@airevstream/shared');
+      await ensureBucket(BUCKETS.BACKUPS);
+
+      const backupBuffer = await readFile(filePath);
+      const key = `database/${filename}`;
+      await uploadBuffer(BUCKETS.BACKUPS, key, backupBuffer, 'application/gzip');
+
+      // Clean up local file
+      await unlink(filePath).catch(() => {});
+
+      // Retain last 7 backups — delete older ones
+      const objects = await listObjects(BUCKETS.BACKUPS, 'database/');
+      if (objects.length > 7) {
+        const sorted = objects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+        const toDelete = sorted.slice(7);
+        for (const obj of toDelete) {
+          await deleteObject(BUCKETS.BACKUPS, obj.name);
+          logger.info({ key: obj.name }, 'Deleted old backup');
+        }
+      }
+
+      logger.info({ key, size: backupBuffer.length }, 'Database backup completed');
+      return { target: data.target, status: 'completed', key, size: backupBuffer.length };
+    } catch (err) {
+      // Clean up on failure
+      await unlink(filePath).catch(() => {});
+      logger.error({ err }, 'Database backup failed');
+      throw err;
+    }
+  }
+
+  // Storage backup is a future enhancement
+  if (data.target === 'storage') {
+    logger.info('Storage backup not yet implemented');
+    return { target: data.target, status: 'not_implemented' };
+  }
+
+  return { target: data.target, status: 'completed' };
 }
 
 async function handleMetrics() {
@@ -109,6 +170,14 @@ export function startMaintenanceWorker() {
 
   worker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'Maintenance job failed');
+  });
+
+  // Set up daily backup job
+  const maintenanceQueue = getQueue('maintenance');
+  maintenanceQueue.add('maintenance:backup', { target: 'database' } as any, {
+    repeat: { every: 24 * 60 * 60 * 1000 }, // every 24 hours
+    removeOnComplete: true,
+    removeOnFail: 10,
   });
 
   logger.info('Maintenance worker started');

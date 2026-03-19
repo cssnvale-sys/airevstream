@@ -225,3 +225,7 @@ export async function closeAllQueues(): Promise<void> {
 }
 
 export { Queue, Worker, QueueEvents, Job };
+
+export { FlowProducer } from 'bullmq';
+export { getFlowProducer, startContentPipeline, closeFlowProducer } from './flows.js';
+export type { ContentPipelineParams } from './flows.js';

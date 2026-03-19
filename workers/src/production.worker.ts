@@ -2,7 +2,7 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger } from '@airevstream/shared';
+import { createLogger, BUCKETS } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -15,7 +15,7 @@ import { uploadBuffer, ensureBucket } from '@airevstream/storage';
 
 const logger = createLogger('production-worker');
 
-const BUCKET = 'airevstream-production';
+const BUCKET = BUCKETS.PRODUCTION;
 const COMFYUI_URL = process.env.COMFYUI_URL ?? 'http://localhost:8188';
 const COMFYUI_TIMEOUT = parseInt(process.env.COMFYUI_TIMEOUT_MS ?? '120000', 10);
 const TEMPLATES_DIR = resolve(__dirname, '../../comfyui-workflows');
@@ -194,49 +194,66 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
   const workflow = await renderTemplate(templateName, params);
 
   // Generate images via ComfyUI
-  const promptId = await comfyQueuePrompt(workflow);
-  await comfyWaitForCompletion(promptId);
-  const outputImages = await comfyGetOutputImages(promptId);
+  try {
+    const promptId = await comfyQueuePrompt(workflow);
+    await comfyWaitForCompletion(promptId);
+    const outputImages = await comfyGetOutputImages(promptId);
 
-  // Download and upload to storage
-  await ensureBucket(BUCKET);
-  const uploadedUrls: string[] = [];
+    // Download and upload to storage
+    await ensureBucket(BUCKET);
+    const uploadedUrls: string[] = [];
 
-  for (const img of outputImages) {
-    const imageData = await comfyDownloadImage(img.filename, img.subfolder, img.type);
-    const timestamp = Date.now();
-    const key = `images/${data.workflowType}/${data.shotId ?? data.contentId ?? 'misc'}/${timestamp}-${img.filename}`;
-    await uploadBuffer(BUCKET, key, imageData, 'image/png');
-    uploadedUrls.push(`${BUCKET}/${key}`);
-    logger.info({ key }, 'Image uploaded to storage');
+    for (const img of outputImages) {
+      const imageData = await comfyDownloadImage(img.filename, img.subfolder, img.type);
+      const timestamp = Date.now();
+      const key = `images/${data.workflowType}/${data.shotId ?? data.contentId ?? 'misc'}/${timestamp}-${img.filename}`;
+      await uploadBuffer(BUCKET, key, imageData, 'image/png');
+      uploadedUrls.push(`${BUCKET}/${key}`);
+      logger.info({ key }, 'Image uploaded to storage');
+    }
+
+    // Update storyboard shot if shotId provided
+    if (data.shotId) {
+      await db.storyboardShot.update({
+        where: { id: data.shotId },
+        data: {
+          keyframeUrls: uploadedUrls as any,
+          status: 'generated',
+        },
+      });
+    }
+
+    // Record workflow job
+    if (data.contentId) {
+      await db.workflowJob.create({
+        data: {
+          jobType: 'image_generation',
+          contentId: data.contentId,
+          channelId: data.channelId,
+          status: 'completed',
+          params: data as any,
+          result: { images: uploadedUrls } as any,
+        },
+      });
+    }
+
+    logger.info({ imageCount: outputImages.length, uploadedUrls }, 'Image generation complete');
+  } catch (err) {
+    logger.error({ err, workflowType: data.workflowType, shotId: data.shotId }, 'ComfyUI image generation failed');
+    if (data.contentId) {
+      await db.workflowJob.create({
+        data: {
+          jobType: 'image_generation',
+          contentId: data.contentId,
+          channelId: data.channelId,
+          status: 'failed',
+          params: data as any,
+          result: { error: err instanceof Error ? err.message : String(err) } as any,
+        },
+      });
+    }
+    throw err;
   }
-
-  // Update storyboard shot if shotId provided
-  if (data.shotId) {
-    await db.storyboardShot.update({
-      where: { id: data.shotId },
-      data: {
-        keyframeUrls: uploadedUrls as any,
-        status: 'generated',
-      },
-    });
-  }
-
-  // Record workflow job
-  if (data.contentId) {
-    await db.workflowJob.create({
-      data: {
-        jobType: 'image_generation',
-        contentId: data.contentId,
-        channelId: data.channelId,
-        status: 'completed',
-        params: data as any,
-        result: { images: uploadedUrls } as any,
-      },
-    });
-  }
-
-  logger.info({ imageCount: outputImages.length, uploadedUrls }, 'Image generation complete');
 }
 
 // ─── Video Render Handler ───
@@ -381,33 +398,47 @@ async function handleGenerateAudio(data: ProductionGenerateAudioJob): Promise<vo
     return;
   }
 
-  const result = await ttsClient.synthesize({
-    text: data.text,
-    voice: data.voice,
-    language: data.language,
-  });
+  try {
+    const result = await ttsClient.synthesize({
+      text: data.text,
+      voice: data.voice,
+      language: data.language,
+    });
 
-  // Upload to storage
-  await ensureBucket(BUCKET);
-  const ext = result.format === 'mp3' ? 'mp3' : 'wav';
-  const key = `audio/${data.contentId}/${Date.now()}.${ext}`;
-  await uploadBuffer(BUCKET, key, result.audioBuffer, `audio/${ext}`);
+    // Upload to storage
+    await ensureBucket(BUCKET);
+    const ext = result.format === 'mp3' ? 'mp3' : 'wav';
+    const key = `audio/${data.contentId}/${Date.now()}.${ext}`;
+    await uploadBuffer(BUCKET, key, result.audioBuffer, `audio/${ext}`);
 
-  await db.workflowJob.create({
-    data: {
-      jobType: 'audio_generation',
-      contentId: data.contentId,
-      status: 'completed',
-      params: data as any,
-      result: {
-        audioUrl: `${BUCKET}/${key}`,
-        format: result.format,
-        durationMs: result.durationMs,
-      } as any,
-    },
-  });
+    await db.workflowJob.create({
+      data: {
+        jobType: 'audio_generation',
+        contentId: data.contentId,
+        status: 'completed',
+        params: data as any,
+        result: {
+          audioUrl: `${BUCKET}/${key}`,
+          format: result.format,
+          durationMs: result.durationMs,
+        } as any,
+      },
+    });
 
-  logger.info({ key, durationMs: result.durationMs }, 'Audio generation complete');
+    logger.info({ key, durationMs: result.durationMs }, 'Audio generation complete');
+  } catch (err) {
+    logger.error({ err, contentId: data.contentId }, 'Audio generation failed');
+    await db.workflowJob.create({
+      data: {
+        jobType: 'audio_generation',
+        contentId: data.contentId,
+        status: 'failed',
+        params: data as any,
+        result: { error: err instanceof Error ? err.message : String(err) } as any,
+      },
+    });
+    throw err;
+  }
 }
 
 // ─── Storyboard Generation Handler ───

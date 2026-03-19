@@ -164,22 +164,13 @@ async function handleCreate(data: AccountCreateJob, job: Job) {
     }
   }
 
-  // Fallback: create DB record without automation
-  logger.info({ emailAccountId: data.emailAccountId, platform: data.platform }, 'Account creation (placeholder mode)');
-  const social = await db.socialAccount.create({
-    data: {
-      emailAccountId: data.emailAccountId,
-      platform: data.platform,
-      status: 'pending',
-    },
-  });
-
+  // Automation unavailable — fail honestly instead of creating a placeholder
+  logger.error({ emailAccountId: data.emailAccountId, platform: data.platform }, 'Account creation failed: browser automation unavailable');
   await db.workflowJob.update({
     where: { id: workflowJob.id },
-    data: { status: 'completed', completedAt: new Date(), result: { socialAccountId: social.id, mode: 'placeholder' } },
+    data: { status: 'failed', error: 'Browser automation unavailable' },
   });
-
-  return { socialAccountId: social.id, status: 'created_placeholder' };
+  throw new Error('Account creation requires browser automation which is not available');
 }
 
 async function handleSync(data: AccountSyncJob, job: Job) {
@@ -239,8 +230,8 @@ async function handleSync(data: AccountSyncJob, job: Job) {
     }
   }
 
-  // Fallback placeholder
-  logger.info({ socialAccountId: data.socialAccountId, platform: account.platform }, 'Account synced (placeholder)');
+  // Fallback placeholder — degraded operation, sync can proceed without automation
+  logger.warn({ socialAccountId: data.socialAccountId, platform: account.platform }, 'Account synced (placeholder — browser automation unavailable)');
   await db.socialAccount.update({
     where: { id: data.socialAccountId },
     data: { lastLoginAt: new Date() },
@@ -437,12 +428,12 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
     }
   }
 
-  // Fallback placeholder
-  logger.info({
+  // Fallback placeholder — degraded operation, warming can proceed without automation
+  logger.warn({
     socialAccountId: data.socialAccountId,
     platform: account.platform,
     durationMinutes,
-  }, 'Account warming (placeholder)');
+  }, 'Account warming (placeholder — browser automation unavailable)');
 
   await db.socialAccount.update({
     where: { id: data.socialAccountId },

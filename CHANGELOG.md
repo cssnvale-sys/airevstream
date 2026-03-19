@@ -6,6 +6,31 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Presigned URL API route** (Session 14): `GET /api/v1/media/[...path]` serves MinIO objects via presigned URLs with auth, rate limiting, and bucket validation
+- **Scheduled post trigger** (Session 14): BullMQ repeatable job (`posting:check-scheduled`) polls every 60s for due `ScheduledPost` records and enqueues publish jobs
+- **Content detail page** (Session 14): `/content/[id]` with metadata grid, script display, storyboard shots, scheduled posts, version history, approve/reject/archive actions
+- **Media preview component** (Session 14): `MediaPreview` renders images/videos/audio from MinIO with presigned URL caching (50-min TTL)
+- **Quality breakdown component** (Session 14): Radial score display + 5 horizontal breakdown bars with color coding
+- **Shot gallery component** (Session 14): Expandable storyboard shot cards showing script, visual description, camera motion
+- **Breadcrumbs navigation** (Session 14): Auto-generated from pathname, UUID segments shown as "Detail"
+- **Command palette** (Session 14): `Cmd+K` global search across content, channels, accounts with keyboard navigation
+- **Unified search API** (Session 14): `GET /api/v1/search` searches content items, channels, social accounts (tenant-scoped)
+- **Reusable pagination component** (Session 14): Page numbers, previous/next, per-page selector
+- **FlowProducer content pipeline** (Session 14): BullMQ DAG orchestration — research → generate → production, triggered via `POST /pipeline/content`
+- **Database backup job** (Session 14): pg_dump → gzip → MinIO upload, 7-backup retention, 24h repeatable job
+- **Dockerfiles** (Session 14): Multi-stage builds for web (Next.js standalone), services (Fastify), workers
+- **GitHub Actions CI** (Session 14): Build + test + audit pipeline with PostgreSQL and Redis services
+- **Makefile** (Session 14): Common commands (dev, build, test, audit, docker-build, docker-up, db-migrate)
+- **Production env template** (Session 14): `.env.production.example` with all required variables
+
+### Fixed
+- **Worker error handling** (Session 14): Added try/catch to content (publish/approve), account (honest failure vs placeholder), maintenance (cleanup), production (ComfyUI/Remotion chains)
+- **BUCKETS constant mismatch** (Session 14): Added `PRODUCTION` and `BACKUPS` to shared BUCKETS, replaced hardcoded string in production worker
+- **Docker health checks** (Session 14): Added healthcheck for PostgreSQL, Redis, MinIO in docker-compose.yml
+- **Next.js standalone output** (Session 14): Added `output: 'standalone'` for Docker builds
+- **TypeScript unknown→ReactNode** (Session 14): Fixed 5 type errors in content detail and shot gallery components
+
 ### Fixed
 - **CRITICAL: Prisma migrations regenerated** (Session 13): Deleted stale 12-table init migration, regenerated baseline from current 36-model schema. Fresh deployments now get correct schema via `prisma migrate deploy`.
 - **CRITICAL: GIN fulltext search indexes applied** (Session 13): 11 GIN indexes created on live database. Previously existed only as unapplied SQL file.

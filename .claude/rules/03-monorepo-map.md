@@ -5,7 +5,7 @@
 ```
 apps/
   web/                    → Next.js 14 App Router (port 3000)
-    src/app/api/v1/       → 106 API route files (BFF pattern, D011)
+    src/app/api/v1/       → 108 API route files (BFF pattern, D011)
     src/components/       → React components (dark theme Tailwind)
     src/hooks/            → SWR hooks (use-api.ts, useSSE)
     src/lib/              → api-server.ts (authenticate), utils

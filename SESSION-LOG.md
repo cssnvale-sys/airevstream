@@ -1369,3 +1369,95 @@ Implemented a persistent codebase audit system: 9 Vitest-based audit tests that 
 - `turbo audit`: 24 audit tests ✓
 - `prisma migrate status`: in sync ✓
 - GIN indexes: 11 confirmed in pg_indexes ✓
+
+---
+
+## Session 14 — Full Feature Build: 34 System Gaps (2026-03-18)
+
+### Summary
+Implemented all 34 identified system gaps across 7 phases using parallel agents. Added presigned URL route, scheduled post trigger, worker hardening, content detail page, media preview, quality breakdown, shot gallery, breadcrumbs, command palette, pagination, unified search, workflow orchestration (FlowProducer), database backup, Docker health checks, Dockerfiles, GitHub Actions CI, and Makefile.
+
+### What Was Done
+
+**Phase 1: Backend Plumbing**
+- Presigned URL API route (`/api/v1/media/[...path]`) with auth, rate limiting, bucket validation
+- Added `PRODUCTION` and `BACKUPS` to BUCKETS constant; fixed hardcoded bucket in production worker
+- Scheduled post trigger: `posting:check-scheduled` repeatable job (every 60s) queries due `ScheduledPost` records and enqueues `posting:publish` jobs
+- Worker error handling hardening: try/catch in content (publish/approve), account (honest failure vs placeholder), maintenance (cleanup), production (ComfyUI/Remotion chains)
+
+**Phase 2: Content Detail Page + Media Components**
+- Content detail page (`/content/[id]`) with metadata grid, script display, storyboard shots, scheduled posts, version history, approve/reject/archive actions
+- `MediaPreview` component (image/video/audio) with presigned URL loading
+- `usePresignedUrl` SWR hook with 50-min cache
+- `QualityBreakdown` component with overall score + 5 breakdown bars
+- `ShotGallery` component with expandable shot cards
+
+**Phase 3: Navigation & UI**
+- Added Approvals link to sidebar navigation
+- Breadcrumbs component (auto-generates from pathname, UUID→"Detail")
+- Mounted breadcrumbs in dashboard layout
+
+**Phase 4: Workflow Orchestration + Backup**
+- BullMQ `FlowProducer` content pipeline DAG: research → content:generate → production:generate-storyboard
+- `POST /pipeline/content` endpoint in workflow-engine service
+- Real database backup: pg_dump → gzip → MinIO upload, 7-backup retention, 24h repeatable job
+
+**Phase 5: UI Polish**
+- Command palette (Cmd+K) with debounced search, keyboard navigation, grouped results
+- Unified search API (`/api/v1/search`) across content, channels, accounts (tenant-scoped)
+- Reusable `Pagination` component with page numbers, per-page selector
+- Docker health checks for PostgreSQL, Redis, MinIO
+
+**Phase 6: DevOps**
+- `Dockerfile.web` — 3-stage Next.js standalone build
+- `Dockerfile.services` — multi-service with `SERVICE` build arg
+- `Dockerfile.workers` — includes postgresql-client for pg_dump
+- `.dockerignore`
+- GitHub Actions CI (`.github/workflows/ci.yml`) with PostgreSQL + Redis services
+- `Makefile` with dev, build, test, audit, docker, db commands
+- `.env.production.example` production environment template
+- Added `output: 'standalone'` to `next.config.js`
+
+### New Files (28)
+- `apps/web/src/app/api/v1/media/[...path]/route.ts`
+- `apps/web/src/app/api/v1/search/route.ts`
+- `apps/web/src/app/content/[id]/page.tsx`
+- `apps/web/src/app/content/[id]/layout.tsx`
+- `apps/web/src/app/content/[id]/loading.tsx`
+- `apps/web/src/app/content/[id]/error.tsx`
+- `apps/web/src/components/content/quality-breakdown.tsx`
+- `apps/web/src/components/content/shot-gallery.tsx`
+- `apps/web/src/components/ui/breadcrumbs.tsx`
+- `apps/web/src/components/ui/command-palette.tsx`
+- `apps/web/src/components/ui/media-preview.tsx`
+- `apps/web/src/components/ui/pagination.tsx`
+- `apps/web/src/hooks/use-presigned-url.ts`
+- `packages/queue/src/flows.ts`
+- `Dockerfile.web`, `Dockerfile.services`, `Dockerfile.workers`
+- `.dockerignore`, `.github/workflows/ci.yml`, `Makefile`, `.env.production.example`
+
+### Modified Files (12)
+- `packages/shared/src/constants.ts` — PRODUCTION + BACKUPS buckets
+- `packages/queue/src/index.ts` — FlowProducer re-exports
+- `workers/src/posting.worker.ts` — scheduled post checker
+- `workers/src/content.worker.ts` — error handling
+- `workers/src/account.worker.ts` — honest failure
+- `workers/src/maintenance.worker.ts` — real backup + error handling
+- `workers/src/production.worker.ts` — BUCKETS.PRODUCTION + error handling
+- `services/workflow-engine/src/routes/workflow.ts` — pipeline trigger endpoint
+- `apps/web/src/components/layout/sidebar.tsx` — Approvals nav item
+- `apps/web/src/components/layout/app-layout.tsx` — Breadcrumbs + CommandPalette
+- `apps/web/next.config.js` — standalone output
+- `docker-compose.yml` — health checks
+
+### Key Decisions
+- D026: BullMQ FlowProducer for content pipeline DAG orchestration
+- D027: Presigned URL route as MinIO proxy with bucket validation
+- D028: Multi-stage Docker builds with `node:20-slim` runtime images
+- D029: Command palette pattern (Cmd+K) for global search
+
+### Verification
+- `turbo build`: 14 packages ✓
+- `turbo test`: 222 unit tests ✓ (27 tasks)
+- `turbo audit`: 24 audit tests ✓ (9 files)
+- All type errors fixed (unknown→Boolean/String patterns)

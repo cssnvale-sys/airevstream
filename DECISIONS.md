@@ -124,3 +124,23 @@
 **Date**: 2026-03-18
 **Decision**: Use `prisma migrate diff --from-empty` to generate migration SQL from the current schema, then `prisma migrate resolve --applied` to mark it as already applied against an existing database.
 **Rationale**: The database was originally set up via `db push` (no migration history). The old migration files were stale (12 tables vs 36 models). Running `prisma migrate dev` would try to reset the database, destroying all data. The baselining approach creates a correct migration file that matches the current schema while marking it as applied so Prisma doesn't try to re-run it. Fresh deployments can use `prisma migrate deploy` and get the correct 36-table schema. GIN fulltext search indexes are in a separate migration for clarity.
+
+## D026: BullMQ FlowProducer for Content Pipeline DAG
+**Date**: 2026-03-18
+**Decision**: Use BullMQ `FlowProducer` to define content pipeline DAGs (research → generate → production) rather than chaining jobs manually via worker callbacks.
+**Rationale**: FlowProducer provides native job dependency tracking — child jobs only start when parents complete. This eliminates manual job chaining, provides built-in flow visualization, and supports complex DAGs. The pipeline is triggered via a single `POST /pipeline/content` endpoint that submits the entire flow, returning a flow job ID for tracking.
+
+## D027: Presigned URL Route as MinIO Proxy
+**Date**: 2026-03-18
+**Decision**: Create a catch-all API route (`/api/v1/media/[...path]`) that generates presigned URLs from MinIO rather than exposing MinIO directly to the browser.
+**Rationale**: MinIO is internal (Docker network). Exposing it directly would require public access or CORS configuration. The proxy route adds auth (JWT), rate limiting (30/min), and bucket validation (allowlist from BUCKETS constant). Presigned URLs expire in 1 hour and are cached by the frontend (50-min SWR TTL). This keeps MinIO private while enabling secure media access.
+
+## D028: Multi-Stage Docker Builds
+**Date**: 2026-03-18
+**Decision**: Use 3-stage Dockerfile pattern (deps → build → runtime) with `node:20-slim` as the runtime base for all containers.
+**Rationale**: Multi-stage builds minimize image size (only runtime deps + built artifacts in final image). `node:20-slim` provides a small Debian base with necessary native deps. The web Dockerfile uses Next.js `output: 'standalone'` to produce a minimal deployment folder. Services use a shared Dockerfile with a `SERVICE` build arg. Workers include `postgresql-client` for pg_dump backups.
+
+## D029: Command Palette Pattern (Cmd+K)
+**Date**: 2026-03-18
+**Decision**: Implement a global search command palette activated by `Cmd+K` / `Ctrl+K` with debounced search across content, channels, and accounts.
+**Rationale**: Command palettes are a proven UX pattern for keyboard-driven navigation (VS Code, GitHub, Linear). The unified search endpoint (`/api/v1/search`) queries 3 models with tenant scoping and returns max 5 results per category. The 200ms debounce prevents excessive API calls. Keyboard navigation (up/down/enter/escape) provides a fast workflow for power users.

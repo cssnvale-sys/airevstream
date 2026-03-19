@@ -70,7 +70,29 @@
 | 5.19 | Deep audit — Session 9 (20 rounds) | Done | 53 viewer role checks, 3 TOCTOU fixes (interactive transactions), N+1 budgets/check, 3 tenant scoping gaps, 5 settings GET try/catch, DB error logging in authenticate(), service auth logging, ComfyUI URL leak, rate limiting on 5 endpoints, pagination limits, 3 frontend silent catches |
 | 5.20 | Verified audit — Session 10 (10 rounds) | Done | Runtime-verified: .next cache fix, all 17 pages + 21 API routes verified at runtime, 3 content lifecycle bugs fixed (status enum, reject validation, regenerate Decimal), 8 packages barrel exports verified, 0 data shape mismatches, 0 error handling gaps |
 | 5.9 | E2E testing | Done | Playwright E2E suite: 30 spec files, 170 test cases, all 17 pages covered (Session 11) |
-| 5.10 | Production config | Partial | PM2 ecosystem.config.js exists |
+| 5.10 | Production config | Done | PM2, Dockerfiles, GitHub Actions CI, Makefile, .env.production.example |
+
+### Phase 6: Feature Build (Session 14) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| 6.1 | Presigned URL route | Done | `/api/v1/media/[...path]` with auth, rate limit, bucket validation |
+| 6.2 | Scheduled post trigger | Done | `posting:check-scheduled` repeatable job every 60s |
+| 6.3 | Worker hardening | Done | try/catch in content, account (honest fail), maintenance, production |
+| 6.4 | Content detail page | Done | `/content/[id]` with metadata, script, shots, actions |
+| 6.5 | Media preview | Done | `MediaPreview` + `usePresignedUrl` (50-min cache) |
+| 6.6 | Quality breakdown | Done | Overall score + 5 breakdown bars |
+| 6.7 | Shot gallery | Done | Expandable cards with script, visual, camera motion |
+| 6.8 | Breadcrumbs | Done | Auto-generated from pathname in dashboard layout |
+| 6.9 | Command palette | Done | Cmd+K global search with keyboard navigation |
+| 6.10 | Unified search API | Done | `/api/v1/search` across content, channels, accounts |
+| 6.11 | Pagination component | Done | Reusable with page numbers, per-page selector |
+| 6.12 | FlowProducer pipeline | Done | BullMQ DAG: research → generate → production |
+| 6.13 | Database backup | Done | pg_dump → gzip → MinIO, 7 retention, 24h cycle |
+| 6.14 | Docker health checks | Done | PostgreSQL, Redis, MinIO in docker-compose.yml |
+| 6.15 | Dockerfiles | Done | Multi-stage: web, services (build arg), workers |
+| 6.16 | GitHub Actions CI | Done | Build + test + audit pipeline with PG/Redis services |
+| 6.17 | Makefile | Done | dev, build, test, audit, docker-build, db-migrate |
+| 6.18 | Production env | Done | `.env.production.example` with all required vars |
 
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
@@ -87,7 +109,7 @@
 
 ## Test Summary
 - **Unit tests**: 135 web + 87 packages = 222 (all passing across 27 test tasks via Vitest)
-- **Audit tests**: 24 (9 files scanning 106 API routes for 9 bug classes, <1s)
+- **Audit tests**: 24 (9 files scanning 108 API routes for 9 bug classes, <1s)
 - **E2E tests**: 173 (30 spec files via Playwright, all 17 pages covered)
 - **Total**: 419 tests
 - Packages: 87 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3, workflow-engine: 8, ai-assistant: 5, production-pipeline: 5, workers: 5)
@@ -101,8 +123,8 @@
 ## Architecture Highlights
 - **Prisma Schema**: 36 models with full-text search GIN indexes on key tables
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: 106 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
-- **Dashboard**: 16 views (+ workflows, approvals, affiliate, forgot/reset password) + notification center + SSE real-time updates
+- **Next.js API Routes**: 108 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 3 compositions (short 9:16, long 16:9, thumbnail still) with H.I.C.C. beat timing
 - **ComfyUI**: 4 SDXL workflow templates with {{placeholder}} syntax + client API wrapper + template renderer

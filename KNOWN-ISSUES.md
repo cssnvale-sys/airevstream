@@ -55,16 +55,16 @@ Several models lack `tenantId` and cannot be tenant-scoped without a Prisma sche
 Old JWTs remain valid after password change until they naturally expire (7 days). The change-password route now returns a fresh JWT so clients can replace the old one, but the old token isn't explicitly invalidated.
 **Action**: Add `passwordChangedAt` field to User model, check it in `authenticate()` to reject tokens issued before the last password change.
 
-### KI-040: Worker Reliability Issues (Documented)
-**Severity**: Medium
-**Status**: Open (Needs Deeper Refactoring)
-Workers have several reliability patterns that need addressing:
-- Account worker fallback mode masks failures (creates placeholder when automation fails)
-- Content worker `handlePublishRequest` and `handleApprove` have no try/catch
-- Production worker has unhandled async operations in ComfyUI/Remotion chains
-- Posting worker has conflicting BullMQ + manual retry logic
-- Maintenance worker cleanup has no try/catch
-**Action**: Refactor worker error handling — each processor should use try/catch, update job status on failure, not create fallback entities.
+### KI-040: Worker Reliability Issues
+**Severity**: Low
+**Status**: Partially Fixed (Session 14)
+Session 14 hardened worker error handling:
+- Content worker: try/catch added to `handlePublishRequest` and `handleApprove` with logging + re-throw
+- Account worker: fallback mode removed (honest failure instead of placeholder creation), sync/warm degraded to warn
+- Maintenance worker: try/catch around `$transaction` cleanup operations
+- Production worker: try/catch around ComfyUI and Remotion chains with failed workflow job recording
+Remaining: posting worker conflicting BullMQ + manual retry logic.
+**Action**: Clean up posting worker retry logic.
 
 ### KI-041: Services Missing Rate Limiting and CORS Restrictions
 **Severity**: Medium

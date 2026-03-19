@@ -140,6 +140,26 @@ The production worker renders via Remotion CLI. No additional setup needed.
 
 ---
 
+## 11. Docker Deployment (Optional)
+
+Build and run the full app via Docker:
+
+```bash
+# Build all images
+make docker-build
+
+# Or individually:
+docker build -f Dockerfile.web -t airevstream-web .
+docker build -f Dockerfile.services --build-arg SERVICE=workflow-engine -t airevstream-workflow-engine .
+docker build -f Dockerfile.services --build-arg SERVICE=ai-assistant -t airevstream-ai-assistant .
+docker build -f Dockerfile.services --build-arg SERVICE=production-pipeline -t airevstream-production-pipeline .
+docker build -f Dockerfile.workers -t airevstream-workers .
+```
+
+Copy `.env.production.example` to `.env` and fill in all values before running.
+
+---
+
 ## Summary of What's Blocked
 
 | Feature | Blocked By | Severity |

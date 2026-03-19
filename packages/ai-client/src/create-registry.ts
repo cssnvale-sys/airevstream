@@ -80,8 +80,8 @@ export function createServiceRegistry(
             errorMessage: usage.errorMessage,
           },
         });
-      } catch {
-        // Don't let usage logging failures break the main flow
+      } catch (err) {
+        console.error('AI service usage logging failed:', err);
       }
     },
 
@@ -91,8 +91,8 @@ export function createServiceRegistry(
           where: { id: serviceId },
           data: updates,
         });
-      } catch {
-        // Don't let service update failures break the main flow
+      } catch (err) {
+        console.error('AI service stats update failed:', err);
       }
     },
 

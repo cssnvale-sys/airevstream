@@ -19,6 +19,7 @@ async function authPluginFn(fastify: FastifyInstance) {
     try {
       await request.jwtVerify();
     } catch (err) {
+      fastify.log.warn({ err, url: request.url, method: request.method }, 'Authentication failed');
       reply.status(401).send({
         success: false,
         error: { code: 'AUTHENTICATION_ERROR', message: 'Authentication required' },

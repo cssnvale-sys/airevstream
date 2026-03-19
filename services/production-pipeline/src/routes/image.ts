@@ -48,7 +48,6 @@ export async function imageRoutes(app: FastifyInstance) {
       success: true,
       data: {
         status: healthy ? 'connected' : 'disconnected',
-        url: process.env.COMFYUI_URL ?? 'http://localhost:8188',
       },
     });
   });

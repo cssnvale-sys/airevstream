@@ -6,7 +6,7 @@
 | Step | Package | Status | Notes |
 |------|---------|--------|-------|
 | 1.1 | @airevstream/shared | Done | Config, errors, logger, types (full schema-aligned), utils. 8 tests |
-| 1.2 | @airevstream/db | Done | Prisma schema (32 models), all relations, JSON columns, full-text search GIN indexes. 4 tests |
+| 1.2 | @airevstream/db | Done | Prisma schema (36 models), all relations, JSON columns, full-text search GIN indexes. 4 tests |
 | 1.3 | @airevstream/crypto | Done | AES-256-GCM encrypt/decrypt. 10 tests |
 | 1.4 | @airevstream/storage | Done | MinIO client with full CRUD. 3 tests |
 | 1.5 | @airevstream/queue | Done | BullMQ queues with typed jobs. 5 tests |
@@ -41,7 +41,7 @@
 | 4.8 | System Health | Done | Resource usage, services grid, active workflows, alerts, error log |
 | 4.9 | Settings | Done | General/AI Services/Notifications/Security/Appearance tabs |
 | 4.10 | Affiliate Manager | Done | Products CRUD, channel pools, links, performance matrix |
-| 4.11 | API Routes | Done | 99 Next.js API route files under /api/v1/ covering all endpoint groups |
+| 4.11 | API Routes | Done | 106 Next.js API route files under /api/v1/ covering all endpoint groups |
 | 4.12 | Design System | Done | CSS variable tokens (dark/light), component classes, layout components |
 | 4.13 | AI Assistant Panel | Done | Collapsible 380px chat panel, context-aware |
 | 4.14 | Notification Center | Done | Bell icon with badge, dropdown panel, mark all read, sonner toast integration |
@@ -99,9 +99,9 @@
 - Codebase audit (Session 12): 9 bug classes automated, 114 known violations tracked for future fix
 
 ## Architecture Highlights
-- **Prisma Schema**: 33 models (+ SystemSetting) with full-text search GIN indexes on key tables
+- **Prisma Schema**: 36 models with full-text search GIN indexes on key tables
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: 106 server-side route handlers with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Next.js API Routes**: 106 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 16 views (+ workflows, approvals, affiliate, forgot/reset password) + notification center + SSE real-time updates
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 3 compositions (short 9:16, long 16:9, thumbnail still) with H.I.C.C. beat timing

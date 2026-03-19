@@ -119,3 +119,8 @@
 **Date**: 2026-03-19
 **Decision**: Use Playwright with sequential execution (workers: 1), storageState auth pattern, and manual dev server start.
 **Rationale**: Sequential execution avoids test conflicts on a shared real database. The storageState pattern logs in once via UI and reuses the authenticated state across all tests, avoiding per-test login overhead. Manual dev server start is more reliable than Playwright's webServer auto-start for a Turborepo monorepo with complex startup. Test-created data uses `e2e-*@e2e-test.local` emails for cleanup isolation.
+
+## D025: Prisma Migration Baselining Strategy
+**Date**: 2026-03-18
+**Decision**: Use `prisma migrate diff --from-empty` to generate migration SQL from the current schema, then `prisma migrate resolve --applied` to mark it as already applied against an existing database.
+**Rationale**: The database was originally set up via `db push` (no migration history). The old migration files were stale (12 tables vs 36 models). Running `prisma migrate dev` would try to reset the database, destroying all data. The baselining approach creates a correct migration file that matches the current schema while marking it as applied so Prisma doesn't try to re-run it. Fresh deployments can use `prisma migrate deploy` and get the correct 36-table schema. GIN fulltext search indexes are in a separate migration for clarity.

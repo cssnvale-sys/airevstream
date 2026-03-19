@@ -26,9 +26,10 @@ npm install
 ## 3. Run Database Migrations
 
 ```bash
-cd packages/db
-DATABASE_URL="postgresql://airevstream:airevstream_dev@localhost:5432/airevstream" npx prisma migrate dev
+npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma
 ```
+
+This applies the two migrations (init + GIN fulltext indexes) to create all 36 tables. For development, you can also use `npx prisma migrate dev --schema=packages/db/prisma/schema.prisma`.
 
 ---
 
@@ -128,14 +129,14 @@ Open http://localhost:3000 in your browser and register a new account.
 
 ---
 
-## 10. Set Up Remotion (Optional — for Video Rendering)
+## 10. Remotion (Already Set Up)
 
-1. The `remotion/` directory is reserved for Remotion compositions
-2. Install Remotion when you're ready to add video rendering:
-   ```bash
-   npm install @remotion/cli @remotion/renderer remotion
-   ```
-3. Create compositions in `remotion/src/`
+Remotion is installed and configured with 3 compositions in `remotion/`:
+- **ShortFormVideo** (9:16) — vertical short-form with H.I.C.C. beat timing
+- **LongFormVideo** (16:9) — horizontal long-form
+- **ThumbnailRenderer** — still image thumbnails
+
+The production worker renders via Remotion CLI. No additional setup needed.
 
 ---
 
@@ -145,6 +146,6 @@ Open http://localhost:3000 in your browser and register a new account.
 |---------|------------|----------|
 | AI Chat & Generation | Ollama not installed | Medium — install to use AI |
 | Image Generation | ComfyUI not installed | Low — optional feature |
-| Video Rendering | Remotion not set up | Low — optional feature |
+| Video Rendering | Remotion installed and configured | None — ready to use |
 | Cross-Platform Publishing | Platform API keys needed | Medium — placeholder works |
 | Audio/TTS | TTS engine not configured | Low — future feature |

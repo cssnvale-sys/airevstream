@@ -1341,3 +1341,31 @@ Implemented a persistent codebase audit system: 9 Vitest-based audit tests that 
 - Fix known violations (remove from allowlist as each is fixed)
 - Add Bug Class 10+ as new patterns are discovered
 - Consider adding audit to CI pipeline
+
+---
+
+## Session 13 — Documentation & Infrastructure Audit Fix (2026-03-18)
+
+### What Was Done
+1. **CRITICAL: Prisma migrations regenerated** — Deleted old broken migrations (12-table init + orphan GIN SQL). Generated fresh baseline from current 36-model schema via `prisma migrate diff`. Marked as applied with `prisma migrate resolve`. Created separate GIN fulltext search migration (11 indexes). Both migrations now in sync with live DB.
+2. **CRITICAL: GIN fulltext indexes applied** — 11 GIN indexes created on live database (content_items, knowledge_base_entries, email_accounts, channels, conversations, conversation_messages, affiliate_products, alerts). Previously existed only as unapplied SQL.
+3. **COMFYUI env var mismatch fixed** — `COMFYUI_BASE_URL` → `COMFYUI_URL` in `packages/shared/src/config.ts` and `comfyui-workflows/README.md` to match actual code and `.env.example`.
+4. **ESLint gap fixed** — `apps/web/package.json` lint script changed from `next lint` (no ESLint installed) to `tsc --noEmit` matching other packages.
+5. **Stale counts fixed across 8 files** — Models: 32→36, routes: 99→106, tests: 93→419 in CLAUDE.md, monorepo-map.md, DEV-STATUS.md, CHANGELOG.md, TESTING.md, MEMORY.md. Decision/issue counts updated.
+6. **OPERATOR-TODO updated** — Step 3 now uses correct `prisma migrate deploy` command. Step 10 Remotion marked as already set up.
+7. **KNOWN-ISSUES archived** — 31 fixed items from Sessions 6-9 collapsed to summary. Only open + recently fixed (Sessions 10-12) remain.
+8. **CHANGELOG cleaned** — Removed completed items (E2E suite, PM2 config) from To Do section.
+9. **TESTING.md counts fixed** — Replaced tilde estimates with actual per-package test counts.
+
+### Key Decisions
+- D025: Prisma migration baselining via `migrate diff --from-empty` + `migrate resolve --applied` instead of `migrate dev` (which wanted to reset the entire database)
+
+### Issues Found
+- None new — this session focused on fixing documentation/infrastructure gaps identified in the plan
+
+### Verification
+- `turbo build`: 14 packages ✓
+- `turbo test`: 222 unit tests ✓
+- `turbo audit`: 24 audit tests ✓
+- `prisma migrate status`: in sync ✓
+- GIN indexes: 11 confirmed in pg_indexes ✓

@@ -6,11 +6,11 @@ AiRevStream uses a 3-tier test pyramid:
 
 | Tier | Tool | Tests | Speed | What it catches |
 |------|------|-------|-------|-----------------|
-| 1. Unit | Vitest | 135 | ~1s | Package functions, API helpers, auth, rate limiting, utils |
+| 1. Unit | Vitest | 222 | ~1s | Package functions, API helpers, auth, rate limiting, utils |
 | 2. Audit | Vitest | 24 | <1s | Source code patterns (9 bug classes from 150+ manual findings) |
 | 3. E2E | Playwright | 173 | ~2-5min | Full UI flows across all 17 pages |
 
-Total: ~332 tests.
+Total: 419 tests.
 
 ## Quick Reference
 
@@ -35,14 +35,16 @@ Total: ~332 tests.
 | Package | Tests | What's tested |
 |---------|-------|---------------|
 | `@airevstream/web` | 135 | API server helpers, auth, rate limiting, password hashing, export utils |
-| `@airevstream/shared` | ~20 | Config, constants, utility functions |
-| `@airevstream/crypto` | ~10 | AES-256-GCM encrypt/decrypt |
-| `@airevstream/queue` | ~10 | Job type definitions, queue helpers |
-| `@airevstream/ai-client` | ~15 | Provider registry, Ollama client |
-| `@airevstream/storage` | ~5 | MinIO/S3 client operations |
-| `@airevstream/audio-engine` | ~10 | TTS providers, audio processing |
-| `@airevstream/browser-automation` | ~15 | Stealth browser, human behavior simulation |
-| Services (3) | ~15 | Fastify auth plugins, route handlers |
+| `@airevstream/shared` | 20 | Config, constants, utility functions |
+| `@airevstream/db` | 4 | Prisma client, schema validation |
+| `@airevstream/crypto` | 10 | AES-256-GCM encrypt/decrypt |
+| `@airevstream/queue` | 5 | Job type definitions, queue helpers |
+| `@airevstream/ai-client` | 14 | Provider registry, Ollama client |
+| `@airevstream/storage` | 3 | MinIO/S3 client operations |
+| `@airevstream/audio-engine` | 5 | TTS providers, audio processing |
+| `@airevstream/browser-automation` | 3 | Stealth browser, human behavior simulation |
+| Services (3) | 18 | Fastify auth plugins, route handlers |
+| Workers | 5 | Worker processors |
 
 ---
 

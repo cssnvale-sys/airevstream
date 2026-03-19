@@ -6,6 +6,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **CRITICAL: Prisma migrations regenerated** (Session 13): Deleted stale 12-table init migration, regenerated baseline from current 36-model schema. Fresh deployments now get correct schema via `prisma migrate deploy`.
+- **CRITICAL: GIN fulltext search indexes applied** (Session 13): 11 GIN indexes created on live database. Previously existed only as unapplied SQL file.
+- **COMFYUI env var mismatch** (Session 13): `COMFYUI_BASE_URL` → `COMFYUI_URL` in `packages/shared/src/config.ts` to match actual code and `.env.example`.
+- **apps/web lint script** (Session 13): Changed `next lint` (ESLint not installed) to `tsc --noEmit`.
+- **Stale counts across 8 documentation files** (Session 13): Models 32→36, routes 99→106, tests 93→419, issues 12→48, decisions 17→25.
+- **OPERATOR-TODO.md** (Session 13): Step 3 uses correct `prisma migrate deploy`, step 10 Remotion marked as set up.
+- **KNOWN-ISSUES.md** (Session 13): Archived 31 fixed items from Sessions 6-9.
+- **CHANGELOG To Do** (Session 13): Removed completed items (E2E suite, PM2 config).
+
 ### Added
 - **Persistent Codebase Audit System** (Session 12): 9 Vitest-based audit tests scanning 106 API route files for 9 recurring bug classes (silent catch, getDb misuse, err.message leaks, tenant scoping, data shape, Decimal wrapping, error allowlist, role checks, rate limiting). Runs in <1s via `npm run audit` or `turbo audit`. Known pre-existing violations tracked in allowlists for regression-only detection.
 - `docs/TESTING.md` — comprehensive test infrastructure reference document
@@ -399,22 +409,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed 5 settings routes leaking `err.message` to clients
 
 ### To Do
-- E2E test suite (Playwright)
-- Complete PM2 production config
 - Platform API credential setup + real adapter testing
-- Analytics CSV/PDF export implementation
+- Analytics PDF export implementation
 - Storyboard AI integration (currently hardcoded)
 - Shot generation completion polling/webhook
 
 ## [0.1.0] — 2026-03-18
 
-Initial development release. All 9 PRD epics complete, 93 tests passing, 14 packages building.
+Initial development release. All 9 PRD epics complete, 419 tests (222 unit + 24 audit + 173 E2E), 14 packages building.
 
 ### Added
 
 **Foundation Packages**
 - `@airevstream/shared` — config, errors, logger, types (full schema-aligned), utilities
-- `@airevstream/db` — Prisma schema (32 models), relations, JSON columns, full-text search GIN indexes
+- `@airevstream/db` — Prisma schema (36 models), relations, JSON columns, full-text search GIN indexes
 - `@airevstream/crypto` — AES-256-GCM encrypt/decrypt for stored secrets
 - `@airevstream/storage` — MinIO/S3 client with full CRUD operations
 - `@airevstream/queue` — BullMQ queue definitions with typed jobs
@@ -451,7 +459,7 @@ Initial development release. All 9 PRD epics complete, 93 tests passing, 14 pack
 - Notification center with bell badge, dropdown panel, mark all read, sonner toast integration
 - AI assistant collapsible chat panel (380px, context-aware)
 - Real-time updates via SSE with auto-reconnect and exponential backoff
-- 99 Next.js API route files under `/api/v1/`
+- 106 Next.js API route files under `/api/v1/`
 
 **Platform Adapters**
 - YouTube Data API v3 (resumable upload)

@@ -5,7 +5,7 @@
 ```
 apps/
   web/                    → Next.js 14 App Router (port 3000)
-    src/app/api/v1/       → 99 API route files (BFF pattern, D011)
+    src/app/api/v1/       → 106 API route files (BFF pattern, D011)
     src/components/       → React components (dark theme Tailwind)
     src/hooks/            → SWR hooks (use-api.ts, useSSE)
     src/lib/              → api-server.ts (authenticate), utils
@@ -17,7 +17,7 @@ services/
 
 packages/
   shared/                 → Types, config, constants, utilities
-  db/                     → Prisma schema (32 models) + client
+  db/                     → Prisma schema (36 models) + client
   crypto/                 → AES-256-GCM encryption
   storage/                → MinIO/S3 client
   queue/                  → BullMQ job definitions + helpers
@@ -46,7 +46,7 @@ All packages ← apps/web
 |------|------|---------|
 | API auth | `apps/web/src/lib/api-server.ts` | `authenticate()` → `ApiContext { userId, role, tenantId, db }` |
 | SWR hooks | `apps/web/src/hooks/use-api.ts` | `useApi<T>()`, `apiPost`, `apiPut`, `apiDelete` |
-| Prisma schema | `packages/db/prisma/schema.prisma` | 32 models, GIN indexes |
+| Prisma schema | `packages/db/prisma/schema.prisma` | 36 models, GIN indexes |
 | Shared types | `packages/shared/src/types.ts` | All TypeScript types |
 | Turbo config | `turbo.json` | Build tasks (uses `tasks` not `pipeline`) |
 | PM2 config | `ecosystem.config.js` | Process management |
@@ -57,8 +57,8 @@ All packages ← apps/web
 | File | Purpose |
 |------|---------|
 | `DEV-STATUS.md` | Phase/epic completion, test counts |
-| `KNOWN-ISSUES.md` | 12 tracked issues (KI-001 through KI-012) |
-| `DECISIONS.md` | 17 architecture decisions (D001–D017) |
+| `KNOWN-ISSUES.md` | 48 tracked issues (KI-001 through KI-048) |
+| `DECISIONS.md` | 25 architecture decisions (D001–D025) |
 | `SESSION-LOG.md` | Per-session development history |
 | `CHANGELOG.md` | Keep a Changelog format |
 | `OPERATOR-TODO.md` | Setup actions for the operator |

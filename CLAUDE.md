@@ -39,7 +39,7 @@ remotion/             → Remotion video compositions
 ```
 
 ## Build Status
-All 9 PRD Epics complete. 14 packages building, 93 tests passing. See `DEV-STATUS.md` for details.
+All 9 PRD Epics complete. 14 packages building, 419 tests (222 unit + 24 audit + 173 E2E). See `DEV-STATUS.md` for details.
 
 ## Conventions
 - Package names: `@airevstream/<name>`

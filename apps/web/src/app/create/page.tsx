@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import NextImage from 'next/image';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useChannels, useAffiliateProducts, apiPost } from '@/hooks/use-api';
@@ -15,6 +16,9 @@ import {
   Play,
   Loader2,
   Image as ImageIcon,
+  Zap,
+  Film,
+  Clapperboard,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -39,6 +43,7 @@ interface AffiliateProduct {
 type ContentType = 'video_short' | 'video_long' | 'image' | 'text' | 'voice' | 'thumbnail';
 type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook';
 type AffiliateMode = 'dedicated' | 'commercial_break';
+type QualityTier = 'quick' | 'standard' | 'cinema';
 
 interface ShotCard {
   id: number | string;
@@ -102,6 +107,39 @@ const DURATION_OPTIONS = [
   { value: '900', label: '15 minutes' },
 ];
 
+const QUALITY_TIERS: { value: QualityTier; label: string; icon: typeof Zap; features: string[] }[] = [
+  {
+    value: 'quick',
+    label: 'Quick',
+    icon: Zap,
+    features: ['Image only', 'Single pass', 'Auto-approve'],
+  },
+  {
+    value: 'standard',
+    label: 'Standard',
+    icon: Film,
+    features: ['Image + upscale', 'QC gate', 'Basic audio'],
+  },
+  {
+    value: 'cinema',
+    label: 'Cinema',
+    icon: Clapperboard,
+    features: ['Full pipeline', 'Bible, LoRA, video', 'Multi-audio, QC'],
+  },
+];
+
+/** Map wizard contentType to cinema pipeline contentType. */
+const toCinemaContentType = (ct: ContentType): 'short' | 'long' | 'thumbnail' | 'image' => {
+  switch (ct) {
+    case 'video_short': return 'short';
+    case 'video_long': return 'long';
+    case 'thumbnail': return 'thumbnail';
+    case 'image': return 'image';
+    // text / voice default to 'short' — the pipeline only accepts the four above
+    default: return 'short';
+  }
+};
+
 const HICC_SECTIONS = ['[HOOK]', '[INTRO]', '[CONTENT]', '[CTA]'] as const;
 
 const INITIAL_FORM: FormData = {
@@ -123,8 +161,10 @@ const INITIAL_FORM: FormData = {
 // ---------------------------------------------------------------------------
 
 export default function CreatePage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [qualityTier, setQualityTier] = useState<QualityTier>('quick');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -299,7 +339,8 @@ export default function CreatePage() {
     setGenerating(true);
     setError(null);
     try {
-      await apiPost('/content', {
+      // Step 1: Create the content item
+      const contentRes = await apiPost<{ data: { id: string } }>('/content', {
         channelId: formData.channelId,
         title: formData.topic,
         contentType: formData.contentType,
@@ -308,12 +349,39 @@ export default function CreatePage() {
         shots: formData.shots,
         affiliateProductId: formData.affiliateEnabled ? formData.affiliateProductId : undefined,
         affiliateMode: formData.affiliateEnabled ? formData.affiliateMode : undefined,
-        status: 'scheduled',
+        status: qualityTier === 'quick' ? 'scheduled' : 'generating',
       });
-      // Reset wizard
-      toast.success('Content approved and scheduled!');
-      setFormData(INITIAL_FORM);
-      setCurrentStep(1);
+
+      const contentId = contentRes.data?.id;
+
+      // Step 2: For standard/cinema tiers, trigger the cinema pipeline
+      if (qualityTier !== 'quick' && contentId) {
+        const qualityPreset = qualityTier === 'cinema' ? 'cinema' : 'standard';
+        await apiPost('/pipeline/cinema', {
+          contentId,
+          channelId: formData.channelId,
+          topic: formData.topic,
+          contentType: toCinemaContentType(formData.contentType),
+          qualityPreset,
+        });
+      }
+
+      // Step 3: Route based on tier
+      if (qualityTier === 'cinema' && contentId) {
+        toast.success('Cinema pipeline started — opening studio');
+        router.push('/studio/' + contentId);
+      } else if (qualityTier === 'standard') {
+        toast.success('Standard pipeline started — content is generating');
+        setFormData(INITIAL_FORM);
+        setQualityTier('quick');
+        setCurrentStep(1);
+      } else {
+        // Quick tier — existing behavior
+        toast.success('Content approved and scheduled!');
+        setFormData(INITIAL_FORM);
+        setQualityTier('quick');
+        setCurrentStep(1);
+      }
     } catch (err) {
       console.error('Failed to save content:', err);
       setError('Failed to save content');
@@ -432,6 +500,55 @@ export default function CreatePage() {
           </select>
         </div>
       )}
+
+      {/* Quality Tier selector */}
+      <div>
+        <label className="block text-caption text-text-secondary mb-2">Quality Tier</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl">
+          {QUALITY_TIERS.map((tier) => {
+            const Icon = tier.icon;
+            const isSelected = qualityTier === tier.value;
+            return (
+              <button
+                key={tier.value}
+                type="button"
+                onClick={() => setQualityTier(tier.value)}
+                className={cn(
+                  'relative flex flex-col items-center gap-3 p-5 rounded-lg border-2 transition-all text-center',
+                  isSelected
+                    ? 'border-accent-blue bg-accent-blue/10 shadow-sm shadow-accent-blue/20'
+                    : 'border-border bg-bg-secondary hover:bg-bg-tertiary hover:border-border',
+                )}
+              >
+                {isSelected && (
+                  <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-accent-blue flex items-center justify-center">
+                    <Check size={12} className="text-white" />
+                  </div>
+                )}
+                <Icon
+                  size={28}
+                  className={cn(
+                    isSelected ? 'text-accent-blue' : 'text-text-secondary',
+                  )}
+                />
+                <span
+                  className={cn(
+                    'text-body font-semibold',
+                    isSelected ? 'text-accent-blue' : 'text-text-primary',
+                  )}
+                >
+                  {tier.label}
+                </span>
+                <ul className="space-y-1">
+                  {tier.features.map((f) => (
+                    <li key={f} className="text-caption text-text-secondary">{f}</li>
+                  ))}
+                </ul>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {selectedChannel && (
         <div className="card max-w-md">
@@ -906,6 +1023,16 @@ export default function CreatePage() {
                 </span>
               </div>
             )}
+            <div className="flex justify-between py-2 border-b border-border">
+              <span className="text-text-secondary">Quality Tier</span>
+              <span className={cn(
+                'text-text-primary font-medium capitalize',
+                qualityTier === 'cinema' && 'text-accent-purple',
+                qualityTier === 'standard' && 'text-accent-blue',
+              )}>
+                {qualityTier}
+              </span>
+            </div>
             <div className="flex justify-between py-2">
               <span className="text-text-secondary">Script Length</span>
               <span className="text-text-primary">{formData.script.length} chars</span>
@@ -925,10 +1052,27 @@ export default function CreatePage() {
         <button
           onClick={handleApproveAndSchedule}
           disabled={generating}
-          className="btn-primary flex items-center gap-2"
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-md text-white font-medium transition-colors',
+            qualityTier === 'cinema'
+              ? 'bg-accent-purple hover:bg-accent-purple/90'
+              : 'btn-primary',
+          )}
         >
-          {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          Approve & Schedule
+          {generating ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : qualityTier === 'cinema' ? (
+            <Clapperboard size={16} />
+          ) : qualityTier === 'standard' ? (
+            <Film size={16} />
+          ) : (
+            <Sparkles size={16} />
+          )}
+          {qualityTier === 'cinema'
+            ? 'Start Cinema Pipeline'
+            : qualityTier === 'standard'
+              ? 'Start Standard Pipeline'
+              : 'Approve & Schedule'}
         </button>
         <button
           onClick={() => setCurrentStep(3)}

@@ -94,6 +94,22 @@
 | 6.17 | Makefile | Done | dev, build, test, audit, docker-build, db-migrate |
 | 6.18 | Production env | Done | `.env.production.example` with all required vars |
 
+### Phase 7: Cinema Pipeline (Session 15) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| 7.1 | Extended shared types | Done | ShotSpec, CameraSpec, GenerationSpec, LoraSpec, ControlNetSpec, UpscaleSpec, RefinerSpec, AudioPlan, etc. |
+| 7.2 | Cinema constants | Done | CINEMA_PRESETS (aspect ratios, lens, camera movements, color grades), QUALITY_THRESHOLDS |
+| 7.3 | ComfyUI workflow composer | Done | Composable node graph builder: base + LoRA + ControlNet + refiner + upscale |
+| 7.4 | Video provider abstraction | Done | ComfyUI AnimateDiff, Google Veo, OpenAI Sora — submit/poll/download |
+| 7.5 | Audio mixer | Done | WAV PCM mixing, 3-layer model (BG/MG/FG), volume/fade/loop |
+| 7.6 | QC scoring module | Done | 5-dimension scoring (technical, promptAdherence, consistency, composition, colorQuality) |
+| 7.7 | Cinema pipeline DAG | Done | 8-step FlowProducer: research → script → storyboard → shots → QC → audio → render → review |
+| 7.8 | CinemaVideo Remotion | Done | 24fps composition with CameraMotion, ColorGrade, MultiTrackAudio, SubtitleOverlay |
+| 7.9 | Studio UI | Done | Shot editor, visual timeline, AI guidance, cinema bible editor |
+| 7.10 | Cinema API routes | Done | POST /pipeline/cinema, CRUD /cinema-bible, GET /comfyui/models, POST /ai/guidance |
+| 7.11 | Quality tier selector | Done | Quick/Standard/Cinema tiers in create wizard |
+| 7.12 | Unit tests | Done | 37 tests: composer (16), QC scoring (9), mixer (7), constants (5) |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -108,11 +124,11 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 135 web + 87 packages = 222 (all passing across 27 test tasks via Vitest)
+- **Unit tests**: 135 web + 124 packages = 259 (all passing across 31 test tasks via Vitest)
 - **Audit tests**: 24 (9 files scanning 108 API routes for 9 bug classes, <1s)
 - **E2E tests**: 173 (30 spec files via Playwright, all 17 pages covered)
-- **Total**: 419 tests
-- Packages: 87 tests (shared: 20, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 5, browser-automation: 3, workflow-engine: 8, ai-assistant: 5, production-pipeline: 5, workers: 5)
+- **Total**: 456 tests
+- Packages: 124 tests (shared: 50, db: 4, crypto: 10, storage: 3, queue: 5, ai-client: 14, audio-engine: 12, browser-automation: 3, workflow-engine: 8, ai-assistant: 5, production-pipeline: 5, workers: 5)
 - Web: 135 tests (lib: 6, password: 11, rate-limit: 15, api-server: 57, utils-behavior: 28, auth: 10, export: 8) + Next.js build (106 API routes, 14 dashboard pages)
 - Audit: 24 tests across 9 files (silent-catch: 2, getdb: 2, error-leak: 2, tenant: 2, data-shape: 4, decimal: 3, allowlist: 5, role: 2, rate-limit: 2)
 - E2E: 173 tests across 30 files (auth: 16, dashboard: 8, accounts: 13, library: 15, content: 13, approvals: 17, calendar: 17, analytics: 9, affiliate: 11, settings: 25, system: 5, workflows: 6, shared: 18)

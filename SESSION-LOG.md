@@ -4,6 +4,50 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 15 — Cinema-Quality AI Video Production Pipeline
+
+**Date:** 2026-03-19
+**Focus:** Implement end-to-end cinema production pipeline
+
+### What Was Done
+- **Phase 1:** Extended shared types (ShotSpec, Bible types, CameraSpec, GenerationSpec, LoraSpec, ControlNetSpec, etc.), added cinema constants (CINEMA_PRESETS, QUALITY_THRESHOLDS), created ComfyUI workflow composer, video provider abstraction (ComfyUI/Veo/Sora)
+- **Phase 2:** Implemented audio mixer (WAV PCM mixing), extracted ComfyUI client to shared package, rewrote production worker with cinema pipeline handlers, created QC scoring module
+- **Phase 3:** Rewrote FlowProducer pipeline DAG (8-step cinema pipeline), added new job types, created cinema pipeline API endpoint
+- **Phase 4:** Created CinemaVideo Remotion composition (24fps), CameraMotion, ColorGrade, MultiTrackAudio, SubtitleOverlay components
+- **Phase 5:** Built Studio UI — cinema bible editor, shot editor panel, visual timeline, pipeline progress, AI guidance system, studio page
+- **Phase 6:** Upgraded create wizard with quality tier selection (Quick/Standard/Cinema)
+- **Phase 7:** Unit tests for composer, QC scoring, mixer, constants; documentation updates
+
+### Decisions Made
+- D030: ShotSpec as universal job ticket — all parameters stored in shotspec JSON
+- D031: Composable ComfyUI workflows replace static JSON templates
+- D032: Video providers follow async polling pattern (submit → poll → download)
+- D033: 3-layer audio model (BG/MG/FG) with WAV PCM mixing
+- D034: 8-step cinema DAG via FlowProducer
+- D035: Studio UI as full-screen workspace with shot editor + timeline
+
+### New Files Created
+- `packages/shared/src/comfyui-composer.ts` — Composable workflow builder
+- `packages/shared/src/comfyui-client.ts` — Extracted ComfyUI HTTP client
+- `packages/shared/src/qc-scoring.ts` — Quality control scoring
+- `packages/ai-client/src/providers/video/` — Video provider abstraction (5 files)
+- `packages/audio-engine/src/mixer.ts` — Audio mixing engine
+- `remotion/src/compositions/CinemaVideo.tsx` + 4 component files
+- `apps/web/src/components/cinema/` — 9 Studio UI components
+- `apps/web/src/app/studio/[contentId]/` — Studio page (4 files)
+- `apps/web/src/app/api/v1/pipeline/cinema/route.ts`
+- `apps/web/src/app/api/v1/cinema-bible/` — CRUD routes (2 files)
+- `apps/web/src/app/api/v1/comfyui/models/route.ts`
+- `apps/web/src/app/api/v1/ai/guidance/route.ts`
+
+### Tests Added
+- `packages/shared/src/__tests__/comfyui-composer.test.ts` — 16 tests (prompt composition, base workflow, LoRA, ControlNet, compose, presets)
+- `packages/shared/src/__tests__/qc-scoring.test.ts` — 9 tests (recommendations, quick score, full score with dimensions)
+- `packages/shared/src/__tests__/constants.test.ts` — 5 tests (cinema constants, quality thresholds)
+- `packages/audio-engine/src/__tests__/mixer.test.ts` — 7 tests (silence, mixing, volume, overlapping tracks, layer conversion)
+
+---
+
 ## Session 1 — 2026-03-17 (Morning)
 
 ### Summary

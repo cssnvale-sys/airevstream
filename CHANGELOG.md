@@ -7,6 +7,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Cinema-quality video production pipeline with 8-step DAG (Session 15)
+- ComfyUI workflow composer (LoRA, ControlNet, upscale, refiner) (Session 15)
+- Video generation providers (ComfyUI AnimateDiff, Google Veo, OpenAI Sora) (Session 15)
+- Audio mixing engine with 3-layer model (BG/MG/FG) (Session 15)
+- QC scoring module with multi-dimensional quality evaluation (Session 15)
+- CinemaVideo Remotion composition (24fps, video plates, color grading) (Session 15)
+- Camera motion, color grade, multi-track audio, subtitle components (Session 15)
+- Cinema Studio UI — shot editor, visual timeline, AI guidance (Session 15)
+- Cinema Bible editor for visual style management (Session 15)
+- Cinema pipeline API endpoint (POST /api/v1/pipeline/cinema) (Session 15)
+- Quality tier selector in create wizard (Quick/Standard/Cinema) (Session 15)
+- ComfyUI model listing endpoint (GET /api/v1/comfyui/models) (Session 15)
+- AI guidance API with rule-based shot analysis (Session 15)
+- Unit tests: ComfyUI composer (16), QC scoring (9), audio mixer (7), cinema constants (5) — 37 new tests (Session 15)
 - **Presigned URL API route** (Session 14): `GET /api/v1/media/[...path]` serves MinIO objects via presigned URLs with auth, rate limiting, and bucket validation
 - **Scheduled post trigger** (Session 14): BullMQ repeatable job (`posting:check-scheduled`) polls every 60s for due `ScheduledPost` records and enqueues publish jobs
 - **Content detail page** (Session 14): `/content/[id]` with metadata grid, script display, storyboard shots, scheduled posts, version history, approve/reject/archive actions

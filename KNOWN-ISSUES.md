@@ -96,6 +96,18 @@ All 3 Fastify services use `origin: true` CORS (allows any origin) and have no p
 12 routes access tenant-scoped models without filtering by `ctx.tenantId`. Some are legitimate (admin-only, self-service by userId), others are real gaps (affiliate analytics). Tracked in `KNOWN_MISSING_TENANT_SCOPE`.
 **Action**: Assess each route — fix real gaps, document legitimate exceptions.
 
+### KI-049: Cinema Pipeline Routes Missing Audit Coverage
+**Severity**: Medium
+**Status**: Open (Session 15)
+New API routes added in Session 15 (`/api/v1/pipeline/cinema`, `/api/v1/cinema-bible/*`, `/api/v1/comfyui/models`, `/api/v1/ai/guidance`) are not yet included in the automated audit test known-violations sets. They may lack viewer role checks, rate limiting, or tenant scoping.
+**Action**: Run `npm run audit` after cinema routes are fully wired, update audit allowlists as needed.
+
+### KI-050: QC Scoring Uses Heuristics Not ML
+**Severity**: Low
+**Status**: By Design (Session 15)
+The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level statistics for quality evaluation. Prompt adherence scoring is limited without a CLIP model. This is intentional for the zero-dependency baseline; ML-based scoring is a future enhancement.
+**Action**: Integrate CLIP-based prompt adherence scoring when an inference endpoint is available.
+
 ---
 
 ## Recently Fixed (Sessions 10-12)

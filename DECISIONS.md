@@ -144,3 +144,33 @@
 **Date**: 2026-03-18
 **Decision**: Implement a global search command palette activated by `Cmd+K` / `Ctrl+K` with debounced search across content, channels, and accounts.
 **Rationale**: Command palettes are a proven UX pattern for keyboard-driven navigation (VS Code, GitHub, Linear). The unified search endpoint (`/api/v1/search`) queries 3 models with tenant scoping and returns max 5 results per category. The 200ms debounce prevents excessive API calls. Keyboard navigation (up/down/enter/escape) provides a fast workflow for power users.
+
+## D030: ShotSpec as Universal Job Ticket
+**Date**: 2026-03-19
+**Decision**: Every shot flows through the pipeline as a typed ShotSpec in StoryboardShot.shotspec JSON. All parameters needed for generation, QC, audio, and render are in the spec. No runtime hardcoded values.
+**Rationale**: A single canonical spec object eliminates parameter drift between pipeline stages, makes shots reproducible (same spec = same output with locked seed), and simplifies debugging by providing a complete snapshot of intent at each stage.
+
+## D031: Composable ComfyUI Workflows
+**Date**: 2026-03-19
+**Decision**: Static JSON templates replaced by programmatic node graph assembly. Builder functions (addLoraNodes, addControlNetNodes, etc.) compose workflows from ShotSpec. Presets provide backward compat.
+**Rationale**: Static templates could not express dynamic combinations of LoRAs, ControlNets, refiners, and upscalers. Programmatic composition ensures correct node wiring (model/CLIP/conditioning chains), supports arbitrary feature combinations, and is testable via unit tests. Presets map to the old static template behavior.
+
+## D032: Video Provider Async Polling
+**Date**: 2026-03-19
+**Decision**: All video providers (ComfyUI, Veo, Sora) follow submit->poll->download pattern.
+**Rationale**: Matches BullMQ job architecture where workers poll for completion. Video generation is inherently asynchronous (minutes to hours). The unified interface allows swapping providers without changing worker code.
+
+## D033: 3-Layer Audio Model
+**Date**: 2026-03-19
+**Decision**: Audio uses BG (background, loopable, 0.1-0.3 volume), MG (midground events), FG (foreground dialogue). WAV PCM mixing without external dependencies.
+**Rationale**: The 3-layer model mirrors professional audio mixing (bed/sweetener/dialogue). WAV PCM mixing avoids FFmpeg dependency for simple cases. The AudioMixer handles volume, fading, looping, and timed placement purely in Node.js.
+
+## D034: 8-Step Cinema Pipeline DAG
+**Date**: 2026-03-19
+**Decision**: research -> script -> storyboard -> shots -> QC -> audio -> render -> review. Uses BullMQ FlowProducer with children-before-parent execution.
+**Rationale**: The 8-step DAG ensures each stage completes before its dependents start. FlowProducer handles dependency resolution, retry, and failure propagation. Each step is independently testable and replaceable.
+
+## D035: Studio UI Architecture
+**Date**: 2026-03-19
+**Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.
+**Rationale**: Professional video editing UIs (DaVinci Resolve, Premiere) use this layout pattern. The component decomposition allows each panel to be developed and tested independently while the Studio page composes them into a cohesive workspace.

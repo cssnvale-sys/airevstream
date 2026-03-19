@@ -11,6 +11,7 @@ coverage/
 logs/
 test-results/
 playwright-report/
+e2e/.auth/
 *.log
 .DS_Store
 *.tsbuildinfo

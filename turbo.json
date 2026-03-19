@@ -19,6 +19,10 @@
     },
     "db:migrate": {
       "cache": false
+    },
+    "audit": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/app/api/**/*.ts", "src/__tests__/audit/**/*.ts"]
     }
   }
 }

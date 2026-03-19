@@ -3,10 +3,12 @@ import { Composition, Still } from 'remotion';
 import { ShortFormVideo } from './compositions/ShortFormVideo';
 import { LongFormVideo } from './compositions/LongFormVideo';
 import { ThumbnailRenderer } from './compositions/ThumbnailRenderer';
+import { CinemaVideo } from './compositions/CinemaVideo';
 import type {
   ShortFormVideoProps,
   LongFormVideoProps,
   ThumbnailProps,
+  CinemaVideoProps,
 } from './types';
 import {
   DEFAULT_SHORT_BEAT_TIMINGS,
@@ -17,6 +19,7 @@ import {
 const ShortFormVideoComponent = ShortFormVideo as unknown as React.FC<Record<string, unknown>>;
 const LongFormVideoComponent = LongFormVideo as unknown as React.FC<Record<string, unknown>>;
 const ThumbnailComponent = ThumbnailRenderer as unknown as React.FC<Record<string, unknown>>;
+const CinemaVideoComponent = CinemaVideo as unknown as React.FC<Record<string, unknown>>;
 
 /**
  * Remotion Root — Registers all compositions for rendering.
@@ -243,6 +246,56 @@ export const RemotionRoot: React.FC = () => {
           titleFontSize: 24,
           overlayFontSize: 72,
         }}
+      />
+
+      {/* ─── Cinema Video (16:9 Horizontal, 24fps Cinema) ─── */}
+      <Composition
+        id="CinemaVideo"
+        component={CinemaVideoComponent}
+        durationInFrames={2880} // 120 seconds at 24fps
+        fps={24}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          title: 'Cinema Video',
+          shots: [
+            {
+              id: 'cinema-shot-1',
+              src: 'https://placehold.co/1920x1080/0a0a1a/ffffff?text=Cinema+Shot+1',
+              durationInFrames: 720,
+              transitionIn: 'fade' as const,
+              transitionOut: 'fade' as const,
+              transitionDurationInFrames: 24,
+              camera: { movement: 'dolly-in', lens: '35mm', framing: 'wide' },
+            },
+            {
+              id: 'cinema-shot-2',
+              src: 'https://placehold.co/1920x1080/1a0a3e/ffffff?text=Cinema+Shot+2',
+              durationInFrames: 1440,
+              transitionIn: 'fade' as const,
+              transitionOut: 'fade' as const,
+              transitionDurationInFrames: 24,
+              camera: { movement: 'pan-left', lens: '85mm', framing: 'close-up' },
+            },
+            {
+              id: 'cinema-shot-3',
+              src: 'https://placehold.co/1920x1080/0a1929/ffffff?text=Cinema+Shot+3',
+              durationInFrames: 720,
+              transitionIn: 'fade' as const,
+              transitionOut: 'fade' as const,
+              transitionDurationInFrames: 24,
+              camera: { movement: 'crane-up', lens: '24mm', framing: 'wide' },
+            },
+          ],
+          audioTracks: [],
+          fps: 24,
+          width: 1920,
+          height: 1080,
+          colorGrade: { contrast: 10, saturation: -10, filmGrain: 15, vignette: 20 },
+          beatTimings: [],
+          textOverlays: [],
+          watermark: undefined,
+        } satisfies CinemaVideoProps}
       />
     </>
   );

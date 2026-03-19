@@ -299,3 +299,100 @@ export const BEAT_PRESET_COLORS: Record<BeatPreset, { primary: string; secondary
   MOMENTUM: { primary: '#1a2744', secondary: '#0a1225', accent: '#06b6d4' },
   CALM: { primary: '#1a2e1a', secondary: '#0a140a', accent: '#a3e635' },
 };
+
+// ─── Cinema Video Types ───
+
+/** Camera specification for animated camera moves */
+export interface CinemaCamera {
+  lens?: string;
+  framing?: string;
+  movement?: string;
+  dof?: 'shallow' | 'medium' | 'deep';
+  stabilization?: 'handheld' | 'steadicam' | 'tripod' | 'gimbal';
+}
+
+/** Color grading specification */
+export interface CinemaColorGrade {
+  temperature?: number;    // -100 to +100
+  tint?: number;
+  contrast?: number;
+  saturation?: number;
+  highlights?: number;
+  shadows?: number;
+  blacks?: number;
+  whites?: number;
+  filmGrain?: number;      // 0-100
+  vignette?: number;       // 0-100
+}
+
+/** Subtitle/caption entry */
+export interface SubtitleEntry {
+  text: string;
+  startFrame: number;
+  endFrame: number;
+  position?: 'top' | 'center' | 'bottom';
+  style?: 'default' | 'bold' | 'outline' | 'shadow';
+}
+
+/** Watermark configuration */
+export interface WatermarkConfig {
+  text?: string;
+  imageUrl?: string;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  opacity: number;
+  size: number;
+}
+
+/** A cinema-quality shot with video plate support */
+export interface CinemaShotData extends ShotData {
+  /** URL for video plate (Veo/Sora output) instead of image */
+  videoSrc?: string;
+  /** Whether this shot is a video plate */
+  isVideo?: boolean;
+  /** Camera specification for animated camera moves */
+  camera?: CinemaCamera;
+  /** Per-shot color grade override */
+  colorGrade?: CinemaColorGrade;
+  /** Subtitles for this shot */
+  subtitles?: SubtitleEntry[];
+}
+
+/** Multi-track audio with volume automation */
+export interface CinemaAudioTrack {
+  /** URL of the audio source */
+  src: string;
+  /** Frame at which this track starts playing */
+  startFrame: number;
+  /** Duration in frames (null = play to end of composition) */
+  durationInFrames?: number;
+  /** Volume level or automation function */
+  volume: number;
+  /** Whether to loop the audio */
+  loop?: boolean;
+  /** Audio layer designation */
+  layer: 'bg' | 'mg' | 'fg';
+}
+
+/** Props for the CinemaVideo composition */
+export interface CinemaVideoProps {
+  /** Video title */
+  title: string;
+  /** Cinema-quality shots with video support */
+  shots: CinemaShotData[];
+  /** Multi-track audio configuration */
+  audioTracks: CinemaAudioTrack[];
+  /** Frames per second */
+  fps: number;
+  /** Composition width */
+  width: number;
+  /** Composition height */
+  height: number;
+  /** Global color grade applied to all shots */
+  colorGrade?: CinemaColorGrade;
+  /** Beat timing markers */
+  beatTimings?: BeatTiming[];
+  /** Text overlays */
+  textOverlays?: TextOverlayConfig[];
+  /** Watermark configuration */
+  watermark?: WatermarkConfig;
+}

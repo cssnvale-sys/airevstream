@@ -1,7 +1,8 @@
-import { createWorker, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob, type ContentFinalReviewJob } from '@airevstream/queue';
+import { createWorker, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob, type ContentFinalReviewJob, type ContentViralScoreJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
-import { createLogger } from '@airevstream/shared';
+import { createLogger, scoreViralPotential } from '@airevstream/shared';
+import type { ViralScoringInput } from '@airevstream/shared';
 import type { Job } from 'bullmq';
 
 let _registry: ReturnType<typeof createServiceRegistry> | null = null;
@@ -14,7 +15,7 @@ function getRegistry() {
 
 const logger = createLogger('worker:content');
 
-async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob>) {
+async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob | ContentViralScoreJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing content job');
 
   if (job.name === 'content:generate') {
@@ -35,6 +36,11 @@ async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob
   if (job.name === 'content:approve') {
     const data = job.data as ContentApproveJob;
     return handleApprove(data);
+  }
+
+  if (job.name === 'content:viral-score') {
+    const data = job.data as ContentViralScoreJob;
+    return handleViralScore(data);
   }
 
   logger.warn({ jobName: job.name }, 'Unknown job name');
@@ -223,30 +229,174 @@ async function handleFinalReview(data: ContentFinalReviewJob) {
   try {
     const content = await db.contentItem.findUnique({
       where: { id: data.contentId },
-      select: { id: true, status: true },
+      include: {
+        channel: { select: { socialAccount: { select: { platform: true } } } },
+        storyboards: {
+          where: { id: data.storyboardId },
+          select: {
+            totalDurationSec: true,
+            shots: {
+              select: { shotNumber: true, startSec: true, endSec: true, qualityScore: true, shotspec: true },
+              orderBy: { shotNumber: 'asc' },
+            },
+          },
+          take: 1,
+        },
+      },
     });
 
     if (!content) {
       throw new Error(`Content item ${data.contentId} not found`);
     }
 
+    // Compute viral score during final review
+    const storyboard = content.storyboards[0];
+    const shots = storyboard?.shots ?? [];
+    const script = (content.platformMetadata as Record<string, unknown>)?.script as string | undefined;
+
+    const viralInput: ViralScoringInput = {
+      title: content.title ?? undefined,
+      script,
+      contentType: content.contentType,
+      platform: content.channel?.socialAccount?.platform ?? undefined,
+      durationSec: storyboard?.totalDurationSec != null ? Number(storyboard.totalDurationSec) : undefined,
+      shotCount: shots.length,
+      shotDurations: shots.map(s => Number(s.endSec ?? 0) - Number(s.startSec ?? 0)),
+      qualityScores: shots.filter(s => s.qualityScore != null).map(s => Number(s.qualityScore)),
+      hasMusic: shots.some(s => {
+        const spec = s.shotspec as Record<string, unknown> | null;
+        return spec?.audioPlan != null;
+      }),
+      hasFace: shots.some(s => {
+        const spec = s.shotspec as Record<string, unknown> | null;
+        const prompt = ((spec?.promptBlocks as string[]) ?? []).join(' ').toLowerCase();
+        return /\b(face|portrait|person|character|man|woman|girl|boy)\b/.test(prompt);
+      }),
+      hasCTA: script ? /\b(subscribe|follow|like|share|comment|link)\b/i.test(script) : false,
+    };
+
+    const viralScore = scoreViralPotential(viralInput);
+    logger.info({ contentId: data.contentId, viralScore: viralScore.overall, tier: viralScore.tier }, 'Viral score computed');
+
+    // Store viral score in content performance JSON
+    const existingPerf = (content.performance as Record<string, unknown>) ?? {};
+    const updatedPerf = {
+      ...existingPerf,
+      viralScore: viralScore.overall,
+      viralTier: viralScore.tier,
+      viralDimensions: viralScore.dimensions,
+      viralIssues: viralScore.issues,
+      shareCoefficient: viralScore.shareCoefficient,
+      scoredAt: new Date().toISOString(),
+    };
+
     if (data.autoApprove) {
       await db.contentItem.update({
         where: { id: data.contentId },
-        data: { status: 'approved' },
+        data: { status: 'approved', performance: updatedPerf as any },
       });
       logger.info({ contentId: data.contentId }, 'Content auto-approved');
     } else {
       await db.contentItem.update({
         where: { id: data.contentId },
-        data: { status: 'pending_approval' },
+        data: { status: 'pending_approval', performance: updatedPerf as any },
       });
       logger.info({ contentId: data.contentId }, 'Content sent for manual review');
     }
 
-    return { contentId: data.contentId, status: data.autoApprove ? 'approved' : 'pending_approval' };
+    return { contentId: data.contentId, status: data.autoApprove ? 'approved' : 'pending_approval', viralScore };
   } catch (err) {
     logger.error({ err, contentId: data.contentId }, 'Final review failed');
+    throw err;
+  }
+}
+
+// ─── Viral Score Handler ───
+
+async function handleViralScore(data: ContentViralScoreJob) {
+  const db = getDb();
+  logger.info({ contentId: data.contentId }, 'Computing viral score');
+
+  try {
+    const content = await db.contentItem.findUnique({
+      where: { id: data.contentId },
+      include: {
+        channel: { select: { socialAccount: { select: { platform: true } } } },
+        storyboards: {
+          where: data.storyboardId ? { id: data.storyboardId } : undefined,
+          select: {
+            totalDurationSec: true,
+            shots: {
+              select: { shotNumber: true, startSec: true, endSec: true, qualityScore: true, shotspec: true },
+              orderBy: { shotNumber: 'asc' },
+            },
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!content) {
+      throw new Error(`Content item ${data.contentId} not found`);
+    }
+
+    // Fetch trending topics for alignment check
+    const trendEntries = await db.knowledgeBaseEntry.findMany({
+      where: { category: 'trends' },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: { title: true, relevanceScore: true },
+    });
+
+    const storyboard = content.storyboards[0];
+    const shots = storyboard?.shots ?? [];
+    const script = (content.platformMetadata as Record<string, unknown>)?.script as string | undefined;
+
+    const viralInput: ViralScoringInput = {
+      title: content.title ?? undefined,
+      script,
+      contentType: content.contentType,
+      platform: data.platform ?? content.channel?.socialAccount?.platform ?? undefined,
+      durationSec: storyboard?.totalDurationSec != null ? Number(storyboard.totalDurationSec) : undefined,
+      shotCount: shots.length,
+      shotDurations: shots.map(s => Number(s.endSec ?? 0) - Number(s.startSec ?? 0)),
+      qualityScores: shots.filter(s => s.qualityScore != null).map(s => Number(s.qualityScore)),
+      trendingTopics: trendEntries.map(e => e.title),
+      hasMusic: shots.some(s => {
+        const spec = s.shotspec as Record<string, unknown> | null;
+        return spec?.audioPlan != null;
+      }),
+      hasFace: shots.some(s => {
+        const spec = s.shotspec as Record<string, unknown> | null;
+        const prompt = ((spec?.promptBlocks as string[]) ?? []).join(' ').toLowerCase();
+        return /\b(face|portrait|person|character|man|woman|girl|boy)\b/.test(prompt);
+      }),
+      hasCTA: script ? /\b(subscribe|follow|like|share|comment|link)\b/i.test(script) : false,
+    };
+
+    const viralScore = scoreViralPotential(viralInput);
+
+    // Store in performance JSON
+    const existingPerf = (content.performance as Record<string, unknown>) ?? {};
+    await db.contentItem.update({
+      where: { id: data.contentId },
+      data: {
+        performance: {
+          ...existingPerf,
+          viralScore: viralScore.overall,
+          viralTier: viralScore.tier,
+          viralDimensions: viralScore.dimensions,
+          viralIssues: viralScore.issues,
+          shareCoefficient: viralScore.shareCoefficient,
+          scoredAt: new Date().toISOString(),
+        } as any,
+      },
+    });
+
+    logger.info({ contentId: data.contentId, viralScore: viralScore.overall, tier: viralScore.tier }, 'Viral score computed and stored');
+    return viralScore;
+  } catch (err) {
+    logger.error({ err, contentId: data.contentId }, 'Viral score computation failed');
     throw err;
   }
 }

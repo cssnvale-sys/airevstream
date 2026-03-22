@@ -140,6 +140,7 @@ export type JobType =
   | 'production:qc-gate'
   | 'production:mix-audio'
   | 'production:repair-shot'
+  | 'content:viral-score'
   | 'posting:schedule'
   | 'posting:publish';
 

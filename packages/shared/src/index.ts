@@ -1,6 +1,7 @@
 export * from './agents/index.js';
 export * from './comfyui-client.js';
 export * from './provenance.js';
+export * from './viral-scoring.js';
 export * from './lip-sync.js';
 export * from './identity-drift.js';
 export * from './comfyui-composer.js';

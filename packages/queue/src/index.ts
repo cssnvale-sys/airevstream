@@ -150,6 +150,12 @@ export interface ContentFinalReviewJob {
   autoApprove?: boolean;
 }
 
+export interface ContentViralScoreJob {
+  contentId: string;
+  storyboardId: string;
+  platform?: string;
+}
+
 export interface ProductionRepairShotJob {
   shotId: string;
   storyboardId: string;
@@ -165,7 +171,7 @@ export interface ProductionRepairShotJob {
 // ─── Queue Name → Job Data Mapping ───
 
 export interface QueueJobMap {
-  content: ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob;
+  content: ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob | ContentViralScoreJob;
   account: AccountCreateJob | AccountSyncJob | AccountHealthCheckJob | AccountWarmJob;
   posting: PostingScheduleJob | PostingPublishJob;
   research: ResearchTrendsJob | ResearchTopicsJob | ResearchKnowledgeUpdateJob | ResearchPopulateKnowledgeJob;

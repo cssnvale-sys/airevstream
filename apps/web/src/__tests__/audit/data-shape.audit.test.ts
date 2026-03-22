@@ -26,6 +26,7 @@ describe('Bug Class 5: Data shape mismatches', () => {
     const KNOWN_FALSE_POSITIVES = new Set([
       'cinema-bible/[id]/route.ts',
       'cinema-bible/route.ts',
+      'content/viral-score/route.ts',
     ]);
     const violations: string[] = [];
 

@@ -68,6 +68,7 @@
 | 5.18 | Audit fixes (round 9) | Done | Decimal in 9 more routes, 5 settings routes err.message leak prevention |
 | 5.x | Session 7 improvements (155 batches) | Done | UI components, error handling, delete endpoints, job polling, CSV export, forgot-password, bulk actions, calendar filters, keyboard shortcuts, copy buttons, accessibility, search debounce, page metadata, error boundaries, loading skeletons, auth middleware, 404 page, password toggle, sidebar persistence, progress bar, system refresh, type-safe hooks, UUID validation, 222 tests, API key auth, Prisma indexes, graceful shutdown, PM2 hardening, security hardening (tenant scoping, SSRF, open redirect, rate limiter, N+1 queries, access control) |
 | 5.21 | Security hardening — Session 17 | Done | 72 viewer checks (0 gaps), 33 rate limits (0 gaps), 2 tenant scoping fixes, JWT revocation, Fastify CORS + rate-limit, posting worker retry cleanup, audit extractHandlers fix |
+| 5.22 | Infra & config fixes — Session 18 | Done | Deployed pending migration (passwordChangedAt), fixed COMFYUI env var mismatch, removed deprecated docker-compose version, added missing env vars |
 | 5.19 | Deep audit — Session 9 (20 rounds) | Done | 53 viewer role checks, 3 TOCTOU fixes (interactive transactions), N+1 budgets/check, 3 tenant scoping gaps, 5 settings GET try/catch, DB error logging in authenticate(), service auth logging, ComfyUI URL leak, rate limiting on 5 endpoints, pagination limits, 3 frontend silent catches |
 | 5.20 | Verified audit — Session 10 (10 rounds) | Done | Runtime-verified: .next cache fix, all 17 pages + 21 API routes verified at runtime, 3 content lifecycle bugs fixed (status enum, reject validation, regenerate Decimal), 8 packages barrel exports verified, 0 data shape mismatches, 0 error handling gaps |
 | 5.9 | E2E testing | Done | Playwright E2E suite: 30 spec files, 181 tests, all 17 pages, **100% pass rate** (Sessions 11+16) |
@@ -134,6 +135,7 @@
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 - Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
 - Codebase audit (Session 12→17): 9 bug classes automated, known violation sets for viewer checks and rate limiting emptied to 0
+- Full codebase audit (Session 19): 302 files scanned, 16 fixes applied (2 bugs, 4 silent catches, 9 type safety, 1 config), 0 silent catches remaining
 
 ## Architecture Highlights
 - **Prisma Schema**: 36 models with full-text search GIN indexes on key tables

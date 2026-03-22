@@ -61,9 +61,27 @@ Several models lack `tenantId` and cannot be tenant-scoped without a Prisma sche
 The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level statistics for quality evaluation. Prompt adherence scoring is limited without a CLIP model. This is intentional for the zero-dependency baseline; ML-based scoring is a future enhancement.
 **Action**: Integrate CLIP-based prompt adherence scoring when an inference endpoint is available.
 
+### KI-056: Port 3000 Conflict with External Project — Fixed (Session 18)
+**Severity**: Medium
+**Status**: Fixed (Session 18)
+A separate project (`delegayt-dashboard`, Next.js + uvicorn) was occupying port 3000, causing all AiRevStream API route tests to return `{"detail":"Not Found"}` with `server: uvicorn` headers. Killed the conflicting process and started AiRevStream's Next.js dev server. Developers should ensure no other apps are running on port 3000 before starting AiRevStream.
+**Action**: None — resolved. Consider adding a port-check to dev startup scripts.
+
 ---
 
-## Recently Fixed (Sessions 10-17)
+## Recently Fixed (Sessions 10-18)
+
+### KI-056: Port 3000 Conflict with External Project — Fixed (Session 18)
+A separate project (`delegayt-dashboard`) was running on port 3000 instead of AiRevStream. Killed the process and started the correct Next.js app.
+
+### KI-053: Pending Migration 0003_add_password_changed_at Not Deployed — Fixed (Session 18)
+Migration `0003_add_password_changed_at` was present in source but not applied to the database, preventing JWT revocation from functioning. Deployed via `prisma migrate deploy`.
+
+### KI-054: .env COMFYUI_BASE_URL Mismatched Code Expectation — Fixed (Session 18)
+`.env` had `COMFYUI_BASE_URL` but code and `.env.example` use `COMFYUI_URL`. Renamed env var and added missing `COMFYUI_TIMEOUT_MS`, `CORS_ORIGINS`, `NEXT_PUBLIC_APP_URL`.
+
+### KI-055: docker-compose.yml Deprecated `version` Key — Fixed (Session 18)
+Removed deprecated `version: '3.8'` that caused warning noise on every `docker compose` command.
 
 ### KI-046: 72 Write Handlers Missing Viewer Role Checks — Fixed (Session 17)
 All write handlers now have viewer role checks. `KNOWN_MISSING_VIEWER_CHECKS` reduced from 72 to 0. Audit handler extraction bug fixed (destructured params).

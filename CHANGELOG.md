@@ -7,6 +7,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Fixed
+- **TextOverlay exit animation bug** (Session 19): Both ternary branches were identical, causing exit animations to play like enter animations
+- **request.userId bug** (Session 19): Workflow-engine approve/bulk-approve used non-existent `(request as any).userId`; changed to `request.user?.sub`
+- **Silent catch blocks** (Session 19): 4 file cleanup `.catch(() => {})` in production/maintenance workers now log errors
+- **as-any type safety** (Session 19): Replaced 9 `as any` casts with proper types in openai-compat, http, ollama, and comfyui-client providers
+- **tsconfig consistency** (Session 19): Standardized audio-engine `outDir` to `"./dist"` matching all other packages
+- **KI-053: Pending migration** (Session 18): Deployed `0003_add_password_changed_at` migration — JWT revocation now functional
+- **KI-054: Env var mismatch** (Session 18): Renamed `COMFYUI_BASE_URL` → `COMFYUI_URL`, added missing `COMFYUI_TIMEOUT_MS`, `CORS_ORIGINS`, `NEXT_PUBLIC_APP_URL`
+- **KI-055: Docker Compose deprecation** (Session 18): Removed deprecated `version: '3.8'` key
 - **KI-046: Viewer role checks** (Session 17): Added `ctx.role === 'viewer'` checks to all 72 write handlers (17 real gaps, 46 phantoms removed, 5 admin routes refactored)
 - **KI-047: Rate limiting** (Session 17): Added `checkRateLimit()` to all 33 write handlers with appropriate presets
 - **KI-048: Tenant scoping** (Session 17): Added tenant filtering to `affiliate/analytics` and `affiliate/products/[id]/analytics` routes

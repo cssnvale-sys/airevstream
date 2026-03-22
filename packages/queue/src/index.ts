@@ -72,11 +72,22 @@ export interface MaintenanceMetricsJob {
   metricTypes?: string[];
 }
 
+export interface ExportVariant {
+  label: string;
+  width: number;
+  height: number;
+  fps: number;
+  aspect: string;
+  codec: 'h264' | 'prores';
+}
+
 export interface ProductionRenderVideoJob {
   contentId: string;
   storyboardId: string;
   channelId: string;
   qualityPreset?: 'draft' | 'standard' | 'cinema';
+  /** If set, renders this specific variant instead of the default */
+  exportVariant?: ExportVariant;
 }
 
 export interface ProductionGenerateImageJob {

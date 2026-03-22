@@ -10,6 +10,7 @@ import type {
   ProductionRenderVideoJob,
   ProductionGenerateAudioJob,
   ProductionStoryboardJob,
+  ExportVariant,
 } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { uploadBuffer, ensureBucket, downloadBuffer } from '@airevstream/storage';
@@ -228,24 +229,29 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
 
   // Determine composition based on quality tier and content type
   const isCinema = data.qualityPreset === 'cinema';
+  const variant: ExportVariant | undefined = data.exportVariant;
   let compositionId: string;
   let inputProps: string;
 
   if (isCinema) {
     compositionId = 'CinemaVideo';
 
+    // Use export variant dimensions/fps if provided, otherwise defaults
+    const renderWidth = variant?.width ?? 1920;
+    const renderHeight = variant?.height ?? 1080;
+    const renderFps = variant?.fps ?? 24;
+
     // Build CinemaVideoProps from storyboard/shots data
     const cinemaShots = storyboard.shots.map((s, idx) => {
       const spec = (s.shotspec as Record<string, unknown>) ?? {};
       const keyframeUrls = s.keyframeUrls as string[] | null;
       const durationSec = Number(s.endSec ?? 0) - Number(s.startSec ?? 0);
-      const fps = 24; // Cinema standard
       return {
         id: s.id,
         src: keyframeUrls?.[0] ?? '',
         videoSrc: (spec.videoSrc as string) ?? undefined,
         isVideo: !!(spec.videoSrc),
-        durationInFrames: Math.max(1, Math.round(durationSec * fps)),
+        durationInFrames: Math.max(1, Math.round(durationSec * renderFps)),
         transitionIn: idx === 0 ? 'fade' : ((spec.transition as string) ?? 'cut'),
         transitionOut: 'cut',
         transitionDurationInFrames: idx === 0 ? 12 : 6,
@@ -290,9 +296,9 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
       title: storyboard.content.title,
       shots: cinemaShots,
       audioTracks,
-      fps: 24,
-      width: 1920,
-      height: 1080,
+      fps: renderFps,
+      width: renderWidth,
+      height: renderHeight,
       colorGrade: lookBible?.colorPipeline ?? undefined,
     });
   } else {
@@ -311,12 +317,13 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
 
   const outputDir = '/tmp/airevstream/renders';
   await mkdir(outputDir, { recursive: true });
-  const renderExt = isCinema ? 'mov' : 'mp4';
+  const useProres = variant?.codec === 'prores' || (!variant && isCinema);
+  const renderExt = useProres ? 'mov' : 'mp4';
   const outputPath = `${outputDir}/${data.contentId}-${Date.now()}.${renderExt}`;
 
   try {
     // Invoke Remotion CLI render
-    const codec = isCinema ? 'prores' : 'h264';
+    const codec = useProres ? 'prores' : 'h264';
     const { stdout, stderr } = await execFileAsync(
       'npx',
       [
@@ -342,7 +349,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     await ensureBucket(BUCKET);
     const videoBuffer = await readFile(outputPath);
     const key = `videos/${data.contentId}/${Date.now()}.${renderExt}`;
-    const contentType = isCinema ? 'video/quicktime' : 'video/mp4';
+    const contentType = useProres ? 'video/quicktime' : 'video/mp4';
     await uploadBuffer(BUCKET, key, videoBuffer, contentType);
 
     // Clean up temp file after successful upload

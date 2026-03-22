@@ -11,6 +11,9 @@ import type { ShotData } from '@/components/cinema/shot-editor-panel';
 import type { GuidanceSuggestion } from '@/components/cinema/ai-guidance-panel';
 import Link from 'next/link';
 import { ComplexityToggle } from '@/components/ui/complexity-toggle';
+import { ExportVariants } from '@/components/cinema/export-variants';
+import { useComplexityMode } from '@/hooks/use-complexity-mode';
+import { isVisible } from '@/lib/complexity-fields';
 
 interface StudioContent {
   id: string;
@@ -40,6 +43,7 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<GuidanceSuggestion[]>([]);
   const guidanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { mode } = useComplexityMode();
 
   const content = data?.data;
   const storyboard = content?.storyboards?.[0];
@@ -194,6 +198,14 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
               onApplyAction={handleApplyGuidance}
             />
             <PipelineProgress contentId={contentId} />
+            {isVisible('advanced', mode) && storyboard && (
+              <ExportVariants
+                contentId={contentId}
+                storyboardId={storyboard.id}
+                channelId=""
+                qualityPreset="cinema"
+              />
+            )}
           </div>
         </div>
       </div>

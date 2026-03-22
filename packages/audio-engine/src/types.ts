@@ -21,11 +21,35 @@ export interface TTSResult {
   sampleRate: number;
 }
 
+export interface AudioDuckingConfig {
+  /** Index of the track that triggers ducking (typically FG/dialogue) */
+  triggerTrackIndex: number;
+  /** Indices of tracks to duck when trigger is active */
+  targetTrackIndices: number[];
+  /** Attenuation in dB when ducking is active (e.g., -12) */
+  duckingDb: number;
+  /** Attack time in ms — how quickly ducking engages */
+  attackMs?: number;
+  /** Release time in ms — how quickly ducking disengages */
+  releaseMs?: number;
+  /** RMS threshold (0-1) for trigger detection — below this = silence */
+  threshold?: number;
+}
+
+export interface LoudnessConfig {
+  /** Target integrated loudness in LUFS (e.g., -14 for YouTube, -16 for broadcast) */
+  targetLufs: number;
+  /** True peak limit in dBTP (e.g., -1) */
+  truePeakDbtp?: number;
+}
+
 export interface AudioMixConfig {
   tracks: AudioTrack[];
   outputFormat: 'wav' | 'mp3';
   sampleRate?: number;   // default 44100
   totalDurationMs?: number;
+  ducking?: AudioDuckingConfig;
+  loudness?: LoudnessConfig;
 }
 
 export interface AudioTrack {

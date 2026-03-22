@@ -1,4 +1,5 @@
-import type { AudioMixConfig, AudioTrack, AudioMixResult } from './types.js';
+import type { AudioMixConfig, AudioTrack, AudioMixResult, AudioDuckingConfig } from './types.js';
+import { normalizeLufs, applyTruePeakLimiter } from './loudness.js';
 
 // WAV header constants
 const WAV_HEADER_SIZE = 44;
@@ -40,9 +41,19 @@ export class AudioMixer {
     // Create output buffer (float for mixing precision)
     const mixBuffer = new Float32Array(totalSamples);
 
-    // Mix each track
-    for (const track of config.tracks) {
-      this.mixTrack(mixBuffer, track, sampleRate, totalSamples);
+    // Mix each track — if ducking is enabled, mix into separate buffers first
+    if (config.ducking) {
+      this.mixWithDucking(mixBuffer, config.tracks, config.ducking, sampleRate, totalSamples);
+    } else {
+      for (const track of config.tracks) {
+        this.mixTrack(mixBuffer, track, sampleRate, totalSamples);
+      }
+    }
+
+    // Apply loudness normalization + true peak limiting
+    if (config.loudness) {
+      normalizeLufs(mixBuffer, sampleRate, config.loudness.targetLufs);
+      applyTruePeakLimiter(mixBuffer, config.loudness.truePeakDbtp ?? -1.0);
     }
 
     // Clamp and convert to 16-bit PCM
@@ -86,6 +97,78 @@ export class AudioMixer {
   }
 
   // ─── Private Methods ───
+
+  /**
+   * Mix tracks with ducking: when the trigger track (e.g., FG dialogue)
+   * is active, attenuate the target tracks (e.g., BG music).
+   */
+  private mixWithDucking(
+    output: Float32Array,
+    tracks: AudioTrack[],
+    ducking: AudioDuckingConfig,
+    sampleRate: number,
+    totalSamples: number,
+  ): void {
+    // First, render the trigger track to detect speech activity
+    const triggerBuffer = new Float32Array(totalSamples);
+    if (ducking.triggerTrackIndex < tracks.length) {
+      this.mixTrack(triggerBuffer, tracks[ducking.triggerTrackIndex], sampleRate, totalSamples);
+    }
+
+    // Build an envelope of the trigger track using RMS in 10ms windows
+    const windowSize = Math.floor(sampleRate * 0.01); // 10ms
+    const threshold = ducking.threshold ?? 0.01;
+    const duckGain = Math.pow(10, ducking.duckingDb / 20); // e.g., -12dB → 0.25
+    const attackSamples = Math.floor(((ducking.attackMs ?? 5) / 1000) * sampleRate);
+    const releaseSamples = Math.floor(((ducking.releaseMs ?? 50) / 1000) * sampleRate);
+
+    // Compute per-sample ducking gain envelope
+    const duckEnvelope = new Float32Array(totalSamples).fill(1.0);
+    let currentGain = 1.0;
+
+    for (let i = 0; i < totalSamples; i += windowSize) {
+      // Compute RMS for this window
+      let sumSq = 0;
+      const end = Math.min(i + windowSize, totalSamples);
+      for (let j = i; j < end; j++) {
+        sumSq += triggerBuffer[j] * triggerBuffer[j];
+      }
+      const rms = Math.sqrt(sumSq / (end - i));
+      const targetGain = rms > threshold ? duckGain : 1.0;
+
+      // Smooth transition
+      for (let j = i; j < end; j++) {
+        if (targetGain < currentGain) {
+          // Attack (ducking engaging)
+          currentGain = Math.max(targetGain, currentGain - (1.0 - duckGain) / Math.max(attackSamples, 1));
+        } else {
+          // Release (ducking disengaging)
+          currentGain = Math.min(targetGain, currentGain + (1.0 - duckGain) / Math.max(releaseSamples, 1));
+        }
+        duckEnvelope[j] = currentGain;
+      }
+    }
+
+    // Now mix all tracks, applying ducking envelope to target tracks
+    const targetSet = new Set(ducking.targetTrackIndices);
+
+    for (let t = 0; t < tracks.length; t++) {
+      const trackBuffer = new Float32Array(totalSamples);
+      this.mixTrack(trackBuffer, tracks[t], sampleRate, totalSamples);
+
+      if (targetSet.has(t)) {
+        // Apply ducking envelope
+        for (let i = 0; i < totalSamples; i++) {
+          output[i] += trackBuffer[i] * duckEnvelope[i];
+        }
+      } else {
+        // Add as-is
+        for (let i = 0; i < totalSamples; i++) {
+          output[i] += trackBuffer[i];
+        }
+      }
+    }
+  }
 
   private getTrackDurationMs(track: AudioTrack, sampleRate: number): number {
     const samples = this.extractPCMSamples(track.buffer);

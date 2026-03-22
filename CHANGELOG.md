@@ -7,6 +7,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **C2PA provenance tracking** (Session 22/LE-4): ProvenanceRecord and C2PAManifest types, `createProvenanceRecord()` and `generateC2PAManifest()` functions, prompt safety linting (8 categories), ProvenanceViewer component in Studio, GET /content/provenance API route
+- **Viral scoring engine** (Session 22/LE-3): 6-dimension viral potential scoring (hook strength, retention, CTA clarity, shareability, platform fit, trend alignment), tier classification (low/medium/high/viral), trend matching, A/B test statistical significance calculator, ViralScorePanel in Studio, GET /content/viral-score and GET /trending API routes
+- **ComfyUI repair workflows** (Session 22/LE-6): 3 repair types (inpaint, face-fix, lighting-harmonize) with composable node graph builder, repair menu in shot editor, POST /content/repair-shot API route
+- **Identity drift detection** (Session 22/LE-5): Statistical image fingerprinting (color histogram, quadrant analysis, spatial frequency), drift comparison, temporal flicker detection, auto-conditioning (LoRA boost, CFG increase, seed lock, denoise reduction)
+- **Specialized agent system** (Session 22/LE-1): 7 cinema agents (Director, LookDev, ShotSpec, Render, Dialogue, Sound, Finishing), 5-phase orchestrator with parallel execution, QC gates, retry logic, GET/POST /ai/agents API route
+- **Lip-sync pipeline** (Session 22/LE-2): 15-viseme system (Preston Blair), phoneme-to-viseme mapping, word timing estimation, frame-indexed timeline for Remotion, lip-sync settings in shot properties
 - **Three-tier complexity UI toggle** (Session 21/ME-1): Simple/Advanced/Complex mode stored in localStorage controls Studio shot-editor and Create wizard field visibility. Toggle appears in Studio top bar and Create wizard header.
 - **Providers wrapper** (Session 21/ME-1): Client-side providers component wrapping root layout for app-wide React context.
 - **Preset registry + resolver** (Session 21/ME-2): 15 built-in presets (visual/camera/audio/output) + 3 recipes (Explainer, Cinematic Short, TikTok Hook). Deterministic deep-merge resolver with 3-layer precedence. Tabbed PresetPicker UI with search.

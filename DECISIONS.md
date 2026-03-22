@@ -230,6 +230,36 @@
 **Decision**: Use simplified ITU-R BS.1770-4 with 400ms sliding window for LUFS measurement, with a -70 LUFS absolute gate.
 **Rationale**: Full ITU-R BS.1770-4 requires K-weighting filters which add complexity. The simplified approach (RMS-based with a sliding window and gate) provides sufficient accuracy for automated loudness normalization in a content pipeline. Platform targets: -14 LUFS (YouTube), -16 LUFS (broadcast).
 
+## D048: Prompt Safety Linting
+**Date**: 2026-03-22
+**Decision**: Use pattern-based prompt safety linting (regex) for 8 categories (violence, sexual, hate, self_harm, illegal, pii, copyright, deceptive) rather than ML-based content moderation.
+**Rationale**: Pattern matching is fast, deterministic, runs offline, and has zero inference cost. Sufficient for pre-generation filtering. ML-based moderation can be added as a secondary pass for edge cases.
+
+## D049: Viral Scoring Heuristics
+**Date**: 2026-03-22
+**Decision**: Viral scoring uses heuristic analysis (pacing metrics, emotional keywords, platform duration fit, trend keyword matching, CTA detection) rather than ML models.
+**Rationale**: No training data available for our specific content types. Heuristic approach is interpretable (each dimension has clear factors), fast, and can be refined incrementally. Integrates into final review as an automatic advisory step.
+
+## D050: Identity Drift via Statistical Fingerprinting
+**Date**: 2026-03-22
+**Decision**: Use statistical image fingerprinting (color histograms, quadrant brightness/entropy, spatial frequency energy) as a proxy for character identity consistency rather than face embeddings or CLIP.
+**Rationale**: Face embedding models require GPU inference and ML dependencies. Statistical fingerprinting is fast (pure math), runs on raw image bytes, and provides a "good enough" signal for detecting visual drift between shots. Can be upgraded to CLIP/face embedding later.
+
+## D051: 5-Phase Agent DAG
+**Date**: 2026-03-22
+**Decision**: The 7 cinema agents execute in a 5-phase DAG: Director → LookDev+Dialogue → ShotSpec → Render+Sound → Finishing. Agents within a phase run in parallel.
+**Rationale**: Dependencies between agents form a natural DAG. The Director must set vision before LookDev/Dialogue can work. ShotSpec needs both LookDev and Dialogue outputs. Render and Sound can process shots independently. Finishing is a final pass.
+
+## D052: Letter-Based Viseme Approximation
+**Date**: 2026-03-22
+**Decision**: Lip-sync uses letter/digraph-based phoneme approximation rather than audio analysis (forced alignment).
+**Rationale**: Forced alignment requires audio input, which isn't available during pre-production planning. Letter-based approximation provides a viseme timeline from text alone, suitable for subtitle-only and overlay modes. Character-rig mode can upgrade to audio-based alignment at render time.
+
+## D053: A/B Test Significance via Z-Test
+**Date**: 2026-03-22
+**Decision**: A/B test statistical significance uses a two-proportion z-test with Abramowitz & Stegun normal CDF approximation.
+**Rationale**: The z-test is the standard approach for comparing two proportions (engagement rates). The Abramowitz & Stegun approximation is fast and accurate to 7+ decimal places. No external statistics library needed.
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

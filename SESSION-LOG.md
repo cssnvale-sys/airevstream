@@ -4,6 +4,86 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 22 — LE-1 through LE-6 Cinema Pipeline Enhancements
+
+**Date:** 2026-03-22
+**Focus:** Complete remaining Cinema Pipeline Gap Analysis items: LE-1 through LE-6.
+
+### What Was Done
+
+#### LE-6: ComfyUI Repair Workflows
+- `composeRepairWorkflow()` in comfyui-composer.ts — 3 repair types: inpaint (masked inpaint), face-fix (auto face mask detect), lighting-harmonize (ColorMatch + low-denoise)
+- `ProductionRepairShotJob` queue job type, `handleRepairShot()` in production worker
+- POST /content/repair-shot API route with Zod validation, tenant scoping
+- Repair dropdown menu in shot-editor-panel.tsx
+
+#### LE-5: Identity Drift Detection + Visual QC
+- `identity-drift.ts` — fingerprinting (color histogram, quadrant brightness/entropy, spatial frequency), drift comparison (chi-squared distance, brightness shift, structural drift), temporal flicker detection
+- 6th QC dimension `identityDrift` with reference-aware weight distribution
+- Auto-conditioning on drift: LoRA strength boost, CFG increase, seed lock, denoise reduction
+- QC gate loads character reference from cinema bible for drift detection
+
+#### LE-1: Specialized Agent System
+- `agents/` directory: agent-types.ts, agent-prompts.ts, agent-orchestrator.ts
+- 7 agents: Director, LookDev, ShotSpec, Render, Dialogue, Sound, Finishing
+- 5-phase execution: Director → LookDev+Dialogue → ShotSpec → Render+Sound → Finishing
+- QC gates, retry logic, parallel execution within phases
+- GET/POST /ai/agents API route
+
+#### LE-2: Lip-Sync Pipeline
+- `lip-sync.ts` — 15-viseme system (Preston Blair), phoneme mapping, word timing, frame timeline
+- `synthesizeWithLipSync()` in TTS client
+- Lip-sync section in shot-properties (advanced mode): enable toggle, mode selector, smoothing/exaggeration
+- ShotSpec extended with lipSync config
+
+#### LE-4: C2PA Provenance + Safety Pipeline
+- `provenance.ts` — ProvenanceRecord, C2PAManifest, lintPrompt() (8 safety categories), createProvenanceRecord(), generateC2PAManifest()
+- Production worker: prompt linting + provenance record creation during shot generation
+- GET /content/provenance API route
+- ProvenanceViewer component in Studio right panel (advanced mode)
+
+#### LE-3: Viral Video Discovery & Testing
+- `viral-scoring.ts` — 6-dimension scoring (hook, retention, CTA, shareability, platform fit, trend alignment), tier classification, trend matching, A/B test significance calculator
+- Content worker: viral scoring integrated into final review handler
+- `content:viral-score` queue job type with standalone handler
+- GET /content/viral-score API route (with 1-hour caching)
+- GET /trending API route (queries knowledge base trends)
+- ViralScorePanel component in Studio right panel (advanced mode)
+
+### Architecture Decisions
+- D048: Prompt safety uses pattern-based linting (no ML) for 8 categories; prompts are linted before generation
+- D049: Viral scoring is heuristic-based (no ML), integrated into final review as automatic step
+- D050: Identity drift uses statistical fingerprinting as lightweight proxy for face/character embedding
+- D051: Agent system uses 5-phase DAG with parallel execution within phases (LookDev+Dialogue, Render+Sound)
+- D052: Lip-sync uses letter-based phoneme approximation for offline viseme generation (no audio analysis)
+- D053: A/B test significance uses two-proportion z-test with Abramowitz & Stegun normal CDF approximation
+
+### Files Created
+- `packages/shared/src/provenance.ts`, `packages/shared/src/viral-scoring.ts`
+- `packages/shared/src/identity-drift.ts`, `packages/shared/src/lip-sync.ts`
+- `packages/shared/src/agents/agent-types.ts`, `packages/shared/src/agents/agent-prompts.ts`, `packages/shared/src/agents/agent-orchestrator.ts`, `packages/shared/src/agents/index.ts`
+- `apps/web/src/app/api/v1/content/provenance/route.ts`, `apps/web/src/app/api/v1/content/viral-score/route.ts`
+- `apps/web/src/app/api/v1/content/repair-shot/route.ts`, `apps/web/src/app/api/v1/trending/route.ts`
+- `apps/web/src/app/api/v1/ai/agents/route.ts`
+- `apps/web/src/components/cinema/provenance-viewer.tsx`, `apps/web/src/components/cinema/viral-score-panel.tsx`
+
+### Files Modified
+- `packages/shared/src/index.ts`, `packages/shared/src/types.ts`, `packages/shared/src/qc-scoring.ts`
+- `packages/shared/src/comfyui-composer.ts`
+- `packages/queue/src/index.ts`
+- `packages/audio-engine/src/types.ts`, `packages/audio-engine/src/tts-client.ts`
+- `workers/src/production.worker.ts`, `workers/src/content.worker.ts`
+- `apps/web/src/app/studio/[contentId]/page.tsx`
+- `apps/web/src/components/cinema/shot-editor-panel.tsx`, `apps/web/src/components/cinema/shot-properties.tsx`
+- `apps/web/src/lib/complexity-fields.ts`
+- `apps/web/src/__tests__/audit/data-shape.audit.test.ts`
+
+### Build Status
+- 14 packages building, all tests passing
+- 24 audit tests passing, 0 regressions
+
+---
+
 ## Session 21 — ME-1 through ME-6 Feature Batch
 
 **Date:** 2026-03-22

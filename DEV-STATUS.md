@@ -122,6 +122,16 @@
 | ME-5 | Seed policy system | Done | 4 policies (free/shot-offset/scene-lock/series-lock), XOR hash, UI controls |
 | ME-6 | Cost estimation + budgets | Done | Pipeline cost estimator, CRUD budget page, sidebar nav, Create wizard cost preview |
 
+### Phase 8C: Cinema Pipeline Enhancements (Session 22) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| LE-6 | ComfyUI repair workflows | Done | 3 repair types (inpaint, face-fix, lighting-harmonize), composable node graphs |
+| LE-5 | Identity drift detection | Done | Statistical fingerprinting, drift comparison, flicker detection, auto-conditioning |
+| LE-1 | Specialized agent system | Done | 7 agents, 5-phase orchestrator, QC gates, retry logic |
+| LE-2 | Lip-sync pipeline | Done | 15-viseme system, phoneme mapping, word timing, frame timeline |
+| LE-4 | C2PA provenance + safety | Done | ProvenanceRecord, C2PAManifest, prompt safety linting, ProvenanceViewer |
+| LE-3 | Viral scoring + A/B testing | Done | 6-dimension scoring, trend matching, significance calculator, ViralScorePanel |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -150,7 +160,7 @@
 ## Architecture Highlights
 - **Prisma Schema**: 36 models with full-text search GIN indexes on key tables
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: 108 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Next.js API Routes**: 118 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 4 compositions (short 9:16, long 16:9, thumbnail still, CinemaVideo 24fps) with H.I.C.C. beat timing — CinemaVideo now wired in render handler (Session 20)

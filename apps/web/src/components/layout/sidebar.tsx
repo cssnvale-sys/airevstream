@@ -13,6 +13,7 @@ import {
   BarChart3,
   Activity,
   BadgeDollarSign,
+  Wallet,
   Settings,
   LogOut,
   PanelLeftClose,
@@ -35,6 +36,7 @@ const navItems = [
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/system', label: 'System', icon: Activity },
   { href: '/affiliate', label: 'Affiliate', icon: BadgeDollarSign },
+  { href: '/budgets', label: 'Budgets', icon: Wallet },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 

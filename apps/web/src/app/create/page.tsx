@@ -23,6 +23,7 @@ import {
 import { ComplexityToggle } from '@/components/ui/complexity-toggle';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
+import { estimatePipelineCost, formatCost } from '@airevstream/shared';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1046,6 +1047,39 @@ export default function CreatePage() {
           </div>
         </div>
       </div>
+
+      {/* Cost Estimate */}
+      {(() => {
+        const estimate = estimatePipelineCost({
+          qualityTier,
+          durationSec: Number(formData.duration) || 30,
+          shotCount: formData.shots.length || 1,
+          isLocal: true,
+        });
+        return (
+          <div className="card">
+            <h3 className="text-card-title text-text-primary mb-3">Estimated Cost</h3>
+            <div className="flex items-baseline gap-2 mb-3">
+              <span className="text-2xl font-bold text-text-primary">
+                {formatCost(estimate.totalCost)}
+              </span>
+              <span className="text-xs text-text-tertiary">
+                ({estimate.breakdown.length} resource{estimate.breakdown.length !== 1 ? 's' : ''})
+              </span>
+            </div>
+            {estimate.totalCost > 0 && (
+              <div className="space-y-1">
+                {estimate.breakdown.map((item) => (
+                  <div key={item.category} className="flex justify-between text-xs">
+                    <span className="text-text-secondary">{item.description}</span>
+                    <span className="text-text-primary">{formatCost(item.estimatedCost)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {error && (
         <div className="bg-accent-red/10 border border-accent-red/30 rounded-md px-4 py-3 text-caption text-accent-red">

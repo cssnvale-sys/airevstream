@@ -2,6 +2,7 @@ export * from './comfyui-client.js';
 export * from './comfyui-composer.js';
 export * from './config.js';
 export * from './constants.js';
+export * from './cost-estimator.js';
 export * from './errors.js';
 export * from './logger.js';
 export * from './qc-scoring.js';

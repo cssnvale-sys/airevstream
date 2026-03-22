@@ -2,8 +2,8 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot } from '@airevstream/shared';
-import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning } from '@airevstream/shared';
+import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -490,7 +490,36 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
     await db.storyboardShot.update({ where: { id: shotId }, data: { status: 'generating' } });
 
     try {
-      const spec = (shot.shotspec as unknown as ShotSpec) ?? { promptBlocks: ['default scene'] };
+      let spec = (shot.shotspec as unknown as ShotSpec) ?? { promptBlocks: ['default scene'] };
+
+      // Apply identity drift adjustments if present (set by QC gate retry)
+      const driftAdj = (shot.shotspec as Record<string, unknown>)?.driftAdjustments as Record<string, unknown> | undefined;
+      if (driftAdj) {
+        if (driftAdj.loraStrengthMultiplier && spec.generation?.loras) {
+          const multiplier = driftAdj.loraStrengthMultiplier as number;
+          spec = {
+            ...spec,
+            generation: {
+              ...spec.generation,
+              loras: spec.generation.loras.map(l => ({
+                ...l,
+                strength: Math.min(2.0, l.strength * multiplier),
+              })),
+            },
+          };
+          logger.info({ shotId, multiplier }, 'Applied LoRA strength boost for identity consistency');
+        }
+        if (driftAdj.cfgBoost && spec.generation) {
+          spec = { ...spec, generation: { ...spec.generation, cfg: (spec.generation.cfg ?? 7) + (driftAdj.cfgBoost as number) } };
+        }
+        if (driftAdj.seedLocked) {
+          spec = { ...spec, seedLocked: true };
+        }
+        if (driftAdj.denoiseReduction && spec.generation) {
+          const currentDenoise = spec.generation.denoise ?? 1.0;
+          spec = { ...spec, generation: { ...spec.generation, denoise: Math.max(0.3, currentDenoise - (driftAdj.denoiseReduction as number)) } };
+        }
+      }
 
       // Compose and run workflow
       const workflow = composeWorkflow(spec, promptBible);
@@ -539,8 +568,36 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
     orderBy: { shotNumber: 'asc' },
   });
 
+  // Load character reference from cinema bible for identity drift detection
+  let referenceFingerprint: ImageFingerprint | undefined;
+  try {
+    const storyboard = await db.storyboard.findUnique({
+      where: { id: data.storyboardId },
+      select: { contentId: true },
+    });
+    if (storyboard) {
+      const cinemaBible = await db.cinemaBible.findFirst({
+        orderBy: { updatedAt: 'desc' },
+        select: { characterBible: true },
+      });
+      const charBible = cinemaBible?.characterBible as Record<string, unknown> | null;
+      const faceRef = charBible?.faceRef as string | undefined;
+      if (faceRef) {
+        const slashIdx = faceRef.indexOf('/');
+        const bucket = faceRef.slice(0, slashIdx);
+        const key = faceRef.slice(slashIdx + 1);
+        const refBuffer = await downloadBuffer(bucket, key);
+        referenceFingerprint = extractFingerprint(refBuffer);
+        logger.info('Loaded character reference fingerprint for identity drift detection');
+      }
+    }
+  } catch (err) {
+    logger.debug({ err }, 'Could not load character reference — skipping identity drift detection');
+  }
+
   let allApproved = true;
   let previousShotBuffer: Buffer | undefined;
+  const allShotBuffers: Buffer[] = [];
 
   for (const shot of shots) {
     const keyframeUrls = shot.keyframeUrls as string[] | null;
@@ -575,7 +632,9 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
       continue;
     }
 
-    // Run the 5-dimension QC scorer
+    allShotBuffers.push(imageBuffer);
+
+    // Run the 6-dimension QC scorer (including identity drift)
     const spec = (shot.shotspec as unknown as ShotSpec) ?? {};
     const expectedWidth = spec.generation?.width ?? 1024;
     const expectedHeight = spec.generation?.height ?? 1024;
@@ -588,6 +647,7 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
       expectedWidth,
       expectedHeight,
       previousShotBuffer,
+      referenceFingerprint,
       prompt,
     });
 
@@ -604,11 +664,25 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
       // Check retry count — re-queue for generation if retries remain
       const retryCount = ((shot.shotspec as Record<string, unknown>)?.qcRetryCount as number) ?? 0;
       if (retryCount < MAX_QC_RETRIES) {
+        // Check for identity drift and compute conditioning adjustments
+        const identityScore = qcResult.dimensions.identityDrift;
+        let driftAdjustments: Record<string, unknown> | undefined;
+        if (referenceFingerprint && identityScore < 65) {
+          const currentFp = extractFingerprint(imageBuffer);
+          const driftResult = compareFingerprints(referenceFingerprint, currentFp);
+          const conditioning = recommendConditioning(driftResult);
+          if (Object.keys(conditioning.adjustments).length > 0) {
+            driftAdjustments = conditioning.adjustments;
+            logger.info({ shotId: shot.id, adjustments: driftAdjustments }, `Drift conditioning: ${conditioning.message}`);
+          }
+        }
+
         // Increment seed and retry count, re-queue for generation
         const updatedSpec = {
           ...spec,
           seed: (spec.seed ?? Math.floor(Math.random() * 2147483647)) + 1,
           qcRetryCount: retryCount + 1,
+          ...(driftAdjustments ? { driftAdjustments } : {}),
         };
         await db.storyboardShot.update({
           where: { id: shot.id },
@@ -645,6 +719,17 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
 
     // Pass current image as reference for consistency scoring on next shot
     previousShotBuffer = imageBuffer;
+  }
+
+  // Temporal flicker detection across all shots
+  if (allShotBuffers.length >= 3) {
+    const flickerResult = detectFlicker(allShotBuffers);
+    if (flickerResult.flickering) {
+      logger.warn(
+        { storyboardId: data.storyboardId, flickerScore: flickerResult.flickerScore, transitions: flickerResult.transitionCount },
+        `Flicker detected: ${flickerResult.message}`,
+      );
+    }
   }
 
   // Update storyboard status

@@ -5,6 +5,8 @@
  * Scores are 0-100, mapped to quality thresholds for auto-approve/reject.
  */
 
+import { extractFingerprint, compareFingerprints, type ImageFingerprint, type DriftResult } from './identity-drift.js';
+
 // ─── Score Types ───
 
 export interface QCScoreResult {
@@ -29,6 +31,8 @@ export interface QCDimensions {
   composition: number;
   /** Color quality: dynamic range, color distribution */
   colorQuality: number;
+  /** Identity drift: character/subject consistency with reference (0-100, 100=identical) */
+  identityDrift: number;
 }
 
 export interface QCIssue {
@@ -50,6 +54,10 @@ export interface QCShotContext {
   expectedHeight?: number;
   /** Previous shot's image buffer (for consistency scoring) */
   previousShotBuffer?: Buffer;
+  /** Character reference image buffer (for identity drift detection) */
+  referenceBuffer?: Buffer;
+  /** Pre-computed reference fingerprint (more efficient than re-extracting) */
+  referenceFingerprint?: ImageFingerprint;
   /** Prompt used for generation */
   prompt?: string;
 }
@@ -60,23 +68,37 @@ export interface QCShotContext {
  * Score a generated shot across all quality dimensions.
  */
 export function scoreShot(context: QCShotContext): QCScoreResult {
+  const identityResult = scoreIdentityDrift(context);
+
   const dimensions: QCDimensions = {
     technical: scoreTechnical(context),
     promptAdherence: scorePromptAdherence(context),
     consistency: scoreConsistency(context),
     composition: scoreComposition(context),
     colorQuality: scoreColorQuality(context),
+    identityDrift: identityResult.score,
   };
 
   const issues = collectIssues(dimensions, context);
 
-  // Weighted average for overall score
+  // Add identity-specific issues
+  if (identityResult.driftResult?.drifted) {
+    issues.push({
+      dimension: 'identityDrift',
+      severity: identityResult.driftResult.driftScore > 60 ? 'error' : 'warning',
+      message: identityResult.driftResult.message,
+    });
+  }
+
+  // Weighted average for overall score — identity drift only counted when reference available
+  const hasReference = !!(context.referenceBuffer || context.referenceFingerprint);
   const weights = {
-    technical: 0.25,
-    promptAdherence: 0.25,
-    consistency: 0.20,
-    composition: 0.15,
-    colorQuality: 0.15,
+    technical: hasReference ? 0.22 : 0.25,
+    promptAdherence: hasReference ? 0.22 : 0.25,
+    consistency: hasReference ? 0.18 : 0.20,
+    composition: hasReference ? 0.13 : 0.15,
+    colorQuality: hasReference ? 0.13 : 0.15,
+    identityDrift: hasReference ? 0.12 : 0,
   };
 
   const overall = Math.round(
@@ -84,7 +106,8 @@ export function scoreShot(context: QCShotContext): QCScoreResult {
     dimensions.promptAdherence * weights.promptAdherence +
     dimensions.consistency * weights.consistency +
     dimensions.composition * weights.composition +
-    dimensions.colorQuality * weights.colorQuality,
+    dimensions.colorQuality * weights.colorQuality +
+    dimensions.identityDrift * weights.identityDrift,
   );
 
   const recommendation = getRecommendation(overall);
@@ -293,6 +316,32 @@ function scoreColorQuality(context: QCShotContext): number {
   }
 
   return Math.max(0, Math.min(100, score));
+}
+
+// ─── Identity Drift Scorer ───
+
+/**
+ * Score identity consistency against a reference image.
+ * Returns 100 when perfectly matching, lower when drifted.
+ */
+function scoreIdentityDrift(context: QCShotContext): {
+  score: number;
+  driftResult?: DriftResult;
+} {
+  const ref = context.referenceFingerprint
+    ?? (context.referenceBuffer ? extractFingerprint(context.referenceBuffer) : undefined);
+
+  if (!ref) {
+    return { score: 85 }; // No reference — assume acceptable identity
+  }
+
+  const currentFp = extractFingerprint(context.imageBuffer);
+  const driftResult = compareFingerprints(ref, currentFp);
+
+  // Invert drift score: 0 drift → 100 score, 100 drift → 0 score
+  const score = Math.max(0, Math.min(100, 100 - driftResult.driftScore));
+
+  return { score, driftResult };
 }
 
 // ─── Utility Functions ───

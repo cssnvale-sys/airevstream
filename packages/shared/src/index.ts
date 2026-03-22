@@ -1,4 +1,5 @@
 export * from './comfyui-client.js';
+export * from './identity-drift.js';
 export * from './comfyui-composer.js';
 export * from './config.js';
 export * from './constants.js';

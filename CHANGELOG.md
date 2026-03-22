@@ -6,6 +6,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Three-tier complexity UI toggle** (Session 21): Simple/Advanced/Complex mode stored in localStorage controls which Studio shot-editor fields and Create wizard sections are visible. Simple shows only essentials (prompt, lens, framing, duration); Advanced adds camera movement/DOF, generation, color grade, lighting, FPS, timeline audio/beats tracks; Complex adds post-process, VFX, audio plan, raw JSON viewer. Toggle appears in Studio top bar and Create wizard header.
+- **Providers wrapper** (Session 21): Client-side providers component wrapping root layout — keeps layout.tsx as server component while enabling app-wide React context.
+- **QC gate real scoring** (Session 20): 5-dimension QC scoring (technical, prompt adherence, consistency, composition, color) now wired into production worker QC gate — replaces trivial binary check
+- **Per-shot QC retry** (Session 20): Shots that fail QC get seed-incremented and re-queued for generation (max 2 retries) before marking as failed
+- **CinemaVideo composition rendering** (Session 20): Cinema quality tier now renders using CinemaVideo Remotion composition (24fps, ProRes, camera motion, color grading, multi-track audio)
+- **Multi-layer audio mixing** (Session 20): Audio mix handler now processes BG (ambient/music), MG (effects/room tone), and FG (dialogue) layers from ShotSpec audioPlan — was FG-only
+- **AI guidance panel live** (Session 20): Studio page calls guidance API on shot selection change with 500ms debounce, populates suggestions panel with actionable recommendations
+- **qualityPreset in render job** (Session 20): `ProductionRenderVideoJob` now carries `qualityPreset` field, propagated through cinema pipeline DAG
+
 ### Fixed
 - **TextOverlay exit animation bug** (Session 19): Both ternary branches were identical, causing exit animations to play like enter animations
 - **request.userId bug** (Session 19): Workflow-engine approve/bulk-approve used non-existent `(request as any).userId`; changed to `request.user?.sub`

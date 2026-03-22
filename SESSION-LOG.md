@@ -4,6 +4,71 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 21 — Three-Tier Complexity UI Toggle (ME-1)
+
+**Date:** 2026-03-22
+**Focus:** Add a Simple/Advanced/Complex UI complexity mode that controls which fields/sections are visible in Studio and Create wizard — no backend changes needed.
+
+### What Was Done
+- **complexity-fields.ts** — Pure data config mapping sections/fields to minimum required complexity mode (Simple/Advanced/Complex). `isVisible(minMode, currentMode)` helper function.
+- **use-complexity-mode.tsx** — React context + `useComplexityMode()` hook. Reads/writes `localStorage` key `airevstream_complexity_mode`. Default: `simple`.
+- **providers.tsx** — Client provider wrapper, imported in root `layout.tsx` to make complexity context available app-wide.
+- **complexity-toggle.tsx** — Segmented control component (Simple | Advanced | Complex) with dark theme styling.
+- **shot-properties.tsx** — Core change: wrapped Camera (movement/DOF), Generation section + inner fields (sampler/scheduler/width/height), Color Grade, Lighting, Timing (FPS) with `isVisible()` checks. Added 4 new Complex-only sections: Post-Process (sharpen/denoise/vignette/film grain sliders), VFX (lens flare/chromatic aberration checkboxes), Audio Plan (BG/MG/FG text fields), Raw JSON viewer.
+- **timeline.tsx** — Audio BG and Beats tracks conditionally rendered (advanced+). Container height dynamically adjusts based on visible track count.
+- **studio/[contentId]/page.tsx** — ComplexityToggle in top bar between status badge and Render button.
+- **create/page.tsx** — ComplexityToggle in page header. Affiliate Integration section hidden in Simple mode.
+
+### Architecture Decisions
+- D043: UI complexity mode stored in localStorage, not database — no migration needed, purely frontend concern
+
+### Files Changed
+- `apps/web/src/lib/complexity-fields.ts` (new)
+- `apps/web/src/hooks/use-complexity-mode.tsx` (new)
+- `apps/web/src/app/providers.tsx` (new)
+- `apps/web/src/components/ui/complexity-toggle.tsx` (new)
+- `apps/web/src/app/layout.tsx` (modified — wrap children in Providers)
+- `apps/web/src/components/cinema/shot-properties.tsx` (modified — visibility logic + 4 new sections)
+- `apps/web/src/components/cinema/timeline.tsx` (modified — conditional track rendering)
+- `apps/web/src/app/studio/[contentId]/page.tsx` (modified — toggle in top bar)
+- `apps/web/src/app/create/page.tsx` (modified — toggle in header, affiliate hidden in Simple)
+
+### Build Status
+- 14 packages building, all tests passing
+- 24 audit tests passing, 0 regressions
+
+---
+
+## Session 20 — Cinema Pipeline Quick Wins (Phase A)
+
+**Date:** 2026-03-22
+**Focus:** Wire existing but disconnected cinema pipeline code — QC scoring, CinemaVideo composition, multi-layer audio, AI guidance panel
+
+### What Was Done
+- **QW-1: Wired `qc-scoring.ts` into QC gate handler** — Replaced trivial binary keyframe-presence check with real 5-dimension `scoreShot()` call. Downloads keyframe from storage, evaluates technical quality, prompt adherence, consistency (vs previous shot), composition, and color quality. Uses QUALITY_THRESHOLDS for auto-approve (≥85), review (60-84), reject/regenerate (<60).
+- **QW-6: Per-shot retry on QC failure** — When a shot scores below reject threshold, increments seed, bumps `qcRetryCount`, and re-queues for generation (max 2 retries). Only fails after exhausting retries.
+- **QW-2: Wired CinemaVideo Remotion composition in render handler** — Added `qualityPreset` field to `ProductionRenderVideoJob`. Cinema tier now selects `CinemaVideo` composition with 24fps, ProRes codec, camera motion, per-shot color grading, multi-track audio, and global color grade from Cinema Bible. Non-cinema tiers unchanged (ShortFormVideo/LongFormVideo, h264).
+- **QW-3: Wired BG/MG audio layers in mix handler** — Extended `handleMixAudio` to process all three AudioPlan layers (BG background, MG midground, FG foreground). BG/MG layers source from storage (`fileKey`) or TTS (`text`+`voice`). BG defaults to loop with 2s fade in/out. Volume defaults: BG=0.3, MG=0.5, FG=0.9.
+- **QW-5: Wired AI guidance panel in Studio** — Studio page now calls `POST /api/v1/ai/guidance` when shot selection changes (500ms debounce). Populates suggestions array from rule-based engine (camera, generation, prompt, timing, audio rules). Apply button patches ShotSpec.
+
+### Architecture Decisions
+- D040: QC gate downloads keyframe images and runs real 5-dimension scoring
+- D041: Cinema tier uses ProRes codec for archival quality, h264 for social tiers
+- D042: QC retry increments seed (not random) for reproducible regeneration
+
+### Files Changed
+- `workers/src/production.worker.ts` — QC gate, render handler, audio mix handler
+- `packages/queue/src/index.ts` — Added `qualityPreset` to `ProductionRenderVideoJob`
+- `packages/queue/src/flows.ts` — Pass `qualityPreset` through cinema pipeline DAG
+- `apps/web/src/app/studio/[contentId]/page.tsx` — AI guidance fetching on shot selection
+
+### Build Status
+- 14 packages building, all tests passing
+- 24 audit tests passing, 0 regressions
+- 4 architecture conflicts from gap analysis resolved (QC scoring bypassed, CinemaVideo unused, audio BG/MG unused, guidance panel empty)
+
+---
+
 ## Session 19 — Full Codebase Audit-Fix Cycle
 
 **Date:** 2026-03-22

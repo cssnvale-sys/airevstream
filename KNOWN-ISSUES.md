@@ -57,9 +57,21 @@ Several models lack `tenantId` and cannot be tenant-scoped without a Prisma sche
 
 ### KI-050: QC Scoring Uses Heuristics Not ML
 **Severity**: Low
-**Status**: By Design (Session 15)
-The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level statistics for quality evaluation. Prompt adherence scoring is limited without a CLIP model. This is intentional for the zero-dependency baseline; ML-based scoring is a future enhancement.
+**Status**: By Design (Sessions 15+20)
+The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level statistics for quality evaluation. Now wired into the QC gate (Session 20) with per-shot retry. Prompt adherence scoring is limited without a CLIP model. This is intentional for the zero-dependency baseline; ML-based scoring is a future enhancement.
 **Action**: Integrate CLIP-based prompt adherence scoring when an inference endpoint is available.
+
+### KI-057: Cinema Bible LoRA/Lens Fields Not in UI
+**Severity**: Medium
+**Status**: Open (Session 20 gap analysis)
+`LookBible.loras`, `LookBible.lensKit`, `CharacterBible.characterLoras`, `EnvironmentBible.lightingSetups` are all typed but have no UI editor in the Cinema Bible settings page.
+**Action**: Add LoRA picker (from ComfyUI model list API), lens kit editor, color pipeline editor to Bible tabs.
+
+### KI-058: Empty ComfyUI Workflow Subdirectories
+**Severity**: Low
+**Status**: Open (Session 20 gap analysis)
+`comfyui-workflows/character/`, `environment/`, `style/`, `upscale/` are empty reserved directories. Should be populated with actual workflow templates or removed.
+**Action**: Populate with ComfyUI workflow JSON templates for each category, or remove if not needed.
 
 ### KI-056: Port 3000 Conflict with External Project — Fixed (Session 18)
 **Severity**: Medium

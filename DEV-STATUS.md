@@ -112,6 +112,17 @@
 | 7.11 | Quality tier selector | Done | Quick/Standard/Cinema tiers in create wizard |
 | 7.12 | Unit tests | Done | 37 tests: composer (16), QC scoring (9), mixer (7), constants (5) |
 
+### Phase 8B: UX Improvements (Session 21) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| 8B.1 | Complexity mode config | Done | `complexity-fields.ts` — field visibility map + `isVisible()` helper |
+| 8B.2 | Complexity context/hook | Done | `use-complexity-mode.tsx` — React context + localStorage persistence |
+| 8B.3 | Providers wrapper | Done | `providers.tsx` wrapping root layout for client contexts |
+| 8B.4 | Complexity toggle UI | Done | Segmented control component (Simple/Advanced/Complex) |
+| 8B.5 | Shot properties visibility | Done | 6 existing sections + 4 new Complex-only sections with `isVisible()` checks |
+| 8B.6 | Timeline conditional tracks | Done | Audio BG + Beats tracks hidden in Simple mode, dynamic height |
+| 8B.7 | Studio + Create integration | Done | Toggle in Studio top bar + Create header, affiliate hidden in Simple |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -143,12 +154,12 @@
 - **Next.js API Routes**: 108 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
-- **Remotion**: 3 compositions (short 9:16, long 16:9, thumbnail still) with H.I.C.C. beat timing
+- **Remotion**: 4 compositions (short 9:16, long 16:9, thumbnail still, CinemaVideo 24fps) with H.I.C.C. beat timing — CinemaVideo now wired in render handler (Session 20)
 - **ComfyUI**: 4 SDXL workflow templates with {{placeholder}} syntax + client API wrapper + template renderer
-- **Audio Engine**: @airevstream/audio-engine with TTSClient supporting Piper (local) and ElevenLabs (cloud) providers, placeholder fallback
-- **Production Worker**: Image generation (ComfyUI), video render (Remotion CLI), audio generation (TTS), storyboard generation (H.I.C.C. section parser)
+- **Audio Engine**: @airevstream/audio-engine with TTSClient supporting Piper (local) and ElevenLabs (cloud) providers, 3-layer mixing (BG/MG/FG) now fully wired (Session 20)
+- **Production Worker**: Image generation (ComfyUI), video render (Remotion CLI with cinema tier support), audio generation (TTS), storyboard generation (H.I.C.C. section parser), 5-dimension QC scoring with per-shot retry (Session 20)
 - **Platform Posting**: 4 platform adapters (YouTube resumable upload, TikTok PULL_FROM_URL, Instagram container publish, Facebook Graph API), credential decryption, presigned URL resolution
-- **Quality Scoring**: 5-criteria algorithm (hook strength, length, CTA, readability, engagement) with 0-10 scale and breakdown
+- **Quality Scoring**: Content: 5-criteria (hook, length, CTA, readability, engagement) 0-10 scale. Shot QC: 5-dimension (technical, prompt adherence, consistency, composition, color) 0-100 scale — auto-approve/review/reject thresholds (Session 20)
 - **Content Variants**: A/B testing via version chains (parentId → variants), clone + modify API
 - **Intelligence Layer**: Knowledge base CRUD + keyword search, 4-tier action executor (11 actions with audit logging, rollback), context-aware chat (injects alerts, workflows, content queue, relevant KB entries)
 - **Storefronts**: Per-channel storefronts with product management, public link redirect with click tracking + IP hashing, revenue analytics with time series

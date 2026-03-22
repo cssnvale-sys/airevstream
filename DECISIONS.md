@@ -190,6 +190,26 @@
 **Decision**: `extractHandlers()` in audit-helpers.ts now skips past the function parameter list (counting parentheses) before finding the function body opening brace.
 **Rationale**: The previous implementation found the first `{` after the function name, which matched destructured parameters like `{ params }` instead of the function body. This caused the audit to extract the wrong text for handler body checks, masked by the known violation sets.
 
+## D040: QC Gate Real Scoring
+**Date**: 2026-03-22
+**Decision**: QC gate downloads keyframe images from storage and runs the 5-dimension `scoreShot()` function (technical, prompt adherence, consistency, composition, color quality) instead of a binary keyframe-presence check.
+**Rationale**: The scoring module existed but was never called. Using real scoring enables meaningful quality gating — auto-approve ≥85, manual review 60-84, reject/regenerate <60. Falls back to basic check if image download fails.
+
+## D041: Cinema Tier ProRes Codec
+**Date**: 2026-03-22
+**Decision**: Cinema quality tier renders using ProRes codec (.mov), while standard/draft tiers use h264 (.mp4).
+**Rationale**: ProRes preserves maximum quality for archival and re-editing. Social media export (h264) can be done as a secondary pass. The CinemaVideo composition runs at 24fps (cinema standard) vs 30fps for other compositions.
+
+## D042: QC Retry Seed Increment
+**Date**: 2026-03-22
+**Decision**: When a shot fails QC and is re-queued for generation, its seed is incremented by 1 (not randomized), with a `qcRetryCount` tracking retries (max 2).
+**Rationale**: Incrementing preserves reproducibility — you can predict and replay the retry sequence. Max 2 retries prevents infinite loops. After exhausting retries, the shot is marked as failed for manual review.
+
+## D043: UI Complexity Mode in localStorage
+**Date**: 2026-03-22
+**Decision**: Store the UI complexity mode (`simple`/`advanced`/`complex`) in `localStorage` rather than in the database.
+**Rationale**: This is purely a frontend display preference — the backend resolver runs identically regardless of mode. localStorage avoids a database migration, API endpoint, and latency for a per-device preference. If multi-device sync is needed later, it can be promoted to the User model.
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

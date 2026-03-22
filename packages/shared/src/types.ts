@@ -229,6 +229,8 @@ export interface PromptBible {
   qualityTokens?: string;
   styleTokens?: string;
   avoidTokens?: string;
+  defaultSeedPolicy?: SeedPolicy;
+  baseSeed?: number;
 }
 
 // ─── Cinema Pipeline Types ───
@@ -327,12 +329,25 @@ export interface AudioPlan {
   masterVolume?: number;     // 0.0-1.0
 }
 
+// ─── Seed Policy ───
+
+/**
+ * Controls how seeds are assigned to shots for generation consistency:
+ *   - free: random seed per shot (default)
+ *   - shot-offset: baseSeed + shotIndex — deterministic sequence
+ *   - scene-lock: same seed for all shots in a scene
+ *   - series-lock: same seed across episodes for character consistency
+ */
+export type SeedPolicy = 'free' | 'shot-offset' | 'scene-lock' | 'series-lock';
+
 // ─── ShotSpec ───
 export interface ShotSpec {
   // --- Existing fields ---
   promptBlocks: string[];
   references?: string[];
   seed?: number;
+  seedPolicy?: SeedPolicy;
+  seedLocked?: boolean;   // When true, seed is never overridden by policy resolution
   model?: string;
   duration?: number;
   fps?: number;

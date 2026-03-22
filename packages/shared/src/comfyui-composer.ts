@@ -13,6 +13,7 @@
 
 import type {
   ShotSpec,
+  SeedPolicy,
   LoraSpec,
   ControlNetSpec,
   UpscaleSpec,
@@ -105,6 +106,64 @@ export function composePrompt(
   return { positive, negative };
 }
 
+// ─── Seed Resolution ───
+
+export interface SeedContext {
+  shotIndex?: number;
+  sceneId?: string;
+  seriesId?: string;
+}
+
+/**
+ * Resolve the seed for a shot based on its seed policy.
+ *
+ * Resolution order:
+ *   1. If seedLocked=true, use spec.seed as-is (never override)
+ *   2. If spec.seed is set and policy is 'free', use spec.seed
+ *   3. Apply policy:
+ *      - free: random
+ *      - shot-offset: baseSeed + shotIndex
+ *      - scene-lock: hash(baseSeed + sceneId)
+ *      - series-lock: baseSeed (constant across all shots)
+ */
+export function resolveSeed(
+  spec: ShotSpec,
+  bible?: PromptBible,
+  seedCtx?: SeedContext,
+): number {
+  // Locked seeds are never overridden
+  if (spec.seedLocked && spec.seed != null) {
+    return spec.seed;
+  }
+
+  const policy: SeedPolicy = spec.seedPolicy ?? bible?.defaultSeedPolicy ?? 'free';
+  const baseSeed = bible?.baseSeed ?? spec.seed ?? Math.floor(Math.random() * 2147483647);
+
+  switch (policy) {
+    case 'free':
+      return spec.seed ?? Math.floor(Math.random() * 2147483647);
+
+    case 'shot-offset':
+      return baseSeed + (seedCtx?.shotIndex ?? 0);
+
+    case 'scene-lock': {
+      // Simple hash: baseSeed XOR'd with sceneId character codes
+      const sceneId = seedCtx?.sceneId ?? 'default';
+      let hash = baseSeed;
+      for (let i = 0; i < sceneId.length; i++) {
+        hash = ((hash << 5) - hash + sceneId.charCodeAt(i)) | 0;
+      }
+      return Math.abs(hash);
+    }
+
+    case 'series-lock':
+      return baseSeed;
+
+    default:
+      return spec.seed ?? Math.floor(Math.random() * 2147483647);
+  }
+}
+
 // ─── Base Workflow Builder ───
 
 /**
@@ -120,9 +179,10 @@ export function composePrompt(
 export function buildBaseWorkflow(
   spec: ShotSpec,
   bible?: PromptBible,
+  seedCtx?: SeedContext,
 ): { workflow: ComfyUIWorkflow; ctx: WorkflowContext } {
   const gen = spec.generation ?? {};
-  const seed = spec.seed ?? Math.floor(Math.random() * 2147483647);
+  const seed = resolveSeed(spec, bible, seedCtx);
   const { positive, negative } = composePrompt(spec, bible);
 
   const workflow: ComfyUIWorkflow = {};
@@ -526,8 +586,9 @@ export function addRefinerNodes(
 export function composeWorkflow(
   spec: ShotSpec,
   bible?: PromptBible,
+  seedCtx?: SeedContext,
 ): ComfyUIWorkflow & { resolvedSeed?: number } {
-  const { workflow, ctx } = buildBaseWorkflow(spec, bible);
+  const { workflow, ctx } = buildBaseWorkflow(spec, bible, seedCtx);
   let currentCtx = ctx;
 
   // Add LoRA chain if specified

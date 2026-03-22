@@ -42,6 +42,8 @@ export const FIELD_VISIBILITY = {
     steps: 'advanced' as ComplexityMode,
     cfg: 'advanced' as ComplexityMode,
     seed: 'advanced' as ComplexityMode,
+    seedPolicy: 'advanced' as ComplexityMode,
+    seedLock: 'advanced' as ComplexityMode,
     sampler: 'complex' as ComplexityMode,
     scheduler: 'complex' as ComplexityMode,
     width: 'complex' as ComplexityMode,

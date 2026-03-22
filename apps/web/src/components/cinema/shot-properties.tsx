@@ -19,6 +19,7 @@ const LENS_OPTIONS = ['24mm', '35mm', '50mm', '85mm', '135mm', 'anamorphic 50mm'
 const FRAMING_OPTIONS = ['extreme-close-up', 'close-up', 'medium', 'wide', 'extreme-wide'];
 const SAMPLER_OPTIONS = ['euler_ancestral', 'dpmpp_2m', 'dpmpp_sde', 'dpm_2', 'uni_pc'];
 const SCHEDULER_OPTIONS = ['normal', 'karras', 'exponential', 'sgm_uniform'];
+const SEED_POLICY_OPTIONS = ['free', 'shot-offset', 'scene-lock', 'series-lock'];
 
 export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
   const { mode } = useComplexityMode();
@@ -140,12 +141,38 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
               />
             )}
           </div>
-          <div className="mt-3">
-            <NumberField
-              label="Seed"
-              value={(spec.seed as number) ?? 0}
-              onChange={(v) => update('seed', v)}
-            />
+          <div className="mt-3 space-y-3">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <NumberField
+                  label="Seed"
+                  value={(spec.seed as number) ?? 0}
+                  onChange={(v) => update('seed', v)}
+                />
+              </div>
+              <button
+                onClick={() => update('seed', Math.floor(Math.random() * 2147483647))}
+                className="px-2.5 py-1.5 text-xs bg-bg-tertiary border border-border rounded-md text-text-secondary hover:text-text-primary hover:bg-border transition-colors"
+                title="Re-roll seed"
+              >
+                Re-roll
+              </button>
+            </div>
+            {isVisible(FIELD_VISIBILITY.generationFields.seedPolicy, mode) && (
+              <SelectField
+                label="Seed Policy"
+                value={(spec.seedPolicy as string) ?? 'free'}
+                options={SEED_POLICY_OPTIONS}
+                onChange={(v) => update('seedPolicy', v)}
+              />
+            )}
+            {isVisible(FIELD_VISIBILITY.generationFields.seedLock, mode) && (
+              <CheckboxField
+                label="Lock seed (prevent policy override)"
+                checked={(spec.seedLocked as boolean) ?? false}
+                onChange={(v) => update('seedLocked', v)}
+              />
+            )}
           </div>
         </CollapsibleSection>
       )}

@@ -7,8 +7,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- **Three-tier complexity UI toggle** (Session 21): Simple/Advanced/Complex mode stored in localStorage controls which Studio shot-editor fields and Create wizard sections are visible. Simple shows only essentials (prompt, lens, framing, duration); Advanced adds camera movement/DOF, generation, color grade, lighting, FPS, timeline audio/beats tracks; Complex adds post-process, VFX, audio plan, raw JSON viewer. Toggle appears in Studio top bar and Create wizard header.
-- **Providers wrapper** (Session 21): Client-side providers component wrapping root layout — keeps layout.tsx as server component while enabling app-wide React context.
+- **Three-tier complexity UI toggle** (Session 21/ME-1): Simple/Advanced/Complex mode stored in localStorage controls Studio shot-editor and Create wizard field visibility. Toggle appears in Studio top bar and Create wizard header.
+- **Providers wrapper** (Session 21/ME-1): Client-side providers component wrapping root layout for app-wide React context.
+- **Preset registry + resolver** (Session 21/ME-2): 15 built-in presets (visual/camera/audio/output) + 3 recipes (Explainer, Cinematic Short, TikTok Hook). Deterministic deep-merge resolver with 3-layer precedence. Tabbed PresetPicker UI with search.
+- **Multi-aspect export** (Session 21/ME-3): ExportVariant type in queue package. 4 format options (YouTube 16:9, Reels 9:16, Square 1:1, ProRes archive). Production worker respects variant dimensions/fps/codec. Batch export UI in Studio right panel.
+- **Audio ducking + loudness compliance** (Session 21/ME-4): LUFS measurement (ITU-R BS.1770-4 simplified), normalization to target LUFS, true peak limiting. Audio mixer supports ducking with RMS envelope detection and configurable attack/release.
+- **Seed policy system** (Session 21/ME-5): 4 seed policies (free/shot-offset/scene-lock/series-lock) with deterministic XOR hash. Re-roll button, policy selector, and seed lock toggle in shot properties.
+- **Cost estimation + budget UI** (Session 21/ME-6): Pipeline cost estimator with tier multipliers and category breakdown. Full CRUD budget management page with progress bars. Cost estimate preview in Create wizard Review step.
 - **QC gate real scoring** (Session 20): 5-dimension QC scoring (technical, prompt adherence, consistency, composition, color) now wired into production worker QC gate — replaces trivial binary check
 - **Per-shot QC retry** (Session 20): Shots that fail QC get seed-incremented and re-queued for generation (max 2 retries) before marking as failed
 - **CinemaVideo composition rendering** (Session 20): Cinema quality tier now renders using CinemaVideo Remotion composition (24fps, ProRes, camera motion, color grading, multi-track audio)

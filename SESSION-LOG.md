@@ -4,34 +4,76 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
-## Session 21 — Three-Tier Complexity UI Toggle (ME-1)
+## Session 21 — ME-1 through ME-6 Feature Batch
 
 **Date:** 2026-03-22
-**Focus:** Add a Simple/Advanced/Complex UI complexity mode that controls which fields/sections are visible in Studio and Create wizard — no backend changes needed.
+**Focus:** Implement 6 medium-effort features: Three-Tier Complexity UI Toggle, Preset Registry + Resolver, Multi-Aspect Export, Audio Ducking + Loudness, Seed Policy System, Cost Estimation + Budget UI.
 
 ### What Was Done
+
+#### ME-1: Three-Tier Complexity UI Toggle
 - **complexity-fields.ts** — Pure data config mapping sections/fields to minimum required complexity mode (Simple/Advanced/Complex). `isVisible(minMode, currentMode)` helper function.
 - **use-complexity-mode.tsx** — React context + `useComplexityMode()` hook. Reads/writes `localStorage` key `airevstream_complexity_mode`. Default: `simple`.
 - **providers.tsx** — Client provider wrapper, imported in root `layout.tsx` to make complexity context available app-wide.
 - **complexity-toggle.tsx** — Segmented control component (Simple | Advanced | Complex) with dark theme styling.
-- **shot-properties.tsx** — Core change: wrapped Camera (movement/DOF), Generation section + inner fields (sampler/scheduler/width/height), Color Grade, Lighting, Timing (FPS) with `isVisible()` checks. Added 4 new Complex-only sections: Post-Process (sharpen/denoise/vignette/film grain sliders), VFX (lens flare/chromatic aberration checkboxes), Audio Plan (BG/MG/FG text fields), Raw JSON viewer.
-- **timeline.tsx** — Audio BG and Beats tracks conditionally rendered (advanced+). Container height dynamically adjusts based on visible track count.
-- **studio/[contentId]/page.tsx** — ComplexityToggle in top bar between status badge and Render button.
-- **create/page.tsx** — ComplexityToggle in page header. Affiliate Integration section hidden in Simple mode.
+- **shot-properties.tsx** — Wrapped Camera (movement/DOF), Generation section + inner fields, Color Grade, Lighting, Timing (FPS) with `isVisible()` checks. Added 4 new Complex-only sections: Post-Process, VFX, Audio Plan, Raw JSON viewer.
+- **timeline.tsx** — Audio BG and Beats tracks conditionally rendered (advanced+). Dynamic container height.
+- **studio/[contentId]/page.tsx** — ComplexityToggle in top bar.
+- **create/page.tsx** — ComplexityToggle in header. Affiliate section hidden in Simple mode.
+
+#### ME-2: Preset Registry + Resolver System
+- **presets/schema.ts** — Zod schemas for Preset, Recipe, PresetFamily types.
+- **presets/built-in.ts** — 15 built-in presets (6 visual, 5 camera, 4 audio) + 3 recipes (Explainer, Cinematic Short, TikTok Hook).
+- **presets/resolver.ts** — `resolvePresets()` with deterministic deep merge: recipe → presets → user overrides.
+- **preset-picker.tsx** — Tabbed UI (Recipes/Visual/Camera/Audio/Output) with search and one-click apply.
+- **shot-editor-panel.tsx** — Wired PresetPicker in right panel (advanced+ mode).
+
+#### ME-3: Multi-Aspect Export from Single Timeline
+- **ExportVariant type** — Added to `@airevstream/queue` with width/height/fps/aspect/codec fields.
+- **export-variants.tsx** — 4 format options (YouTube 16:9, Reels 9:16, Square 1:1, ProRes archive) with batch export.
+- **production.worker.ts** — `handleRenderVideo` now respects `exportVariant` dimensions, fps, and codec.
+- **studio/[contentId]/page.tsx** — ExportVariants in right panel (advanced+ mode).
+
+#### ME-4: Audio Ducking + Loudness Compliance
+- **loudness.ts** — `measureLufs()` (ITU-R BS.1770-4 simplified), `normalizeLufs()`, `applyTruePeakLimiter()`.
+- **AudioDuckingConfig/LoudnessConfig types** — Added to audio-engine types.
+- **mixer.ts** — `mixWithDucking()` with RMS envelope detection, configurable attack/release, per-track ducking. LUFS normalization + true peak limiting applied to final mix.
+
+#### ME-5: Seed Policy System
+- **SeedPolicy type** — `'free' | 'shot-offset' | 'scene-lock' | 'series-lock'` added to shared types.
+- **resolveSeed()** — In `comfyui-composer.ts`, deterministic seed computation using XOR hash for scene/series lock.
+- **shot-properties.tsx** — Re-roll button, seed policy selector, seed lock toggle in Generation section.
+
+#### ME-6: Cost Estimation + Budget UI
+- **cost-estimator.ts** — `estimatePipelineCost()` with tier multipliers and category breakdown.
+- **budgets/page.tsx** — Full CRUD page with budget cards, progress bars, pause/resume, delete.
+- **sidebar.tsx** — Added Budgets nav item with Wallet icon.
+- **create/page.tsx** — Cost estimate preview card in Review step.
 
 ### Architecture Decisions
-- D043: UI complexity mode stored in localStorage, not database — no migration needed, purely frontend concern
+- D043: UI complexity mode stored in localStorage, not database
+- D044: Preset resolver uses deterministic deep merge with 3-layer precedence (recipe → presets → user overrides)
+- D045: Export variants render as separate BullMQ jobs sharing the same timeline/storyboard
+- D046: Seed policies use XOR hash for deterministic scene/series locking
+- D047: LUFS measurement uses simplified ITU-R BS.1770-4 with 400ms sliding window
 
-### Files Changed
-- `apps/web/src/lib/complexity-fields.ts` (new)
-- `apps/web/src/hooks/use-complexity-mode.tsx` (new)
-- `apps/web/src/app/providers.tsx` (new)
-- `apps/web/src/components/ui/complexity-toggle.tsx` (new)
-- `apps/web/src/app/layout.tsx` (modified — wrap children in Providers)
-- `apps/web/src/components/cinema/shot-properties.tsx` (modified — visibility logic + 4 new sections)
-- `apps/web/src/components/cinema/timeline.tsx` (modified — conditional track rendering)
-- `apps/web/src/app/studio/[contentId]/page.tsx` (modified — toggle in top bar)
-- `apps/web/src/app/create/page.tsx` (modified — toggle in header, affiliate hidden in Simple)
+### Files Created
+- `apps/web/src/lib/complexity-fields.ts`
+- `apps/web/src/hooks/use-complexity-mode.tsx`
+- `apps/web/src/app/providers.tsx`
+- `apps/web/src/components/ui/complexity-toggle.tsx`
+- `packages/shared/src/presets/schema.ts`
+- `packages/shared/src/presets/built-in.ts`
+- `packages/shared/src/presets/resolver.ts`
+- `packages/shared/src/presets/index.ts`
+- `apps/web/src/components/cinema/preset-picker.tsx`
+- `apps/web/src/components/cinema/export-variants.tsx`
+- `packages/audio-engine/src/loudness.ts`
+- `packages/shared/src/cost-estimator.ts`
+- `apps/web/src/app/budgets/page.tsx`
+
+### Files Modified
+- `apps/web/src/app/layout.tsx`, `apps/web/src/components/cinema/shot-properties.tsx`, `apps/web/src/components/cinema/timeline.tsx`, `apps/web/src/app/studio/[contentId]/page.tsx`, `apps/web/src/app/create/page.tsx`, `apps/web/src/components/cinema/shot-editor-panel.tsx`, `packages/shared/src/types.ts`, `packages/shared/src/comfyui-composer.ts`, `packages/shared/src/index.ts`, `packages/audio-engine/src/types.ts`, `packages/audio-engine/src/mixer.ts`, `packages/audio-engine/src/index.ts`, `packages/queue/src/index.ts`, `workers/src/production.worker.ts`, `apps/web/src/components/layout/sidebar.tsx`
 
 ### Build Status
 - 14 packages building, all tests passing

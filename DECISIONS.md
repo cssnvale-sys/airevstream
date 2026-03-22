@@ -210,6 +210,26 @@
 **Decision**: Store the UI complexity mode (`simple`/`advanced`/`complex`) in `localStorage` rather than in the database.
 **Rationale**: This is purely a frontend display preference — the backend resolver runs identically regardless of mode. localStorage avoids a database migration, API endpoint, and latency for a per-device preference. If multi-device sync is needed later, it can be promoted to the User model.
 
+## D044: Preset Resolver Precedence
+**Date**: 2026-03-22
+**Decision**: Preset resolver uses deterministic deep merge with 3-layer precedence: recipe presets (in order) → individual presets → user overrides (highest priority).
+**Rationale**: Lower layers provide defaults, higher layers override. Recipes are convenience bundles that combine presets. User overrides always win, preserving manual edits. Deep merge allows partial overrides (e.g., just camera.lens) without losing other fields.
+
+## D045: Export Variants as Separate Render Jobs
+**Date**: 2026-03-22
+**Decision**: Each export variant (YouTube 16:9, Reels 9:16, Square 1:1, ProRes) renders as a separate BullMQ job sharing the same storyboard/timeline data. The `ExportVariant` type carries width/height/fps/aspect/codec per job.
+**Rationale**: Separate jobs allow parallel rendering across workers, individual failure/retry, and progress tracking per variant. The alternative (single job rendering all variants sequentially) would block the worker for too long and make partial failure recovery impossible.
+
+## D046: Seed Policy XOR Hash
+**Date**: 2026-03-22
+**Decision**: Seed policies use XOR-based hash for deterministic scene/series locking: `baseSeed XOR hash(sceneId/seriesId)`.
+**Rationale**: XOR is fast, deterministic, and distributes evenly across the seed space. The same scene ID always produces the same seed offset, ensuring visual consistency across shots in a scene. Series lock ensures consistency across episodes.
+
+## D047: LUFS Measurement Approach
+**Date**: 2026-03-22
+**Decision**: Use simplified ITU-R BS.1770-4 with 400ms sliding window for LUFS measurement, with a -70 LUFS absolute gate.
+**Rationale**: Full ITU-R BS.1770-4 requires K-weighting filters which add complexity. The simplified approach (RMS-based with a sliding window and gate) provides sufficient accuracy for automated loudness normalization in a content pipeline. Platform targets: -14 LUFS (YouTube), -16 LUFS (broadcast).
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

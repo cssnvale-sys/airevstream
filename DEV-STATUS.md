@@ -112,16 +112,15 @@
 | 7.11 | Quality tier selector | Done | Quick/Standard/Cinema tiers in create wizard |
 | 7.12 | Unit tests | Done | 37 tests: composer (16), QC scoring (9), mixer (7), constants (5) |
 
-### Phase 8B: UX Improvements (Session 21) — COMPLETE
+### Phase 8B: UX + Pipeline Enhancements (Session 21) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
-| 8B.1 | Complexity mode config | Done | `complexity-fields.ts` — field visibility map + `isVisible()` helper |
-| 8B.2 | Complexity context/hook | Done | `use-complexity-mode.tsx` — React context + localStorage persistence |
-| 8B.3 | Providers wrapper | Done | `providers.tsx` wrapping root layout for client contexts |
-| 8B.4 | Complexity toggle UI | Done | Segmented control component (Simple/Advanced/Complex) |
-| 8B.5 | Shot properties visibility | Done | 6 existing sections + 4 new Complex-only sections with `isVisible()` checks |
-| 8B.6 | Timeline conditional tracks | Done | Audio BG + Beats tracks hidden in Simple mode, dynamic height |
-| 8B.7 | Studio + Create integration | Done | Toggle in Studio top bar + Create header, affiliate hidden in Simple |
+| ME-1 | Three-tier complexity toggle | Done | Simple/Advanced/Complex localStorage mode, context+hook, visibility config, 4 new Complex sections |
+| ME-2 | Preset registry + resolver | Done | 15 presets (6 visual, 5 camera, 4 audio) + 3 recipes, deep-merge resolver, tabbed PresetPicker UI |
+| ME-3 | Multi-aspect export | Done | ExportVariant type, 4 formats (YT/Reels/Square/ProRes), worker variant support, Studio UI |
+| ME-4 | Audio ducking + loudness | Done | LUFS measurement, normalization, true peak limiter, RMS envelope ducking in mixer |
+| ME-5 | Seed policy system | Done | 4 policies (free/shot-offset/scene-lock/series-lock), XOR hash, UI controls |
+| ME-6 | Cost estimation + budgets | Done | Pipeline cost estimator, CRUD budget page, sidebar nav, Create wizard cost preview |
 
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |

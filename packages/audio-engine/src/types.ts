@@ -19,6 +19,8 @@ export interface TTSResult {
   format: 'wav' | 'mp3' | 'ogg';
   durationMs: number;
   sampleRate: number;
+  /** Word-level timing data (if available from provider) */
+  wordTimings?: Array<{ word: string; startMs: number; endMs: number }>;
 }
 
 export interface AudioDuckingConfig {

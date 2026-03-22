@@ -1,4 +1,5 @@
-import { createLogger } from '@airevstream/shared';
+import { createLogger, generateLipSyncData } from '@airevstream/shared';
+import type { LipSyncData } from '@airevstream/shared';
 import type { TTSConfig, TTSRequest, TTSResult, VoiceProfile } from './types.js';
 
 const logger = createLogger('tts-client');
@@ -171,6 +172,35 @@ export class TTSClient {
     buffer.writeUInt32LE(dataSize, 40);
     // Data is zero-filled (silence)
     return { audioBuffer: buffer, format: 'wav', durationMs, sampleRate };
+  }
+
+  /**
+   * Synthesize speech with lip-sync data.
+   * Returns both the audio result and viseme timeline for character animation.
+   */
+  async synthesizeWithLipSync(request: TTSRequest): Promise<{ tts: TTSResult; lipSync: LipSyncData }> {
+    const tts = await this.synthesize(request);
+
+    // Generate lip-sync data from text and actual/estimated duration
+    const lipSync = generateLipSyncData(
+      request.text,
+      tts.durationMs,
+      request.speed,
+    );
+
+    // If the TTS provider returned word-level timing, merge it
+    if (tts.wordTimings && tts.wordTimings.length > 0) {
+      for (let i = 0; i < Math.min(tts.wordTimings.length, lipSync.wordTimings.length); i++) {
+        const providerTiming = tts.wordTimings[i]!;
+        const lipSyncWord = lipSync.wordTimings[i]!;
+        lipSyncWord.startMs = providerTiming.startMs;
+        lipSyncWord.endMs = providerTiming.endMs;
+      }
+    }
+
+    logger.info({ wordCount: lipSync.wordTimings.length, visemeCount: lipSync.visemeTimeline.length }, 'Lip-sync data generated');
+
+    return { tts, lipSync };
   }
 
   /** Estimate audio duration from text (useful for storyboard planning) */

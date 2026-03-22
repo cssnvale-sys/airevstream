@@ -44,6 +44,7 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
   const postProcess = (spec.postProcess as Record<string, unknown>) ?? {};
   const vfx = (spec.vfx as Record<string, unknown>) ?? {};
   const audioPlan = (spec.audioPlan as Record<string, unknown>) ?? {};
+  const lipSync = (spec.lipSync as Record<string, unknown>) ?? {};
 
   return (
     <div className="space-y-3">
@@ -312,6 +313,61 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
                 className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
             </div>
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Lip-Sync — advanced+ */}
+      {isVisible(FIELD_VISIBILITY.lipSync, mode) && (
+        <CollapsibleSection title="Lip-Sync">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm text-text-primary">
+              <input
+                type="checkbox"
+                checked={!!lipSync.enabled}
+                onChange={(e) => update('lipSync.enabled', e.target.checked)}
+                className="rounded border-border bg-bg-tertiary"
+              />
+              Enable lip-sync
+            </label>
+            {!!lipSync.enabled && (
+              <>
+                <div>
+                  <label className="block text-xs text-text-secondary mb-1">Mode</label>
+                  <select
+                    value={(lipSync.mode as string) ?? 'subtitle-only'}
+                    onChange={(e) => update('lipSync.mode', e.target.value)}
+                    className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+                  >
+                    <option value="subtitle-only">Subtitle Only</option>
+                    <option value="character-rig">Character Rig</option>
+                    <option value="overlay">Overlay</option>
+                  </select>
+                </div>
+                <SliderField
+                  label="Smoothing"
+                  value={Number(lipSync.smoothing ?? 0.5)}
+                  min={0} max={1} step={0.05}
+                  onChange={(v) => update('lipSync.smoothing', v)}
+                />
+                <SliderField
+                  label="Exaggeration"
+                  value={Number(lipSync.exaggeration ?? 1.0)}
+                  min={0.5} max={2.0} step={0.1}
+                  onChange={(v) => update('lipSync.exaggeration', v)}
+                />
+                <div>
+                  <label className="block text-xs text-text-secondary mb-1">Character ID</label>
+                  <input
+                    type="text"
+                    value={(lipSync.characterId as string) ?? ''}
+                    onChange={(e) => update('lipSync.characterId', e.target.value)}
+                    placeholder="Optional character identifier"
+                    className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </CollapsibleSection>
       )}

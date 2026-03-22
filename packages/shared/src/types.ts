@@ -387,6 +387,15 @@ export interface ShotSpec {
   vfx?: VfxSpec;
   aspect?: '16:9' | '9:16' | '4:3' | '2.39:1' | '1:1';
   outputType?: 'image' | 'video' | 'image+video';
+
+  // --- Lip-sync ---
+  lipSync?: {
+    enabled: boolean;
+    mode: 'subtitle-only' | 'character-rig' | 'overlay';
+    smoothing?: number;
+    exaggeration?: number;
+    characterId?: string;
+  };
 }
 
 // ─── WebSocket Event Types ───

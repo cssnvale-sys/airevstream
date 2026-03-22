@@ -66,6 +66,7 @@ export const FIELD_VISIBILITY = {
   postProcess: 'complex' as ComplexityMode,
   vfx: 'complex' as ComplexityMode,
   audioPlan: 'complex' as ComplexityMode,
+  lipSync: 'advanced' as ComplexityMode,
   rawJson: 'complex' as ComplexityMode,
 
   // Timeline tracks

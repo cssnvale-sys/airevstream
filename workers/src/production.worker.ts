@@ -2,7 +2,7 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, lintPrompt } from '@airevstream/shared';
 import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
@@ -521,6 +521,13 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         }
       }
 
+      // Prompt safety lint
+      const promptText = spec.promptBlocks?.join(', ') ?? '';
+      const safetyResult = lintPrompt(promptText);
+      if (!safetyResult.safe) {
+        logger.warn({ shotId, riskScore: safetyResult.riskScore, flags: safetyResult.flags.map(f => f.category) }, 'Prompt safety warning');
+      }
+
       // Compose and run workflow
       const workflow = composeWorkflow(spec, promptBible);
       const images = await comfyClient.queueAndWait(workflow);
@@ -537,13 +544,31 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         uploadedUrls.push(`${BUCKET}/${key}`);
       }
 
-      // Update shot with generated keyframes and resolved seed
+      // Create provenance record
+      const provenance = createProvenanceRecord(
+        'image',
+        { name: spec.model ?? 'sd_xl_base_1.0', provider: 'comfyui' },
+        {
+          prompt: promptText,
+          seed: workflow.resolvedSeed,
+          steps: spec.generation?.steps,
+          cfg: spec.generation?.cfg,
+          sampler: spec.generation?.sampler,
+          width: spec.generation?.width,
+          height: spec.generation?.height,
+          loras: spec.generation?.loras?.map(l => ({ name: l.name, strength: l.strength })),
+        },
+        { storageKey: uploadedUrls[0] ?? '' },
+        'shot-generation',
+      );
+
+      // Update shot with generated keyframes, resolved seed, and provenance
       await db.storyboardShot.update({
         where: { id: shotId },
         data: {
           keyframeUrls: uploadedUrls as any,
           status: 'generated',
-          shotspec: { ...spec, seed: workflow.resolvedSeed } as any,
+          shotspec: { ...spec, seed: workflow.resolvedSeed, provenance: provenance.id, safetyScore: safetyResult.riskScore } as any,
         },
       });
 

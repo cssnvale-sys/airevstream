@@ -12,6 +12,7 @@ import type { GuidanceSuggestion } from '@/components/cinema/ai-guidance-panel';
 import Link from 'next/link';
 import { ComplexityToggle } from '@/components/ui/complexity-toggle';
 import { ExportVariants } from '@/components/cinema/export-variants';
+import { ProvenanceViewer } from '@/components/cinema/provenance-viewer';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible } from '@/lib/complexity-fields';
 
@@ -216,6 +217,9 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
               onApplyAction={handleApplyGuidance}
             />
             <PipelineProgress contentId={contentId} />
+            {isVisible('advanced', mode) && (
+              <ProvenanceViewer contentId={contentId} />
+            )}
             {isVisible('advanced', mode) && storyboard && (
               <ExportVariants
                 contentId={contentId}

@@ -59,122 +59,17 @@ export const VIEWER_WRITE_EXEMPT: string[] = [
 /**
  * Known routes missing viewer role checks on write handlers.
  * Format: "routeDir:METHOD" (e.g. "accounts/[id]:PUT")
- * TODO: Fix these and remove from list.
+ * All 72 entries fixed in Session 17 security hardening.
  */
-export const KNOWN_MISSING_VIEWER_CHECKS = new Set([
-  'accounts/[id]:PUT',
-  'accounts/[id]:DELETE',
-  'accounts/[id]/socials:POST',
-  'affiliate/links:POST',
-  'ai/guidance:POST',
-  'cinema-bible/[id]:PUT',
-  'affiliate/products/[id]:PUT',
-  'affiliate/storefronts/[id]/products/[productId]:PATCH',
-  'affiliate/storefronts/[id]/products/[productId]:DELETE',
-  'affiliate/storefronts/[id]/products:POST',
-  'affiliate/storefronts/[id]:PATCH',
-  'affiliate/storefronts/[id]:DELETE',
-  'ai-services/[id]:PUT',
-  'ai-services/[id]:DELETE',
-  'api-keys/[id]:PATCH',
-  'api-keys/[id]:DELETE',
-  'api-keys:POST',
-  'approvals/[id]/[action]:POST',
-  'assistant/chat:POST',
-  'assistant/conversations/[id]:DELETE',
-  'budgets/[id]:PATCH',
-  'budgets/[id]:DELETE',
-  'channels/[id]/affiliate-pool:DELETE',
-  'channels/[id]/affiliate-pool:POST',
-  'channels/[id]/avatars:POST',
-  'channels/[id]/cinema-bible:PUT',
-  'channels/[id]:PUT',
-  'channels/[id]:DELETE',
-  'channels/families:POST',
-  'content/[id]/approve:POST',
-  'content/[id]/quality-score:POST',
-  'content/[id]/regenerate:POST',
-  'content/[id]/reject:POST',
-  'pipeline/cinema:POST',
-  'content/[id]:PUT',
-  'content/[id]:DELETE',
-  'content/[id]/storyboard:PUT',
-  'content/[id]/variants:POST',
-  'content/[id]/versions:POST',
-  'content/generate:POST',
-  'content/generate-script:POST',
-  'content/generate-shot:POST',
-  'content/generate-storyboard:POST',
-  'knowledge-base/[id]:PUT',
-  'knowledge-base/[id]:PATCH',
-  'knowledge-base/[id]:DELETE',
-  'knowledge-base:POST',
-  'prompts/[id]:PUT',
-  'prompts/[id]:PATCH',
-  'prompts/[id]:DELETE',
-  'prompts/[id]/score:POST',
-  'prompts:POST',
-  'schedule/[id]:PUT',
-  'schedule/[id]:PATCH',
-  'schedule/[id]:DELETE',
-  'schedule:POST',
-  'settings/api-keys/[id]/revoke:POST',
-  'settings/appearance:PUT',
-  'settings/general:PUT',
-  'settings/notifications:PUT',
-  'settings/security:PUT',
-  'subscriptions/[id]:PATCH',
-  'subscriptions:POST',
-  'system/alerts/[id]/acknowledge:POST',
-  'system/alerts/[id]/snooze:POST',
-  'system/alerts/acknowledge-all:POST',
-  'system/errors/[id]/retry:POST',
-  'tenants/[id]:PATCH',
-  'tenants:POST',
-  'users/[id]:PATCH',
-  'users/invite:POST',
-  'workflows/hitl/[id]/complete:POST',
+export const KNOWN_MISSING_VIEWER_CHECKS = new Set<string>([
 ]);
 
 /**
  * Known routes missing rate limiting on write handlers.
  * Format: "routeDir:METHOD"
- * TODO: Fix these and remove from list.
+ * All 33 entries fixed in Session 17 security hardening.
  */
-export const KNOWN_MISSING_RATE_LIMIT = new Set([
-  'affiliate/storefronts/[id]/products/[productId]:PATCH',
-  'affiliate/storefronts/[id]/products/[productId]:DELETE',
-  'affiliate/storefronts/[id]/products:POST',
-  'ai/guidance:POST',
-  'ai-services:POST',
-  'api-keys/[id]:PATCH',
-  'api-keys/[id]:DELETE',
-  'api-keys:POST',
-  'approvals/bulk:POST',
-  'assistant/conversations/[id]:DELETE',
-  'channels/[id]/avatars:POST',
-  'channels/[id]/cinema-bible:PUT',
-  'channels/families:POST',
-  'content/[id]/approve:POST',
-  'content/[id]/quality-score:POST',
-  'content/[id]/reject:POST',
-  'pipeline/cinema:POST',
-  'prompts/[id]/score:POST',
-  'schedule:POST',
-  'settings/api-keys/[id]/revoke:POST',
-  'settings/appearance:PUT',
-  'settings/general:PUT',
-  'settings/notifications:PUT',
-  'settings/security:PUT',
-  'subscriptions:POST',
-  'system/alerts/[id]/acknowledge:POST',
-  'system/alerts/[id]/snooze:POST',
-  'system/alerts/acknowledge-all:POST',
-  'system/errors/[id]/retry:POST',
-  'tenants/[id]:PATCH',
-  'tenants:POST',
-  'users/[id]:PATCH',
-  'workflows/hitl/[id]/complete:POST',
+export const KNOWN_MISSING_RATE_LIMIT = new Set<string>([
 ]);
 
 /**
@@ -196,9 +91,7 @@ export const KNOWN_MISSING_TENANT_SCOPE = new Set([
   'api-keys/[id]/route.ts',
   // Legitimate: subscription routes check tenantId via comparison
   'subscriptions/[id]/route.ts',
-  // Real gaps (to be fixed):
-  'affiliate/analytics/route.ts',           // TODO: add tenant filtering
-  'affiliate/products/[id]/analytics/route.ts',  // TODO: add tenant filtering
+  // Fixed in Session 17: affiliate analytics tenant scoping
   'ai-services/usage/route.ts',             // admin-only, acceptable
 ]);
 
@@ -293,8 +186,25 @@ export function extractHandlers(content: string): HandlerInfo[] {
     const startIndex = match.index;
     const startLine = content.substring(0, startIndex).split('\n').length;
 
-    // Find the opening brace of the function
-    const braceStart = content.indexOf('{', startIndex + match[0].length);
+    // Skip past the parameter list — find the matching ')' for the opening '('
+    // This handles destructured params like { params }: RouteParams
+    const afterOpenParen = startIndex + match[0].length; // position after '('
+    let parenDepth = 1;
+    let closingParenIdx = -1;
+    for (let i = afterOpenParen; i < content.length; i++) {
+      if (content[i] === '(') parenDepth++;
+      if (content[i] === ')') {
+        parenDepth--;
+        if (parenDepth === 0) {
+          closingParenIdx = i;
+          break;
+        }
+      }
+    }
+    if (closingParenIdx === -1) continue;
+
+    // Find the opening brace of the function body (after closing paren)
+    const braceStart = content.indexOf('{', closingParenIdx + 1);
     if (braceStart === -1) continue;
 
     const body = extractBraceBlock(content, braceStart);

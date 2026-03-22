@@ -152,29 +152,29 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     };
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    const retryCount = (scheduledPost.retryCount || 0) + 1;
+    const maxAttempts = job.opts.attempts ?? 3;
 
     await db.scheduledPost.update({
       where: { id: scheduledPost.id },
       data: {
         status: 'failed',
         errorMessage: errMsg,
-        retryCount,
+        retryCount: job.attemptsMade,
       },
     });
 
-    if (retryCount >= 3) {
+    // Only create failure alert on the final attempt
+    if (job.attemptsMade >= maxAttempts) {
       await db.contentItem.update({
         where: { id: contentId },
         data: { status: 'failed' },
       });
 
-      // Create alert for persistent failure
       await db.alert.create({
         data: {
           severity: 'warning',
           category: 'content',
-          title: `Posting failed after ${retryCount} retries`,
+          title: `Posting failed after ${job.attemptsMade} attempts`,
           message: `Content "${scheduledPost.content.title}" failed to post to ${platform}: ${errMsg}`,
           source: 'posting-worker',
           metadata: { contentId, channelId, platform, error: errMsg },
@@ -211,7 +211,10 @@ async function checkScheduledPosts() {
         contentId: post.contentId,
         channelId: post.channelId,
         platform: post.platform,
-      } as PostingPublishJob);
+      } as PostingPublishJob, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 60000 },
+      });
 
       await db.scheduledPost.update({
         where: { id: post.id },

@@ -32,6 +32,9 @@ const envSchema = z.object({
   // ComfyUI
   COMFYUI_URL: z.string().url().default('http://localhost:8188'),
 
+  // CORS
+  CORS_ORIGINS: z.string().default('http://localhost:3000'),
+
   // App
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });

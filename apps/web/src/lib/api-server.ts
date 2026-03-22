@@ -76,9 +76,16 @@ export async function authenticate(req: NextRequest): Promise<ApiContext | NextR
     const db = getDb();
     // Fetch tenantId from DB (not in JWT to keep it current)
     try {
-      const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
+      const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true, passwordChangedAt: true } });
       if (!user) {
         return error('UNAUTHORIZED', 'User not found', 401);
+      }
+      // Revoke tokens issued before the last password change
+      if (user.passwordChangedAt) {
+        const iat = payload.iat as number | undefined;
+        if (iat && iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+          return error('UNAUTHORIZED', 'Session expired. Please log in again.', 401);
+        }
       }
       return { userId, role, tenantId: user.tenantId, db };
     } catch (dbErr) {
@@ -121,9 +128,16 @@ export async function authenticateSSE(req: NextRequest): Promise<ApiContext | Ne
     const role = (payload.role as string) ?? 'operator';
     const db = getDb();
     try {
-      const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
+      const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true, passwordChangedAt: true } });
       if (!user) {
         return error('UNAUTHORIZED', 'User not found', 401);
+      }
+      // Revoke tokens issued before the last password change
+      if (user.passwordChangedAt) {
+        const iat = payload.iat as number | undefined;
+        if (iat && iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+          return error('UNAUTHORIZED', 'Session expired. Please log in again.', 401);
+        }
       }
       return { userId, role, tenantId: user.tenantId, db };
     } catch (dbErr) {

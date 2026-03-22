@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     await ctx.db.user.update({
       where: { id: ctx.userId },
-      data: { passwordHash: hashPassword(newPassword) },
+      data: { passwordHash: hashPassword(newPassword), passwordChangedAt: new Date() },
     });
 
     // Issue a fresh JWT so the client can replace the old one

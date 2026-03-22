@@ -39,6 +39,7 @@ model User {
   avatarUrl    String?  @map("avatar_url")
   role         String   @default("operator") @db.VarChar(20) // admin, operator, viewer
   tenantId     String?  @map("tenant_id") @db.Uuid
+  passwordChangedAt DateTime? @map("password_changed_at") @db.Timestamptz
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance, type FastifyError } from 'fastify';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import fjwt from '@fastify/jwt';
 import { getConfig, createLogger } from '@airevstream/shared';
 import { authPlugin } from './plugins/auth.js';
@@ -19,7 +20,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   // Plugins
-  await app.register(cors, { origin: true, credentials: true });
+  const allowedOrigins = config.CORS_ORIGINS.split(',');
+  await app.register(cors, { origin: allowedOrigins, credentials: true });
+  await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 
   if (!config.JWT_SECRET) {
     if (config.NODE_ENV === 'production') {

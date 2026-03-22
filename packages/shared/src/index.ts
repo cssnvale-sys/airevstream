@@ -5,6 +5,7 @@ export * from './constants.js';
 export * from './cost-estimator.js';
 export * from './errors.js';
 export * from './logger.js';
+export * from './presets/index.js';
 export * from './qc-scoring.js';
 export * from './types.js';
 export * from './utils.js';

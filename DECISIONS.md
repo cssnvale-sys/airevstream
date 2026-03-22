@@ -175,6 +175,21 @@
 **Decision**: Use `globalThis.__prisma` to store the Prisma client singleton instead of a module-level variable in `packages/db/src/index.ts`.
 **Rationale**: Next.js HMR in development mode re-imports modules on every change, creating new `PrismaClient` instances while the old ones retain their connection pools. This caused PostgreSQL connection pool exhaustion during E2E test runs (100+ connections). The `globalThis` pattern survives HMR reloads because `globalThis` persists across module re-evaluations. This is the pattern recommended by the Prisma documentation for Next.js projects.
 
+## D037: JWT Revocation via passwordChangedAt
+**Date**: 2026-03-22
+**Decision**: Add `passwordChangedAt` timestamp to User model. `authenticate()` compares JWT `iat` against this value and rejects tokens issued before the last password change.
+**Rationale**: Avoids the complexity of a token blacklist or Redis-backed revocation store. The comparison is O(1) per request and requires only a single DB field. The change-password route sets `passwordChangedAt` atomically with the password hash update.
+
+## D038: CORS Origin Restriction via Environment Variable
+**Date**: 2026-03-22
+**Decision**: All 3 Fastify services read `CORS_ORIGINS` env var (comma-separated list) instead of `origin: true`. Default: `http://localhost:3000`.
+**Rationale**: `origin: true` allows any origin, which is insecure in production. Environment-based configuration allows operators to add multiple dashboard origins (e.g., staging + production) without code changes.
+
+## D039: Audit Handler Extraction Fix for Destructured Params
+**Date**: 2026-03-22
+**Decision**: `extractHandlers()` in audit-helpers.ts now skips past the function parameter list (counting parentheses) before finding the function body opening brace.
+**Rationale**: The previous implementation found the first `{` after the function name, which matched destructured parameters like `{ params }` instead of the function body. This caused the audit to extract the wrong text for handler body checks, masked by the known violation sets.
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

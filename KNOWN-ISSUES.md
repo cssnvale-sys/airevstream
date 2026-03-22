@@ -49,58 +49,11 @@ Several models lack `tenantId` and cannot be tenant-scoped without a Prisma sche
 - **AffiliateProduct** — Products are global (may need `tenantId` or shared product catalog design).
 **Action**: Add `tenantId` fields to these models in a future schema migration and update all related API routes.
 
-### KI-021: No JWT Token Revocation on Password Change
-**Severity**: Medium
-**Status**: Open (Requires Schema Change)
-Old JWTs remain valid after password change until they naturally expire (7 days). The change-password route now returns a fresh JWT so clients can replace the old one, but the old token isn't explicitly invalidated.
-**Action**: Add `passwordChangedAt` field to User model, check it in `authenticate()` to reject tokens issued before the last password change.
-
-### KI-040: Worker Reliability Issues
-**Severity**: Low
-**Status**: Partially Fixed (Session 14)
-Session 14 hardened worker error handling:
-- Content worker: try/catch added to `handlePublishRequest` and `handleApprove` with logging + re-throw
-- Account worker: fallback mode removed (honest failure instead of placeholder creation), sync/warm degraded to warn
-- Maintenance worker: try/catch around `$transaction` cleanup operations
-- Production worker: try/catch around ComfyUI and Remotion chains with failed workflow job recording
-Remaining: posting worker conflicting BullMQ + manual retry logic.
-**Action**: Clean up posting worker retry logic.
-
-### KI-041: Services Missing Rate Limiting and CORS Restrictions
-**Severity**: Medium
-**Status**: Open
-All 3 Fastify services use `origin: true` CORS (allows any origin) and have no per-user rate limiting on generation endpoints.
-**Action**: Restrict CORS to dashboard origin, add rate limiting to AI generation endpoints.
-
 ### KI-042: Zero Worker Processor Tests
 **Severity**: High
 **Status**: Partially Fixed (Session 16)
 222 unit tests + 181 E2E tests (100% pass rate). E2E tests cover all 17 pages and exercise API routes through the browser. Worker processor unit tests and multi-tenant isolation tests still needed.
 **Action**: Add worker processor unit tests and targeted multi-tenant integration tests.
-
-### KI-046: 70 Write Handlers Missing Viewer Role Checks
-**Severity**: High
-**Status**: Open (Tracked by audit, Session 12)
-70 POST/PUT/PATCH/DELETE handlers in authenticated routes do not check `ctx.role === 'viewer'`. Viewers could potentially perform write operations. All violations tracked in `KNOWN_MISSING_VIEWER_CHECKS` in `apps/web/src/__tests__/audit/audit-helpers.ts`. Automated audit test prevents new regressions.
-**Action**: Add viewer check to each handler. Remove from known list as fixed.
-
-### KI-047: 31 Write Handlers Missing Rate Limiting
-**Severity**: Medium
-**Status**: Open (Tracked by audit, Session 12)
-31 POST/PUT/PATCH/DELETE handlers lack `checkRateLimit()` calls. Tracked in `KNOWN_MISSING_RATE_LIMIT`.
-**Action**: Add rate limiting to each handler. Remove from known list as fixed.
-
-### KI-048: 12 Routes Missing Tenant Scoping
-**Severity**: High
-**Status**: Open (Tracked by audit, Session 12)
-12 routes access tenant-scoped models without filtering by `ctx.tenantId`. Some are legitimate (admin-only, self-service by userId), others are real gaps (affiliate analytics). Tracked in `KNOWN_MISSING_TENANT_SCOPE`.
-**Action**: Assess each route — fix real gaps, document legitimate exceptions.
-
-### KI-049: Cinema Pipeline Routes Missing Audit Coverage
-**Severity**: Medium
-**Status**: Open (Session 15)
-New API routes added in Session 15 (`/api/v1/pipeline/cinema`, `/api/v1/cinema-bible/*`, `/api/v1/comfyui/models`, `/api/v1/ai/guidance`) are not yet included in the automated audit test known-violations sets. They may lack viewer role checks, rate limiting, or tenant scoping.
-**Action**: Run `npm run audit` after cinema routes are fully wired, update audit allowlists as needed.
 
 ### KI-050: QC Scoring Uses Heuristics Not ML
 **Severity**: Low
@@ -110,7 +63,28 @@ The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level stati
 
 ---
 
-## Recently Fixed (Sessions 10-16)
+## Recently Fixed (Sessions 10-17)
+
+### KI-046: 72 Write Handlers Missing Viewer Role Checks — Fixed (Session 17)
+All write handlers now have viewer role checks. `KNOWN_MISSING_VIEWER_CHECKS` reduced from 72 to 0. Audit handler extraction bug fixed (destructured params).
+
+### KI-047: 33 Write Handlers Missing Rate Limiting — Fixed (Session 17)
+All write handlers now have `checkRateLimit()`. `KNOWN_MISSING_RATE_LIMIT` reduced from 33 to 0.
+
+### KI-048: Tenant Scoping Gaps in Affiliate Analytics — Fixed (Session 17)
+Added tenant channel filtering to `affiliate/analytics` and `affiliate/products/[id]/analytics`. 2 real gaps fixed, 10 legitimate exceptions remain.
+
+### KI-049: Cinema Pipeline Routes Missing Audit Coverage — Fixed (Session 17)
+Cinema routes (`pipeline/cinema`, `cinema-bible`, `ai/guidance`) now have viewer checks and rate limiting.
+
+### KI-021: JWT Token Revocation on Password Change — Fixed (Session 17)
+Added `passwordChangedAt` to User model. `authenticate()` rejects JWTs issued before last password change.
+
+### KI-041: Services Missing Rate Limiting and CORS — Fixed (Session 17)
+All 3 Fastify services now use restricted CORS (`CORS_ORIGINS` env var) and `@fastify/rate-limit` (100 req/min).
+
+### KI-040: Posting Worker Retry Logic — Fixed (Session 17)
+Removed conflicting manual retry counting. Now uses BullMQ's `job.attemptsMade` with exponential backoff.
 
 ### KI-051: PostgreSQL Connection Pool Exhaustion During E2E Runs — Fixed (Session 16)
 Prisma client used a module-level singleton that leaked connections during Next.js HMR. Switched to `globalThis` pattern (D030).

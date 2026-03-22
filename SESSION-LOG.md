@@ -4,6 +4,36 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 17 — Security Hardening (KI-021, KI-040, KI-041, KI-046, KI-047, KI-048)
+
+**Date:** 2026-03-22
+**Focus:** Fix verified known issues — viewer role checks, rate limiting, tenant scoping, JWT revocation, Fastify CORS, worker retry cleanup
+
+### What Was Done
+- **KI-046 Fixed**: Added viewer role checks to all 72 write handlers in `KNOWN_MISSING_VIEWER_CHECKS` (17 real gaps fixed, 46 phantoms confirmed, 4 stale entries removed, 5 admin routes refactored to use `forbidden()`/`requireAdmin()`)
+- **KI-047 Fixed**: Added `checkRateLimit()` to all 33 write handlers in `KNOWN_MISSING_RATE_LIMIT` with appropriate presets (standardWrite, adminWrite, contentGeneration, bulkOperation)
+- **KI-048 Fixed**: Added tenant scoping to `affiliate/analytics` and `affiliate/products/[id]/analytics` routes via channel chain filtering
+- **KI-021 Fixed**: JWT revocation on password change — added `passwordChangedAt` field to User model, checked in `authenticate()` and `authenticateSSE()` against JWT `iat` claim
+- **KI-041 Fixed**: Restricted CORS origins and added `@fastify/rate-limit` (100 req/min) to all 3 Fastify services
+- **KI-040 Fixed**: Removed manual retry counting in posting worker, switched to BullMQ's built-in `job.attemptsMade` with exponential backoff
+- **KI-049 Fixed**: Cinema pipeline routes now covered by audit (viewer checks + rate limiting added)
+- **Audit infrastructure fix**: Fixed `extractHandlers()` handler extraction bug — destructured params `{ params }` caused handler body to be the destructured object instead of the function body. This was masked by the known violation set.
+- Both `KNOWN_MISSING_VIEWER_CHECKS` and `KNOWN_MISSING_RATE_LIMIT` sets are now **empty** (0 violations)
+- `KNOWN_MISSING_TENANT_SCOPE` reduced from 12 to 10 entries (2 real gaps fixed, 10 legitimate exceptions remain)
+
+### Decisions Made
+- D037: JWT revocation via `passwordChangedAt` timestamp comparison (no token blacklist)
+- D038: CORS origin restriction via `CORS_ORIGINS` env var (comma-separated list)
+- D039: Fixed audit handler extraction to skip past destructured params before finding function body brace
+
+### Build Status
+- 14 packages building, turbo build passes
+- 24/24 audit tests pass (0 known violations for viewer checks and rate limiting)
+- 246 unit tests pass
+- E2E tests not re-run (no frontend behavior changes)
+
+---
+
 ## Session 16 — E2E Test Suite 100% Pass Rate
 
 **Date:** 2026-03-19

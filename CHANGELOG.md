@@ -7,6 +7,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Fixed
+- **KI-046: Viewer role checks** (Session 17): Added `ctx.role === 'viewer'` checks to all 72 write handlers (17 real gaps, 46 phantoms removed, 5 admin routes refactored)
+- **KI-047: Rate limiting** (Session 17): Added `checkRateLimit()` to all 33 write handlers with appropriate presets
+- **KI-048: Tenant scoping** (Session 17): Added tenant filtering to `affiliate/analytics` and `affiliate/products/[id]/analytics` routes
+- **KI-021: JWT revocation** (Session 17): Tokens issued before password change are now rejected via `passwordChangedAt` field
+- **KI-041: Fastify CORS + rate limiting** (Session 17): Restricted CORS to `CORS_ORIGINS` env var, added `@fastify/rate-limit` (100 req/min) to all 3 services
+- **KI-040: Posting worker retry** (Session 17): Replaced manual retry counting with BullMQ's `job.attemptsMade` + exponential backoff
+- **KI-049: Cinema pipeline audit coverage** (Session 17): Cinema routes now have viewer checks and rate limiting
+- **Audit handler extraction bug** (Session 17): Fixed `extractHandlers()` to skip destructured params `{ params }` before finding function body brace
 - **E2E test suite 100% pass rate** (Session 16): Fixed 18 failing tests across 11 spec files — strict mode violations, pagination resilience, modal dismiss, timing races, ARIA role mismatches
 - **PostgreSQL connection pool exhaustion** (Session 16): Switched Prisma client `getDb()` to `globalThis` singleton pattern to prevent connection leaks during Next.js HMR and E2E runs (D036)
 - **Settings password form** (Session 16): Removed `minLength={8}` from password inputs that blocked React `onSubmit` via HTML5 validation

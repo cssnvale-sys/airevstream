@@ -140,6 +140,19 @@ The production worker renders via Remotion CLI. No additional setup needed.
 
 ---
 
+## 11. CORS Origins (Session 17)
+
+All 3 Fastify services now restrict CORS to the origins listed in `CORS_ORIGINS`. Default: `http://localhost:3000`.
+
+For production, set this in your `.env`:
+```bash
+CORS_ORIGINS=https://dashboard.yourdomain.com,https://staging.yourdomain.com
+```
+
+Comma-separated list, no trailing slashes.
+
+---
+
 ## 11. Docker Deployment (Optional)
 
 Build and run the full app via Docker:

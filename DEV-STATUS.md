@@ -67,6 +67,7 @@
 | 5.17 | Audit fixes (round 8) | Done | **CRITICAL security:** tenant/user/schedule/calendar access control. Auth hardening: deleted user rejection, NaN param handling, 401 redirect, AI panel stale closure, SSE poll order |
 | 5.18 | Audit fixes (round 9) | Done | Decimal in 9 more routes, 5 settings routes err.message leak prevention |
 | 5.x | Session 7 improvements (155 batches) | Done | UI components, error handling, delete endpoints, job polling, CSV export, forgot-password, bulk actions, calendar filters, keyboard shortcuts, copy buttons, accessibility, search debounce, page metadata, error boundaries, loading skeletons, auth middleware, 404 page, password toggle, sidebar persistence, progress bar, system refresh, type-safe hooks, UUID validation, 222 tests, API key auth, Prisma indexes, graceful shutdown, PM2 hardening, security hardening (tenant scoping, SSRF, open redirect, rate limiter, N+1 queries, access control) |
+| 5.21 | Security hardening — Session 17 | Done | 72 viewer checks (0 gaps), 33 rate limits (0 gaps), 2 tenant scoping fixes, JWT revocation, Fastify CORS + rate-limit, posting worker retry cleanup, audit extractHandlers fix |
 | 5.19 | Deep audit — Session 9 (20 rounds) | Done | 53 viewer role checks, 3 TOCTOU fixes (interactive transactions), N+1 budgets/check, 3 tenant scoping gaps, 5 settings GET try/catch, DB error logging in authenticate(), service auth logging, ComfyUI URL leak, rate limiting on 5 endpoints, pagination limits, 3 frontend silent catches |
 | 5.20 | Verified audit — Session 10 (10 rounds) | Done | Runtime-verified: .next cache fix, all 17 pages + 21 API routes verified at runtime, 3 content lifecycle bugs fixed (status enum, reject validation, regenerate Decimal), 8 packages barrel exports verified, 0 data shape mismatches, 0 error handling gaps |
 | 5.9 | E2E testing | Done | Playwright E2E suite: 30 spec files, 181 tests, all 17 pages, **100% pass rate** (Sessions 11+16) |
@@ -124,15 +125,15 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 222 (all passing via Vitest)
-- **Audit tests**: 24 (9 files scanning 108 API routes for 9 bug classes, <1s)
+- **Unit tests**: 246 (all passing via Vitest)
+- **Audit tests**: 24 (9 files scanning 108+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
-- **Total**: 427 tests
-- Audit: 24 tests across 9 files (silent-catch: 2, getdb: 2, error-leak: 2, tenant: 2, data-shape: 4, decimal: 3, allowlist: 5, role: 2, rate-limit: 2)
-- E2E: 181 tests across 30 files (all 17 pages covered, fixed from 163/181 → 181/181 in Session 16)
+- **Total**: 451 tests
+- Audit: 24 tests across 9 files — **0 known violations** for viewer checks and rate limiting (all fixed Session 17)
+- E2E: 181 tests across 30 files (all 17 pages covered, 100% pass rate)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 - Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
-- Codebase audit (Session 12): 9 bug classes automated, 114 known violations tracked for future fix
+- Codebase audit (Session 12→17): 9 bug classes automated, known violation sets for viewer checks and rate limiting emptied to 0
 
 ## Architecture Highlights
 - **Prisma Schema**: 36 models with full-text search GIN indexes on key tables

@@ -20,6 +20,9 @@ import {
   Film,
   Clapperboard,
 } from 'lucide-react';
+import { ComplexityToggle } from '@/components/ui/complexity-toggle';
+import { useComplexityMode } from '@/hooks/use-complexity-mode';
+import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -167,6 +170,7 @@ export default function CreatePage() {
   const [qualityTier, setQualityTier] = useState<QualityTier>('quick');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { mode } = useComplexityMode();
 
   // API hooks
   const { data: channelsData, isLoading: channelsLoading } = useChannels<Channel[]>();
@@ -671,68 +675,70 @@ export default function CreatePage() {
         </div>
       </div>
 
-      {/* Affiliate Integration */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-card-title text-text-primary">Affiliate Integration</h3>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.affiliateEnabled}
-              onChange={(e) => update('affiliateEnabled', e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-9 h-5 bg-bg-tertiary peer-focus:ring-2 peer-focus:ring-accent-blue/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-blue" />
-          </label>
-        </div>
+      {/* Affiliate Integration — advanced+ */}
+      {isVisible(FIELD_VISIBILITY.create.affiliate, mode) && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-card-title text-text-primary">Affiliate Integration</h3>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.affiliateEnabled}
+                onChange={(e) => update('affiliateEnabled', e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-bg-tertiary peer-focus:ring-2 peer-focus:ring-accent-blue/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-blue" />
+            </label>
+          </div>
 
-        {formData.affiliateEnabled && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-caption text-text-secondary mb-1.5">Product</label>
-              <select
-                value={formData.affiliateProductId}
-                onChange={(e) => update('affiliateProductId', e.target.value)}
-                className="input w-full"
-              >
-                <option value="">Select product...</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.commissionRate ?? 0}% commission)
-                  </option>
-                ))}
-              </select>
-            </div>
+          {formData.affiliateEnabled && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-caption text-text-secondary mb-1.5">Product</label>
+                <select
+                  value={formData.affiliateProductId}
+                  onChange={(e) => update('affiliateProductId', e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">Select product...</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.commissionRate ?? 0}% commission)
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-caption text-text-secondary mb-1.5">Integration Mode</label>
-              <div className="flex gap-4">
-                {(['dedicated', 'commercial_break'] as AffiliateMode[]).map((mode) => (
-                  <label
-                    key={mode}
-                    className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors',
-                      formData.affiliateMode === mode
-                        ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
-                        : 'border-border text-text-secondary hover:bg-bg-tertiary',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="affiliateMode"
-                      value={mode}
-                      checked={formData.affiliateMode === mode}
-                      onChange={() => update('affiliateMode', mode)}
-                      className="text-accent-blue focus:ring-accent-blue"
-                    />
-                    <span className="text-body capitalize">{mode.replace('_', ' ')}</span>
-                  </label>
-                ))}
+              <div>
+                <label className="block text-caption text-text-secondary mb-1.5">Integration Mode</label>
+                <div className="flex gap-4">
+                  {(['dedicated', 'commercial_break'] as AffiliateMode[]).map((affMode) => (
+                    <label
+                      key={affMode}
+                      className={cn(
+                        'flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors',
+                        formData.affiliateMode === affMode
+                          ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
+                          : 'border-border text-text-secondary hover:bg-bg-tertiary',
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="affiliateMode"
+                        value={affMode}
+                        checked={formData.affiliateMode === affMode}
+                        onChange={() => update('affiliateMode', affMode)}
+                        className="text-accent-blue focus:ring-accent-blue"
+                      />
+                      <span className="text-body capitalize">{affMode.replace('_', ' ')}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -1114,11 +1120,14 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <div className="mb-6">
-        <h1 className="text-page-title text-text-primary">Create Content</h1>
-        <p className="text-text-secondary mt-1">
-          Step-by-step wizard to generate and publish content.
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-page-title text-text-primary">Create Content</h1>
+          <p className="text-text-secondary mt-1">
+            Step-by-step wizard to generate and publish content.
+          </p>
+        </div>
+        <ComplexityToggle />
       </div>
 
       {renderStepIndicator()}

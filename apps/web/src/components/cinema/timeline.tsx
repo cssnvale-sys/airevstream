@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState, useCallback } from 'react';
+import { useComplexityMode } from '@/hooks/use-complexity-mode';
+import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 import type { ShotData } from './shot-editor-panel';
 
 interface TimelineProps {
@@ -18,6 +20,11 @@ const PADDING = 16;
 export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot, currentTimeSec }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pixelsPerSecond, setPixelsPerSecond] = useState(40);
+  const { mode } = useComplexityMode();
+
+  const showAudioTrack = isVisible(FIELD_VISIBILITY.timeline.audio, mode);
+  const showBeatsTrack = isVisible(FIELD_VISIBILITY.timeline.beats, mode);
+  const trackCount = 1 + (showAudioTrack ? 1 : 0) + (showBeatsTrack ? 1 : 0);
 
   const totalWidth = totalDurationSec * pixelsPerSecond;
 
@@ -38,7 +45,7 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
       </div>
 
       {/* Scrollable timeline */}
-      <div ref={containerRef} className="overflow-x-auto overflow-y-hidden" style={{ height: RULER_HEIGHT + TRACK_HEIGHT * 3 + PADDING * 2 }}>
+      <div ref={containerRef} className="overflow-x-auto overflow-y-hidden" style={{ height: RULER_HEIGHT + TRACK_HEIGHT * trackCount + PADDING * 2 }}>
         <div style={{ width: totalWidth + PADDING * 2, position: 'relative', height: '100%', paddingLeft: PADDING, paddingRight: PADDING }}>
           {/* Ruler */}
           <div style={{ height: RULER_HEIGHT }} className="relative border-b border-border">
@@ -91,32 +98,36 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
             })}
           </div>
 
-          {/* Audio BG track */}
-          <div style={{ height: TRACK_HEIGHT, marginTop: 2 }} className="relative flex items-center">
-            <span className="absolute -left-0 text-[10px] text-text-tertiary w-12">Audio</span>
-            <div
-              style={{ position: 'absolute', left: 0, width: totalWidth, height: TRACK_HEIGHT - 8 }}
-              className="bg-emerald-500/10 border border-emerald-500/20 rounded"
-            />
-          </div>
+          {/* Audio BG track — advanced+ */}
+          {showAudioTrack && (
+            <div style={{ height: TRACK_HEIGHT, marginTop: 2 }} className="relative flex items-center">
+              <span className="absolute -left-0 text-[10px] text-text-tertiary w-12">Audio</span>
+              <div
+                style={{ position: 'absolute', left: 0, width: totalWidth, height: TRACK_HEIGHT - 8 }}
+                className="bg-emerald-500/10 border border-emerald-500/20 rounded"
+              />
+            </div>
+          )}
 
-          {/* Beat sections track */}
-          <div style={{ height: TRACK_HEIGHT, marginTop: 2 }} className="relative flex items-center">
-            <span className="absolute -left-0 text-[10px] text-text-tertiary w-12">Beats</span>
-            {['Hook', 'Intro', 'Content', 'CTA'].map((label, i) => {
-              const sectionWidth = totalWidth / 4;
-              const colors = ['bg-red-500/15', 'bg-yellow-500/15', 'bg-blue-500/15', 'bg-green-500/15'];
-              return (
-                <div
-                  key={label}
-                  style={{ position: 'absolute', left: i * sectionWidth, width: sectionWidth - 2, height: TRACK_HEIGHT - 8 }}
-                  className={`${colors[i]} border border-white/5 rounded flex items-center justify-center`}
-                >
-                  <span className="text-[10px] text-text-tertiary">{label}</span>
-                </div>
-              );
-            })}
-          </div>
+          {/* Beat sections track — advanced+ */}
+          {showBeatsTrack && (
+            <div style={{ height: TRACK_HEIGHT, marginTop: 2 }} className="relative flex items-center">
+              <span className="absolute -left-0 text-[10px] text-text-tertiary w-12">Beats</span>
+              {['Hook', 'Intro', 'Content', 'CTA'].map((label, i) => {
+                const sectionWidth = totalWidth / 4;
+                const colors = ['bg-red-500/15', 'bg-yellow-500/15', 'bg-blue-500/15', 'bg-green-500/15'];
+                return (
+                  <div
+                    key={label}
+                    style={{ position: 'absolute', left: i * sectionWidth, width: sectionWidth - 2, height: TRACK_HEIGHT - 8 }}
+                    className={`${colors[i]} border border-white/5 rounded flex items-center justify-center`}
+                  >
+                    <span className="text-[10px] text-text-tertiary">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

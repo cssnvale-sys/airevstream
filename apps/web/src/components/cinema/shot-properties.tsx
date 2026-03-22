@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useComplexityMode } from '@/hooks/use-complexity-mode';
+import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 
 interface ShotPropertiesProps {
   spec: Record<string, unknown>;
@@ -19,6 +21,8 @@ const SAMPLER_OPTIONS = ['euler_ancestral', 'dpmpp_2m', 'dpmpp_sde', 'dpm_2', 'u
 const SCHEDULER_OPTIONS = ['normal', 'karras', 'exponential', 'sgm_uniform'];
 
 export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
+  const { mode } = useComplexityMode();
+
   const update = (path: string, value: unknown) => {
     const updated = { ...spec };
     // Support nested paths like 'camera.lens'
@@ -36,10 +40,13 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
   const camera = (spec.camera as Record<string, unknown>) ?? {};
   const generation = (spec.generation as Record<string, unknown>) ?? {};
   const promptBlocks = (spec.promptBlocks as string[]) ?? [];
+  const postProcess = (spec.postProcess as Record<string, unknown>) ?? {};
+  const vfx = (spec.vfx as Record<string, unknown>) ?? {};
+  const audioPlan = (spec.audioPlan as Record<string, unknown>) ?? {};
 
   return (
     <div className="space-y-3">
-      {/* Prompt */}
+      {/* Prompt — always visible */}
       <CollapsibleSection title="Prompt" defaultOpen>
         <textarea
           value={promptBlocks.join('\n')}
@@ -67,98 +74,116 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
             options={FRAMING_OPTIONS}
             onChange={(v) => update('camera.framing', v)}
           />
-          <SelectField
-            label="Movement"
-            value={(camera.movement as string) ?? 'static'}
-            options={CAMERA_MOVEMENTS}
-            onChange={(v) => update('camera.movement', v)}
-          />
-          <SelectField
-            label="DOF"
-            value={(camera.dof as string) ?? 'medium'}
-            options={['shallow', 'medium', 'deep']}
-            onChange={(v) => update('camera.dof', v)}
-          />
+          {isVisible(FIELD_VISIBILITY.camera.movement, mode) && (
+            <SelectField
+              label="Movement"
+              value={(camera.movement as string) ?? 'static'}
+              options={CAMERA_MOVEMENTS}
+              onChange={(v) => update('camera.movement', v)}
+            />
+          )}
+          {isVisible(FIELD_VISIBILITY.camera.dof, mode) && (
+            <SelectField
+              label="DOF"
+              value={(camera.dof as string) ?? 'medium'}
+              options={['shallow', 'medium', 'deep']}
+              onChange={(v) => update('camera.dof', v)}
+            />
+          )}
         </div>
       </CollapsibleSection>
 
-      {/* Generation */}
-      <CollapsibleSection title="Generation">
-        <div className="grid grid-cols-2 gap-3">
-          <SliderField
-            label="Steps"
-            value={(generation.steps as number) ?? 30}
-            min={10} max={60} step={1}
-            onChange={(v) => update('generation.steps', v)}
-          />
-          <SliderField
-            label="CFG Scale"
-            value={(generation.cfg as number) ?? 7}
-            min={1} max={20} step={0.5}
-            onChange={(v) => update('generation.cfg', v)}
-          />
-          <SelectField
-            label="Sampler"
-            value={(generation.sampler as string) ?? 'dpmpp_2m'}
-            options={SAMPLER_OPTIONS}
-            onChange={(v) => update('generation.sampler', v)}
-          />
-          <SelectField
-            label="Scheduler"
-            value={(generation.scheduler as string) ?? 'karras'}
-            options={SCHEDULER_OPTIONS}
-            onChange={(v) => update('generation.scheduler', v)}
-          />
-          <NumberField
-            label="Width"
-            value={(generation.width as number) ?? 1024}
-            onChange={(v) => update('generation.width', v)}
-          />
-          <NumberField
-            label="Height"
-            value={(generation.height as number) ?? 1024}
-            onChange={(v) => update('generation.height', v)}
-          />
-        </div>
-        <div className="mt-3">
-          <NumberField
-            label="Seed"
-            value={(spec.seed as number) ?? 0}
-            onChange={(v) => update('seed', v)}
-          />
-        </div>
-      </CollapsibleSection>
-
-      {/* Color */}
-      <CollapsibleSection title="Color Grade">
-        <div className="grid grid-cols-2 gap-3">
-          {(['temperature', 'contrast', 'saturation', 'tint'] as const).map((prop) => {
-            const colorGrade = (spec.colorGrade as Record<string, unknown>) ?? {};
-            return (
-              <SliderField
-                key={prop}
-                label={prop.charAt(0).toUpperCase() + prop.slice(1)}
-                value={(colorGrade[prop] as number) ?? 0}
-                min={-100} max={100} step={1}
-                onChange={(v) => update(`colorGrade.${prop}`, v)}
+      {/* Generation — advanced+ */}
+      {isVisible(FIELD_VISIBILITY.generation, mode) && (
+        <CollapsibleSection title="Generation">
+          <div className="grid grid-cols-2 gap-3">
+            <SliderField
+              label="Steps"
+              value={(generation.steps as number) ?? 30}
+              min={10} max={60} step={1}
+              onChange={(v) => update('generation.steps', v)}
+            />
+            <SliderField
+              label="CFG Scale"
+              value={(generation.cfg as number) ?? 7}
+              min={1} max={20} step={0.5}
+              onChange={(v) => update('generation.cfg', v)}
+            />
+            {isVisible(FIELD_VISIBILITY.generationFields.sampler, mode) && (
+              <SelectField
+                label="Sampler"
+                value={(generation.sampler as string) ?? 'dpmpp_2m'}
+                options={SAMPLER_OPTIONS}
+                onChange={(v) => update('generation.sampler', v)}
               />
-            );
-          })}
-        </div>
-      </CollapsibleSection>
+            )}
+            {isVisible(FIELD_VISIBILITY.generationFields.scheduler, mode) && (
+              <SelectField
+                label="Scheduler"
+                value={(generation.scheduler as string) ?? 'karras'}
+                options={SCHEDULER_OPTIONS}
+                onChange={(v) => update('generation.scheduler', v)}
+              />
+            )}
+            {isVisible(FIELD_VISIBILITY.generationFields.width, mode) && (
+              <NumberField
+                label="Width"
+                value={(generation.width as number) ?? 1024}
+                onChange={(v) => update('generation.width', v)}
+              />
+            )}
+            {isVisible(FIELD_VISIBILITY.generationFields.height, mode) && (
+              <NumberField
+                label="Height"
+                value={(generation.height as number) ?? 1024}
+                onChange={(v) => update('generation.height', v)}
+              />
+            )}
+          </div>
+          <div className="mt-3">
+            <NumberField
+              label="Seed"
+              value={(spec.seed as number) ?? 0}
+              onChange={(v) => update('seed', v)}
+            />
+          </div>
+        </CollapsibleSection>
+      )}
 
-      {/* Lighting */}
-      <CollapsibleSection title="Lighting">
-        <input
-          type="text"
-          value={(spec.lighting as string) ?? ''}
-          onChange={(e) => update('lighting', e.target.value)}
-          placeholder="e.g., golden hour, soft diffused, hard dramatic"
-          className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
-        />
-      </CollapsibleSection>
+      {/* Color Grade — advanced+ */}
+      {isVisible(FIELD_VISIBILITY.colorGrade, mode) && (
+        <CollapsibleSection title="Color Grade">
+          <div className="grid grid-cols-2 gap-3">
+            {(['temperature', 'contrast', 'saturation', 'tint'] as const).map((prop) => {
+              const colorGrade = (spec.colorGrade as Record<string, unknown>) ?? {};
+              return (
+                <SliderField
+                  key={prop}
+                  label={prop.charAt(0).toUpperCase() + prop.slice(1)}
+                  value={(colorGrade[prop] as number) ?? 0}
+                  min={-100} max={100} step={1}
+                  onChange={(v) => update(`colorGrade.${prop}`, v)}
+                />
+              );
+            })}
+          </div>
+        </CollapsibleSection>
+      )}
 
-      {/* Duration */}
+      {/* Lighting — advanced+ */}
+      {isVisible(FIELD_VISIBILITY.lighting, mode) && (
+        <CollapsibleSection title="Lighting">
+          <input
+            type="text"
+            value={(spec.lighting as string) ?? ''}
+            onChange={(e) => update('lighting', e.target.value)}
+            placeholder="e.g., golden hour, soft diffused, hard dramatic"
+            className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+          />
+        </CollapsibleSection>
+      )}
+
+      {/* Timing */}
       <CollapsibleSection title="Timing">
         <div className="grid grid-cols-2 gap-3">
           <NumberField
@@ -166,13 +191,112 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
             value={(spec.duration as number) ?? 5}
             onChange={(v) => update('duration', v)}
           />
-          <NumberField
-            label="FPS"
-            value={(spec.fps as number) ?? 24}
-            onChange={(v) => update('fps', v)}
-          />
+          {isVisible(FIELD_VISIBILITY.timing.fps, mode) && (
+            <NumberField
+              label="FPS"
+              value={(spec.fps as number) ?? 24}
+              onChange={(v) => update('fps', v)}
+            />
+          )}
         </div>
       </CollapsibleSection>
+
+      {/* Post-Process — complex only */}
+      {isVisible(FIELD_VISIBILITY.postProcess, mode) && (
+        <CollapsibleSection title="Post-Process">
+          <div className="grid grid-cols-2 gap-3">
+            <SliderField
+              label="Sharpen"
+              value={(postProcess.sharpen as number) ?? 0}
+              min={0} max={100} step={1}
+              onChange={(v) => update('postProcess.sharpen', v)}
+            />
+            <SliderField
+              label="Denoise"
+              value={(postProcess.denoise as number) ?? 0}
+              min={0} max={100} step={1}
+              onChange={(v) => update('postProcess.denoise', v)}
+            />
+            <SliderField
+              label="Vignette"
+              value={(postProcess.vignette as number) ?? 0}
+              min={0} max={100} step={1}
+              onChange={(v) => update('postProcess.vignette', v)}
+            />
+            <SliderField
+              label="Film Grain"
+              value={(postProcess.filmGrain as number) ?? 0}
+              min={0} max={100} step={1}
+              onChange={(v) => update('postProcess.filmGrain', v)}
+            />
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* VFX — complex only */}
+      {isVisible(FIELD_VISIBILITY.vfx, mode) && (
+        <CollapsibleSection title="VFX">
+          <div className="space-y-2">
+            <CheckboxField
+              label="Lens flare"
+              checked={(vfx.lensFlare as boolean) ?? false}
+              onChange={(v) => update('vfx.lensFlare', v)}
+            />
+            <CheckboxField
+              label="Chromatic aberration"
+              checked={(vfx.chromaticAberration as boolean) ?? false}
+              onChange={(v) => update('vfx.chromaticAberration', v)}
+            />
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Audio Plan — complex only */}
+      {isVisible(FIELD_VISIBILITY.audioPlan, mode) && (
+        <CollapsibleSection title="Audio Plan">
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-text-secondary mb-1">Background</label>
+              <input
+                type="text"
+                value={(audioPlan.background as string) ?? ''}
+                onChange={(e) => update('audioPlan.background', e.target.value)}
+                placeholder="e.g., ambient pad, lo-fi beat"
+                className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-text-secondary mb-1">Midground</label>
+              <input
+                type="text"
+                value={(audioPlan.midground as string) ?? ''}
+                onChange={(e) => update('audioPlan.midground', e.target.value)}
+                placeholder="e.g., foley, atmosphere"
+                className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-text-secondary mb-1">Foreground</label>
+              <input
+                type="text"
+                value={(audioPlan.foreground as string) ?? ''}
+                onChange={(e) => update('audioPlan.foreground', e.target.value)}
+                placeholder="e.g., voiceover, narration"
+                className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+            </div>
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Raw JSON — complex only */}
+      {isVisible(FIELD_VISIBILITY.rawJson, mode) && (
+        <CollapsibleSection title="Raw JSON">
+          <pre className="bg-bg-tertiary text-text-secondary border border-border rounded-md p-3 text-xs overflow-auto max-h-64 font-mono">
+            {JSON.stringify(spec, null, 2)}
+          </pre>
+        </CollapsibleSection>
+      )}
     </div>
   );
 }
@@ -240,5 +364,19 @@ function NumberField({ label, value, onChange }: { label: string; value: number;
         className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
       />
     </div>
+  );
+}
+
+function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="rounded border-border bg-bg-tertiary text-accent-blue focus:ring-accent-blue"
+      />
+      <span className="text-sm text-text-primary">{label}</span>
+    </label>
   );
 }

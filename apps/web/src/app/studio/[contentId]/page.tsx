@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, use } from 'react';
+import { useState, useCallback, useEffect, useRef, use } from 'react';
 import { useApi, apiPut, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { ShotEditorPanel } from '@/components/cinema/shot-editor-panel';
@@ -10,6 +10,7 @@ import { AiGuidancePanel } from '@/components/cinema/ai-guidance-panel';
 import type { ShotData } from '@/components/cinema/shot-editor-panel';
 import type { GuidanceSuggestion } from '@/components/cinema/ai-guidance-panel';
 import Link from 'next/link';
+import { ComplexityToggle } from '@/components/ui/complexity-toggle';
 
 interface StudioContent {
   id: string;
@@ -37,7 +38,8 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
   const { contentId } = use(params);
   const { data, error, isLoading, mutate } = useApi<StudioContent>(`/content/${contentId}?include=storyboards`);
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
-  const [suggestions] = useState<GuidanceSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<GuidanceSuggestion[]>([]);
+  const guidanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const content = data?.data;
   const storyboard = content?.storyboards?.[0];
@@ -87,6 +89,33 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
     await handleUpdateShot(selectedShotId, { ...shot.shotspec, ...patch });
   }, [selectedShotId, shots, handleUpdateShot]);
 
+  // Fetch AI guidance when selected shot changes (debounced)
+  useEffect(() => {
+    if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current);
+
+    const selectedShot = shots.find(s => s.id === selectedShotId);
+    if (!selectedShot?.shotspec) {
+      setSuggestions([]);
+      return;
+    }
+
+    guidanceTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await apiPost<{ suggestions: GuidanceSuggestion[] }>('/ai/guidance', {
+          shotSpec: selectedShot.shotspec,
+        });
+        setSuggestions(res?.suggestions ?? []);
+      } catch {
+        // Silently fail — guidance is non-critical
+        setSuggestions([]);
+      }
+    }, 500);
+
+    return () => {
+      if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current);
+    };
+  }, [selectedShotId, shots]);
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -120,7 +149,8 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
           <h1 className="text-sm font-medium text-text-primary truncate max-w-md">{content.title}</h1>
           <span className="text-xs text-text-tertiary bg-bg-tertiary px-2 py-0.5 rounded">{content.status}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <ComplexityToggle />
           <button
             onClick={handleGenerateAll}
             className="px-3 py-1.5 bg-accent-blue text-white rounded-md text-sm hover:bg-accent-blue/90"

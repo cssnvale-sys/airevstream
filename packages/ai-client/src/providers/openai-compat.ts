@@ -61,7 +61,11 @@ export class OpenAICompatProvider implements AiProvider {
       throw new Error(`OpenAI-compat API error ${res.status}: ${text}`);
     }
 
-    const data = await res.json() as any;
+    const data = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+      model?: string;
+    };
     const choice = data.choices?.[0];
     const usage = data.usage;
 
@@ -131,7 +135,9 @@ export class OpenAICompatProvider implements AiProvider {
           return;
         }
         try {
-          const parsed = JSON.parse(data) as any;
+          const parsed = JSON.parse(data) as {
+            choices?: Array<{ delta?: { content?: string }; finish_reason?: string | null }>;
+          };
           const delta = parsed.choices?.[0]?.delta?.content ?? '';
           const finished = parsed.choices?.[0]?.finish_reason != null;
           if (delta || finished) {

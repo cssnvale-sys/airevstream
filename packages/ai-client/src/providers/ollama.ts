@@ -20,7 +20,7 @@ export class OllamaProvider implements AiProvider {
   }
 
   async generateText(request: TextRequest & { endpoint?: string }): Promise<TextResponse> {
-    const endpoint = (request as any).endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+    const endpoint = request.endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
     const client = this.getClient(endpoint);
     const model = request.model ?? DEFAULT_MODEL;
 
@@ -52,7 +52,7 @@ export class OllamaProvider implements AiProvider {
   }
 
   async generateChat(request: ChatRequest & { endpoint?: string }): Promise<TextResponse> {
-    const endpoint = (request as any).endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+    const endpoint = request.endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
     const client = this.getClient(endpoint);
     const model = request.model ?? DEFAULT_MODEL;
 
@@ -82,7 +82,7 @@ export class OllamaProvider implements AiProvider {
   }
 
   async *streamChat(request: ChatRequest & { endpoint?: string }): AsyncGenerator<StreamChunk> {
-    const endpoint = (request as any).endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+    const endpoint = request.endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
     const client = this.getClient(endpoint);
     const model = request.model ?? DEFAULT_MODEL;
 

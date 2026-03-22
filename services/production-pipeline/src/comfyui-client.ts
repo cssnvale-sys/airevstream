@@ -81,7 +81,9 @@ export class ComfyUIClient {
     });
     if (!res.ok) throw new Error(`Failed to get history for prompt ${promptId}`);
 
-    const data = (await res.json()) as Record<string, any>;
+    const data = (await res.json()) as Record<string, {
+      outputs?: Record<string, { images?: Array<{ filename: string; subfolder?: string; type?: string }> }>;
+    }>;
     const entry = data[promptId];
     if (!entry?.outputs) throw new Error(`No outputs for prompt ${promptId}`);
 

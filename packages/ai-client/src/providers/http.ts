@@ -20,7 +20,7 @@ export class HttpProvider implements AiProvider {
     this.supportedTypes = supportedTypes;
   }
 
-  async generateText(request: TextRequest & { endpoint?: string; apiKey?: string }): Promise<TextResponse> {
+  async generateText(request: TextRequest & { endpoint?: string; apiKey?: string; params?: Record<string, unknown> }): Promise<TextResponse> {
     const endpoint = request.endpoint;
     if (!endpoint) throw new Error(`No endpoint configured for ${this.name}`);
 
@@ -37,7 +37,7 @@ export class HttpProvider implements AiProvider {
       body: JSON.stringify({
         prompt: request.prompt,
         model: request.model,
-        ...((request as any).params ?? {}),
+        ...(request.params ?? {}),
       }),
     });
 
@@ -46,7 +46,7 @@ export class HttpProvider implements AiProvider {
       throw new Error(`${this.name} API error ${res.status}: ${text}`);
     }
 
-    const data = await res.json() as any;
+    const data: unknown = await res.json();
 
     return {
       content: typeof data === 'string' ? data : JSON.stringify(data),

@@ -274,7 +274,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     await uploadBuffer(BUCKET, key, videoBuffer, 'video/mp4');
 
     // Clean up temp file after successful upload
-    await unlink(outputPath).catch(() => {});
+    await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
 
     // Update storyboard with result
     await db.storyboard.update({
@@ -296,7 +296,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     logger.info({ key, compositionId, stdout: stdout?.slice(0, 200) }, 'Video render complete');
   } catch (error) {
     // Clean up temp file on failure
-    await unlink(outputPath).catch(() => {});
+    await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
 
     const msg = error instanceof Error ? error.message : String(error);
     logger.error({ error: msg }, 'Remotion render failed');

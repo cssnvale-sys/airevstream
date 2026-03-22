@@ -168,7 +168,7 @@ export async function contentRoutes(app: FastifyInstance) {
 
     const content = await db.contentItem.update({
       where: { id },
-      data: { status: 'approved', approvedAt: new Date(), approvedBy: (request as any).userId ?? 'system' },
+      data: { status: 'approved', approvedAt: new Date(), approvedBy: request.user?.sub ?? 'system' },
     });
 
     return reply.send({ success: true, data: content });
@@ -308,7 +308,7 @@ export async function contentRoutes(app: FastifyInstance) {
     const db = getDb();
 
     const updateData = action === 'approve'
-      ? { status: 'approved', approvedAt: new Date(), approvedBy: (request as any).userId ?? 'system' }
+      ? { status: 'approved', approvedAt: new Date(), approvedBy: request.user?.sub ?? 'system' }
       : { status: 'draft' };
 
     const result = await db.contentItem.updateMany({

@@ -98,7 +98,7 @@ async function handleBackup(data: MaintenanceBackupJob) {
       await uploadBuffer(BUCKETS.BACKUPS, key, backupBuffer, 'application/gzip');
 
       // Clean up local file
-      await unlink(filePath).catch(() => {});
+      await unlink(filePath).catch((e) => logger.debug({ err: e, path: filePath }, 'Temp file cleanup failed'));
 
       // Retain last 7 backups — delete older ones
       const objects = await listObjects(BUCKETS.BACKUPS, 'database/');
@@ -115,7 +115,7 @@ async function handleBackup(data: MaintenanceBackupJob) {
       return { target: data.target, status: 'completed', key, size: backupBuffer.length };
     } catch (err) {
       // Clean up on failure
-      await unlink(filePath).catch(() => {});
+      await unlink(filePath).catch((e) => logger.debug({ err: e, path: filePath }, 'Temp file cleanup failed'));
       logger.error({ err }, 'Database backup failed');
       throw err;
     }

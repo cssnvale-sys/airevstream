@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { hashPassword } from '@/lib/password';
 
@@ -28,10 +28,8 @@ export async function POST(req: NextRequest) {
       return error('RATE_LIMITED', 'Too many invites. Please try again later.', 429);
     }
 
-    const currentUser = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!currentUser || currentUser.role !== 'admin') {
-      return error('FORBIDDEN', 'Admin access required', 403);
-    }
+    const adminCheck = requireAdmin(ctx);
+    if (adminCheck) return adminCheck;
 
     const body = await req.json();
     const parsed = inviteUserSchema.safeParse(body);

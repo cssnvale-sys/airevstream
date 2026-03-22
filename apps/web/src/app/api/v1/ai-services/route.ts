@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateAiServiceSchema = z.object({
   name: z.string().min(1).max(200),
@@ -111,6 +112,10 @@ export async function POST(req: NextRequest) {
   if (ctx.role !== 'admin') {
     return forbidden('Only admins can register AI services');
   }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`ai-services:POST:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const body = await req.json();

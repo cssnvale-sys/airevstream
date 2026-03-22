@@ -45,11 +45,20 @@ export async function GET(req: NextRequest) {
     const periodDays = parseInt(period.replace('d', ''), 10) || 30;
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Build base where clause
+    // Tenant scoping: only include clicks for channels owned by this tenant
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const channelIds = tenantChannels.map(c => c.id);
+
+    // Build base where clause (tenant-scoped via channelIds)
     const where: Record<string, unknown> = {
       createdAt: { gte: startDate },
+      channelId: channelId
+        ? (channelIds.includes(channelId) ? channelId : '__none__')
+        : { in: channelIds },
     };
-    if (channelId) where.channelId = channelId;
     if (productId) where.productId = productId;
 
     // Summary totals

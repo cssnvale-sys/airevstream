@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, requireAdmin } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const SecuritySettingsSchema = z.object({
   sessionTimeout: z.number().int().min(300).max(86400).optional(),
@@ -36,9 +37,12 @@ export async function PUT(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  if (ctx.role !== 'admin') {
-    return error('FORBIDDEN', 'Only admins can modify security settings', 403);
-  }
+  const adminCheck = requireAdmin(ctx);
+  if (adminCheck) return adminCheck;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`settings-security:PUT:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const body = await req.json();

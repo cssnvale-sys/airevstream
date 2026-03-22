@@ -28,6 +28,13 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       totalRevenue: Number(rawProduct.totalRevenue),
     };
 
+    // Tenant scoping: only include clicks for channels owned by this tenant
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const channelIds = tenantChannels.map(c => c.id);
+
     const url = new URL(req.url);
     const start = url.searchParams.get('start');
     const end = url.searchParams.get('end');
@@ -42,7 +49,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       if (!isNaN(d.getTime())) dateFilter.lte = d;
     }
 
-    const clickWhere: Record<string, unknown> = { productId: id };
+    const clickWhere: Record<string, unknown> = { productId: id, channelId: { in: channelIds } };
     if (Object.keys(dateFilter).length > 0) {
       clickWhere.createdAt = dateFilter;
     }
@@ -56,10 +63,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     });
 
     // Get channel names for the grouped results
-    const channelIds = byChannel.map((c) => c.channelId).filter(Boolean) as string[];
-    const channels = channelIds.length > 0
+    const resultChannelIds = byChannel.map((c) => c.channelId).filter(Boolean) as string[];
+    const channels = resultChannelIds.length > 0
       ? await ctx.db.channel.findMany({
-          where: { id: { in: channelIds } },
+          where: { id: { in: resultChannelIds } },
           select: { id: true, name: true },
         })
       : [];

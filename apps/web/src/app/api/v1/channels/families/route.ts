@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, parseQuery, paginated, validationError } from '@/lib/api-server';
+import { authenticate, success, error, parseQuery, paginated, validationError, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateFamilySchema = z.object({
   channelIds: z.array(z.string().uuid()).min(2, 'At least 2 channel IDs required').max(50),
@@ -72,6 +73,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`channels-families:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const body = await req.json();

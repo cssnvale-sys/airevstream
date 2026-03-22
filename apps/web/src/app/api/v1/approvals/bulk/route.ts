@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const BulkApprovalSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(100),
@@ -14,6 +15,10 @@ export async function POST(req: NextRequest) {
     if (ctx.role === 'viewer') {
       return forbidden('Viewers cannot perform this action');
     }
+
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`approvals-bulk:POST:${ip}:${ctx.userId}`, RATE_LIMITS.bulkOperation);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     const body = await req.json();
     const parsed = BulkApprovalSchema.safeParse(body);

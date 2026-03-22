@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { randomBytes, createHash } from 'node:crypto';
-import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const createApiKeySchema = z.object({
   name: z.string().min(1).max(255),
@@ -78,6 +79,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`api-keys:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });

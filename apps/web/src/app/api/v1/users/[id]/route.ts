@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -70,6 +71,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`users:PATCH:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
@@ -82,7 +91,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     // Non-admins can only update themselves
     if (!isAdmin && !isSelf) {
-      return error('FORBIDDEN', 'You can only update your own profile', 403);
+      return forbidden('You can only update your own profile');
     }
 
     const body = await req.json();
@@ -95,7 +104,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     // Non-admins cannot change role or tenantId
     if (!isAdmin && (role !== undefined || tenantId !== undefined)) {
-      return error('FORBIDDEN', 'Only admins can change role or tenant assignment', 403);
+      return forbidden('Only admins can change role or tenant assignment');
     }
 
     // Validate tenant exists if tenantId is being set

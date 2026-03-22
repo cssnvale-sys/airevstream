@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticate, success, error, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 interface GuidanceSuggestion {
   type: 'info' | 'warning' | 'improvement';
@@ -12,6 +13,13 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot perform this action');
+    }
+
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`ai-guidance:POST:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     const body = await req.json();
     const { shotSpec, context } = body;

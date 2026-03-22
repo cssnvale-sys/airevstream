@@ -1,4 +1,4 @@
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 import type { ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,6 +25,9 @@ const ChatSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
 
   const rl = checkRateLimit(`chat:${ctx.userId}`, RATE_LIMITS.contentGeneration);
   if (!rl.allowed) {

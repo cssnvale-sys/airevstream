@@ -1,4 +1,5 @@
 import { authenticate, success, error, validationError, paginated, parseQuery, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import type { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -79,6 +80,10 @@ export async function POST(req: NextRequest) {
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`schedule:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const body = await req.json();

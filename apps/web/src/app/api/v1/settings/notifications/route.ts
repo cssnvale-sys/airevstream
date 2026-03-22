@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const NotificationChannelSchema = z.object({
   type: z.enum(['dashboard', 'email', 'slack']),
@@ -38,6 +39,10 @@ export async function PUT(req: NextRequest) {
   if (ctx instanceof NextResponse) return ctx;
 
   if (ctx.role !== 'admin') return forbidden('Admin access required');
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`settings-notifications:PUT:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const body = await req.json();

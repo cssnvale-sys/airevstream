@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, forbidden, isUUID, validationError } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -10,6 +11,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (ctx.role !== 'admin') {
     return forbidden('Only admins can revoke API keys');
   }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`settings-apikeys-revoke:POST:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');

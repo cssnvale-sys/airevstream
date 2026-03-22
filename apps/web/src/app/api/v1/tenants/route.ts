@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, paginated, parseQuery, validationError } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, requireAdmin } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const createTenantSchema = z.object({
   name: z.string().min(1).max(255),
@@ -92,9 +93,12 @@ export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  if (ctx.role !== 'admin') {
-    return error('FORBIDDEN', 'Admin access required', 403);
-  }
+  const adminCheck = requireAdmin(ctx);
+  if (adminCheck) return adminCheck;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`tenants:POST:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const body = await req.json();

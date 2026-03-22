@@ -111,6 +111,7 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
           contentId: params.contentId,
           storyboardId: params.storyboardId ?? '',
           channelId: params.channelId,
+          qualityPreset,
         },
         children: [
           {

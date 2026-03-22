@@ -76,6 +76,7 @@ export interface ProductionRenderVideoJob {
   contentId: string;
   storyboardId: string;
   channelId: string;
+  qualityPreset?: 'draft' | 'standard' | 'cinema';
 }
 
 export interface ProductionGenerateImageJob {

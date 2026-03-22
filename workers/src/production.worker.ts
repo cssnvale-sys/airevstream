@@ -2,8 +2,8 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow } from '@airevstream/shared';
-import type { ShotSpec, PromptBible, ComfyUIWorkflow } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, scoreShot } from '@airevstream/shared';
+import type { ShotSpec, PromptBible, ComfyUIWorkflow, QCScoreResult } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -12,7 +12,7 @@ import type {
   ProductionStoryboardJob,
 } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
-import { uploadBuffer, ensureBucket } from '@airevstream/storage';
+import { uploadBuffer, ensureBucket, downloadBuffer } from '@airevstream/storage';
 
 const logger = createLogger('production-worker');
 
@@ -226,26 +226,97 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     throw new Error(`Storyboard ${data.storyboardId} not found`);
   }
 
-  // Determine composition based on content type
-  const compositionId = storyboard.content.contentType === 'short_video'
-    ? 'ShortFormVideo'
-    : 'LongFormVideo';
+  // Determine composition based on quality tier and content type
+  const isCinema = data.qualityPreset === 'cinema';
+  let compositionId: string;
+  let inputProps: string;
 
-  // Build input props for Remotion
-  const inputProps = JSON.stringify({
-    title: storyboard.content.title,
-    shots: storyboard.shots.map(s => ({
-      ...(s.shotspec as Record<string, unknown>),
-      keyframeUrls: s.keyframeUrls,
-    })),
-  });
+  if (isCinema) {
+    compositionId = 'CinemaVideo';
+
+    // Build CinemaVideoProps from storyboard/shots data
+    const cinemaShots = storyboard.shots.map((s, idx) => {
+      const spec = (s.shotspec as Record<string, unknown>) ?? {};
+      const keyframeUrls = s.keyframeUrls as string[] | null;
+      const durationSec = Number(s.endSec ?? 0) - Number(s.startSec ?? 0);
+      const fps = 24; // Cinema standard
+      return {
+        id: s.id,
+        src: keyframeUrls?.[0] ?? '',
+        videoSrc: (spec.videoSrc as string) ?? undefined,
+        isVideo: !!(spec.videoSrc),
+        durationInFrames: Math.max(1, Math.round(durationSec * fps)),
+        transitionIn: idx === 0 ? 'fade' : ((spec.transition as string) ?? 'cut'),
+        transitionOut: 'cut',
+        transitionDurationInFrames: idx === 0 ? 12 : 6,
+        camera: spec.camera ?? undefined,
+        colorGrade: spec.colorGrade ?? undefined,
+        section: spec.section ?? undefined,
+      };
+    });
+
+    // Collect audio tracks from shots' audioPlan
+    const audioTracks = storyboard.shots.flatMap((s) => {
+      const spec = (s.shotspec as Record<string, unknown>) ?? {};
+      const audioPlan = spec.audioPlan as Record<string, unknown> | undefined;
+      const tracks: Array<Record<string, unknown>> = [];
+      const startSec = Number(s.startSec ?? 0);
+      const fps = 24;
+
+      for (const layer of ['bg', 'mg', 'fg'] as const) {
+        const layerSpec = audioPlan?.[layer] as Record<string, unknown> | undefined;
+        if (layerSpec?.fileKey) {
+          tracks.push({
+            src: layerSpec.fileKey as string,
+            startFrame: Math.round(startSec * fps),
+            volume: (layerSpec.volume as number) ?? (layer === 'fg' ? 0.9 : layer === 'bg' ? 0.3 : 0.5),
+            loop: layer === 'bg',
+            layer,
+          });
+        }
+      }
+      return tracks;
+    });
+
+    // Load cinema bible for global color grade if available
+    const cinemaBible = await db.cinemaBible.findFirst({
+      where: {},
+      orderBy: { updatedAt: 'desc' },
+      select: { lookBible: true },
+    });
+    const lookBible = cinemaBible?.lookBible as Record<string, unknown> | null;
+
+    inputProps = JSON.stringify({
+      title: storyboard.content.title,
+      shots: cinemaShots,
+      audioTracks,
+      fps: 24,
+      width: 1920,
+      height: 1080,
+      colorGrade: lookBible?.colorPipeline ?? undefined,
+    });
+  } else {
+    compositionId = storyboard.content.contentType === 'short_video'
+      ? 'ShortFormVideo'
+      : 'LongFormVideo';
+
+    inputProps = JSON.stringify({
+      title: storyboard.content.title,
+      shots: storyboard.shots.map(s => ({
+        ...(s.shotspec as Record<string, unknown>),
+        keyframeUrls: s.keyframeUrls,
+      })),
+    });
+  }
 
   const outputDir = '/tmp/airevstream/renders';
   await mkdir(outputDir, { recursive: true });
-  const outputPath = `${outputDir}/${data.contentId}-${Date.now()}.mp4`;
+  const renderExt = isCinema ? 'mov' : 'mp4';
+  const outputPath = `${outputDir}/${data.contentId}-${Date.now()}.${renderExt}`;
 
   try {
     // Invoke Remotion CLI render
+    const codec = isCinema ? 'prores' : 'h264';
     const { stdout, stderr } = await execFileAsync(
       'npx',
       [
@@ -253,7 +324,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
         compositionId,
         outputPath,
         '--props', inputProps,
-        '--codec', 'h264',
+        '--codec', codec,
         '--log', 'error',
       ],
       {
@@ -270,8 +341,9 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     // Upload rendered video to storage
     await ensureBucket(BUCKET);
     const videoBuffer = await readFile(outputPath);
-    const key = `videos/${data.contentId}/${Date.now()}.mp4`;
-    await uploadBuffer(BUCKET, key, videoBuffer, 'video/mp4');
+    const key = `videos/${data.contentId}/${Date.now()}.${renderExt}`;
+    const contentType = isCinema ? 'video/quicktime' : 'video/mp4';
+    await uploadBuffer(BUCKET, key, videoBuffer, contentType);
 
     // Clean up temp file after successful upload
     await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
@@ -448,6 +520,8 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
 
 // ─── QC Gate Handler ───
 
+const MAX_QC_RETRIES = 2;
+
 async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
   const db = getDb();
   logger.info({ storyboardId: data.storyboardId }, 'Processing QC gate');
@@ -458,39 +532,111 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
   });
 
   let allApproved = true;
+  let previousShotBuffer: Buffer | undefined;
 
   for (const shot of shots) {
     const keyframeUrls = shot.keyframeUrls as string[] | null;
 
-    // Simple QC: check that the shot has keyframes
+    // No keyframes = automatic failure
     if (!keyframeUrls || keyframeUrls.length === 0) {
       await db.storyboardShot.update({
         where: { id: shot.id },
-        data: { status: 'failed' },
+        data: { status: 'failed', qualityScore: 0 },
       });
       allApproved = false;
       continue;
     }
 
-    // Score based on whether the shot was generated successfully
-    const score = shot.status === 'generated' ? 90 : 40;
-    const qualityScore = score;
+    // Download the first keyframe for QC scoring
+    let imageBuffer: Buffer;
+    try {
+      const url = keyframeUrls[0];
+      const slashIdx = url.indexOf('/');
+      const bucket = url.slice(0, slashIdx);
+      const key = url.slice(slashIdx + 1);
+      imageBuffer = await downloadBuffer(bucket, key);
+    } catch (err) {
+      logger.warn({ err, shotId: shot.id }, 'Failed to download keyframe for QC — falling back to basic check');
+      // Fallback: approve if keyframes exist and shot was generated
+      const fallbackScore = shot.status === 'generated' ? 80 : 40;
+      await db.storyboardShot.update({
+        where: { id: shot.id },
+        data: { qualityScore: fallbackScore, status: fallbackScore >= QUALITY_THRESHOLDS.AUTO_APPROVE ? 'approved' : 'pending' },
+      });
+      if (fallbackScore < QUALITY_THRESHOLDS.AUTO_APPROVE) allApproved = false;
+      continue;
+    }
+
+    // Run the 5-dimension QC scorer
+    const spec = (shot.shotspec as unknown as ShotSpec) ?? {};
+    const expectedWidth = spec.generation?.width ?? 1024;
+    const expectedHeight = spec.generation?.height ?? 1024;
+    const prompt = spec.promptBlocks?.join(', ');
+
+    const qcResult: QCScoreResult = scoreShot({
+      imageBuffer,
+      width: expectedWidth,
+      height: expectedHeight,
+      expectedWidth,
+      expectedHeight,
+      previousShotBuffer,
+      prompt,
+    });
+
+    logger.info(
+      { shotId: shot.id, overall: qcResult.overall, recommendation: qcResult.recommendation, dimensions: qcResult.dimensions },
+      'QC score computed',
+    );
+
+    // Determine status based on recommendation
+    let newStatus: string;
+    if (qcResult.recommendation === 'approve') {
+      newStatus = 'approved';
+    } else if (qcResult.recommendation === 'regenerate' || qcResult.recommendation === 'reject') {
+      // Check retry count — re-queue for generation if retries remain
+      const retryCount = ((shot.shotspec as Record<string, unknown>)?.qcRetryCount as number) ?? 0;
+      if (retryCount < MAX_QC_RETRIES) {
+        // Increment seed and retry count, re-queue for generation
+        const updatedSpec = {
+          ...spec,
+          seed: (spec.seed ?? Math.floor(Math.random() * 2147483647)) + 1,
+          qcRetryCount: retryCount + 1,
+        };
+        await db.storyboardShot.update({
+          where: { id: shot.id },
+          data: {
+            qualityScore: qcResult.overall,
+            status: 'pending',
+            shotspec: updatedSpec as any,
+          },
+        });
+        logger.info(
+          { shotId: shot.id, retryCount: retryCount + 1, newSeed: updatedSpec.seed },
+          'QC failed — re-queuing shot for regeneration',
+        );
+        allApproved = false;
+        continue;
+      }
+      newStatus = 'failed';
+    } else {
+      // 'review' — needs manual review
+      newStatus = 'pending';
+    }
 
     await db.storyboardShot.update({
       where: { id: shot.id },
       data: {
-        qualityScore,
-        status: qualityScore >= QUALITY_THRESHOLDS.AUTO_APPROVE
-          ? 'approved'
-          : qualityScore <= QUALITY_THRESHOLDS.AUTO_REJECT
-            ? 'failed'
-            : 'pending',
+        qualityScore: qcResult.overall,
+        status: newStatus,
       },
     });
 
-    if (qualityScore < QUALITY_THRESHOLDS.AUTO_APPROVE) {
+    if (newStatus !== 'approved') {
       allApproved = false;
     }
+
+    // Pass current image as reference for consistency scoring on next shot
+    previousShotBuffer = imageBuffer;
   }
 
   // Update storyboard status
@@ -501,7 +647,7 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
     });
     logger.info({ storyboardId: data.storyboardId }, 'QC gate passed — all shots approved');
   } else {
-    logger.info({ storyboardId: data.storyboardId }, 'QC gate — some shots need review');
+    logger.info({ storyboardId: data.storyboardId }, 'QC gate — some shots need review or regeneration');
   }
 }
 
@@ -538,12 +684,73 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
   const ttsClient = new TTSClient();
   const tracks: Array<{ buffer: Buffer; startMs: number; volume: number; fadeInMs?: number; fadeOutMs?: number; loop?: boolean }> = [];
 
-  // Generate TTS for each shot's foreground audio
+  // Process all three audio layers (BG, MG, FG) for each shot
   for (const shot of storyboard.shots) {
     const spec = (shot.shotspec as unknown as ShotSpec) ?? {};
     const audioPlan = spec.audioPlan;
+    if (!audioPlan) continue;
 
-    if (audioPlan?.fg?.text) {
+    const startMs = Number(shot.startSec ?? 0) * 1000;
+
+    // ─── Background layer (ambient, music) ───
+    if (audioPlan.bg) {
+      try {
+        let bgBuffer: Buffer | null = null;
+
+        if (audioPlan.bg.fileKey) {
+          // Load from storage
+          const [bucket, ...keyParts] = audioPlan.bg.fileKey.split('/');
+          bgBuffer = await downloadBuffer(bucket, keyParts.join('/'));
+        } else if (audioPlan.bg.text && audioPlan.bg.source === 'tts') {
+          const ttsResult = await ttsClient.synthesize({ text: audioPlan.bg.text, voice: audioPlan.bg.voice });
+          bgBuffer = ttsResult.audioBuffer;
+        }
+
+        if (bgBuffer) {
+          tracks.push({
+            buffer: bgBuffer,
+            startMs,
+            volume: audioPlan.bg.volume ?? 0.3,
+            fadeInMs: audioPlan.bg.fadeInMs ?? 2000,
+            fadeOutMs: audioPlan.bg.fadeOutMs ?? 2000,
+            loop: audioPlan.bg.loop ?? true,
+          });
+        }
+      } catch (err) {
+        logger.warn({ err, shotId: shot.id, layer: 'bg' }, 'Background audio load failed');
+      }
+    }
+
+    // ─── Midground layer (effects, room tone) ───
+    if (audioPlan.mg) {
+      try {
+        let mgBuffer: Buffer | null = null;
+
+        if (audioPlan.mg.fileKey) {
+          const [bucket, ...keyParts] = audioPlan.mg.fileKey.split('/');
+          mgBuffer = await downloadBuffer(bucket, keyParts.join('/'));
+        } else if (audioPlan.mg.text && audioPlan.mg.source === 'tts') {
+          const ttsResult = await ttsClient.synthesize({ text: audioPlan.mg.text, voice: audioPlan.mg.voice });
+          mgBuffer = ttsResult.audioBuffer;
+        }
+
+        if (mgBuffer) {
+          tracks.push({
+            buffer: mgBuffer,
+            startMs,
+            volume: audioPlan.mg.volume ?? 0.5,
+            fadeInMs: audioPlan.mg.fadeInMs,
+            fadeOutMs: audioPlan.mg.fadeOutMs,
+            loop: audioPlan.mg.loop,
+          });
+        }
+      } catch (err) {
+        logger.warn({ err, shotId: shot.id, layer: 'mg' }, 'Midground audio load failed');
+      }
+    }
+
+    // ─── Foreground layer (dialogue, voice-over) ───
+    if (audioPlan.fg?.text) {
       try {
         const ttsResult = await ttsClient.synthesize({
           text: audioPlan.fg.text,
@@ -551,13 +758,13 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
         });
         tracks.push({
           buffer: ttsResult.audioBuffer,
-          startMs: Number(shot.startSec ?? 0) * 1000,
+          startMs,
           volume: audioPlan.fg.volume ?? 0.9,
           fadeInMs: audioPlan.fg.fadeInMs,
           fadeOutMs: audioPlan.fg.fadeOutMs,
         });
       } catch (err) {
-        logger.warn({ err, shotId: shot.id }, 'TTS generation failed for shot');
+        logger.warn({ err, shotId: shot.id, layer: 'fg' }, 'TTS generation failed for shot');
       }
     }
   }

@@ -150,6 +150,18 @@ export interface ContentFinalReviewJob {
   autoApprove?: boolean;
 }
 
+export interface ProductionRepairShotJob {
+  shotId: string;
+  storyboardId: string;
+  contentId: string;
+  channelId: string;
+  repairType: 'inpaint' | 'face-fix' | 'lighting-harmonize';
+  maskImageKey?: string;
+  lightingRefKey?: string;
+  repairPrompt?: string;
+  denoise?: number;
+}
+
 // ─── Queue Name → Job Data Mapping ───
 
 export interface QueueJobMap {
@@ -158,7 +170,7 @@ export interface QueueJobMap {
   posting: PostingScheduleJob | PostingPublishJob;
   research: ResearchTrendsJob | ResearchTopicsJob | ResearchKnowledgeUpdateJob | ResearchPopulateKnowledgeJob;
   maintenance: MaintenanceCleanupJob | MaintenanceBackupJob | MaintenanceMetricsJob;
-  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob | ProductionGenerateShotsJob | ProductionQCGateJob | ProductionMixAudioJob;
+  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob | ProductionGenerateShotsJob | ProductionQCGateJob | ProductionMixAudioJob | ProductionRepairShotJob;
 }
 
 export type QueueName = keyof QueueJobMap;

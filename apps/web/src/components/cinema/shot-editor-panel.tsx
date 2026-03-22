@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ShotList } from './shot-list';
 import { ShotPreview } from './shot-preview';
 import { ShotProperties } from './shot-properties';
@@ -24,14 +24,17 @@ export interface ShotData {
   shotspec: Record<string, unknown>;
 }
 
+type RepairType = 'inpaint' | 'face-fix' | 'lighting-harmonize';
+
 interface ShotEditorPanelProps {
   shots: ShotData[];
   onUpdateShot: (shotId: string, spec: Record<string, unknown>) => Promise<void>;
   onGenerateShot: (shotId: string) => Promise<void>;
   onGenerateAll: () => Promise<void>;
+  onRepairShot?: (shotId: string, repairType: RepairType) => Promise<void>;
 }
 
-export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerateAll }: ShotEditorPanelProps) {
+export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerateAll, onRepairShot }: ShotEditorPanelProps) {
   const [selectedShotId, setSelectedShotId] = useState<string | null>(shots[0]?.id ?? null);
   const selectedShot = shots.find((s) => s.id === selectedShotId) ?? null;
   const { mode } = useComplexityMode();
@@ -87,6 +90,11 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
           >
             Generate All
           </button>
+          {isVisible('advanced', mode) && onRepairShot && (selectedShot?.keyframeUrls?.length ?? 0) > 0 && (
+            <RepairMenu
+              onRepair={(type) => selectedShotId && onRepairShot(selectedShotId, type)}
+            />
+          )}
         </div>
       </div>
 
@@ -111,6 +119,55 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Repair Dropdown Menu ───
+
+function RepairMenu({ onRepair }: { onRepair: (type: RepairType) => void }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  const items: { type: RepairType; label: string; desc: string }[] = [
+    { type: 'inpaint', label: 'Inpaint', desc: 'Fix a masked region' },
+    { type: 'face-fix', label: 'Face Fix', desc: 'Auto-detect and repair faces' },
+    { type: 'lighting-harmonize', label: 'Lighting Match', desc: 'Match lighting to reference' },
+  ];
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="px-3 py-1.5 bg-bg-tertiary text-text-primary rounded-md text-sm hover:bg-border border border-border"
+      >
+        Repair
+      </button>
+      {open && (
+        <div className="absolute bottom-full left-0 mb-1 w-52 bg-bg-secondary border border-border rounded-lg shadow-lg z-20">
+          {items.map((item) => (
+            <button
+              key={item.type}
+              onClick={() => { onRepair(item.type); setOpen(false); }}
+              className="w-full text-left px-3 py-2 hover:bg-bg-tertiary first:rounded-t-lg last:rounded-b-lg"
+            >
+              <div className="text-sm text-text-primary">{item.label}</div>
+              <div className="text-xs text-text-secondary">{item.desc}</div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

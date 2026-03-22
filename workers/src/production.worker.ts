@@ -2,14 +2,15 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, scoreShot } from '@airevstream/shared';
-import type { ShotSpec, PromptBible, ComfyUIWorkflow, QCScoreResult } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot } from '@airevstream/shared';
+import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
   ProductionRenderVideoJob,
   ProductionGenerateAudioJob,
   ProductionStoryboardJob,
+  ProductionRepairShotJob,
   ExportVariant,
 } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
@@ -941,6 +942,114 @@ function estimateDuration(script: string, contentType: string): number {
   }
 }
 
+// ─── Repair Shot Handler ───
+
+async function handleRepairShot(data: ProductionRepairShotJob): Promise<void> {
+  const db = getDb();
+  logger.info({ shotId: data.shotId, repairType: data.repairType }, 'Processing shot repair job');
+
+  const healthy = await comfyClient.isHealthy();
+  if (!healthy) {
+    logger.warn('ComfyUI not available for shot repair');
+    await db.workflowJob.create({
+      data: {
+        jobType: 'image_generation',
+        contentId: data.contentId,
+        channelId: data.channelId,
+        status: 'failed',
+        params: data as any,
+        result: { error: 'ComfyUI not available' } as any,
+      },
+    });
+    return;
+  }
+
+  const shot = await db.storyboardShot.findUnique({ where: { id: data.shotId } });
+  if (!shot) {
+    throw new Error(`Shot ${data.shotId} not found`);
+  }
+
+  const keyframeUrls = shot.keyframeUrls as string[] | null;
+  if (!keyframeUrls?.length) {
+    throw new Error(`Shot ${data.shotId} has no keyframes to repair`);
+  }
+
+  const spec = (shot.shotspec as unknown as ShotSpec) ?? {};
+
+  // Build RepairSpec from job data
+  const repairSpec: RepairSpec = {
+    type: data.repairType,
+    sourceImage: keyframeUrls[0],
+    maskImage: data.maskImageKey,
+    autoFaceMask: data.repairType === 'face-fix',
+    denoise: data.denoise,
+    repairPrompt: data.repairPrompt,
+    lightingRef: data.lightingRefKey,
+  };
+
+  // Compose the repair workflow
+  const prompt = spec.promptBlocks?.join(', ');
+  const workflow = composeRepairWorkflow(
+    repairSpec,
+    spec.model,
+    prompt,
+  );
+
+  try {
+    await db.storyboardShot.update({ where: { id: data.shotId }, data: { status: 'generating' } });
+
+    const images = await comfyClient.queueAndWait(workflow);
+
+    // Upload repaired images
+    await ensureBucket(BUCKET);
+    const uploadedUrls: string[] = [];
+
+    for (const img of images) {
+      const imageData = await comfyClient.downloadImage(img.filename, img.subfolder, img.type);
+      const timestamp = Date.now();
+      const key = `shots/${data.storyboardId}/${data.shotId}/repair-${timestamp}-${img.filename}`;
+      await uploadBuffer(BUCKET, key, imageData, 'image/png');
+      uploadedUrls.push(`${BUCKET}/${key}`);
+    }
+
+    // Update shot with repaired keyframes
+    await db.storyboardShot.update({
+      where: { id: data.shotId },
+      data: {
+        keyframeUrls: uploadedUrls as any,
+        status: 'generated',
+      },
+    });
+
+    await db.workflowJob.create({
+      data: {
+        jobType: 'image_generation',
+        contentId: data.contentId,
+        channelId: data.channelId,
+        status: 'completed',
+        params: data as any,
+        result: { images: uploadedUrls, repairType: data.repairType } as any,
+      },
+    });
+
+    logger.info({ shotId: data.shotId, repairType: data.repairType, imageCount: images.length }, 'Shot repair complete');
+  } catch (err) {
+    logger.error({ err, shotId: data.shotId, repairType: data.repairType }, 'Shot repair failed');
+    await db.storyboardShot.update({ where: { id: data.shotId }, data: { status: 'failed' } });
+    await db.workflowJob.create({
+      data: {
+        jobType: 'image_generation',
+        contentId: data.contentId,
+        channelId: data.channelId,
+        status: 'failed',
+        params: data as any,
+        result: { error: err instanceof Error ? err.message : String(err) } as any,
+      },
+    });
+    throw err;
+  }
+}
+
 // ─── Worker Setup ───
 
 type ProductionJob =
@@ -950,7 +1059,8 @@ type ProductionJob =
   | ProductionStoryboardJob
   | ProductionGenerateShotsJob
   | ProductionQCGateJob
-  | ProductionMixAudioJob;
+  | ProductionMixAudioJob
+  | ProductionRepairShotJob;
 
 export function startProductionWorker() {
   const worker = createWorker<'production'>(
@@ -979,6 +1089,9 @@ export function startProductionWorker() {
           break;
         case 'production:mix-audio':
           await handleMixAudio(job.data as ProductionMixAudioJob);
+          break;
+        case 'production:repair-shot':
+          await handleRepairShot(job.data as ProductionRepairShotJob);
           break;
         default:
           logger.warn({ jobName: job.name }, 'Unknown production job type');

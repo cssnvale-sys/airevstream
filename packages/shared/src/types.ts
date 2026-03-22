@@ -139,6 +139,7 @@ export type JobType =
   | 'production:generate-shots'
   | 'production:qc-gate'
   | 'production:mix-audio'
+  | 'production:repair-shot'
   | 'posting:schedule'
   | 'posting:publish';
 
@@ -309,6 +310,26 @@ export interface VfxSpec {
   depthPass?: boolean;       // Generate depth map for compositing
   mattePasses?: string[];    // Which mattes to generate
   motionBlur?: boolean;
+}
+
+// ─── Repair / Inpainting ───
+
+export type RepairType = 'inpaint' | 'face-fix' | 'lighting-harmonize';
+
+export interface RepairSpec {
+  type: RepairType;
+  /** Source image MinIO key to repair */
+  sourceImage: string;
+  /** Mask image MinIO key (for inpainting) */
+  maskImage?: string;
+  /** Auto-generate mask for face regions */
+  autoFaceMask?: boolean;
+  /** Denoise strength for repair pass (lower = subtler fix) */
+  denoise?: number;
+  /** Repair prompt override (what should replace masked area) */
+  repairPrompt?: string;
+  /** Reference image for lighting harmonization */
+  lightingRef?: string;
 }
 
 export interface AudioLayerSpec {

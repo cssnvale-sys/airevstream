@@ -68,6 +68,23 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
     }
   }, [mutate]);
 
+  const handleRepairShot = useCallback(async (shotId: string, repairType: 'inpaint' | 'face-fix' | 'lighting-harmonize') => {
+    if (!storyboard) return;
+    try {
+      await apiPost('/content/repair-shot', {
+        shotId,
+        storyboardId: storyboard.id,
+        contentId,
+        channelId: '',
+        repairType,
+      });
+      toast.success(`Shot ${repairType} repair started`);
+      await mutate();
+    } catch {
+      toast.error('Failed to start repair');
+    }
+  }, [storyboard, contentId, mutate]);
+
   const handleGenerateAll = useCallback(async () => {
     if (!storyboard) return;
     try {
@@ -175,6 +192,7 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
                 onUpdateShot={handleUpdateShot}
                 onGenerateShot={handleGenerateShot}
                 onGenerateAll={handleGenerateAll}
+                onRepairShot={handleRepairShot}
               />
             ) : (
               <div className="flex items-center justify-center h-full">

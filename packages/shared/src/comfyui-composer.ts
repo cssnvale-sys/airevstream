@@ -18,6 +18,7 @@ import type {
   ControlNetSpec,
   UpscaleSpec,
   RefinerSpec,
+  RepairSpec,
   PromptBible,
 } from './types.js';
 
@@ -567,6 +568,217 @@ export function addRefinerNodes(
 
   updatedCtx.samplerNodeId = refinerSamplerId;
   return updatedCtx;
+}
+
+// ─── Repair Workflow Builder ───
+
+/**
+ * Build a repair/inpainting workflow from a RepairSpec.
+ *
+ * Three repair modes:
+ *   - inpaint: Load source + mask → SetLatentNoiseMask → low-denoise KSampler
+ *   - face-fix: Load source → auto face-detect mask → inpaint pass
+ *   - lighting-harmonize: Load source + reference → color-match → low-denoise pass
+ *
+ * Returns a standalone workflow (not composed onto an existing base).
+ */
+export function composeRepairWorkflow(
+  repair: RepairSpec,
+  model?: string,
+  prompt?: string,
+  negativePrompt?: string,
+): ComfyUIWorkflow {
+  const workflow: ComfyUIWorkflow = {};
+  let nextId = 1;
+
+  const positiveText = repair.repairPrompt ?? prompt ?? 'high quality, detailed, sharp';
+  const negativeText = negativePrompt ?? 'worst quality, low quality, blurry, deformed';
+  const denoise = repair.denoise ?? (repair.type === 'lighting-harmonize' ? 0.25 : 0.45);
+
+  // Node: Load checkpoint
+  const checkpointId = String(nextId++);
+  workflow[checkpointId] = {
+    class_type: 'CheckpointLoaderSimple',
+    inputs: { ckpt_name: model ?? 'sd_xl_base_1.0.safetensors' },
+    _meta: { title: 'Load Checkpoint' },
+  };
+
+  // Node: Positive prompt
+  const posPromptId = String(nextId++);
+  workflow[posPromptId] = {
+    class_type: 'CLIPTextEncode',
+    inputs: { text: positiveText, clip: [checkpointId, 1] },
+    _meta: { title: 'Repair Positive Prompt' },
+  };
+
+  // Node: Negative prompt
+  const negPromptId = String(nextId++);
+  workflow[negPromptId] = {
+    class_type: 'CLIPTextEncode',
+    inputs: { text: negativeText, clip: [checkpointId, 1] },
+    _meta: { title: 'Repair Negative Prompt' },
+  };
+
+  // Node: Load source image
+  const sourceImageId = String(nextId++);
+  workflow[sourceImageId] = {
+    class_type: 'LoadImage',
+    inputs: { image: repair.sourceImage },
+    _meta: { title: 'Source Image' },
+  };
+
+  // Node: VAE encode source image to latent
+  const vaeEncodeId = String(nextId++);
+  workflow[vaeEncodeId] = {
+    class_type: 'VAEEncode',
+    inputs: {
+      pixels: [sourceImageId, 0],
+      vae: [checkpointId, 2],
+    },
+    _meta: { title: 'Encode Source to Latent' },
+  };
+
+  let latentInputId = vaeEncodeId;
+
+  if (repair.type === 'inpaint' || repair.type === 'face-fix') {
+    // Load or generate mask
+    let maskNodeId: string;
+
+    if (repair.type === 'face-fix' || repair.autoFaceMask) {
+      // Auto-detect face region as mask
+      const faceDetectId = String(nextId++);
+      workflow[faceDetectId] = {
+        class_type: 'FaceDetectorCropAndPaste',
+        inputs: {
+          image: [sourceImageId, 0],
+          threshold: 0.5,
+          dilation: 30,
+        },
+        _meta: { title: 'Auto Face Mask' },
+      };
+      // Use a simpler approach — generate mask from face area
+      const maskFromFaceId = String(nextId++);
+      workflow[maskFromFaceId] = {
+        class_type: 'ImageToMask',
+        inputs: {
+          image: [faceDetectId, 1], // mask output
+          channel: 'red',
+        },
+        _meta: { title: 'Face Region Mask' },
+      };
+      maskNodeId = maskFromFaceId;
+    } else if (repair.maskImage) {
+      // Load explicit mask image
+      const maskLoadId = String(nextId++);
+      workflow[maskLoadId] = {
+        class_type: 'LoadImage',
+        inputs: { image: repair.maskImage },
+        _meta: { title: 'Mask Image' },
+      };
+      const maskConvertId = String(nextId++);
+      workflow[maskConvertId] = {
+        class_type: 'ImageToMask',
+        inputs: {
+          image: [maskLoadId, 0],
+          channel: 'red',
+        },
+        _meta: { title: 'Convert Mask' },
+      };
+      maskNodeId = maskConvertId;
+    } else {
+      // Fallback: full image pass (no mask)
+      maskNodeId = '';
+    }
+
+    // Apply mask to latent for inpainting
+    if (maskNodeId) {
+      const setMaskId = String(nextId++);
+      workflow[setMaskId] = {
+        class_type: 'SetLatentNoiseMask',
+        inputs: {
+          samples: [vaeEncodeId, 0],
+          mask: [maskNodeId, 0],
+        },
+        _meta: { title: 'Apply Inpaint Mask' },
+      };
+      latentInputId = setMaskId;
+    }
+  } else if (repair.type === 'lighting-harmonize' && repair.lightingRef) {
+    // Load reference image for color matching
+    const refImageId = String(nextId++);
+    workflow[refImageId] = {
+      class_type: 'LoadImage',
+      inputs: { image: repair.lightingRef },
+      _meta: { title: 'Lighting Reference' },
+    };
+
+    // Color match source to reference
+    const colorMatchId = String(nextId++);
+    workflow[colorMatchId] = {
+      class_type: 'ColorMatch',
+      inputs: {
+        image: [sourceImageId, 0],
+        reference: [refImageId, 0],
+        method: 'mkl',
+      },
+      _meta: { title: 'Color Match to Reference' },
+    };
+
+    // Re-encode color-matched image
+    const reEncodeId = String(nextId++);
+    workflow[reEncodeId] = {
+      class_type: 'VAEEncode',
+      inputs: {
+        pixels: [colorMatchId, 0],
+        vae: [checkpointId, 2],
+      },
+      _meta: { title: 'Encode Color-Matched Latent' },
+    };
+    latentInputId = reEncodeId;
+  }
+
+  // KSampler — low-denoise pass for repair
+  const samplerId = String(nextId++);
+  workflow[samplerId] = {
+    class_type: 'KSampler',
+    inputs: {
+      model: [checkpointId, 0],
+      positive: [posPromptId, 0],
+      negative: [negPromptId, 0],
+      latent_image: [latentInputId, 0],
+      seed: Math.floor(Math.random() * 2147483647),
+      steps: 25,
+      cfg: 7,
+      sampler_name: 'dpmpp_2m',
+      scheduler: 'karras',
+      denoise,
+    },
+    _meta: { title: 'Repair Sampler' },
+  };
+
+  // VAE decode
+  const decodeId = String(nextId++);
+  workflow[decodeId] = {
+    class_type: 'VAEDecode',
+    inputs: {
+      samples: [samplerId, 0],
+      vae: [checkpointId, 2],
+    },
+    _meta: { title: 'Decode Repaired' },
+  };
+
+  // Save image
+  const saveId = String(nextId++);
+  workflow[saveId] = {
+    class_type: 'SaveImage',
+    inputs: {
+      images: [decodeId, 0],
+      filename_prefix: 'airevstream_repair',
+    },
+    _meta: { title: 'Save Repaired Image' },
+  };
+
+  return workflow;
 }
 
 // ─── Main Composer (Public API) ───

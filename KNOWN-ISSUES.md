@@ -79,11 +79,35 @@ The library page's AI model filter applies client-side after pagination, so it o
 The content detail "Schedule" button redirects to `/calendar?schedule={id}` but the calendar page doesn't read this query param to auto-open a scheduling dialog.
 **Action**: Read `schedule` search param in calendar page and open the schedule creation form pre-populated with the content ID.
 
-### KI-058: Empty ComfyUI Workflow Subdirectories
+### KI-058: Empty ComfyUI Workflow Subdirectories — Partially Fixed (Session 24)
 **Severity**: Low
-**Status**: Open (Session 20 gap analysis)
-`comfyui-workflows/character/`, `environment/`, `style/`, `upscale/` are empty reserved directories. Should be populated with actual workflow templates or removed.
-**Action**: Populate with ComfyUI workflow JSON templates for each category, or remove if not needed.
+**Status**: Partially Fixed (Session 24)
+`comfyui-workflows/character/`, `environment/`, `style/` now have workflow templates (dialogue-closeup, insert-hands, establishing-wide, action-tracking). `upscale/` remains empty.
+**Action**: Add upscale workflow template to `comfyui-workflows/upscale/` if needed.
+
+### KI-062: Seasoning Pipeline Untested Against Real Platforms
+**Severity**: Medium
+**Status**: Open
+The seasoning pipeline (signup, warming, graduation) is fully implemented but untested against real YouTube/TikTok/Instagram/Facebook. Browser automation workflows depend on platform DOM structures that may change. The pipeline is designed for graceful failure (HITL fallback), but initial runs will likely need human monitoring.
+**Action**: Test with a small cohort (1-2 accounts per platform) with `headless: false` for visual verification.
+
+### KI-063: CAPTCHA/SMS Integration Stubs Only
+**Severity**: Medium
+**Status**: Open
+CaptchaSolver and SmsVerifier are D064 stubs — they throw without API keys and return placeholder data with them. Signup automation will hit CAPTCHA/SMS walls on all platforms without real implementations.
+**Action**: Obtain 2Captcha API key and sms-activate.org API key, then implement real solver logic.
+
+### KI-064: Prisma Migration Not Applied for Seasoning Models
+**Severity**: High
+**Status**: Open
+SeasoningCohort and SeasoningEnrollment models are defined in schema.prisma but no migration has been run. The `prisma generate` was run to update the client, but `prisma migrate dev` requires a running PostgreSQL instance.
+**Action**: Run `npx prisma migrate dev --name add_seasoning_models` when database is available.
+
+### KI-061: Tier 3 Features Require External Setup
+**Severity**: Low
+**Status**: By Design (Session 24)
+Four stub modules throw on call: `viral-discovery` (YouTube/TikTok API keys), `experiment-orchestrator` (analytics integration), `quality-regression` (ffmpeg with libvmaf), `channel-suggestions` (ML model). Type interfaces are complete.
+**Action**: Implement when external dependencies are available. See OPERATOR-TODO.md.
 
 ### KI-056: Port 3000 Conflict with External Project — Fixed (Session 18)
 **Severity**: Medium

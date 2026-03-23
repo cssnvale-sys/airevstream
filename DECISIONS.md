@@ -265,6 +265,86 @@
 **Decision**: The pipeline-status endpoint derives step completion from content status, storyboard/shot statuses, and QC scores rather than tracking BullMQ job progress directly.
 **Rationale**: Avoids Redis dependency in the API layer. DB state is the single source of truth. No need to correlate job IDs across 8 steps. The 8-step pipeline maps naturally to observable DB states (has storyboard? has shots? shots generated? QC scores present? etc.).
 
+## D055: Pre-Generation QC Gate
+**Date**: 2026-03-22
+**Decision**: All shots must pass constraint validation and budget check before the pipeline commits to generation. Violations with severity 'error' block the pipeline; 'warning' allows proceed with advisory.
+**Rationale**: Prevents wasted compute and API costs. Catching invalid specs (e.g., Veo with unsupported aspect ratio) early avoids failed jobs. Budget check prevents runaway costs.
+
+## D056: Prompt Slot Substitution Patterns
+**Date**: 2026-03-22
+**Decision**: Use `{slotName}` for user-defined slots, `{char:key}` for per-character prompt blocks, `{env:key}` for per-environment blocks. Substitution happens in `composePrompt()` before sending to ComfyUI.
+**Rationale**: Templates with named slots allow reusable prompt structures across shots while maintaining consistency. The `char:/env:` namespacing avoids collisions between user slots and bible blocks.
+
+## D057: Agent Complexity Mode Awareness
+**Date**: 2026-03-22
+**Decision**: Agents receive mode-specific instructions via `getAgentPromptForMode()`. In Simple mode, non-critical agent failures are marked 'skipped' (graceful degradation) rather than 'failed'.
+**Rationale**: Simple mode should never block on optional agent output (e.g., sound design). The mode instructions tell agents which fields to skip, reducing cognitive load and token usage.
+
+## D058: Static Provider Constraints
+**Date**: 2026-03-22
+**Decision**: Provider constraints (max FPS, supported aspects, max duration, max steps/dimensions) are defined as static constants, not queried from provider APIs.
+**Rationale**: Provider APIs don't expose constraint metadata. Static constraints are fast, offline, and can be updated with the codebase. The alternative (discovery at runtime) is fragile and adds latency.
+
+## D059: Shot Class → Workflow Template Mapping
+**Date**: 2026-03-22
+**Decision**: 8 standard shot classes (Dialogue_Closeup, Establishing_Wide, etc.) map to ComfyUI workflow templates via `WORKFLOW_TEMPLATE_MAP`. If no shotClass is set, the composer builds a workflow dynamically.
+**Rationale**: Pre-built templates provide optimized defaults (lens, DOF, resolution) for common shot types. Dynamic composition remains available for custom shots. Templates are simple 7-node graphs that are easy to maintain.
+
+## D060: Auto-Variants as Separate Render Jobs
+**Date**: 2026-03-22
+**Decision**: Auto-render variants (9:16 portrait, 16:9 captioned, etc.) are queued as separate BullMQ render jobs after the primary render completes, sharing the same bundle.
+**Rationale**: Extends D045. Separate jobs enable parallel rendering, individual failure recovery, and independent progress tracking per variant.
+
+## D061: Copyright Compliance via License Map
+**Date**: 2026-03-22
+**Decision**: Use a static `KNOWN_LICENSES` map (10 SPDX/model licenses) for copyright compliance checking rather than querying license databases.
+**Rationale**: Covers all major open-source model licenses. Static lookup is fast and offline. Unknown licenses trigger a warning for manual review rather than blocking.
+
+## D062: CMU ARPAbet Phoneme Upgrade for Lip-Sync
+**Date**: 2026-03-22
+**Decision**: When TTS provides phoneme timestamps (CMU ARPAbet format), use the 39-phoneme → 15-viseme mapping for accurate lip-sync. Falls back to letter-based approximation when timestamps unavailable.
+**Rationale**: CMU ARPAbet is the standard phoneme set used by Piper, ElevenLabs, and most TTS engines. Phoneme-level mapping produces significantly better mouth animation than letter approximation. The fallback ensures lip-sync always works.
+
+## D063: Preset Ranges for Bounded Sliders
+**Date**: 2026-03-22
+**Decision**: Presets can define `ranges: Record<string, {min, max}>` to constrain slider values. `getActiveRanges()` merges ranges from recipe presets and individual presets (later presets override).
+**Rationale**: Some visual styles require constrained parameter ranges (e.g., film-noir requires negative saturation). Ranges prevent users from accidentally breaking the style's intent while still allowing adjustment within bounds.
+
+## D064: Tier 3 Stub Pattern
+**Date**: 2026-03-22
+**Decision**: Features requiring external infrastructure (YouTube API keys, ML models, VMAF tooling) are implemented as typed interfaces + stub functions that throw descriptive errors referencing OPERATOR-TODO.md.
+**Rationale**: Provides full type contracts for future implementation without broken runtime behavior. Error messages guide operators to the setup steps. Stubs compile and export cleanly, so downstream code can import types without conditional dependencies.
+
+## D065: Schedule Hybrid — Code Defaults + DB Overrides
+**Date**: 2026-03-23
+**Decision**: Seasoning schedule defined as code constants (DEFAULT_SEASONING_SCHEDULE) with per-cohort DB overrides via scheduleConfig JSON.
+**Rationale**: Deterministic defaults ensure consistent behavior across cohorts. DB overrides allow per-cohort customization without code changes. The schedule is too complex for purely DB-driven config, but too rigid as pure code.
+
+## D066: Repeatable Scheduler (15-min Poll) Not DAG
+**Date**: 2026-03-23
+**Decision**: Seasoning uses a repeatable BullMQ job (every 15 min) to scan for due sessions, not a FlowProducer DAG.
+**Rationale**: Seasoning is ongoing over weeks, not a linear pipeline. Accounts warm at different rates, pause/resume independently. A repeatable scanner that checks `nextScheduledAt <= now()` is simpler and more resilient than a pre-planned DAG.
+
+## D067: Proxy Pinning in Enrollment Record
+**Date**: 2026-03-23
+**Decision**: Pinned proxy stored as `proxyServer` string on SeasoningEnrollment, fingerprint ID also on enrollment.
+**Rationale**: Per-account proxy consistency is critical for avoiding detection. Storing on the enrollment record (not metadata JSON) makes it queryable and ensures each account always connects from the same IP.
+
+## D068: Extend Account Worker for Seasoning
+**Date**: 2026-03-23
+**Decision**: Add seasoning handlers to the existing account worker rather than creating a separate worker.
+**Rationale**: Reuses the existing lazy-loaded browser automation infrastructure, session management, and browser context pooling. The `seasoning` queue is separate from `account` for job isolation, but the processor shares code.
+
+## D069: CAPTCHA/SMS as Typed Stubs
+**Date**: 2026-03-23
+**Decision**: CaptchaSolver and SmsVerifier are stub classes that throw without API keys, following the D064 pattern.
+**Rationale**: The interfaces and integration points are defined now. When the operator provides 2Captcha/sms-activate.org API keys, the stubs can be replaced with real implementations without changing the calling code.
+
+## D070: Type-Only Barrel Exports for Stub Modules
+**Date**: 2026-03-23
+**Decision**: Replace `export *` with `export type { ... }` for the 4 Tier-3 stub modules in packages/shared/src/index.ts.
+**Rationale**: Stub functions that always throw should not be importable from the barrel. Type-only exports keep the interfaces available for future implementation while preventing accidental usage of throwing functions. Verified by grep that no code imports these functions.
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

@@ -4,6 +4,22 @@ Items that need your action before the system is fully operational.
 
 ---
 
+## Seasoning Pipeline Setup (Session 25)
+
+### Required: Database Migration
+```bash
+npx prisma migrate dev --name add_seasoning_models
+```
+Run this to create the `seasoning_cohorts` and `seasoning_enrollments` tables.
+
+### Optional: CAPTCHA Solving Service
+Set `CAPTCHA_SOLVER_API_KEY` in `.env` with a [2Captcha](https://2captcha.com/) API key. This enables automated CAPTCHA solving during account signup. Without it, all CAPTCHAs will fall back to human-in-the-loop resolution.
+
+### Optional: SMS Verification Service
+Set `SMS_VERIFIER_API_KEY` in `.env` with an [sms-activate.org](https://sms-activate.org/) API key. This provides disposable phone numbers for platform SMS verification during signup. Without it, SMS verification steps will require manual intervention.
+
+---
+
 ## 1. Start Infrastructure (if not already running)
 
 ```bash

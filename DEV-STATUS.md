@@ -23,7 +23,7 @@
 | Step | Worker | Status | Notes |
 |------|--------|--------|-------|
 | 3.1 | content.worker | Done | AI content generation + approve/reject/regenerate |
-| 3.2 | account.worker | Done | Create + sync + health check + warm with browser automation (graceful fallback) |
+| 3.2 | account.worker | Done | Create + sync + health check + warm + 5 seasoning handlers (enroll, signup, warm, check-due, graduate) |
 | 3.3 | posting.worker | Done | Publish + schedule with rate limiting |
 | 3.4 | research.worker | Done | Trend analysis + topic generation via AI |
 | 3.5 | maintenance.worker | Done | Cleanup + backup. All 5 tested |
@@ -132,6 +132,39 @@
 | LE-4 | C2PA provenance + safety | Done | ProvenanceRecord, C2PAManifest, prompt safety linting, ProvenanceViewer |
 | LE-3 | Viral scoring + A/B testing | Done | 6-dimension scoring, trend matching, significance calculator, ViralScorePanel |
 
+### Phase 10: SA-1 Systematic Gap Closure (Session 24) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| SA-1.B1 | Foundation types + presets + constraints | Done | ShotSpec enrichment, 14 new presets (5 families), constraint validator, pre-gen QC, workflow registry |
+| SA-1.B2 | Agent complexity + cost preview + PromptBible | Done | Mode-aware agents, cost preview API, prompt slot substitution, Cinema Bible UI enrichment |
+| SA-1.B3 | Pipeline pre-flight + auto-variants + safety | Done | Pre-flight gate, safety defaults, auto-render variants |
+| SA-1.B4 | ComfyUI shot classes + provenance + dialogue | Done | 4 workflow templates, provenance chain, copyright, C2PA sidecar, dialogue TTS |
+| SA-1.B5 | Frontend — cards, table, cost panel | Done | StyleCardPicker, ProjectTypePicker, ShotTable, CostPreviewPanel |
+| SA-1.B6 | Lip-sync + preset ranges + codec | Done | CMU phoneme mapping, getActiveRanges(), codec presets |
+| SA-1.B7 | Tests + Tier 3 stubs | Done | 49 new tests, 4 stub modules |
+| SA-1.B8 | Documentation + tracking files | Done | All 7 tracking files updated |
+
+### Phase 11: AS-1 Seasoning Pipeline (Session 25) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| AS-1.B1 | Seasoning types + config | Done | EnrollmentStatus (11 states), SeasoningPhase (6 values), 4-phase schedule, platform constraints, risk thresholds |
+| AS-1.B2 | Database schema + queue types | Done | SeasoningCohort + SeasoningEnrollment models, 5 job interfaces, `seasoning` queue |
+| AS-1.B3 | Orchestrator + risk management | Done | State machine (determineNextAction), phase advancement, graduation, Gaussian jitter scheduling, risk assessment (5 factors) |
+| AS-1.B4 | Worker extension + flow producer | Done | 5 seasoning handlers in account.worker, repeatable 15-min scanner, staggered enrollment flow |
+| AS-1.B5 | API routes | Done | 6 route files: cohorts CRUD, enroll, enrollments, enrollment detail, stats |
+| AS-1.B6 | Frontend dashboard | Done | Cohort list, detail page, phase pipeline viz, enrollment table, create modal, SWR hooks |
+| AS-1.B7 | CAPTCHA/SMS stubs | Done | CaptchaSolver + SmsVerifier (D064 stub pattern), browser-automation exports |
+| AS-1.B8 | Tests + documentation | Done | 35 new tests (24 orchestrator + 11 config), all tracking files updated |
+
+### Phase 12: Orphan Integration (Session 26) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| OI-B1 | Navigation & discoverability | Done | Workflows sidebar + W shortcut, breadcrumb labels, command palette page links |
+| OI-B2 | Worker bootstrap + repeatables | Done | Seasoning worker started, maintenance cleanup/metrics, research trends repeatables |
+| OI-B3 | Account action API routes + UI | Done | 3 action routes (sync/health-check/warm), research dispatcher, action buttons in detail panel |
+| OI-B4 | Content lifecycle actions + job status | Done | Publish/rescore API routes, Publish Now + Rescore buttons, useJobStatus wired in studio |
+| OI-B5 | Tier-3 stub cleanup | Done | Type-only barrel exports, @internal JSDoc on stub functions |
+
 ### Phase 9: UI Audit & Fixes (Session 23) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
@@ -157,10 +190,10 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 246 (all passing via Vitest)
-- **Audit tests**: 24 (9 files scanning 108+ API routes for 9 bug classes, <1s)
+- **Unit tests**: 330 (all passing via Vitest — 161 shared + 135 web + 5 production-pipeline + 8 workflow-engine + 21 others)
+- **Audit tests**: 24 (9 files scanning 130+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
-- **Total**: 451 tests
+- **Total**: 535 tests
 - Audit: 24 tests across 9 files — **0 known violations** for viewer checks and rate limiting (all fixed Session 17)
 - E2E: 181 tests across 30 files (all 17 pages covered, 100% pass rate)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
@@ -171,7 +204,7 @@
 ## Architecture Highlights
 - **Prisma Schema**: 36 models with full-text search GIN indexes on key tables
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: 118 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Next.js API Routes**: 124 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 4 compositions (short 9:16, long 16:9, thumbnail still, CinemaVideo 24fps) with H.I.C.C. beat timing — CinemaVideo now wired in render handler (Session 20)

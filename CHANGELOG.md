@@ -7,6 +7,55 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Workflows sidebar nav** (Session 26): GitBranch icon, W keyboard shortcut, command palette quick-link
+- **Breadcrumb labels** (Session 26): Added seasoning, budgets, studio to LABEL_MAP
+- **Command palette page links** (Session 26): 14 page quick-links shown when query empty or short, prepended before API results
+- **Account action API routes** (Session 26): POST sync, health-check, warm per social account with tenant ownership verification
+- **Research dispatcher API** (Session 26): POST /research with Zod discriminated union (trends/topics/knowledge-update) → queue jobs
+- **Content publish API** (Session 26): POST /content/[id]/publish dispatches content:publish for approved content
+- **Content rescore API** (Session 26): POST /content/[id]/rescore dispatches content:viral-score for storyboarded content
+- **Account action buttons** (Session 26): Sync/Check/Warm inline buttons per social account in detail panel
+- **Publish Now + Rescore buttons** (Session 26): Content detail page actions for approved/storyboarded content
+- **Job progress in studio** (Session 26): useJobStatus hook wired to cinema pipeline — shows progress bar during render
+- **Seasoning worker bootstrap** (Session 26): startSeasoningWorker() activated in workers/index.ts
+- **Maintenance repeatable jobs** (Session 26): cleanup (7d), metrics (5m) registered alongside backup (24h)
+- **Research repeatable job** (Session 26): trends research every 12 hours
+
+### Changed
+- **Stub module exports** (Session 26): Tier-3 stubs (viral-discovery, experiment-orchestrator, quality-regression, channel-suggestions) now use type-only exports from barrel — throwing functions no longer exported from @airevstream/shared
+- **Audit test** (Session 26): Added cohorts/enrollments to paginated variable name allowlist
+
+### Added
+- **Automated account seasoning pipeline** (Session 25/AS-1): Full signup → phased warming → graduation pipeline with 4-phase schedule (passive consumption → light engagement → active engagement → full activity), risk assessment, Gaussian session jitter, proxy pinning, fingerprint persistence
+- **SeasoningCohort + SeasoningEnrollment models** (Session 25/AS-1): 2 new Prisma models with relations to Tenant, EmailAccount, SocialAccount; 5 new queue job types; seasoning queue
+- **Seasoning orchestrator** (Session 25/AS-1): State machine with 11 statuses, phase advancement logic, graduation criteria checking, risk assessment (5 factors), activity selection per phase
+- **Seasoning API routes** (Session 25/AS-1): 6 route files — cohort CRUD, enrollment, enrollments list, enrollment detail (pause/resume/retry), dashboard stats
+- **Seasoning dashboard UI** (Session 25/AS-1): Cohort list with stats, cohort detail with phase pipeline visualization, enrollment table with filters, create cohort modal, Sprout sidebar nav
+- **CAPTCHA solver stub** (Session 25/AS-1): CaptchaSolver class with detect/solve/getBalance — D064 stub pattern, ready for 2Captcha API key
+- **SMS verifier stub** (Session 25/AS-1): SmsVerifier class with requestNumber/getCode/releaseNumber — D064 stub pattern, ready for sms-activate.org API key
+- **Browser fingerprint store** (Session 25/AS-1): Deterministic fingerprints from seeded PRNG (FNV hash + xorshift32) — same account always gets same browser profile
+- **Account proxy pinning** (Session 25/AS-1): Deterministic proxy assignment per account+platform hash, stored in enrollment record
+- **Seasoning flow producer** (Session 25/AS-1): startSeasoningPipeline() with staggered enrollment job queuing
+- **35 new unit tests** (Session 25/AS-1): seasoning-config (11) + seasoning-orchestrator (24)
+- **Pre-generation QC gate** (Session 24/SA-1): Constraint validator with per-provider limits (Veo/Sora/ComfyUI), safety defaults (personGeneration=disallow), budget validation — gates pipeline entry
+- **14 new presets across 5 families** (Session 24/SA-1): project(3), story(3), dialogue(2), continuity(3), edit(3) with tier and ranges support
+- **ShotSpec enrichment** (Session 24/SA-1): promptSlots, dialogue, shotClass, transition, beat fields + TimestampedScript interface + AssetRegistryEntry type
+- **Workflow registry** (Session 24/SA-1): 8 shot classes mapped to ComfyUI templates, metadata for all registered workflows
+- **Cost preview API** (Session 24/SA-1): POST /pipeline/cost-preview with per-shot estimation, budget check, provider-specific rates
+- **Agent complexity-mode awareness** (Session 24/SA-1): getAgentPromptForMode() with per-mode instructions, Simple mode graceful degradation
+- **PromptBible enrichment** (Session 24/SA-1): logline, slotRules, perCharacterBlocks, perEnvironmentBlocks + Cinema Bible UI editors
+- **Prompt slot substitution** (Session 24/SA-1): {slotName}, {char:key}, {env:key} patterns in ComfyUI composer with slot rule validation
+- **Auto-render variants** (Session 24/SA-1): Queue variant renders (9:16, captioned) after primary render completion
+- **Provenance chain + C2PA sidecar + copyright** (Session 24/SA-1): Chain building, KNOWN_LICENSES map (10 licenses), compliance checking, sidecar JSON generation
+- **4 ComfyUI shot class workflows** (Session 24/SA-1): dialogue-closeup (85mm), establishing-wide (24mm), insert-hands (macro), action-tracking (35mm motion blur)
+- **Simple mode card pickers** (Session 24/SA-1): StyleCardPicker (6 visual cards) and ProjectTypePicker (Explainer/Vlog/Commercial)
+- **Shot-by-shot table view** (Session 24/SA-1): 8-column sortable table with status badges, timecodes, QC scores
+- **Cost preview panel** (Session 24/SA-1): On-demand estimation, budget bar, category breakdown in Studio right sidebar
+- **Bounded sliders with preset ranges** (Session 24/SA-1): getActiveRanges() merges ranges from recipe + individual presets
+- **Lip-sync phoneme-to-viseme upgrade** (Session 24/SA-1): CMU ARPAbet 39-phoneme mapping, generateVisemeTrackFromPhonemes() for TTS timestamps
+- **Codec/output presets** (Session 24/SA-1): ProRes archive, HEVC efficient output presets, codec field on existing presets
+- **Tier 3 stubs** (Session 24/SA-1): viral-discovery, experiment-orchestrator, quality-regression, channel-suggestions — interfaces + throw-on-call functions
+- **49 new unit tests** (Session 24/SA-1): presets-extended, cost-estimator-extended, provenance-extended, lip-sync-extended, comfyui-composer-slots
 - **C2PA provenance tracking** (Session 22/LE-4): ProvenanceRecord and C2PAManifest types, `createProvenanceRecord()` and `generateC2PAManifest()` functions, prompt safety linting (8 categories), ProvenanceViewer component in Studio, GET /content/provenance API route
 - **Viral scoring engine** (Session 22/LE-3): 6-dimension viral potential scoring (hook strength, retention, CTA clarity, shareability, platform fit, trend alignment), tier classification (low/medium/high/viral), trend matching, A/B test statistical significance calculator, ViralScorePanel in Studio, GET /content/viral-score and GET /trending API routes
 - **ComfyUI repair workflows** (Session 22/LE-6): 3 repair types (inpaint, face-fix, lighting-harmonize) with composable node graph builder, repair menu in shot editor, POST /content/repair-shot API route

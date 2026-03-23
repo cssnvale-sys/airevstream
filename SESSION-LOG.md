@@ -4,6 +4,190 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 26 — Orphan Integration: Connect All Disconnected Features
+
+**Date:** 2026-03-23
+**Focus:** Wire together all disconnected features — pages without nav entries, worker handlers without triggers, API routes without dispatchers, and hooks without consumers.
+
+### What Was Done
+
+#### B1: Navigation & Discoverability
+- Added Workflows to sidebar nav with `GitBranch` icon + `W` keyboard shortcut
+- Added `seasoning`, `budgets`, `studio` to breadcrumb LABEL_MAP
+- Added `W → Go to Workflows` to keyboard shortcuts modal
+- Revamped command palette: 14 page quick-links shown when query empty, filtered by label match for short queries, prepended before API results for full queries
+
+#### B2: Worker Bootstrap & Repeatable Jobs
+- Added `startSeasoningWorker()` to workers/index.ts — activates seasoning queue worker + 15-min check-due repeatable
+- Registered `maintenance:cleanup` repeatable (every 7 days, 30-day retention)
+- Registered `maintenance:metrics` repeatable (every 5 minutes) — feeds System Health dashboard
+- Registered `research:trends` repeatable (every 12 hours) — AI-powered trend research
+
+#### B3: Account Operation API Routes + Frontend Triggers
+- Created 3 account action routes: sync, health-check, warm (POST with tenant ownership verification)
+- Created research dispatcher route: POST with Zod discriminated union (trends/topics/knowledge-update)
+- Added `SocialAccountActions` component to accounts detail panel — Sync/Check/Warm inline buttons per social account
+
+#### B4: Content Lifecycle Actions + Job Status Hook
+- Created publish API route: POST dispatches `content:publish` (approved status gate)
+- Created rescore API route: POST dispatches `content:viral-score` (requires storyboard, non-draft)
+- Added "Publish Now" and "Rescore" buttons to content detail page
+- Wired `useJobStatus` hook into studio page — tracks active pipeline job with progress bar
+
+#### B5: Tier-3 Stub Cleanup
+- Replaced `export *` with type-only exports for 4 stub modules (viral-discovery, experiment-orchestrator, quality-regression, channel-suggestions)
+- Added `@internal` JSDoc to all stub throwing functions
+
+#### Audit Fix
+- Added `cohorts` and `enrollments` to paginated variable name allowlist in data-shape audit test (pre-existing false positive from Session 25)
+
+### Build Status
+- 14 packages building, all tests pass (27 test tasks), 24 audit tests pass
+- 6 new API route files, 12 modified files
+- New route count: ~130 API route files
+
+### Decisions
+- D070: Type-only barrel exports for stub modules
+
+---
+
+## Session 25 — AS-1: Automated Account Signup & Seasoning Pipeline
+
+**Date:** 2026-03-23
+**Focus:** Implement full account signup automation and seasoning pipeline — from email accounts through phased warming to graduation as posting-ready.
+
+### What Was Done
+
+#### B1: Foundation Types + Config
+- Created `seasoning-types.ts` — EnrollmentStatus, SeasoningPhase, CohortStatus, SeasoningAction, RiskAssessment, ActivityLogEntry, summary types
+- Created `seasoning-config.ts` — PhaseConfig, GraduationCriteria, SeasoningSchedule, CohortConfig, DEFAULT_SEASONING_SCHEDULE (4-phase 3-week program), PLATFORM_SIGNUP_CONSTRAINTS, SEASONING_RISK_THRESHOLDS, phase progression helpers
+
+#### B2: Database Schema + Queue Types
+- Added SeasoningCohort and SeasoningEnrollment Prisma models (38 models total)
+- Added 5 seasoning job interfaces + `seasoning` queue to QueueJobMap
+- Relations: Tenant → SeasoningCohort → SeasoningEnrollment, EmailAccount → SeasoningEnrollment, SocialAccount → SeasoningEnrollment
+
+#### B3: Orchestrator + Risk Management
+- Created `seasoning-orchestrator.ts` — state machine (determineNextAction), phase advancement, graduation check, session scheduling with Gaussian jitter, activity selection, risk assessment (5 factors)
+- Created `account-proxy-pinning.ts` — deterministic proxy assignment by account+platform hash
+- Created `fingerprint-store.ts` — seeded PRNG for deterministic browser fingerprints (FNV hash + xorshift32)
+- 35 tests across orchestrator + config
+
+#### B4: Worker Extension + Flow Producer
+- Extended account.worker.ts with 5 seasoning handlers: enroll, signup, warm, check-due (repeatable 15-min), graduate
+- Created `startSeasoningWorker()` with repeatable check-due job
+- Added `startSeasoningPipeline()` to flows.ts — staggered enrollment job queuing
+
+#### B5: API Routes (6 files)
+- Cohort CRUD: GET/POST /seasoning/cohorts, GET/PUT/DELETE /seasoning/cohorts/[id]
+- Enroll: POST /seasoning/cohorts/[id]/enroll
+- Enrollments: GET /seasoning/cohorts/[id]/enrollments (filterable)
+- Enrollment detail: GET/PUT /seasoning/enrollments/[id] (pause/resume/retry)
+- Stats: GET /seasoning/stats (dashboard aggregation)
+
+#### B6: Frontend Dashboard
+- Seasoning list page with stats cards, global pipeline visualization, cohort cards with progress bars
+- Cohort detail page with phase pipeline, filterable enrollment table, account enrollment panel
+- Components: PhasePipeline, EnrollmentTable, CreateCohortModal
+- SWR hooks: useCohorts, useCohort, useEnrollments, useEnrollment, useSeasoningStats
+- Sidebar: added Seasoning nav item with Sprout icon
+
+#### B7: CAPTCHA/SMS Stubs
+- Created `captcha-solver.ts` — CaptchaSolver with detectCaptcha/solve/getBalance (D064 stub pattern)
+- Created `sms-verifier.ts` — SmsVerifier with requestNumber/getCode/releaseNumber (D064 stub pattern)
+
+#### B8: Tests + Documentation
+- 35 new tests (11 config + 24 orchestrator) — 161 total in shared package
+- Fixed stale dist overwrite issue: added `rm -rf dist &&` to shared + browser-automation build scripts
+- Updated all tracking files
+
+### Decisions Made
+- D065: Schedule hybrid (code defaults + DB overrides)
+- D066: Repeatable scheduler (15-min poll) not DAG
+- D067: Proxy pinning in enrollment metadata JSON
+- D068: Extend account worker (not new worker)
+- D069: CAPTCHA/SMS as stubs with types
+
+### Build Status
+- All packages compile, 161 shared tests pass
+
+---
+
+## Session 24 — SA-1: Systematic Gap Closure (8 Batches)
+
+**Date:** 2026-03-22
+**Focus:** Full codebase audit against SYSTEM_AUDIT_INSTRUCTIONS.md revealed ~55% completion. Closed 25 gaps, stubbed 4, deferred 2 across 8 sequential batches with parallel agents.
+
+### What Was Done
+
+#### B1: Foundation — Types, Presets, Constraints, Pre-Gen QC, Workflow Registry
+- Extended `ShotSpec` with `promptSlots`, `dialogue`, `transition`, `beat`, `shotClass`
+- Extended `PromptBible` with `logline`, `slotRules`, `perCharacterBlocks`, `perEnvironmentBlocks`
+- Added `AssetRegistryEntry` and `TimestampedScript` interfaces
+- Extended preset schema: 4 new families (project, story, dialogue, continuity) + `tier` and `ranges` fields
+- Added 14 new presets: PROJECT(3), STORY(3), DIALOGUE(2), CONTINUITY(3), EDIT(3)
+- Created `constraint-validator.ts` — per-provider limits (Veo/Sora/ComfyUI), safety defaults, budget validation
+- Created `pre-generation-qc.ts` — validates shots, estimates cost, checks budget
+- Created `workflow-registry.ts` — 8 shot classes, metadata for 8 workflows
+
+#### B2: Agent Complexity + Cost Preview + PromptBible + Cinema Bible UI
+- Added `complexityMode` to DirectorInput and all agent types
+- Added `getAgentPromptForMode()` with per-mode instructions and field skip lists
+- Agent orchestrator: Simple mode gracefully degrades non-critical agent failures
+- Added `estimateShotCost()` and `estimateFromResolvedConfig()` to cost-estimator
+- Created `POST /api/v1/pipeline/cost-preview` with auth, rate limit, viewer check
+- Added prompt slot substitution in ComfyUI composer: `{slotName}`, `{char:key}`, `{env:key}`
+- Cinema Bible UI: logline textarea, slot rules editor, per-character/environment block editors
+
+#### B3: Pipeline Integration — Pre-Flight, Auto-Variants, Safety
+- Production worker pre-flight gate: constraint validation, budget check, safety defaults (personGeneration)
+- Cinema pipeline API pre-flight: returns 400 with violations on error specs
+- Auto-render variants: queue variant renders (9:16, 16:9 captioned) after primary render
+
+#### B4: ComfyUI Shot Classes + Provenance Chain + Dialogue
+- Created 4 ComfyUI workflow JSON templates: dialogue-closeup, establishing-wide, insert-hands, action-tracking
+- Extended WORKFLOW_TEMPLATE_MAP with 8 shot class entries
+- Extended provenance.ts: chain building, copyright compliance, C2PA sidecar generation, KNOWN_LICENSES map
+- Dialogue field integration: TTS uses `spec.dialogue` if available
+
+#### B5: Frontend — Simple Mode Cards, Shot Table, Cost Preview Panel
+- Created `StyleCardPicker` — 6-card visual preset grid for Simple mode
+- Created `ProjectTypePicker` — Explainer/Vlog/Commercial cards
+- Created `ShotTable` — 8-column tabular view with status badges and timecodes
+- Created `CostPreviewPanel` — on-demand estimation via API, budget bar, category breakdown
+- Added `costPreview: 'advanced'` and `shotTable: 'advanced'` to FIELD_VISIBILITY
+
+#### B6: Lip-Sync Upgrade + Preset Ranges + Codec Selection
+- Added CMU ARPAbet → 15-viseme mapping (39 phonemes), `generateVisemeTrackFromPhonemes()`
+- Added `getActiveRanges()` to preset resolver — merges ranges from recipe + individual presets
+- Added `ranges` to 3 visual presets (film-noir, cyberpunk, warm-vintage)
+- Added `codec` to 3 output presets, created 2 new output presets (archive-prores, hevc-efficient)
+
+#### B7: Tests + Tier 3 Stubs
+- 49 new unit tests: presets-extended(10), cost-estimator-extended(12), provenance-extended(11), lip-sync-extended(10), comfyui-composer-slots(6)
+- Created 4 Tier 3 stubs: viral-discovery, experiment-orchestrator, quality-regression, channel-suggestions
+
+#### B8: Documentation + Tracking Files
+- Updated all 7 tracking files
+
+### Architecture Decisions
+- D055: Pre-generation QC gate validates all shots before committing to pipeline
+- D056: Prompt slot substitution uses `{slotName}`, `{char:key}`, `{env:key}` patterns
+- D057: Agent complexity mode uses per-mode instructions + field skip lists, Simple degrades gracefully
+- D058: Constraint validator uses static per-provider limits (not API-queried)
+- D059: Workflow registry maps shot classes to ComfyUI template paths
+- D060: Auto-variants queue separate render jobs per format
+- D061: Copyright compliance checks against KNOWN_LICENSES map
+- D062: CMU ARPAbet phoneme mapping upgrades lip-sync when TTS provides timestamps
+- D063: Preset ranges define bounded slider min/max from active presets
+- D064: Tier 3 stubs throw descriptive errors pointing to OPERATOR-TODO.md
+
+### Test Results
+- 126 shared package tests (up from 77), 135 web tests, 24 audit tests — all passing
+- Total: ~285 Vitest unit + 24 audit + 181 E2E = 490 tests
+
+---
+
 ## Session 23 — UI Audit & Missing Route Fixes
 
 **Date:** 2026-03-22

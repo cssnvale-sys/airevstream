@@ -16,6 +16,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -32,7 +33,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const channel = await ctx.db.channel.findFirst({
       where: {
         id: channelId,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
       select: { id: true },
     });
@@ -62,6 +63,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
@@ -71,7 +73,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const channel = await ctx.db.channel.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
     });
     if (!channel) return notFound('Channel not found');
@@ -108,6 +110,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -124,7 +127,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const channel = await ctx.db.channel.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
     });
     if (!channel) return notFound('Channel not found');

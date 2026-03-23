@@ -3,6 +3,37 @@ export type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook';
 
 export const PLATFORMS: Platform[] = ['youtube', 'tiktok', 'instagram', 'facebook'];
 
+// ─── Warming Types (canonical home — imported by browser-automation and seasoning) ───
+export type WarmingActivity =
+  | 'browse'
+  | 'search'
+  | 'like'
+  | 'comment'
+  | 'watch'
+  | 'subscribe'
+  | 'follow';
+
+export interface WarmingConfig {
+  platform: Platform;
+  durationMinutes: number;
+  activities: WarmingActivity[];
+  nicheTags?: string[];
+  intensity: 'low' | 'medium' | 'high';
+}
+
+export interface WarmingActivityResult {
+  type: WarmingActivity;
+  count: number;
+  durationMs: number;
+}
+
+export interface WarmingSessionResult {
+  activitiesPerformed: WarmingActivityResult[];
+  totalDurationMs: number;
+  flagged: boolean;
+  screenshot?: string;
+}
+
 // ─── Email Account Types ───
 export type EmailAccountStatus = 'active' | 'disabled' | 'flagged' | 'pending';
 export type EmailAccountTier = 'tier1' | 'tier2' | 'tier3';

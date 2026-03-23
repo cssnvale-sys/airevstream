@@ -44,20 +44,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!product) return notFound('Affiliate product not found');
 
-    // Verify tenant ownership via channel pool chain
-    if (ctx.tenantId && product.channelPools.length > 0) {
-      const ownsProduct = product.channelPools.some(pool => pool.channel != null);
-      if (!ownsProduct) {
-        // Double-check via DB query with tenant chain
-        const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
-          where: {
-            affiliateProductId: id,
-            channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-          },
-          select: { channelId: true },
-        });
-        if (!tenantPool) return notFound('Affiliate product not found');
-      }
+    // Verify tenant ownership via channel pool → channel → socialAccount → emailAccount chain
+    if (ctx.tenantId) {
+      const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
+        where: {
+          affiliateProductId: id,
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+        select: { channelId: true },
+      });
+      if (!tenantPool) return notFound('Affiliate product not found');
     }
 
     const converted = {

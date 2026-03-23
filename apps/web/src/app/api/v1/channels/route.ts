@@ -21,6 +21,7 @@ const CreateChannelSchema = z.object({
 export async function GET(req: NextRequest) {
   const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { page, limit, skip, sort, order, search, params } = parseQuery(req);
   const niche = params.get('niche') ?? undefined;
@@ -35,12 +36,9 @@ export async function GET(req: NextRequest) {
     const where: Record<string, unknown> = {};
 
     // Tenant scoping through socialAccount → emailAccount chain
-    if (ctx.tenantId) {
-      where.socialAccount = {
-        ...(where.socialAccount as Record<string, unknown> ?? {}),
-        emailAccount: { tenantId: ctx.tenantId },
-      };
-    }
+    where.socialAccount = {
+      emailAccount: { tenantId: ctx.tenantId },
+    };
 
     if (status && validStatuses.includes(status)) where.status = status;
     if (language) where.primaryLanguage = language;
@@ -120,6 +118,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -143,7 +142,7 @@ export async function POST(req: NextRequest) {
     const socialAccount = await ctx.db.socialAccount.findFirst({
       where: {
         id: socialAccountId,
-        ...(ctx.tenantId ? { emailAccount: { tenantId: ctx.tenantId } } : {}),
+        emailAccount: { tenantId: ctx.tenantId },
       },
     });
     if (!socialAccount) return notFound('Social account not found');

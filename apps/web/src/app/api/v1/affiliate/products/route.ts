@@ -29,10 +29,16 @@ export async function GET(req: NextRequest) {
 
     const validStatuses = ['active', 'inactive', 'expired'];
 
-    // NOTE: AffiliateProduct has no tenantId field (KI-020). Products are global
-    // entities linked to tenants via ChannelAffiliatePool chain. Tenant scoping
-    // here would hide newly created products not yet assigned to pools.
+    // AffiliateProduct has no tenantId field. Scope via channelPools chain:
+    // channelPools → channel → socialAccount → emailAccount → tenantId
     const where: Record<string, unknown> = {};
+    if (ctx.tenantId) {
+      where.channelPools = {
+        some: {
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+      };
+    }
     if (category) where.category = category;
     if (status && validStatuses.includes(status)) where.status = status;
     if (search) {

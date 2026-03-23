@@ -11,6 +11,7 @@ import { z } from 'zod';
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const { page, limit, skip, sort, order, params } = parseQuery(req);
@@ -24,13 +25,11 @@ export async function GET(req: NextRequest) {
     const where: Prisma.ScheduledPostWhereInput = {};
 
     // Tenant scoping
-    if (ctx.tenantId) {
-      where.channel = {
-        socialAccount: {
-          emailAccount: { tenantId: ctx.tenantId },
-        },
-      };
-    }
+    where.channel = {
+      socialAccount: {
+        emailAccount: { tenantId: ctx.tenantId },
+      },
+    };
 
     if (status && validStatuses.includes(status)) where.status = status;
     if (platform && validPlatforms.includes(platform)) where.platform = platform;
@@ -77,6 +76,7 @@ const SchedulePostSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -101,15 +101,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify content and channel exist and belong to tenant
-    const tenantFilter = ctx.tenantId
-      ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } }
-      : {};
+    const tenantFilter = { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } };
 
     const [content, channel] = await Promise.all([
       ctx.db.contentItem.findFirst({
         where: {
           id: contentId,
-          ...(ctx.tenantId ? { channel: tenantFilter } : {}),
+          channel: tenantFilter,
         },
       }),
       ctx.db.channel.findFirst({

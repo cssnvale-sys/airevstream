@@ -105,6 +105,11 @@ export async function POST(req: NextRequest) {
 
     const { name, scopes, rateLimitRpm, expiresAt } = parsed.data;
 
+    // Non-admin users cannot create keys with admin scope
+    if (ctx.role !== 'admin' && scopes.some((s) => s === 'admin')) {
+      return error('FORBIDDEN', 'Only admins can create keys with admin scope', 403);
+    }
+
     // Generate the API key: ars_ + 32 random hex characters
     const rawKey = `ars_${randomBytes(32).toString('hex')}`;
     const keyPrefix = rawKey.slice(0, 12);

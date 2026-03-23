@@ -52,6 +52,11 @@ export function getConfig(): EnvConfig {
       throw new Error('Invalid environment configuration');
     }
     _config = result.data;
+
+    // Fail fast in production if ENCRYPTION_KEY is missing
+    if (_config.NODE_ENV === 'production' && !_config.ENCRYPTION_KEY) {
+      throw new Error('ENCRYPTION_KEY is required in production');
+    }
   }
   return _config;
 }

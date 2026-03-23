@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     const status = params.get('status') ?? undefined;
 
     const validProviders = ['ollama', 'openai', 'comfyui', 'piper', 'elevenlabs', 'http'];
-    const validServiceTypes = ['text_generation', 'image_generation', 'tts', 'embedding', 'moderation'];
+    const validServiceTypes = ['text', 'image', 'video', 'voice'];
     const validStatuses = ['active', 'inactive', 'disabled', 'error'];
 
     const where: Record<string, unknown> = {};

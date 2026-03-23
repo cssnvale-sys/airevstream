@@ -24,6 +24,7 @@ const UpdateChannelSchema = z.object({
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
@@ -91,6 +92,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -154,6 +156,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -181,7 +184,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     if (!channel) return notFound('Channel not found');
 
     // Verify tenant ownership
-    if (ctx.tenantId && channel.socialAccount.emailAccount.tenantId !== ctx.tenantId) {
+    if (channel.socialAccount.emailAccount.tenantId !== ctx.tenantId) {
       return notFound('Channel not found');
     }
 

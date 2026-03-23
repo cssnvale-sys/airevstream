@@ -18,7 +18,7 @@ export function getStorageClient(config?: StorageConfig): Minio.Client {
       port: parseInt(process.env.MINIO_PORT ?? '9000', 10),
       accessKey: process.env.MINIO_ACCESS_KEY ?? 'airevstream',
       secretKey: process.env.MINIO_SECRET_KEY ?? 'airevstream_dev_secret_key_change_me',
-      useSSL: false,
+      useSSL: process.env.MINIO_USE_SSL === 'true',
     };
     client = new Minio.Client({ ...cfg, useSSL: cfg.useSSL ?? false });
   }

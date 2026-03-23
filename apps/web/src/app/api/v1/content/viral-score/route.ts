@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound } from '@/lib/api-server';
 import { scoreViralPotential } from '@airevstream/shared';
 import type { ViralScoringInput } from '@airevstream/shared';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const ViralScoreQuerySchema = z.object({
   contentId: z.string().min(1).max(100),
@@ -11,6 +12,10 @@ const ViralScoreQuerySchema = z.object({
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`content/viral-score:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   const { searchParams } = new URL(req.url);
   const parsed = ViralScoreQuerySchema.safeParse({ contentId: searchParams.get('contentId') });

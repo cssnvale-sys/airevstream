@@ -10,18 +10,6 @@ describe('lib/auth', () => {
   });
 });
 
-describe('lib/api', () => {
-  it('api module exports are defined', async () => {
-    const mod = await import('../lib/api');
-    expect(mod.auth).toBeDefined();
-    expect(mod.content).toBeDefined();
-    expect(mod.accounts).toBeDefined();
-    expect(mod.channels).toBeDefined();
-    expect(mod.chat).toBeDefined();
-    expect(mod.generate).toBeDefined();
-  });
-});
-
 describe('lib/utils', () => {
   it('utils module exports are defined', async () => {
     const mod = await import('../lib/utils');

@@ -1,4 +1,4 @@
-import type { WarmingActivity } from '@airevstream/browser-automation';
+import type { WarmingActivity } from './types.js';
 import type { SeasoningAction, EnrollmentStatus, RiskAssessment, SeasoningPhase, ActivityLogEntry } from './seasoning-types.js';
 import type { PhaseConfig, GraduationCriteria, SeasoningSchedule } from './seasoning-config.js';
 import { getNextPhase, SEASONING_RISK_THRESHOLDS } from './seasoning-config.js';

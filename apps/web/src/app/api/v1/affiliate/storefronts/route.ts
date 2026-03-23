@@ -25,6 +25,7 @@ const createStorefrontSchema = z.object({
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const { page, limit, skip, sort, order, search, params } = parseQuery(req);
@@ -34,11 +35,9 @@ export async function GET(req: NextRequest) {
     const where: Record<string, unknown> = {};
 
     // Tenant scoping through channel → socialAccount → emailAccount chain
-    if (ctx.tenantId) {
-      where.channel = {
-        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
-      };
-    }
+    where.channel = {
+      socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+    };
 
     if (channelId) where.channelId = channelId;
     if (status) where.status = status;
@@ -81,6 +80,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     const channel = await ctx.db.channel.findFirst({
       where: {
         id: channelId,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
       select: { id: true },
     });

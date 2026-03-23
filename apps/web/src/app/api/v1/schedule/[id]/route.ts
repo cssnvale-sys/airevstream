@@ -19,6 +19,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -35,15 +36,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       where: {
         id,
         // Scope to tenant via Channel -> SocialAccount -> EmailAccount chain
-        ...(ctx.tenantId
-          ? {
-              channel: {
-                socialAccount: {
-                  emailAccount: { tenantId: ctx.tenantId },
-                },
-              },
-            }
-          : {}),
+        channel: {
+          socialAccount: {
+            emailAccount: { tenantId: ctx.tenantId },
+          },
+        },
       },
     });
     if (!existing) return notFound('Scheduled post not found');
@@ -101,6 +98,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -117,15 +115,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       where: {
         id,
         // Scope to tenant via Channel -> SocialAccount -> EmailAccount chain
-        ...(ctx.tenantId
-          ? {
-              channel: {
-                socialAccount: {
-                  emailAccount: { tenantId: ctx.tenantId },
-                },
-              },
-            }
-          : {}),
+        channel: {
+          socialAccount: {
+            emailAccount: { tenantId: ctx.tenantId },
+          },
+        },
       },
     });
     if (!existing) return notFound('Scheduled post not found');

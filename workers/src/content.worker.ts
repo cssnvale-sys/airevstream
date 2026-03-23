@@ -176,6 +176,12 @@ async function handlePublishRequest(data: ContentPublishJob) {
       },
     });
 
+    // Update ContentItem status to reflect scheduling
+    await db.contentItem.update({
+      where: { id: data.contentId },
+      data: { status: 'scheduled' },
+    });
+
     logger.info({ contentId: data.contentId, channelId: data.channelId }, 'Publish request queued');
     return { contentId: data.contentId, status: 'scheduled' };
   } catch (err) {

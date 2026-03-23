@@ -199,6 +199,7 @@ async function checkScheduledPosts() {
         content: true,
         channel: { include: { socialAccount: true } },
       },
+      take: 100,
     });
 
     if (duePosts.length === 0) {

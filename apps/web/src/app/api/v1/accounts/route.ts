@@ -19,6 +19,7 @@ const CreateAccountSchema = z.object({
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { page, limit, skip, sort, order, search, params } = parseQuery(req);
   const status = params.get('status') ?? undefined;
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
     const where: Record<string, unknown> = {};
 
     // Tenant scoping: only show accounts belonging to user's tenant
-    if (ctx.tenantId) where.tenantId = ctx.tenantId;
+    where.tenantId = ctx.tenantId;
 
     if (status && validStatuses.includes(status)) where.status = status;
     if (tier && validTiers.includes(tier)) where.tier = tier;
@@ -90,6 +91,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }

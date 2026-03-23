@@ -20,7 +20,15 @@ export async function GET(req: NextRequest) {
   try {
     const { page, limit, skip } = parseQuery(req);
 
-    const where = { shortUrl: { not: null } };
+    // Scope by tenant via channelPools chain + require shortUrl set
+    const where: Record<string, unknown> = { shortUrl: { not: null } };
+    if (ctx.tenantId) {
+      where.channelPools = {
+        some: {
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+      };
+    }
 
     const [items, total] = await Promise.all([
       ctx.db.affiliateProduct.findMany({
@@ -76,6 +84,18 @@ export async function POST(req: NextRequest) {
     const product = await ctx.db.affiliateProduct.findUnique({ where: { id: productId } });
     if (!product) {
       return notFound('Affiliate product not found');
+    }
+
+    // Verify tenant ownership via channelPools chain
+    if (ctx.tenantId) {
+      const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
+        where: {
+          affiliateProductId: productId,
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+        select: { channelId: true },
+      });
+      if (!tenantPool) return notFound('Affiliate product not found');
     }
 
     // Generate a short URL if not provided

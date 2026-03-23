@@ -312,7 +312,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
       colorGrade: lookBible?.colorPipeline ?? undefined,
     });
   } else {
-    compositionId = storyboard.content.contentType === 'short_video'
+    compositionId = storyboard.content.contentType === 'video_short'
       ? 'ShortFormVideo'
       : 'LongFormVideo';
 
@@ -1101,9 +1101,9 @@ function estimateDuration(script: string, contentType: string): number {
   const baseDuration = Math.ceil(wordCount / wordsPerSecond);
 
   switch (contentType) {
-    case 'short_video':
+    case 'video_short':
       return Math.min(60, Math.max(15, baseDuration));
-    case 'long_video':
+    case 'video_long':
       return Math.max(120, baseDuration);
     default:
       return Math.max(30, baseDuration);

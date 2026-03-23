@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     await db.user.update({
       where: { id: userId },
-      data: { passwordHash: hashPassword(newPassword) },
+      data: { passwordHash: hashPassword(newPassword), passwordChangedAt: new Date() },
     });
 
     return success({ message: 'Password has been reset successfully' });

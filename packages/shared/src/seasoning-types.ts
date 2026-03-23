@@ -1,5 +1,5 @@
 import type { Platform } from './types.js';
-import type { WarmingActivity } from '@airevstream/browser-automation';
+import type { WarmingActivity } from './types.js';
 
 // ─── Enrollment Status ───
 

@@ -2,6 +2,10 @@ import { error } from '@/lib/api-server';
 import { getDb } from '@airevstream/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+
+/** Rate limit for public redirect: 60 clicks per minute per IP */
+const REDIRECT_RATE_LIMIT = { maxAttempts: 60, windowMs: 60 * 1000 };
 
 type RouteParams = { params: Promise<{ shortCode: string }> };
 
@@ -20,6 +24,11 @@ type RouteParams = { params: Promise<{ shortCode: string }> };
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const { shortCode } = await params;
+
+  // IP-based rate limiting to prevent click fraud
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`affiliate/redirect:${ip}`, REDIRECT_RATE_LIMIT);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const db = getDb();

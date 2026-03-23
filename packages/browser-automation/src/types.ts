@@ -95,36 +95,8 @@ export interface WorkflowResult {
   humanTaskDescription?: string;
 }
 
-// ─── Warming Types ───
-export type WarmingActivity =
-  | 'browse'
-  | 'search'
-  | 'like'
-  | 'comment'
-  | 'watch'
-  | 'subscribe'
-  | 'follow';
-
-export interface WarmingConfig {
-  platform: Platform;
-  durationMinutes: number;
-  activities: WarmingActivity[];
-  nicheTags?: string[];
-  intensity: 'low' | 'medium' | 'high';
-}
-
-export interface WarmingActivityResult {
-  type: WarmingActivity;
-  count: number;
-  durationMs: number;
-}
-
-export interface WarmingSessionResult {
-  activitiesPerformed: WarmingActivityResult[];
-  totalDurationMs: number;
-  flagged: boolean;
-  screenshot?: string;
-}
+// ─── Warming Types (re-exported from @airevstream/shared to break circular dependency) ───
+export type { WarmingActivity, WarmingConfig, WarmingActivityResult, WarmingSessionResult } from '@airevstream/shared';
 
 // ─── Proxy Verification ───
 export interface ProxyVerificationResult {

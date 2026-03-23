@@ -4,6 +4,35 @@ Items that need your action before the system is fully operational.
 
 ---
 
+## Audit Cleanup — Dependency Housekeeping (Session 27)
+
+### Unused Dependencies (remove to reduce bundle/install size)
+```bash
+# Remove unused class-variance-authority from web
+cd apps/web && npm uninstall class-variance-authority && cd ../..
+
+# Remove unused @fastify/websocket from ai-assistant
+cd services/ai-assistant && npm uninstall @fastify/websocket && cd ../..
+
+# Remove unused stealth libraries from browser-automation
+cd packages/browser-automation && npm uninstall playwright-extra puppeteer-extra-plugin-stealth && cd ../..
+```
+
+### Version Update
+```bash
+# Update bcrypt types to match v6
+cd apps/web && npm install @types/bcrypt@^6.0.0 && cd ../..
+```
+
+### Database Migration (Alert tenant isolation — KI-065)
+Add `tenantId` to Alert model in Prisma schema, then:
+```bash
+npx prisma migrate dev --name add_alert_tenant_id
+```
+Then update all 6 alert routes to scope by tenantId.
+
+---
+
 ## Seasoning Pipeline Setup (Session 25)
 
 ### Required: Database Migration

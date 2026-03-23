@@ -166,6 +166,18 @@
 | OI-B5 | Tier-3 stub cleanup | Done | Type-only barrel exports, @internal JSDoc on stub functions |
 | OI-B6 | Remaining orphan fixes | Done | Pagination component wired (accounts+library), MediaPreview in content detail, Storefronts tab in affiliate page, apiPatch helper |
 
+### Phase 13: UI Response Shape Audit (Session 28) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| UI-1 | CostPreviewPanel response fix | Done | `res.estimate` → `res.data.estimate` |
+| UI-2 | Studio AI guidance response fix | Done | `res.suggestions` → `res.data.suggestions` |
+| UI-3 | Studio channelId derivation | Done | Empty string → content.channelId ?? channel.id |
+| UI-4 | ExportVariants topic/contentType | Done | Added props, passes real values |
+| UI-5 | ShotTable thumbnail rendering | Done | Empty div → img element |
+| UI-6 | Seasoning cohort AppLayout | Done | Added missing wrapper |
+| UI-7 | Calendar language filter wiring | Done | UI → API query params |
+| UI-8 | Calendar content navigation | Done | Fallback to scheduledPost ID removed |
+
 ### Phase 9: UI Audit & Fixes (Session 23) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
@@ -191,16 +203,18 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 330 (all passing via Vitest — 161 shared + 135 web + 5 production-pipeline + 8 workflow-engine + 21 others)
+- **Unit tests**: 329 (all passing via Vitest — 190 shared + 134 web + 5 workers)
 - **Audit tests**: 24 (9 files scanning 130+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
-- **Total**: 535 tests
+- **Total**: 534 tests
 - Audit: 24 tests across 9 files — **0 known violations** for viewer checks and rate limiting (all fixed Session 17)
 - E2E: 181 tests across 30 files (all 17 pages covered, 100% pass rate)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 - Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
 - Codebase audit (Session 12→17): 9 bug classes automated, known violation sets for viewer checks and rate limiting emptied to 0
 - Full codebase audit (Session 19): 302 files scanned, 16 fixes applied (2 bugs, 4 silent catches, 9 type safety, 1 config), 0 silent catches remaining
+- **Full-stack audit (Session 27)**: 26 issues found (3 CRITICAL, 7 HIGH, 9 MEDIUM, 7 LOW), 20 fixed, 1 accepted risk, 5 deferred. Two consecutive clean test runs achieved.
+- **UI response shape audit (Session 28)**: 8 apiPost/navigation bugs found and fixed across 6 components. Root cause: apiPost returns full envelope but components read top-level props.
 
 ## Architecture Highlights
 - **Prisma Schema**: 36 models with full-text search GIN indexes on key tables

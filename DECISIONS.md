@@ -345,6 +345,21 @@
 **Decision**: Replace `export *` with `export type { ... }` for the 4 Tier-3 stub modules in packages/shared/src/index.ts.
 **Rationale**: Stub functions that always throw should not be importable from the barrel. Type-only exports keep the interfaces available for future implementation while preventing accidental usage of throwing functions. Verified by grep that no code imports these functions.
 
+## D071: Unconditional Tenant Scoping
+**Date**: 2026-03-23
+**Decision**: All tenant-scoped API routes must guard with `if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403)` before any query, and use unconditional `tenantId: ctx.tenantId` (never conditional `ctx.tenantId ? {...} : {}`).
+**Rationale**: Session 27 audit found 18 handlers across 8 files using conditional scoping like `if (ctx.tenantId) where.tenantId = ctx.tenantId`. When tenantId is null, these patterns silently skip tenant filtering, returning data from all tenants. This is the single largest security class fixed in the audit.
+
+## D072: Rate Limit Public and Write-Amplifiable Endpoints
+**Date**: 2026-03-23
+**Decision**: All unauthenticated endpoints and authenticated endpoints that perform writes on GET must have rate limiting.
+**Rationale**: Session 27 audit found the affiliate redirect (public, unauthenticated) had no rate limiting, enabling click fraud. The viral score GET endpoint performed DB writes without throttling, enabling write amplification.
+
+## D073: WarmingActivity Canonical Home in Shared
+**Date**: 2026-03-23
+**Decision**: WarmingActivity, WarmingConfig, WarmingActivityResult, and WarmingSessionResult types are defined in `packages/shared/src/types.ts` and re-exported from `packages/browser-automation/src/types.ts`.
+**Rationale**: These types were originally in browser-automation, creating a circular dependency (shared → browser-automation → shared). Moving them to shared breaks the cycle while maintaining backward compatibility via re-exports.
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

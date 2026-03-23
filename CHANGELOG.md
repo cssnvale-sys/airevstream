@@ -6,6 +6,39 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **CostPreviewPanel response shape** (Session 28): Fixed `res.estimate` → `res.data.estimate`, `res.budget` → `res.data.budget`
+- **Studio AI guidance response** (Session 28): Fixed `res.suggestions` → `res.data.suggestions`
+- **Studio channelId derivation** (Session 28): Derives from content data instead of empty string (was causing pipeline 400 errors)
+- **ExportVariants empty props** (Session 28): Added topic/contentType props, passes real values to pipeline
+- **ShotTable thumbnails** (Session 28): Was rendering empty `<div>`, now renders `<img>` when URL exists
+- **Seasoning cohort detail layout** (Session 28): Added missing `<AppLayout>` wrapper
+- **Calendar language filter** (Session 28): Filter UI existed but was never sent to API query params
+- **Calendar content navigation** (Session 28): Only navigates if content ID exists (was falling back to scheduledPost ID)
+
+### Security
+- **Tenant scoping hardened** (Session 27): 18 API handlers across 8 files now have unconditional tenant guards — null tenantId returns 403 instead of leaking all-tenant data
+- **API key scope escalation blocked** (Session 27): Non-admin users can no longer create API keys with admin scope
+- **Password reset session invalidation** (Session 27): Set passwordChangedAt on reset, invalidating existing tokens
+- **Affiliate redirect rate limiting** (Session 27): IP-based rate limit (60/min) prevents click fraud
+- **Viral score rate limiting** (Session 27): User-based rate limit (20/hr) prevents write amplification via GET
+- **Seasoning pages sanitized** (Session 27): Replaced raw err.message with static strings, wrapped in AppLayout
+
+### Fixed
+- **Studio pipeline progress** (Session 27): Fixed job ID extraction (res.data.flowJobId instead of res.jobId) — progress bar now activates
+- **Content type enum** (Session 27): Fixed production worker 'short_video'→'video_short', 'long_video'→'video_long' matching Prisma schema
+- **Publish handler** (Session 27): ContentItem.status now updated to 'scheduled' when publish job creates ScheduledPost
+- **AI service filter** (Session 27): Updated validServiceTypes to match schema values (text/image/video/voice)
+- **Affiliate tenant isolation** (Session 27): Fixed product detail, product list, link list tenant scoping
+- **OLLAMA_BASE_URL** (Session 27): Renamed from OLLAMA_URL in .env.production.example
+- **MINIO_USE_SSL** (Session 27): Now reads from env instead of hardcoded false
+- **ENCRYPTION_KEY guard** (Session 27): Production fails fast at startup if ENCRYPTION_KEY missing
+- **Circular dependency** (Session 27): Moved WarmingActivity types from browser-automation to shared
+- **Posting worker** (Session 27): Added take:100 to unbounded checkScheduledPosts query
+
+### Removed
+- **Legacy API client** (Session 27): Deleted apps/web/src/lib/api.ts (superseded by use-api.ts hooks)
+
 ### Added
 - **Workflows sidebar nav** (Session 26): GitBranch icon, W keyboard shortcut, command palette quick-link
 - **Breadcrumb labels** (Session 26): Added seasoning, budgets, studio to LABEL_MAP

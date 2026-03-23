@@ -4,6 +4,100 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 28 — UI Audit: Response Shape Fixes & Dead Button Cleanup
+
+**Date:** 2026-03-23
+**Focus:** Exhaustive UI audit of every page's interactive elements — found and fixed apiPost response shape mismatches, empty prop passthrough, missing wrappers, and dead navigation.
+
+### What Was Done
+
+#### UI Audit (6 parallel agents covering all 20+ pages)
+- Agents examined every button, form, API call, and navigation across all pages
+- Found 12+ bugs across Studio, Calendar, Seasoning, Create, and Cinema components
+
+#### Fixes Applied
+1. **CostPreviewPanel** — Response shape: `res.estimate` → `res.data.estimate`, `res.budget` → `res.data.budget`
+2. **Studio AI Guidance** — Response shape: `res.suggestions` → `res.data.suggestions`
+3. **Studio handleRepairShot** — Derives channelId from `content?.channelId ?? content?.channel?.id` instead of empty string
+4. **Studio handleGenerateAll** — Uses content's channelId, title, contentType instead of empty strings that fail validation
+5. **ExportVariants** — Added `topic`/`contentType` props, uses them instead of hardcoded empty strings
+6. **ShotTable** — Fixed thumbnail rendering: was showing empty `<div>`, now shows `<img>` element
+7. **Seasoning CohortDetail** — Added missing `<AppLayout>` wrapper
+8. **Calendar language filter** — Filter was in UI but never sent to API; now wired to query params
+9. **Calendar content navigation** — `item.content?.id ?? item.id` fallback would navigate to scheduledPost ID; now only navigates if content ID exists
+
+#### Verified Clean
+- Build: 14/14 packages
+- Tests: 27/27 suites (329+ tests)
+- Audit: 9/9 files (24/24 tests)
+
+### Root Cause Pattern
+The #1 bug class: `apiPost<T>()` returns the FULL response envelope `{ success, data }`, but components typed T as the inner data and read properties directly (e.g., `res.estimate` instead of `res.data.estimate`). Fixed by typing T as `{ success: boolean; data: { ... } }` and reading from `res.data.*`.
+
+### Files Modified (9)
+- `apps/web/src/components/cinema/cost-preview-panel.tsx` — response shape
+- `apps/web/src/app/studio/[contentId]/page.tsx` — response shape + channelId derivation
+- `apps/web/src/components/cinema/export-variants.tsx` — added topic/contentType props
+- `apps/web/src/components/cinema/shot-table.tsx` — thumbnail rendering
+- `apps/web/src/app/seasoning/[cohortId]/page.tsx` — AppLayout wrapper
+- `apps/web/src/app/calendar/page.tsx` — language filter + content navigation
+- Plus 3 files from earlier in session (carried from session 27 continuation)
+
+### Decisions
+- None new (existing D074 pattern — always type apiPost with full envelope)
+
+---
+
+## Session 27 — Full-Stack Codebase Audit & Repair
+
+**Date:** 2026-03-23
+**Focus:** Autonomous 8-phase codebase audit following audit_agent.md methodology — ingestion, comprehension, testing, fix execution, regression verification.
+
+### What Was Done
+
+#### Phase 1 — Codebase Ingestion (5 parallel agents)
+- Architecture mapper: identified 23 pages, 124 API routes, 7 workers, 38 models
+- Dependency auditor: flagged 4 unused packages, 1 version mismatch
+- Env config scanner: found OLLAMA_URL mismatch, missing env vars, hardcoded SSL
+- Dead code resolver: found circular dependency, 2 orphaned files, 39 unused exports
+- Security scanner: found JWT dev-secret, cross-tenant alert leak, click fraud vector
+
+#### Phase 2 — Code Comprehension (5 parallel agents)
+- 137 total findings across auth, content, accounts, frontend, and system modules
+- Key discoveries: conditional tenant scoping bypass (null tenantId), content type enum mismatches, broken studio job ID extraction
+
+#### Phase 5 — Fix Execution (4 parallel agents + manual fixes)
+**20 issues fixed:**
+- CRITICAL: Tenant scoping bypass (18 handlers), studio job ID extraction
+- HIGH: OLLAMA_URL mismatch, API key scope escalation, seasoning page security/UX, content type enum, publish status update, AI service type filter, affiliate product tenant check
+- MEDIUM: Rate limiting (viral score + affiliate redirect), reset-password sessioninvalidation, MINIO_USE_SSL, ENCRYPTION_KEY guard, circular dependency, unbounded query, affiliate tenant filters
+- LOW: Deleted legacy api.ts, added missing env vars to production template
+
+**1 accepted risk:** JWT dev-secret fallback (already throws in production)
+**5 deferred:** Alert tenantId (needs migration), SSE hooks, 3 unused deps, bcrypt types
+
+#### Phase 6 — Regression Verification
+- 3 test iterations: 1st pass clean build, test regression (deleted api.ts had test referencing it), fixed test, 2nd + 3rd consecutive clean passes
+- Final: 14/14 build, 329 tests pass, 24/24 audit pass
+
+#### Additional Changes
+- Moved WarmingActivity types from browser-automation to shared (broke circular dependency)
+- Deleted apps/web/src/lib/api.ts (dead legacy API client)
+- Added production guards: ENCRYPTION_KEY fail-fast, MINIO_USE_SSL from env
+
+### Files Modified
+- 28 files total (10 backend, 16 frontend, 2 config)
+
+### Build Status
+- 14 packages building, 329 tests pass (134 web + 5 workers + 190 shared), 24 audit tests pass
+
+### Decisions
+- D071: Unconditional tenant scoping — always guard with `if (!ctx.tenantId) return 403` before any scoped query. No conditional `ctx.tenantId ? {...} : {}` patterns.
+- D072: Rate limit public endpoints — all unauthenticated or write-amplifiable endpoints must have rate limiting.
+- D073: WarmingActivity canonical home in shared — breaks circular dependency with browser-automation.
+
+---
+
 ## Session 26 — Orphan Integration: Connect All Disconnected Features
 
 **Date:** 2026-03-23

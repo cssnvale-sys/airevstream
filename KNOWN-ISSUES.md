@@ -6,6 +6,26 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
+### KI-065: Alert Model Lacks tenantId — Cross-Tenant Data Leak
+**Severity**: Medium
+**Status**: Open (Session 27 Audit — ISSUE_002)
+The Alert model has no tenantId column. All 6 system alert routes return all tenants' alerts. acknowledge-all affects every tenant. SSE pushes all alerts to all clients.
+**Action**: Add tenantId to Alert model in next Prisma migration batch, then scope all alert queries.
+
+### KI-066: Unused Dependencies (3 packages)
+**Severity**: Low
+**Status**: Open (Session 27 Audit — ISSUE_012/013/014)
+- `class-variance-authority` in apps/web (never imported)
+- `@fastify/websocket` in services/ai-assistant (never imported)
+- `playwright-extra` + `puppeteer-extra-plugin-stealth` in packages/browser-automation (stealth done inline)
+**Action**: `npm uninstall` each from respective workspace.
+
+### KI-067: @types/bcrypt Version Mismatch
+**Severity**: Low
+**Status**: Open (Session 27 Audit — ISSUE_015)
+@types/bcrypt ^5.0.0 declared but bcrypt is ^6.0.0. Types may be incomplete for v6 APIs.
+**Action**: `npm install @types/bcrypt@^6.0.0` in apps/web.
+
 ### KI-002: Analytics Endpoints Return Empty Arrays for Missing Data
 **Severity**: Low
 **Status**: By Design

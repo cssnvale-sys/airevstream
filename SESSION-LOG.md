@@ -4,6 +4,105 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 31 — Cinema Pipeline Improvements (G1-G6)
+
+**Date:** 2026-03-23
+**Focus:** Implement 6 actionable gaps from deep research report on cinema-quality AI video production: frame anchoring, AV sync detection, asset graph enrichment, QC decision agent, VMAF quality regression, C2PA media embedding.
+
+### What Was Done
+
+#### G1: Veo First/Last Frame Controls
+- Added `FrameAnchor` interface to `types.ts` (storageKey, strength, mode, controlNetType)
+- Added `firstFrameRef?` and `lastFrameRef?` fields to `ShotSpec`
+- Added `supportsFirstFrame`/`supportsLastFrame` to `ProviderLimit` in constraint-validator
+- Updated `PROVIDER_CONSTRAINTS`: veo (both true), sora (both true), comfyui (first only)
+- Added frame anchor validation rules in `validateShotSpec()`
+- Added `addFirstFrameNodes()` to comfyui-composer (img2img: LoadImage→VAEEncode→rewire KSampler; controlnet: delegates to existing `addControlNetNodes()`)
+- Wired into `composeWorkflow()` before LoRA/ControlNet stage
+
+#### G5: AV Sync Detection
+- Created `packages/shared/src/av-sync-validator.ts` — pure timing arithmetic, no external deps
+- Exports: `validateAVSync()`, `detectGlobalDrift()`, `validateDurationEnvelope()`
+- Frame-snapping via `snapToFrame(ms, fps)`, per-word drift classification, drift accumulation detection
+- Default thresholds: 80ms max drift (~2 frames at 24fps), 40ms warning, 500ms duration tolerance
+- Created test file with 16 tests covering alignment, thresholds, snapping, config, accumulation, envelope
+- Added barrel export in `index.ts`
+
+#### G2: Asset Graph Enrichment
+- Added 3 Prisma models to schema: `AssetRegistryEntry`, `Sequence`, `SequenceItem`
+- `AssetRegistryEntry`: type enum, storageKey, hash, fileSize, mimeType, versioning (self-ref), provenance JSON, links to content/shot/sequence
+- `Sequence`: channel-scoped, ordered, with status tracking
+- `SequenceItem`: composite PK (sequenceId + contentId), position ordering
+- Added reverse relations on ContentItem, StoryboardShot, Channel
+- Enriched `AssetRegistryEntry` TypeScript interface in types.ts
+- Added `Sequence` and `SequenceItem` TypeScript interfaces
+- Added `registerAsset()` helper in production worker — non-blocking, warn-on-failure
+- Integrated at 4 upload points: handleGenerateImage, handleShotGeneration, handleRenderVideo, handleGenerateAudio
+
+#### G3: QC Decision Agent
+- Added `'qc-decision'` to `AgentRole` union and `AGENT_ROLES` array
+- Added types: `QCVerdict` (approve/soft-fix/regenerate/escalate), `QCDecisionInput`, `QCDecisionOutput`
+- Added `QC_DECISION_PROMPT` with structured decision framework (score thresholds, repair instructions)
+- Updated `AGENT_CONFIGS` — `'qc-decision'` depends on render, no QC gate after
+- Updated `getExecutionOrder()` to 6 phases (new Phase 5: qc-decision between render and finishing)
+- Updated `finishing` config to depend on `'qc-decision'`
+- Added `'qc-decision'` case in `buildAgentInput()` and pipeline state tasks
+
+#### G4: VMAF Quality Regression
+- Replaced stub in `quality-regression.ts` with real ffmpeg+libvmaf implementation
+- `compareVMAF()`: shells out to ffmpeg with libvmaf filter, parses JSON log for vmaf/ssim/psnr
+- `isVMAFAvailable()`: checks ffmpeg presence and libvmaf support
+- `runQualityRegression()`: runs test suite against reference/distorted pairs with threshold checking
+- Injectable `execFn` pattern (same as C2PA) for testability
+- Dynamic imports for node: modules to avoid webpack bundling issues
+- Created test file with 7 tests using mock execFn
+- Barrel export remains type-only (node: modules can't be bundled by Next.js)
+
+#### G6: C2PA Embedding in Media
+- Created `packages/shared/src/provenance-c2pa-cli.ts` — runtime CLI functions (not barrel-exported)
+- `manifestToC2PAToolFormat()`: converts internal C2PAManifest → c2patool format (claim_generator, assertions[], ingredients[])
+- `embedC2PAManifest()`: writes temp JSON, runs `c2patool manifest.json --media X --output Y`
+- `verifyC2PA()`: runs `c2patool <media> --detailed`, parses JSON result
+- `isC2PAToolAvailable()`: checks c2patool version output
+- Added types to `provenance.ts`: `C2PAExecFn`, `C2PAEmbedOptions`, `C2PAEmbedResult`, `C2PAVerifyResult`
+- Created test file with 9 tests using mock C2PAExecFn
+
+### New Files (4)
+- `packages/shared/src/av-sync-validator.ts`
+- `packages/shared/src/provenance-c2pa-cli.ts`
+- `packages/shared/src/__tests__/av-sync-validator.test.ts`
+- `packages/shared/src/__tests__/provenance-c2pa-embed.test.ts`
+- `packages/shared/src/__tests__/quality-regression.test.ts`
+
+### Modified Files (10)
+- `packages/shared/src/types.ts` — FrameAnchor, ShotSpec fields, enriched AssetRegistryEntry, Sequence, SequenceItem
+- `packages/shared/src/constraint-validator.ts` — frame support flags, validation rules
+- `packages/shared/src/comfyui-composer.ts` — addFirstFrameNodes(), composeWorkflow() integration
+- `packages/shared/src/index.ts` — barrel export for av-sync-validator, comment for direct imports
+- `packages/shared/src/agents/agent-types.ts` — qc-decision role, QCDecision types
+- `packages/shared/src/agents/agent-prompts.ts` — QC_DECISION_PROMPT, 6-phase execution order
+- `packages/shared/src/agents/agent-orchestrator.ts` — qc-decision case in buildAgentInput()
+- `packages/shared/src/quality-regression.ts` — replaced stub with real ffmpeg+libvmaf implementation
+- `packages/shared/src/provenance.ts` — C2PA CLI types (C2PAExecFn, C2PAEmbedOptions, etc.)
+- `packages/db/prisma/schema.prisma` — AssetRegistryEntry, Sequence, SequenceItem models + reverse relations
+- `workers/src/production.worker.ts` — registerAsset() helper + 4 integration points
+
+### Key Decisions
+- D077: Frame anchoring — img2img mode (denoise = 1-strength) vs controlnet mode delegation
+- D078: Asset registry — non-critical registration (warn-on-failure, doesn't block pipeline)
+- D079: QC decision agent — 9th agent, 6-phase execution order, verdict-based repair instructions
+- D080: VMAF quality regression — injectable execFn pattern, dynamic node: imports for webpack compat
+- D081: AV sync validation — frame-snapped drift detection, drift accumulation monitoring
+- D082: C2PA CLI embedding — separate provenance-c2pa-cli.ts (not barrel-exported) for node-only code
+
+### Verification
+- `turbo build`: 14 packages ✓
+- `turbo test`: 405 unit tests ✓ (all passing)
+- `turbo audit`: 24 audit tests ✓ (0 violations)
+- Prisma client generated with 3 new models (migration pending — KI-068)
+
+---
+
 ## Session 30 — Tenant Isolation Migration + Fallback Chain DnD Editor
 
 **Date:** 2026-03-23

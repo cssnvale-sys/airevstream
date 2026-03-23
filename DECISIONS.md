@@ -380,3 +380,33 @@
 **Decision**: Alert gets `tenantId String?` (nullable); Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget get `tenantId String` (required). API routes use `ctx.tenantId!` (non-null assertion) for required-tenantId models, always preceded by an unconditional `if (!ctx.tenantId) return error('FORBIDDEN', ..., 403)` guard.
 **Rationale**: Workers create system-wide operational alerts (disk full, service down) that all tenants and admins should see — nullable allows null to mean "global". Application-level data (conversations, knowledge, prompts, budgets) is always owned by a tenant, so required enforces the invariant at the DB layer. The non-null assertion is safe because the 403 guard fires first; TypeScript cannot infer this from the control flow without the assertion.
 **Rationale**: The language config is only needed during pipeline processing. Adding schema columns would require a migration and only serve a subset of content items. JSON storage in platformMetadata is flexible and doesn't require schema changes.
+
+## D077: Frame Anchoring — img2img vs ControlNet Modes
+**Date**: 2026-03-23
+**Decision**: `FrameAnchor` supports two modes: `img2img` (default) rewires KSampler latent input via VAEEncode with `denoise = 1 - strength`; `controlnet` delegates to existing `addControlNetNodes()` with the anchor frame as source image.
+**Rationale**: img2img provides strong visual continuity (first frame of next shot matches last frame of previous), while controlnet provides structural guidance without locking colors. Both are useful for different editorial scenarios. Default img2img covers the common case of shot-to-shot continuity.
+
+## D078: Asset Registry — Non-Blocking Registration Pattern
+**Date**: 2026-03-23
+**Decision**: `registerAsset()` in the production worker uses try/catch with `logger.warn` — asset registration failures don't block the pipeline.
+**Rationale**: The asset registry is a metadata layer for tracking and versioning. A registration failure (DB timeout, constraint violation) should not prevent the primary pipeline from delivering its output. Critical path integrity is preserved while the registry populates on a best-effort basis.
+
+## D079: QC Decision Agent — 9th Agent with 6-Phase Execution
+**Date**: 2026-03-23
+**Decision**: Added `qc-decision` as a dedicated agent (Phase 5) between render (Phase 4) and finishing (Phase 6). Uses a verdict system: `approve` (score ≥ 85), `soft-fix` (60-84, fixable issues), `regenerate` (60-84 with identity drift, or < 60), `escalate` (ambiguous or >50% shots need regen).
+**Rationale**: Hardcoded QC thresholds can't account for the interaction between multiple quality dimensions (e.g., technical score fine but identity drifted). An LLM agent can reason about trade-offs and prescribe specific repair actions (LoRA strength delta, CFG boost, seed lock) rather than just pass/fail.
+
+## D080: VMAF Quality Regression — Injectable execFn Pattern
+**Date**: 2026-03-23
+**Decision**: `compareVMAF()` shells out to ffmpeg CLI with injectable `execFn` for testability. Uses dynamic `import()` for node: modules to avoid webpack bundling. Barrel export is type-only; workers import from `dist/quality-regression.js` directly.
+**Rationale**: Same injectable pattern as C2PA CLI (D082) — keeps functions unit-testable with mock executors. Dynamic imports avoid Next.js webpack errors when the barrel is imported client-side. Type-only barrel export gives consumers access to interfaces without pulling in node: runtime code.
+
+## D081: AV Sync Validation — Frame-Snapped Drift Detection
+**Date**: 2026-03-23
+**Decision**: `validateAVSync()` snaps video timings to frame boundaries before computing drift, using `snapToFrame(ms, fps) = Math.round(ms / frameDuration) * frameDuration`. Default thresholds: 80ms max error (~2 frames at 24fps), 40ms warning (~1 frame). Detects monotonically increasing drift (accumulation) when 75%+ of consecutive drift changes are same-sign.
+**Rationale**: Video playback is quantized to frame boundaries — comparing raw millisecond timings creates false drift alerts. Frame-snapping aligns the comparison to what the viewer actually sees. Drift accumulation detection catches systematic timing offset that worsens over the clip (e.g., TTS running slightly fast/slow relative to viseme timeline).
+
+## D082: C2PA CLI Embedding — Separate File for Node-Only Code
+**Date**: 2026-03-23
+**Decision**: C2PA CLI runtime functions live in `provenance-c2pa-cli.ts` (NOT barrel-exported from index.ts). Workers import directly via `@airevstream/shared/dist/provenance-c2pa-cli.js`. Types remain in `provenance.ts` and are barrel-exported.
+**Rationale**: Even dynamic `import('node:...')` expressions are analyzed by webpack in Next.js client bundles. Keeping node-only runtime code in a file that's never imported by the barrel prevents build errors while maintaining clean type access for all consumers. This applies to both C2PA CLI and VMAF regression modules.

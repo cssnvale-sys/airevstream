@@ -227,10 +227,10 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 329 (all passing via Vitest — 190 shared + 134 web + 5 workers)
+- **Unit tests**: 405 (all passing via Vitest — 266 shared + 134 web + 5 workers)
 - **Audit tests**: 24 (9 files scanning 130+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
-- **Total**: 534 tests
+- **Total**: 610 tests
 - Audit: 24 tests across 9 files — **0 known violations** (all viewer checks, rate limiting, and tenant scoping clean)
 - E2E: 181 tests across 30 files (all 17 pages covered, 100% pass rate)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
@@ -240,9 +240,10 @@
 - **Full-stack audit (Session 27)**: 26 issues found (3 CRITICAL, 7 HIGH, 9 MEDIUM, 7 LOW), 20 fixed, 1 accepted risk, 5 deferred. Two consecutive clean test runs achieved.
 - **UI response shape audit (Session 28)**: 8 apiPost/navigation bugs found and fixed across 6 components. Root cause: apiPost returns full envelope but components read top-level props.
 - **Tenant isolation (Session 30)**: 5 models migrated (Alert nullable, 4 required), ~20 API routes scoped, workers updated, 0 audit violations.
+- **Cinema pipeline improvements (Session 31)**: 6 gaps implemented (G1-G6): frame anchoring, AV sync detection, asset graph, QC decision agent, VMAF regression, C2PA embedding. 3 new Prisma models, 9th cinema agent, 6-phase execution order. 76 new tests added.
 
 ## Architecture Highlights
-- **Prisma Schema**: 38 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment added Session 25)
+- **Prisma Schema**: 41 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31)
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
 - **Next.js API Routes**: 124 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs

@@ -43,6 +43,18 @@ CSV export implemented via `exportToCSV()` utility — all 5 analytics tabs expo
 The `generate-storyboard` API route returns hardcoded placeholder shots rather than AI-generated storyboard frames. The H.I.C.C. section parser exists but isn't connected to real AI output.
 **Action**: Wire storyboard generation to AI service via the content generation pipeline.
 
+### KI-068: Asset Registry + Sequence Prisma Migration Not Yet Applied
+**Severity**: Medium
+**Status**: Open (Session 31)
+3 new Prisma models added to schema (AssetRegistryEntry, Sequence, SequenceItem) but `prisma migrate dev` not yet run. `prisma generate` has been run so types are available. Migration needed before production worker can register assets.
+**Action**: Run `npx prisma migrate dev --name add-asset-registry-and-sequences` from packages/db.
+
+### KI-069: VMAF + C2PA CLI Tools Not Installed
+**Severity**: Low
+**Status**: Open (Session 31)
+G4 (VMAF) requires `ffmpeg` compiled with `--enable-libvmaf`. G6 (C2PA) requires `c2patool` CLI. Both features gracefully degrade (return failure/false) when tools are absent.
+**Action**: See OPERATOR-TODO.md for installation instructions.
+
 ### KI-007: Platform Posting Adapters Untested Against Real APIs
 **Severity**: High
 **Status**: Open

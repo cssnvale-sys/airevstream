@@ -217,6 +217,55 @@ Copy `.env.production.example` to `.env` and fill in all values before running.
 
 ---
 
+## 11. Install ffmpeg with libvmaf Support (Session 31 — G4)
+
+**Required for**: VMAF quality regression testing (comparing rendered video quality against reference)
+
+```bash
+# macOS (Homebrew)
+brew install ffmpeg --with-libvmaf
+# or build from source with --enable-libvmaf
+
+# Verify
+ffmpeg -filters 2>&1 | grep vmaf
+```
+
+The system gracefully degrades if ffmpeg/libvmaf is not available — `isVMAFAvailable()` returns false and quality regression tests are skipped.
+
+## 12. Install c2patool (Session 31 — G6)
+
+**Required for**: Embedding C2PA Content Credentials into media files (content provenance)
+
+```bash
+# Install from GitHub releases
+# https://github.com/contentauth/c2patool/releases
+
+# macOS (Homebrew)
+brew install c2patool
+
+# Verify
+c2patool --version
+```
+
+Optional: Generate signing certificate for production use:
+```bash
+openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 \
+  -keyout c2pa-key.pem -out c2pa-cert.pem -days 365 -nodes
+```
+
+The system gracefully degrades if c2patool is not available — `isC2PAToolAvailable()` returns false and embedding is skipped.
+
+## 13. Run Asset Registry Migration (Session 31 — G2)
+
+**Required for**: Asset graph tracking in production pipeline
+
+```bash
+cd packages/db
+npx prisma migrate dev --name add-asset-registry-and-sequences
+```
+
+This adds 3 new tables: `AssetRegistryEntry`, `Sequence`, `SequenceItem`. Until the migration runs, the production worker's `registerAsset()` calls will fail silently (by design — non-blocking).
+
 ## Summary of What's Blocked
 
 | Feature | Blocked By | Severity |

@@ -7,6 +7,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Veo first/last frame controls** (Session 31, G1): `FrameAnchor` interface, `firstFrameRef`/`lastFrameRef` on ShotSpec, img2img + controlnet modes in ComfyUI composer, per-provider support flags in constraint validator
+- **AV sync detection** (Session 31, G5): `validateAVSync()`, `detectGlobalDrift()`, `validateDurationEnvelope()` — frame-snapped drift detection with per-word classification and drift accumulation monitoring
+- **Asset graph enrichment** (Session 31, G2): `AssetRegistryEntry`, `Sequence`, `SequenceItem` Prisma models with self-referential versioning; `registerAsset()` helper at 4 upload points in production worker
+- **QC decision agent** (Session 31, G3): 9th cinema agent (`qc-decision`) with verdict system (approve/soft-fix/regenerate/escalate); 6-phase execution order in agent orchestrator
+- **VMAF quality regression** (Session 31, G4): Real ffmpeg+libvmaf integration replacing stub; `compareVMAF()`, `isVMAFAvailable()`, `runQualityRegression()` with injectable `execFn` pattern
+- **C2PA media embedding** (Session 31, G6): `embedC2PAManifest()`, `verifyC2PA()`, `manifestToC2PAToolFormat()` via c2patool CLI with injectable `execFn`; separated into `provenance-c2pa-cli.ts` for webpack compatibility
+
+### Added
 - **Tenant isolation for Alert model** (Session 30): nullable `tenantId` column — system-wide worker alerts remain visible globally; per-tenant alert routes now scope by tenantId
 - **Tenant isolation for Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget** (Session 30): required `tenantId` columns added via migration `0004_add_tenant_scoping`; all related API routes updated
 - **Fallback chain drag-and-drop editor** (Session 30): interactive DnD reordering of AI provider chains in Settings → AI Services tab; shows priority, status dot, health %, provider badge; no new dependency (native HTML5 DnD)

@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     const validStatuses = ['active', 'paused', 'exceeded'];
     const validBudgetTypes = ['daily', 'weekly', 'monthly'];
 
-    const where: Prisma.CostBudgetWhereInput = {};
+    const where: Prisma.CostBudgetWhereInput = { tenantId: ctx.tenantId! };
 
     if (status && validStatuses.includes(status)) {
       where.status = status;
@@ -135,6 +135,7 @@ export async function POST(req: NextRequest) {
 
     const budget = await ctx.db.costBudget.create({
       data: {
+        tenantId: ctx.tenantId!,
         name,
         budgetType,
         limitAmount,

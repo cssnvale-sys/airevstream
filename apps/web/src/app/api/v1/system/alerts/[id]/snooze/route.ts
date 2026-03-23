@@ -28,6 +28,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const alert = await ctx.db.alert.findUnique({ where: { id } });
     if (!alert) return error('NOT_FOUND', 'Alert not found', 404);
 
+    // Verify tenant ownership (tenant-specific alert must belong to this tenant)
+    if (alert.tenantId !== null && alert.tenantId !== ctx.tenantId) {
+      return error('NOT_FOUND', 'Alert not found', 404);
+    }
+
     let duration = 3600; // default 1 hour
     try {
       const body = await req.json();

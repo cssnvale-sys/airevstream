@@ -14,9 +14,10 @@ export async function GET(req: NextRequest) {
   if (ctx instanceof NextResponse) return ctx;
 
   try {
-    // Get all active budgets
+    // Get all active budgets (tenant-scoped)
     const budgets = await ctx.db.costBudget.findMany({
       where: {
+        tenantId: ctx.tenantId!,
         status: 'active',
       },
     });

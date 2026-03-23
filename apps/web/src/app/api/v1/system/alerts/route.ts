@@ -19,6 +19,8 @@ export async function GET(req: NextRequest) {
     const validStatuses = ['open', 'acknowledged', 'resolved'];
 
     const where: Record<string, unknown> = {};
+    // Tenant scoping: show tenant-specific + system alerts (tenantId=null)
+    where.OR = [{ tenantId: ctx.tenantId }, { tenantId: null }];
     if (severity && validSeverities.includes(severity)) where.severity = severity;
     if (status && validStatuses.includes(status)) where.status = status;
     else where.status = { in: ['open', 'acknowledged'] }; // Default: show active alerts

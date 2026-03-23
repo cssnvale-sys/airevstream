@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const { page, limit, skip, search, params } = parseQuery(req);
     const contextPage = params.get('contextPage') ?? undefined;
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { tenantId: ctx.tenantId };
     if (contextPage) where.contextPage = contextPage;
     if (search) {
       where.title = { contains: search, mode: 'insensitive' };

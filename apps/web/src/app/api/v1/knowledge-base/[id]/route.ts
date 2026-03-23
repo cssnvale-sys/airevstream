@@ -27,8 +27,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
-    const entry = await ctx.db.knowledgeBaseEntry.findUnique({
-      where: { id },
+    const entry = await ctx.db.knowledgeBaseEntry.findFirst({
+      where: { id, tenantId: ctx.tenantId! },
     });
 
     if (!entry) {
@@ -66,8 +66,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
-    const existing = await ctx.db.knowledgeBaseEntry.findUnique({
-      where: { id },
+    const existing = await ctx.db.knowledgeBaseEntry.findFirst({
+      where: { id, tenantId: ctx.tenantId! },
       select: { id: true },
     });
 
@@ -131,8 +131,8 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
-    const existing = await ctx.db.knowledgeBaseEntry.findUnique({
-      where: { id },
+    const existing = await ctx.db.knowledgeBaseEntry.findFirst({
+      where: { id, tenantId: ctx.tenantId! },
       select: { id: true },
     });
 

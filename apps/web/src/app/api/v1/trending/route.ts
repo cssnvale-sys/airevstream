@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
     // Fetch trending topics from knowledge base
     const entries = await ctx.db.knowledgeBaseEntry.findMany({
       where: {
+        tenantId: ctx.tenantId!,
         category: 'trends',
         ...(platform ? { content: { contains: platform } } : {}),
       },

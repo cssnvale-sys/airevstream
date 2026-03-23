@@ -46,16 +46,19 @@ export async function POST(req: NextRequest) {
     let job;
     if (body.type === 'trends') {
       job = await addJob('research', 'research:trends', {
+        tenantId: ctx.tenantId!,
         platform: body.platform,
         keywords: body.keywords,
       });
     } else if (body.type === 'topics') {
       job = await addJob('research', 'research:topics', {
+        tenantId: ctx.tenantId!,
         niche: body.niche,
         count: body.count,
       });
     } else {
       job = await addJob('research', 'research:knowledge-update', {
+        tenantId: ctx.tenantId!,
         domain: body.domain,
         sourceUrl: body.sourceUrl,
       });

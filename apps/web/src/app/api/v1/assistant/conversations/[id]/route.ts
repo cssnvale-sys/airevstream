@@ -16,8 +16,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const conversation = await ctx.db.conversation.findUnique({
-      where: { id },
+    const conversation = await ctx.db.conversation.findFirst({
+      where: { id, tenantId: ctx.tenantId! },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
@@ -73,7 +73,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.conversation.findUnique({ where: { id } });
+    const existing = await ctx.db.conversation.findFirst({ where: { id, tenantId: ctx.tenantId! } });
     if (!existing) return notFound('Conversation not found');
 
     await ctx.db.conversation.delete({ where: { id } });

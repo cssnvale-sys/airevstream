@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
 
     // Start the cinema pipeline
     const flowJob = await startCinemaPipeline({
+      tenantId: ctx.tenantId!,
       contentId: body.contentId,
       channelId: body.channelId,
       topic: body.topic,

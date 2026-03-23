@@ -289,15 +289,86 @@ function GeneralTab() {
 
 function AiServicesTab() {
   const { data: servicesRes, isLoading, mutate } = useAiServices<AiService[]>();
-  const { data: chainsRes, error: chainsError } = useApi<FallbackChain[]>('/settings/ai/fallback-chains');
+  const { data: chainsRes, error: chainsError, mutate: mutateChains } = useApi<FallbackChain[]>('/settings/ai/fallback-chains');
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newService, setNewService] = useState({ name: '', type: 'text', endpoint: '' });
   const [adding, setAdding] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
 
+  // DnD state for fallback chain editor
+  const [reorderableChains, setReorderableChains] = useState<FallbackChain[]>([]);
+  const [dragState, setDragState] = useState<{ group: string; index: number } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ group: string; index: number } | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderDirty, setOrderDirty] = useState(false);
+
   const services = servicesRes?.data ?? [];
   const fallbackChains = chainsRes?.data ?? [];
+
+  // Sync reorderable chains from SWR data
+  useEffect(() => {
+    if (fallbackChains.length > 0) {
+      setReorderableChains(fallbackChains.map(c => ({ ...c, services: [...c.services] })));
+      setOrderDirty(false);
+    }
+  }, [fallbackChains]);
+
+  const handleDragStart = useCallback((group: string, index: number) => {
+    setDragState({ group, index });
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, group: string, index: number) => {
+    e.preventDefault();
+    if (dragState && dragState.group === group) {
+      setDropTarget({ group, index });
+    }
+  }, [dragState]);
+
+  const handleDrop = useCallback((group: string, index: number) => {
+    if (!dragState || dragState.group !== group) return;
+
+    setReorderableChains(prev => {
+      const updated = prev.map(chain => {
+        if (chain.type !== group) return chain;
+        const svcs = [...chain.services];
+        const [moved] = svcs.splice(dragState.index, 1);
+        svcs.splice(index, 0, moved);
+        return { ...chain, services: svcs };
+      });
+      return updated;
+    });
+    setOrderDirty(true);
+    setDragState(null);
+    setDropTarget(null);
+  }, [dragState]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragState(null);
+    setDropTarget(null);
+  }, []);
+
+  const handleSaveOrder = async () => {
+    setSavingOrder(true);
+    try {
+      const ordering = reorderableChains.flatMap(chain =>
+        chain.services.map((svc, idx) => ({
+          id: svc.id,
+          fallbackOrder: idx,
+          fallbackGroup: chain.type === 'text' ? 'text_gen' : chain.type === 'image' ? 'image_gen' : chain.type === 'video' ? 'video_gen' : `${chain.type}_gen`,
+        }))
+      );
+      await apiPut('/settings/fallback-chain', { ordering });
+      toast.success('Fallback order saved');
+      setOrderDirty(false);
+      mutateChains();
+    } catch (err) {
+      console.error('Failed to save fallback order:', err);
+      toast.error('Failed to save fallback order');
+    } finally {
+      setSavingOrder(false);
+    }
+  };
 
   const handleAddService = async () => {
     setAdding(true);
@@ -487,29 +558,66 @@ function AiServicesTab() {
         )}
       </div>
 
-      {/* Fallback Chains */}
+      {/* Fallback Chains — DnD Editor */}
       <div>
-        <h3 className="text-base font-semibold text-text-primary mb-4">Fallback Chains</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-text-primary">Fallback Chains</h3>
+          {orderDirty && (
+            <button
+              onClick={handleSaveOrder}
+              disabled={savingOrder}
+              className="btn-primary btn-sm flex items-center gap-1"
+            >
+              {savingOrder ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              Save Order
+            </button>
+          )}
+        </div>
         {chainsError ? (
           <p className="text-accent-red text-sm py-4 text-center">Failed to load fallback chains</p>
-        ) : fallbackChains.length === 0 ? (
+        ) : reorderableChains.length === 0 ? (
           <p className="text-text-secondary text-sm py-4 text-center">No fallback chains configured</p>
         ) : (
           <div className="space-y-3">
-            {fallbackChains.map((chain) => (
+            {reorderableChains.map((chain) => (
               <div key={chain.type} className="card">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                   <ArrowDownUp size={14} className="text-accent-purple" />
                   <span className="text-sm font-medium text-text-primary capitalize">{chain.type} Chain</span>
+                  <span className="text-xs text-text-secondary">({chain.services.length} services)</span>
                 </div>
-                <div className="flex flex-wrap items-center gap-1">
+                <div className="space-y-1">
                   {chain.services.map((svc, idx) => (
-                    <span key={svc.id} className="flex items-center gap-1">
-                      <span className="badge badge-idle text-xs">{svc.name}</span>
-                      {idx < chain.services.length - 1 && (
-                        <ChevronRight size={12} className="text-text-secondary" />
+                    <div
+                      key={svc.id}
+                      draggable
+                      onDragStart={() => handleDragStart(chain.type, idx)}
+                      onDragOver={(e) => handleDragOver(e, chain.type, idx)}
+                      onDrop={() => handleDrop(chain.type, idx)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-md border transition-all cursor-grab active:cursor-grabbing',
+                        dragState?.group === chain.type && dragState?.index === idx
+                          ? 'opacity-40 border-border'
+                          : dropTarget?.group === chain.type && dropTarget?.index === idx
+                            ? 'bg-accent-blue/10 border-accent-blue/40'
+                            : 'border-border hover:border-border-hover',
                       )}
-                    </span>
+                    >
+                      <span className="text-text-secondary select-none" title="Drag to reorder">&#x2630;</span>
+                      <span className="text-xs font-mono text-text-secondary w-5 text-center">{idx + 1}</span>
+                      <div
+                        className={cn(
+                          'h-2 w-2 rounded-full shrink-0',
+                          svc.status === 'active' ? 'bg-accent-green' : svc.status === 'degraded' ? 'bg-accent-amber' : 'bg-accent-red',
+                        )}
+                      />
+                      <span className="text-sm text-text-primary flex-1">{svc.name}</span>
+                      <span className="badge badge-idle text-xs">{svc.provider}</span>
+                      <span className="text-xs text-text-secondary">{svc.healthScore}%</span>
+                      {svc.isLocal && <span className="badge badge-active text-xs">Local</span>}
+                      {svc.isFree && <span className="badge badge-active text-xs">Free</span>}
+                    </div>
                   ))}
                 </div>
               </div>

@@ -26,6 +26,7 @@ async function pollAlerts(ctx: ApiContext, lastCheck: Date): Promise<SystemEvent
     where: {
       createdAt: { gt: lastCheck },
       status: { in: ['open', 'acknowledged'] },
+      OR: [{ tenantId: ctx.tenantId }, { tenantId: null }],
     },
     orderBy: { createdAt: 'asc' },
   });

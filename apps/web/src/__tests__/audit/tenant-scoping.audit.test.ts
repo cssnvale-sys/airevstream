@@ -26,7 +26,6 @@ const GLOBAL_MODELS = new Set([
   'AiService',
   'SystemSetting',
   'SystemMetric',
-  'Alert',
   'Avatar',        // Global asset, linked to channels via ChannelAvatar
   'SceneryAsset',  // Global asset, linked to channels via ChannelScenery
 ]);

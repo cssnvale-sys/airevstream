@@ -49,12 +49,14 @@ export async function POST(req: NextRequest) {
 
     let conversation;
 
+    if (!ctx.tenantId) {
+      return error('FORBIDDEN', 'No tenant context', 403);
+    }
+
     if (conversationId) {
-      // Use existing conversation
-      // Note: Conversation model lacks userId/tenantId (KI-020) so ownership
-      // cannot be validated until the schema is migrated.
-      conversation = await ctx.db.conversation.findUnique({
-        where: { id: conversationId },
+      // Use existing conversation — validate tenant ownership
+      conversation = await ctx.db.conversation.findFirst({
+        where: { id: conversationId, tenantId: ctx.tenantId },
       });
       if (!conversation) {
         return validationError('Conversation not found');
@@ -64,6 +66,7 @@ export async function POST(req: NextRequest) {
       const title = message.slice(0, 100) + (message.length > 100 ? '...' : '');
       conversation = await ctx.db.conversation.create({
         data: {
+          tenantId: ctx.tenantId,
           title,
           contextPage: contextPage ?? null,
         },

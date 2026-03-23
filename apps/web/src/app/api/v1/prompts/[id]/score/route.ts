@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.promptTemplate.findUnique({ where: { id } });
+    const existing = await ctx.db.promptTemplate.findFirst({ where: { id, tenantId: ctx.tenantId! } });
     if (!existing) {
       return notFound('Prompt template not found');
     }

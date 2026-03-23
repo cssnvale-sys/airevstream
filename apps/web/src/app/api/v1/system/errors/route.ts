@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     const validStatuses = ['open', 'acknowledged', 'resolved'];
 
     const where: Record<string, unknown> = {
+      OR: [{ tenantId: ctx.tenantId }, { tenantId: null }],
       severity: { in: ['critical', 'error'] },
     };
     if (status && validStatuses.includes(status)) where.status = status;

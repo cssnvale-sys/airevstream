@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
     const validDomains = ['platform_ops', 'civitai', 'remotion', 'huggingface', 'comfyui', 'video_production'];
 
-    const where: Prisma.KnowledgeBaseEntryWhereInput = {};
+    const where: Prisma.KnowledgeBaseEntryWhereInput = { tenantId: ctx.tenantId! };
 
     if (domain && validDomains.includes(domain)) {
       where.domain = domain;
@@ -114,6 +114,7 @@ export async function POST(req: NextRequest) {
 
     const entry = await ctx.db.knowledgeBaseEntry.create({
       data: {
+        tenantId: ctx.tenantId!,
         domain,
         category: category ?? null,
         title,

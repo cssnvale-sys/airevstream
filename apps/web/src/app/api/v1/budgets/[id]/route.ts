@@ -27,8 +27,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const budget = await ctx.db.costBudget.findUnique({
-      where: { id },
+    const budget = await ctx.db.costBudget.findFirst({
+      where: { id, tenantId: ctx.tenantId! },
     });
 
     if (!budget) {
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.costBudget.findUnique({ where: { id } });
+    const existing = await ctx.db.costBudget.findFirst({ where: { id, tenantId: ctx.tenantId! } });
     if (!existing) {
       return notFound('Budget not found');
     }
@@ -159,7 +159,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.costBudget.findUnique({ where: { id } });
+    const existing = await ctx.db.costBudget.findFirst({ where: { id, tenantId: ctx.tenantId! } });
     if (!existing) {
       return notFound('Budget not found');
     }

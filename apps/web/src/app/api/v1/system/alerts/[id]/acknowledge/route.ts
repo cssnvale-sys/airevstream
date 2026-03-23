@@ -27,6 +27,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const existing = await ctx.db.alert.findUnique({ where: { id } });
     if (!existing) return notFound('Alert not found');
 
+    // Verify tenant ownership (tenant-specific alert must belong to this tenant)
+    if (existing.tenantId !== null && existing.tenantId !== ctx.tenantId) {
+      return notFound('Alert not found');
+    }
+
     if (existing.status === 'resolved') {
       return success({ message: 'Alert is already resolved', alert: existing });
     }

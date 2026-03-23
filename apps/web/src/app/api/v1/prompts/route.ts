@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     const validPlatforms = ['youtube', 'tiktok', 'instagram', 'facebook'];
     const validContentTypes = ['video_short', 'video_long', 'image', 'text', 'voice', 'thumbnail'];
 
-    const where: Prisma.PromptTemplateWhereInput = {};
+    const where: Prisma.PromptTemplateWhereInput = { tenantId: ctx.tenantId! };
 
     if (category && validCategories.includes(category)) {
       where.category = category;
@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
 
     const promptTemplate = await ctx.db.promptTemplate.create({
       data: {
+        tenantId: ctx.tenantId!,
         name,
         category,
         platform: platform ?? null,

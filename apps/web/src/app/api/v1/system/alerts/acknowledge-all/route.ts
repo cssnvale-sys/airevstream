@@ -19,7 +19,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await ctx.db.alert.updateMany({
-      where: { status: 'open' },
+      where: {
+        status: 'open',
+        OR: [{ tenantId: ctx.tenantId }, { tenantId: null }],
+      },
       data: {
         status: 'acknowledged',
         acknowledgedAt: new Date(),

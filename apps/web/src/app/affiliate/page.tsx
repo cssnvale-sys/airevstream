@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useApi, useAffiliateProducts, useChannels, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
+import { useApi, useAffiliateProducts, useChannels, apiPost, apiPut, apiPatch, apiDelete } from '@/hooks/use-api';
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
 import {
   Plus,
@@ -16,6 +16,9 @@ import {
   BarChart3,
   Layers,
   MousePointerClick,
+  Store,
+  Globe,
+  Edit2,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -103,17 +106,33 @@ interface RevenueData {
   byProduct: RevenueByProduct[];
 }
 
+interface Storefront {
+  id: string;
+  channelId: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  status: string;
+  customDomain: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { products: number };
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-type TabKey = 'products' | 'pools' | 'links' | 'performance';
+type TabKey = 'products' | 'pools' | 'links' | 'performance' | 'storefronts';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'products', label: 'Products', icon: Package },
   { key: 'pools', label: 'Channel Pools', icon: Layers },
   { key: 'links', label: 'Links', icon: Link2 },
   { key: 'performance', label: 'Performance', icon: BarChart3 },
+  { key: 'storefronts', label: 'Storefronts', icon: Store },
 ];
 
 const CATEGORIES = [
@@ -218,6 +237,9 @@ export default function AffiliatePage() {
   // --- Links state ---
   const [showCreateLink, setShowCreateLink] = useState(false);
 
+  // --- Storefronts state ---
+  const [showCreateStorefront, setShowCreateStorefront] = useState(false);
+
   // Build query params for products
   const productParams = useMemo(() => {
     const p = new URLSearchParams();
@@ -261,11 +283,18 @@ export default function AffiliatePage() {
       : null,
   );
 
+  const {
+    data: storefrontsRes,
+    isLoading: storefrontsLoading,
+    mutate: mutateStorefronts,
+  } = useApi<Storefront[]>(activeTab === 'storefronts' ? '/affiliate/storefronts' : null);
+
   const products = productsRes?.data ?? [];
   const channels = channelsRes?.data ?? [];
   const links = linksRes?.data ?? [];
   const poolProducts = poolRes?.data ?? [];
   const revenue = revenueRes?.data ?? null;
+  const storefronts = storefrontsRes?.data ?? [];
 
   // Channel pools: products not already assigned
   const unassignedProducts = useMemo(() => {
@@ -380,6 +409,17 @@ export default function AffiliatePage() {
         />
       )}
 
+      {activeTab === 'storefronts' && (
+        <StorefrontsTab
+          storefronts={storefronts}
+          loading={storefrontsLoading}
+          channels={channels}
+          onCreateStorefront={() => setShowCreateStorefront(true)}
+          onDeleted={() => mutateStorefronts()}
+          onUpdated={() => mutateStorefronts()}
+        />
+      )}
+
       {/* Add Product Modal */}
       <AddProductModal
         open={showAddProduct}
@@ -408,6 +448,17 @@ export default function AffiliatePage() {
         onCreated={() => {
           setShowCreateLink(false);
           mutateLinks();
+        }}
+      />
+
+      {/* Create Storefront Modal */}
+      <CreateStorefrontModal
+        open={showCreateStorefront}
+        channels={channels}
+        onClose={() => setShowCreateStorefront(false)}
+        onCreated={() => {
+          setShowCreateStorefront(false);
+          mutateStorefronts();
         }}
       />
     </AppLayout>
@@ -1606,6 +1657,396 @@ function CreateLinkModal({
         <div className="flex gap-2 pt-2">
           <button type="submit" disabled={submitting} className="btn-primary flex-1">
             {submitting ? 'Creating...' : 'Create Link'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+            className="btn-secondary"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Storefronts Tab
+// ---------------------------------------------------------------------------
+
+function StorefrontsTab({
+  storefronts,
+  loading,
+  channels,
+  onCreateStorefront,
+  onDeleted,
+  onUpdated,
+}: {
+  storefronts: Storefront[];
+  loading: boolean;
+  channels: Channel[];
+  onCreateStorefront: () => void;
+  onDeleted: () => void;
+  onUpdated: () => void;
+}) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editSlug, setEditSlug] = useState('');
+  const [editStatus, setEditStatus] = useState('');
+  const [editCustomDomain, setEditCustomDomain] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Storefront | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const channelMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const ch of channels) m.set(ch.id, ch.name);
+    return m;
+  }, [channels]);
+
+  const startEdit = (sf: Storefront) => {
+    setEditingId(sf.id);
+    setEditName(sf.name);
+    setEditSlug(sf.slug);
+    setEditStatus(sf.status);
+    setEditCustomDomain(sf.customDomain ?? '');
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const handleSave = async () => {
+    if (!editingId) return;
+    setSaving(true);
+    try {
+      await apiPatch(`/affiliate/storefronts/${editingId}`, {
+        name: editName.trim(),
+        slug: editSlug.trim(),
+        status: editStatus,
+        customDomain: editCustomDomain.trim() || null,
+      });
+      setEditingId(null);
+      toast.success('Storefront updated');
+      onUpdated();
+    } catch {
+      toast.error('Failed to update storefront');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await apiDelete(`/affiliate/storefronts/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      toast.success('Storefront deleted');
+      onDeleted();
+    } catch {
+      toast.error('Failed to delete storefront');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-text-secondary">
+          Public storefronts showcasing your affiliate products.
+        </p>
+        <button onClick={onCreateStorefront} className="btn-secondary flex items-center gap-2 text-sm">
+          <Store size={14} /> Create Storefront
+        </button>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-bg-tertiary text-text-secondary text-left">
+              <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">Slug</th>
+              <th className="px-4 py-3 font-medium">Channel</th>
+              <th className="px-4 py-3 font-medium text-center">Products</th>
+              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Domain</th>
+              <th className="px-4 py-3 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <TableSkeleton rows={4} cols={7} />
+            ) : storefronts.length === 0 ? (
+              <tr>
+                <td colSpan={7}>
+                  <EmptyState
+                    icon={Store}
+                    title="No storefronts yet"
+                    description="Create a storefront to showcase affiliate products on a public page."
+                  />
+                </td>
+              </tr>
+            ) : (
+              storefronts.map((sf) => {
+                const isEditing = editingId === sf.id;
+                return (
+                  <tr key={sf.id} className="border-b border-border hover:bg-bg-tertiary/50 transition-colors">
+                    <td className="px-4 py-3">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="input text-sm w-full"
+                        />
+                      ) : (
+                        <div>
+                          <span className="font-medium text-text-primary">{sf.name}</span>
+                          {sf.description && (
+                            <p className="text-xs text-text-secondary truncate max-w-[200px]">{sf.description}</p>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editSlug}
+                          onChange={(e) => setEditSlug(e.target.value)}
+                          className="input text-sm w-28"
+                        />
+                      ) : (
+                        <code className="text-xs bg-bg-tertiary px-2 py-0.5 rounded text-text-primary">{sf.slug}</code>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-text-primary text-xs">
+                      {channelMap.get(sf.channelId) ?? sf.channelId.slice(0, 8)}
+                    </td>
+                    <td className="px-4 py-3 text-center text-text-primary">
+                      {sf._count?.products ?? 0}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isEditing ? (
+                        <select
+                          value={editStatus}
+                          onChange={(e) => setEditStatus(e.target.value)}
+                          className="input text-xs py-1 w-24"
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="published">Published</option>
+                          <option value="archived">Archived</option>
+                        </select>
+                      ) : (
+                        <span className={cn('text-xs px-2 py-0.5 rounded', statusColor(sf.status))}>
+                          {sf.status}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editCustomDomain}
+                          onChange={(e) => setEditCustomDomain(e.target.value)}
+                          className="input text-xs w-32"
+                          placeholder="custom.domain"
+                        />
+                      ) : sf.customDomain ? (
+                        <span className="flex items-center gap-1 text-xs text-accent-blue">
+                          <Globe size={12} /> {sf.customDomain}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-text-secondary">--</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {isEditing ? (
+                        <div className="flex items-center gap-1 justify-end">
+                          <button onClick={handleSave} disabled={saving} className="btn-primary btn-sm text-xs">
+                            {saving ? 'Saving...' : 'Save'}
+                          </button>
+                          <button onClick={cancelEdit} className="btn-secondary btn-sm text-xs">
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 justify-end">
+                          <button onClick={() => startEdit(sf)} className="btn-secondary btn-sm p-1" title="Edit">
+                            <Edit2 size={14} />
+                          </button>
+                          <button onClick={() => setDeleteTarget(sf)} className="btn-secondary btn-sm p-1 text-accent-red" title="Delete">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Storefront"
+        message={`This will permanently delete "${deleteTarget?.name}" and all its product listings. This cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Create Storefront Modal
+// ---------------------------------------------------------------------------
+
+function CreateStorefrontModal({
+  open,
+  channels,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  channels: Channel[];
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [channelId, setChannelId] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const resetForm = useCallback(() => {
+    setName('');
+    setSlug('');
+    setChannelId('');
+    setDescription('');
+    setErrorMsg('');
+  }, []);
+
+  // Auto-generate slug from name
+  const handleNameChange = (v: string) => {
+    setName(v);
+    if (!slug || slug === name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')) {
+      setSlug(v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !slug.trim() || !channelId) return;
+
+    setSubmitting(true);
+    setErrorMsg('');
+
+    try {
+      await apiPost('/affiliate/storefronts', {
+        name: name.trim(),
+        slug: slug.trim(),
+        channelId,
+        description: description.trim() || undefined,
+      });
+      resetForm();
+      onCreated();
+    } catch {
+      setErrorMsg('Failed to create storefront. Slug may already be taken.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={() => {
+        resetForm();
+        onClose();
+      }}
+      title="Create Storefront"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {errorMsg && (
+          <div className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
+            {errorMsg}
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm text-text-secondary mb-1">
+            Channel <span className="text-red-400">*</span>
+          </label>
+          <select
+            value={channelId}
+            onChange={(e) => setChannelId(e.target.value)}
+            className="input w-full"
+            required
+          >
+            <option value="">-- Select a channel --</option>
+            {channels.map((ch) => (
+              <option key={ch.id} value={ch.id}>
+                {ch.name}
+                {ch.socialAccount ? ` (@${ch.socialAccount.username})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm text-text-secondary mb-1">
+            Name <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            className="input w-full"
+            placeholder="My Storefront"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-text-secondary mb-1">
+            Slug <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            className="input w-full"
+            placeholder="my-storefront"
+            required
+            pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            title="Lowercase alphanumeric with hyphens only"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-text-secondary mb-1">Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="input w-full h-20 resize-none"
+            placeholder="What is this storefront about?"
+          />
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <button type="submit" disabled={submitting} className="btn-primary flex-1">
+            {submitting ? 'Creating...' : 'Create Storefront'}
           </button>
           <button
             type="button"

@@ -6,12 +6,13 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useContent, useChannels, useApi, apiDelete } from '@/hooks/use-api';
 import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
 import {
-  Search, LayoutGrid, List, ChevronLeft, ChevronRight,
+  Search, LayoutGrid, List,
   FileText, Image, Film, Video, Mic, ImageIcon,
   Star, Calendar, SlidersHorizontal, Trash2,
 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Pagination } from '@/components/ui/pagination';
 import { toast } from '@/lib/toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
@@ -392,8 +393,6 @@ export default function LibraryPage() {
   const hasActiveFilters = search || filterType || filterStatus || filterChannel || filterModel || dateFrom || dateTo;
 
   // Pagination helpers
-  const startItem = Math.min((meta.page - 1) * meta.limit + 1, meta.total);
-  const endItem = Math.min(meta.page * meta.limit, meta.total);
 
   return (
     <AppLayout>
@@ -569,62 +568,16 @@ export default function LibraryPage() {
 
       {/* Pagination */}
       {!isLoading && !error && items.length > 0 && (
-        <div className="flex items-center justify-between mt-4 text-sm text-text-secondary">
-          <span>
-            Showing {startItem}-{endItem} of {meta.total}
-          </span>
-          <div className="flex items-center gap-3">
-            <select
-              value={perPage}
-              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
-              className="input text-xs py-1 px-2"
-            >
-              {PER_PAGE_OPTIONS.map((n) => (
-                <option key={n} value={n}>{n} / page</option>
-              ))}
-            </select>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="btn-secondary btn-sm p-1 disabled:opacity-30"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              {Array.from({ length: Math.min(meta.pages, 5) }, (_, i) => {
-                let pageNum: number;
-                if (meta.pages <= 5) {
-                  pageNum = i + 1;
-                } else if (page <= 3) {
-                  pageNum = i + 1;
-                } else if (page >= meta.pages - 2) {
-                  pageNum = meta.pages - 4 + i;
-                } else {
-                  pageNum = page - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setPage(pageNum)}
-                    className={cn(
-                      'btn-sm w-8 h-8 flex items-center justify-center rounded text-xs',
-                      page === pageNum ? 'btn-primary' : 'btn-secondary',
-                    )}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
-                disabled={page >= meta.pages}
-                className="btn-secondary btn-sm p-1 disabled:opacity-30"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={meta.pages}
+          total={meta.total}
+          limit={perPage}
+          onPageChange={setPage}
+          onLimitChange={(n) => { setPerPage(n); setPage(1); }}
+          limitOptions={PER_PAGE_OPTIONS}
+          className="mt-4"
+        />
       )}
 
       <ConfirmDialog

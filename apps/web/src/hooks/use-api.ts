@@ -70,6 +70,10 @@ export async function apiPut<T = unknown>(path: string, body?: unknown): Promise
   return apiMutate<T>('PUT', path, body);
 }
 
+export async function apiPatch<T = unknown>(path: string, body?: unknown): Promise<T> {
+  return apiMutate<T>('PATCH', path, body);
+}
+
 export async function apiDelete(path: string): Promise<void> {
   return apiMutate<void>('DELETE', path);
 }

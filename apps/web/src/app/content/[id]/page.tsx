@@ -9,6 +9,7 @@ import { toast } from '@/lib/toast';
 import { CopyButton } from '@/components/ui/copy-button';
 import { QualityBreakdown } from '@/components/content/quality-breakdown';
 import { ShotGallery } from '@/components/content/shot-gallery';
+import { MediaPreview } from '@/components/ui/media-preview';
 import {
   ArrowLeft, Check, X, Clock, Send, Archive,
   FileText, Film, Video, Image, Mic, ImageIcon,
@@ -76,6 +77,23 @@ function contentTypeIcon(type: string) {
     case 'thumbnail': return ImageIcon;
     default: return FileText;
   }
+}
+
+function parseMinioUrl(url: string): { bucket: string; objectKey: string } | null {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split('/').filter(Boolean);
+    if (parts.length < 2) return null;
+    return { bucket: parts[0], objectKey: parts.slice(1).join('/') };
+  } catch {
+    return null;
+  }
+}
+
+function mediaTypeFromContentType(type: string): 'image' | 'video' | 'audio' {
+  if (type === 'voice') return 'audio';
+  if (type.startsWith('video') || type === 'video_short' || type === 'video_long') return 'video';
+  return 'image';
 }
 
 function contentTypeLabel(type: string): string {
@@ -353,6 +371,28 @@ export default function ContentDetailPage() {
 
           {/* Right panel: Quality, actions */}
           <div className="space-y-6">
+            {/* Media preview */}
+            {(() => {
+              const mediaUrl = item.fileUrl ?? item.thumbnailUrl;
+              const parsed = mediaUrl ? parseMinioUrl(mediaUrl) : null;
+              if (!parsed) return null;
+              const mediaType = item.fileUrl
+                ? mediaTypeFromContentType(item.contentType)
+                : 'image';
+              return (
+                <div className="card">
+                  <h2 className="text-sm font-semibold text-text-primary mb-3">Preview</h2>
+                  <MediaPreview
+                    bucket={parsed.bucket}
+                    objectKey={parsed.objectKey}
+                    type={mediaType}
+                    className="w-full aspect-video"
+                    alt={item.title ?? 'Content preview'}
+                  />
+                </div>
+              );
+            })()}
+
             {/* Quality score breakdown */}
             <div className="card">
               <h2 className="text-sm font-semibold text-text-primary mb-3">Quality Score</h2>

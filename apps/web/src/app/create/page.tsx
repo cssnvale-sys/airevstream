@@ -58,6 +58,9 @@ interface ShotCard {
 
 type ShotStatus = 'queued' | 'generating' | 'complete' | 'failed';
 
+type LanguageCode = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'ja' | 'ko' | 'zh' | 'ar' | 'hi';
+type LanguageMode = 'separate' | 'multi-audio';
+
 interface FormData {
   channelId: string;
   topic: string;
@@ -70,7 +73,22 @@ interface FormData {
   script: string;
   shots: ShotCard[];
   shotStatuses: Record<string, ShotStatus>;
+  languages: LanguageCode[];
+  languageMode: LanguageMode;
 }
+
+const LANGUAGE_OPTIONS: { code: LanguageCode; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'zh', label: 'Chinese' },
+  { code: 'ar', label: 'Arabic' },
+  { code: 'hi', label: 'Hindi' },
+];
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -158,6 +176,8 @@ const INITIAL_FORM: FormData = {
   script: '',
   shots: [],
   shotStatuses: {},
+  languages: [],
+  languageMode: 'separate',
 };
 
 // ---------------------------------------------------------------------------
@@ -735,6 +755,81 @@ export default function CreatePage() {
                     </label>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Languages (advanced+ mode) */}
+          {isVisible('advanced', mode) && (
+            <div className="card">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Multi-Language</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-caption text-text-secondary mb-1.5">Target Languages</label>
+                  <div className="flex flex-wrap gap-2">
+                    {LANGUAGE_OPTIONS.map((lang) => {
+                      const selected = formData.languages.includes(lang.code);
+                      return (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={() => {
+                            if (selected) {
+                              update('languages', formData.languages.filter(l => l !== lang.code));
+                            } else {
+                              update('languages', [...formData.languages, lang.code]);
+                            }
+                          }}
+                          className={cn(
+                            'px-3 py-1.5 rounded-md text-caption border transition-colors',
+                            selected
+                              ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
+                              : 'border-border text-text-secondary hover:bg-bg-tertiary',
+                          )}
+                        >
+                          {lang.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-text-secondary mt-1">Select additional languages for translated versions.</p>
+                </div>
+
+                {formData.languages.length > 0 && (
+                  <div>
+                    <label className="block text-caption text-text-secondary mb-1.5">Language Mode</label>
+                    <div className="flex gap-4">
+                      {(['separate', 'multi-audio'] as LanguageMode[]).map((lm) => (
+                        <label
+                          key={lm}
+                          className={cn(
+                            'flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors',
+                            formData.languageMode === lm
+                              ? 'border-accent-blue bg-accent-blue/10 text-accent-blue'
+                              : 'border-border text-text-secondary hover:bg-bg-tertiary',
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="languageMode"
+                            value={lm}
+                            checked={formData.languageMode === lm}
+                            onChange={() => update('languageMode', lm)}
+                            className="text-accent-blue focus:ring-accent-blue"
+                          />
+                          <span className="text-body">
+                            {lm === 'separate' ? 'Separate Videos' : 'Multi-Audio Track'}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-text-secondary mt-1">
+                      {formData.languageMode === 'separate'
+                        ? 'Creates a separate video for each language with translated TTS.'
+                        : 'Creates one video with multiple audio tracks (one per language).'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}

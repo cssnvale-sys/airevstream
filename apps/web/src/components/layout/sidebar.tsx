@@ -22,6 +22,8 @@ import {
   ClipboardCheck,
   Sprout,
   GitBranch,
+  Menu,
+  X,
 } from 'lucide-react';
 import { removeToken } from '@/lib/auth';
 import { useState, useEffect, useCallback } from 'react';
@@ -54,6 +56,7 @@ export function Sidebar() {
     return false;
   });
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -67,6 +70,31 @@ export function Sidebar() {
     removeToken();
     window.location.href = '/auth/login';
   };
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [mobileOpen]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   // Global keyboard shortcuts
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
@@ -102,22 +130,27 @@ export function Sidebar() {
     return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, [handleGlobalKeyDown]);
 
-  return (
-    <aside
-      className={cn(
-        'bg-bg-secondary border-r border-border flex flex-col h-screen sticky top-0 transition-all duration-200',
-        collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
-      )}
-    >
-      <div className={cn('p-4 flex items-center', collapsed ? 'justify-center' : 'gap-3')}>
+  // Shared sidebar content (used for both desktop and mobile)
+  const sidebarContent = (isMobile: boolean) => (
+    <>
+      <div className={cn('p-4 flex items-center', !isMobile && collapsed ? 'justify-center' : 'gap-3')}>
         <div className="w-8 h-8 rounded-lg bg-accent-purple flex items-center justify-center text-white font-bold text-sm shrink-0">
           A
         </div>
-        {!collapsed && (
-          <div>
+        {(isMobile || !collapsed) && (
+          <div className="flex-1 min-w-0">
             <h1 className="text-card-title text-text-primary font-semibold">AiRevStream</h1>
             <p className="text-caption text-text-secondary">MPCAS</p>
           </div>
+        )}
+        {isMobile && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+            className="p-1.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors"
+          >
+            <X size={20} />
+          </button>
         )}
       </div>
 
@@ -129,64 +162,107 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              title={collapsed ? item.label : undefined}
+              title={!isMobile && collapsed ? item.label : undefined}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-body transition-colors',
-                collapsed && 'justify-center px-2',
+                !isMobile && collapsed && 'justify-center px-2',
                 isActive
                   ? 'bg-accent-blue/10 text-accent-blue'
                   : 'text-text-secondary hover:bg-bg-tertiary hover:text-text-primary',
               )}
             >
               <Icon size={18} className="shrink-0" />
-              {!collapsed && item.label}
+              {(isMobile || !collapsed) && item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-2 border-t border-border space-y-0.5">
+      <div className="p-2 border-t border-border space-y-0.5 safe-bottom">
         <button
           onClick={() => setShowShortcuts(true)}
           aria-label="Show keyboard shortcuts"
-          title={collapsed ? 'Keyboard Shortcuts (?)' : undefined}
+          title={!isMobile && collapsed ? 'Keyboard Shortcuts (?)' : undefined}
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
-            collapsed && 'justify-center px-2',
+            !isMobile && collapsed && 'justify-center px-2',
           )}
         >
           <HelpCircle size={18} className="shrink-0" />
-          {!collapsed && 'Shortcuts'}
+          {(isMobile || !collapsed) && 'Shortcuts'}
         </button>
-        <button
-          onClick={toggleCollapsed}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
-            collapsed && 'justify-center px-2',
-          )}
-        >
-          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          {!collapsed && 'Collapse'}
-        </button>
+        {!isMobile && (
+          <button
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
+              collapsed && 'justify-center px-2',
+            )}
+          >
+            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            {!collapsed && 'Collapse'}
+          </button>
+        )}
         <button
           onClick={handleLogout}
           aria-label="Sign out"
           className={cn(
             'flex items-center gap-3 px-3 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary hover:text-text-primary w-full transition-colors',
-            collapsed && 'justify-center px-2',
+            !isMobile && collapsed && 'justify-center px-2',
           )}
         >
           <LogOut size={18} className="shrink-0" />
-          {!collapsed && 'Sign Out'}
+          {(isMobile || !collapsed) && 'Sign Out'}
         </button>
       </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button — fixed top-left, visible only below md */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open menu"
+        className="fixed top-3 left-3 z-50 md:hidden p-2 rounded-md bg-bg-secondary border border-border text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile overlay drawer — visible only below md when open */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Drawer */}
+          <aside
+            className="absolute inset-y-0 left-0 w-72 bg-bg-secondary border-r border-border flex flex-col transform transition-transform duration-200 ease-out"
+          >
+            {sidebarContent(true)}
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop sidebar — hidden below md, normal flex item at md+ */}
+      <aside
+        className={cn(
+          'hidden md:flex bg-bg-secondary border-r border-border flex-col h-screen sticky top-0 transition-all duration-200',
+          collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
+        )}
+      >
+        {sidebarContent(false)}
+      </aside>
 
       <KeyboardShortcutsModal
         open={showShortcuts}
         onClose={() => setShowShortcuts(false)}
       />
-    </aside>
+    </>
   );
 }

@@ -14,6 +14,7 @@ import {
   ArrowLeft, Check, X, Clock, Send, Archive,
   FileText, Film, Video, Image, Mic, ImageIcon,
   Loader2, Calendar, Globe, Tag, Cpu, BarChart3,
+  Copy, Share2, Eye, ThumbsUp, MessageCircle,
 } from 'lucide-react';
 
 interface ContentDetail {
@@ -36,6 +37,7 @@ interface ContentDetail {
   approvedBy: string | null;
   channel: { id: string; name: string; primaryLanguage: string; niches: string[]; tone: string | null } | null;
   aiService: { id: string; name: string; provider: string; serviceType: string } | null;
+  performance: Record<string, unknown> | null;
   affiliateProduct: { id: string; name: string; url: string; category: string } | null;
   storyboards: Array<{
     id: string;
@@ -119,6 +121,13 @@ export default function ContentDetailPage() {
   const [acting, setActing] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [repurposeOpen, setRepurposeOpen] = useState(false);
+  const [repurposeFormat, setRepurposeFormat] = useState<'short' | 'reel' | 'story'>('short');
+  const [distributeOpen, setDistributeOpen] = useState(false);
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+  const [distributeSchedule, setDistributeSchedule] = useState('');
+  const { data: channelsData } = useApi<{ id: string; name: string; platform: string }[]>('/channels?limit=100');
+  const channels = channelsData?.data ?? [];
 
   const handleAction = async (action: 'approve' | 'reject' | 'schedule' | 'archive' | 'publish' | 'rescore') => {
     setActing(true);
@@ -229,6 +238,16 @@ export default function ContentDetailPage() {
             {item.storyboards.length > 0 && item.status !== 'draft' && (
               <button onClick={() => handleAction('rescore')} disabled={acting} className="btn-secondary flex items-center gap-1.5">
                 <BarChart3 size={14} /> Rescore
+              </button>
+            )}
+            {['generated', 'approved', 'posted'].includes(item.status) && (
+              <button onClick={() => setRepurposeOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5">
+                <Copy size={14} /> Repurpose
+              </button>
+            )}
+            {item.status === 'approved' && (
+              <button onClick={() => setDistributeOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5">
+                <Share2 size={14} /> Distribute
               </button>
             )}
             {!['archived', 'failed'].includes(item.status) && (
@@ -343,6 +362,47 @@ export default function ContentDetailPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Engagement metrics for posted content */}
+            {item.status === 'posted' && (
+              <div className="card">
+                <h2 className="text-sm font-semibold text-text-primary mb-3">Engagement</h2>
+                {(() => {
+                  const perf = (item.performance as Record<string, unknown>) ?? {};
+                  const views = Number(perf.views ?? 0);
+                  const likes = Number(perf.likes ?? 0);
+                  const comments = Number(perf.comments ?? 0);
+                  const shares = Number(perf.shares ?? 0);
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="text-center p-3 bg-bg-tertiary rounded-lg">
+                        <Eye size={16} className="mx-auto text-accent-blue mb-1" />
+                        <p className="text-lg font-semibold text-text-primary">{views.toLocaleString()}</p>
+                        <p className="text-xs text-text-secondary">Views</p>
+                      </div>
+                      <div className="text-center p-3 bg-bg-tertiary rounded-lg">
+                        <ThumbsUp size={16} className="mx-auto text-accent-green mb-1" />
+                        <p className="text-lg font-semibold text-text-primary">{likes.toLocaleString()}</p>
+                        <p className="text-xs text-text-secondary">Likes</p>
+                      </div>
+                      <div className="text-center p-3 bg-bg-tertiary rounded-lg">
+                        <MessageCircle size={16} className="mx-auto text-accent-amber mb-1" />
+                        <p className="text-lg font-semibold text-text-primary">{comments.toLocaleString()}</p>
+                        <p className="text-xs text-text-secondary">Comments</p>
+                      </div>
+                      <div className="text-center p-3 bg-bg-tertiary rounded-lg">
+                        <Share2 size={16} className="mx-auto text-accent-purple mb-1" />
+                        <p className="text-lg font-semibold text-text-primary">{shares.toLocaleString()}</p>
+                        <p className="text-xs text-text-secondary">Shares</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <p className="text-xs text-text-secondary mt-3">
+                  Connect platform APIs in Settings to enable auto-tracking.
+                </p>
               </div>
             )}
 
@@ -486,6 +546,141 @@ export default function ContentDetailPage() {
                   className="btn-primary text-sm"
                 >
                   {acting ? 'Rejecting...' : 'Reject'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Repurpose dialog */}
+        {repurposeOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setRepurposeOpen(false)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="card w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-semibold text-text-primary mb-4">Repurpose Content</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-text-secondary mb-1">Target Format</label>
+                  <select
+                    value={repurposeFormat}
+                    onChange={(e) => setRepurposeFormat(e.target.value as 'short' | 'reel' | 'story')}
+                    className="input w-full"
+                  >
+                    <option value="short">Short (YouTube Shorts, TikTok)</option>
+                    <option value="reel">Reel (Instagram Reels)</option>
+                    <option value="story">Story (Instagram/Facebook Stories)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end mt-4">
+                <button onClick={() => setRepurposeOpen(false)} className="btn-secondary text-sm">Cancel</button>
+                <button
+                  onClick={async () => {
+                    setActing(true);
+                    try {
+                      const res = await apiPost<{ success: boolean; data: { id: string } }>(`/content/${id}/repurpose`, {
+                        targetFormat: repurposeFormat,
+                        targetPlatforms: [repurposeFormat === 'short' ? 'youtube' : repurposeFormat === 'reel' ? 'instagram' : 'instagram'],
+                      });
+                      toast.success('Content repurposed');
+                      setRepurposeOpen(false);
+                      router.push(`/content/${res.data.id}`);
+                    } catch {
+                      toast.error('Failed to repurpose content');
+                    } finally {
+                      setActing(false);
+                    }
+                  }}
+                  disabled={acting}
+                  className="btn-primary text-sm flex items-center gap-1"
+                >
+                  {acting ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
+                  Repurpose
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Distribute dialog */}
+        {distributeOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setDistributeOpen(false)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="card w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-semibold text-text-primary mb-4">Distribute to Channels</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-text-secondary mb-1">Select Channels</label>
+                  <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
+                    {channels.length === 0 ? (
+                      <p className="text-xs text-text-secondary p-2">No channels available</p>
+                    ) : channels.map((ch) => (
+                      <label key={ch.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-bg-tertiary cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedChannels.includes(ch.id)}
+                          onChange={(e) => {
+                            setSelectedChannels(prev =>
+                              e.target.checked ? [...prev, ch.id] : prev.filter(x => x !== ch.id)
+                            );
+                          }}
+                          className="rounded border-border"
+                        />
+                        <span className="text-sm text-text-primary">{ch.name}</span>
+                        <span className="text-xs text-text-secondary ml-auto">{ch.platform}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-text-secondary mb-1">Schedule For (optional)</label>
+                  <input
+                    type="datetime-local"
+                    value={distributeSchedule}
+                    onChange={(e) => setDistributeSchedule(e.target.value)}
+                    className="input w-full"
+                  />
+                  <p className="text-xs text-text-secondary mt-1">Leave empty for immediate distribution</p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end mt-4">
+                <button onClick={() => { setDistributeOpen(false); setSelectedChannels([]); setDistributeSchedule(''); }} className="btn-secondary text-sm">Cancel</button>
+                <button
+                  onClick={async () => {
+                    if (selectedChannels.length === 0) {
+                      toast.error('Select at least one channel');
+                      return;
+                    }
+                    setActing(true);
+                    try {
+                      await apiPost(`/content/${id}/distribute`, {
+                        channelIds: selectedChannels,
+                        scheduledFor: distributeSchedule ? new Date(distributeSchedule).toISOString() : undefined,
+                      });
+                      toast.success(`Distributed to ${selectedChannels.length} channel(s)`);
+                      setDistributeOpen(false);
+                      setSelectedChannels([]);
+                      setDistributeSchedule('');
+                      mutate();
+                    } catch {
+                      toast.error('Failed to distribute content');
+                    } finally {
+                      setActing(false);
+                    }
+                  }}
+                  disabled={acting || selectedChannels.length === 0}
+                  className="btn-primary text-sm flex items-center gap-1"
+                >
+                  {acting ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />}
+                  Distribute
                 </button>
               </div>
             </div>

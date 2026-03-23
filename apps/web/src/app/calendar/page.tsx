@@ -1,26 +1,37 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, type DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useCalendar, useChannels } from '@/hooks/use-api';
+import { useCalendar, useChannels, apiPut } from '@/hooks/use-api';
 import { cn, platformIcon } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useSWRConfig } from 'swr';
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
 } from 'lucide-react';
 import {
   startOfWeek,
   endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfDay,
+  endOfDay,
   addDays,
+  subDays,
   addWeeks,
   subWeeks,
+  addMonths,
+  subMonths,
   format,
-  eachHourOfInterval,
   isSameDay,
-  startOfDay,
+  isSameMonth,
+  isToday as dateIsToday,
+  eachDayOfInterval,
   setHours,
+  setMinutes,
+  setSeconds,
 } from 'date-fns';
 
 // ---------------------------------------------------------------------------
@@ -83,6 +94,10 @@ const HOUR_START = 8;
 const HOUR_END = 20;
 const HOUR_STEP = 2;
 
+// Day view: 1-hour slots across the full day
+const DAY_HOUR_START = 0;
+const DAY_HOUR_END = 24;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -108,17 +123,26 @@ function buildTimeLabels(): string[] {
   return labels;
 }
 
+function buildDayTimeLabels(): string[] {
+  const labels: string[] = [];
+  for (let h = DAY_HOUR_START; h < DAY_HOUR_END; h++) {
+    const suffix = h >= 12 ? 'pm' : 'am';
+    const display = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    labels.push(`${display}${suffix}`);
+  }
+  return labels;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export default function CalendarPage() {
   const router = useRouter();
+  const { mutate: globalMutate } = useSWRConfig();
 
-  // State
-  const [weekStart, setWeekStart] = useState<Date>(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 }),
-  );
+  // State — currentDate is the anchor date for all view modes
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [filters, setFilters] = useState<Filters>({
     channelId: 'all',
@@ -128,20 +152,46 @@ export default function CalendarPage() {
     colorBy: 'status',
   });
 
-  // Derived date range
-  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+  // Drag-and-drop state
+  const [dragItemId, setDragItemId] = useState<string | null>(null);
+  const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
 
-  // Build query params — pass filters server-side instead of client-side
+  // Derived date ranges for each view mode
+  const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
+  const weekEnd = useMemo(() => endOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
+  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
+  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
+  const dayStart = useMemo(() => startOfDay(currentDate), [currentDate]);
+  const dayEnd = useMemo(() => endOfDay(currentDate), [currentDate]);
+
+  // Compute the actual range for the API based on viewMode
+  const { rangeStart, rangeEnd } = useMemo(() => {
+    switch (viewMode) {
+      case 'day':
+        return { rangeStart: dayStart, rangeEnd: dayEnd };
+      case 'month': {
+        // Extend to cover partial weeks at start/end of month
+        const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+        const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+        return { rangeStart: gridStart, rangeEnd: gridEnd };
+      }
+      case 'week':
+      default:
+        return { rangeStart: weekStart, rangeEnd: weekEnd };
+    }
+  }, [viewMode, dayStart, dayEnd, monthStart, monthEnd, weekStart, weekEnd]);
+
+  // Build query params
   const rangeParams = useMemo(() => {
     const p = new URLSearchParams();
-    p.set('start', format(weekStart, 'yyyy-MM-dd'));
-    p.set('end', format(weekEnd, 'yyyy-MM-dd'));
+    p.set('start', format(rangeStart, 'yyyy-MM-dd'));
+    p.set('end', format(rangeEnd, 'yyyy-MM-dd'));
     if (filters.channelId !== 'all') p.set('channelId', filters.channelId);
     if (filters.platform !== 'all') p.set('platform', filters.platform);
     if (filters.status !== 'all') p.set('status', filters.status);
     if (filters.language !== 'all') p.set('language', filters.language);
     return p.toString();
-  }, [weekStart, weekEnd, filters.channelId, filters.platform, filters.status, filters.language]);
+  }, [rangeStart, rangeEnd, filters.channelId, filters.platform, filters.status, filters.language]);
 
   // API hooks
   const { data: calendarData, isLoading, error: calendarError } = useCalendar<CalendarItem[]>(rangeParams);
@@ -155,30 +205,271 @@ export default function CalendarPage() {
   // Items are already filtered server-side
   const filtered = items;
 
-  // Build week days array (Mon-Sun)
+  // Week view helpers
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   }, [weekStart]);
 
   const timeLabels = useMemo(() => buildTimeLabels(), []);
-  const totalRows = timeLabels.length;
+  const dayTimeLabels = useMemo(() => buildDayTimeLabels(), []);
 
-  // Navigation
-  const goToPrevWeek = () => setWeekStart((prev) => subWeeks(prev, 1));
-  const goToNextWeek = () => setWeekStart((prev) => addWeeks(prev, 1));
-  const goToToday = () => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  // Month view: build the grid of days (includes prev/next month padding)
+  const monthGridDays = useMemo(() => {
+    const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start: gridStart, end: gridEnd });
+  }, [monthStart, monthEnd]);
+
+  // Navigation handlers — adapt to view mode
+  const goToPrev = useCallback(() => {
+    switch (viewMode) {
+      case 'day':
+        setCurrentDate((prev) => subDays(prev, 1));
+        break;
+      case 'week':
+        setCurrentDate((prev) => subWeeks(prev, 1));
+        break;
+      case 'month':
+        setCurrentDate((prev) => subMonths(prev, 1));
+        break;
+    }
+  }, [viewMode]);
+
+  const goToNext = useCallback(() => {
+    switch (viewMode) {
+      case 'day':
+        setCurrentDate((prev) => addDays(prev, 1));
+        break;
+      case 'week':
+        setCurrentDate((prev) => addWeeks(prev, 1));
+        break;
+      case 'month':
+        setCurrentDate((prev) => addMonths(prev, 1));
+        break;
+    }
+  }, [viewMode]);
+
+  const goToToday = useCallback(() => {
+    setCurrentDate(new Date());
+  }, []);
+
+  const switchToDay = useCallback((day: Date) => {
+    setCurrentDate(day);
+    setViewMode('day');
+  }, []);
 
   const updateFilter = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Get items for a specific day + time slot
+  // Get items for a specific day + time slot (week view, 2-hour slots)
   function getSlotItems(day: Date, slotIndex: number): CalendarItem[] {
     return filtered.filter((item) => {
       const d = new Date(item.scheduledAt);
       return isSameDay(d, day) && getTimeSlotRow(item.scheduledAt) === slotIndex;
     });
   }
+
+  // Get items for a specific hour (day view, 1-hour slots)
+  function getDaySlotItems(hour: number): CalendarItem[] {
+    return filtered.filter((item) => {
+      const d = new Date(item.scheduledAt);
+      return isSameDay(d, currentDate) && d.getHours() === hour;
+    });
+  }
+
+  // Get items for a specific date (month view)
+  function getDayItems(day: Date): CalendarItem[] {
+    return filtered.filter((item) => {
+      const d = new Date(item.scheduledAt);
+      return isSameDay(d, day);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Drag-and-Drop handlers
+  // ---------------------------------------------------------------------------
+
+  const handleDragStart = useCallback((e: DragEvent<HTMLButtonElement>, item: CalendarItem) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', item.id);
+    setDragItemId(item.id);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDragItemId(null);
+    setDropTargetKey(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>, targetKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropTargetKey(targetKey);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDropTargetKey(null);
+  }, []);
+
+  const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>, newDate: Date) => {
+    e.preventDefault();
+    setDropTargetKey(null);
+    const itemId = e.dataTransfer.getData('text/plain');
+    setDragItemId(null);
+
+    if (!itemId) return;
+
+    const item = filtered.find((i) => i.id === itemId);
+    if (!item) return;
+
+    // Preserve the original time when dropping to a new date in month view,
+    // or use the target time for day/week views
+    const newScheduledAt = newDate.toISOString();
+
+    try {
+      await apiPut(`/schedule/${itemId}`, { scheduledAt: newScheduledAt });
+      toast.success('Post rescheduled successfully');
+      // Revalidate calendar data
+      globalMutate((key: unknown) => typeof key === 'string' && key.includes('/calendar'));
+    } catch (err) {
+      console.error('Failed to reschedule post:', err);
+      toast.error('Failed to reschedule post');
+    }
+  }, [filtered, globalMutate]);
+
+  // Build a drop handler that constructs a date from day + hour
+  const handleDropOnSlot = useCallback((e: DragEvent<HTMLDivElement>, day: Date, hour: number) => {
+    const targetDate = setSeconds(setMinutes(setHours(day, hour), 0), 0);
+    handleDrop(e, targetDate);
+  }, [handleDrop]);
+
+  // Build a drop handler for month view (preserves original time, changes date)
+  const handleDropOnDate = useCallback((e: DragEvent<HTMLDivElement>, day: Date) => {
+    e.preventDefault();
+    setDropTargetKey(null);
+    const itemId = e.dataTransfer.getData('text/plain');
+    setDragItemId(null);
+
+    if (!itemId) return;
+
+    const item = filtered.find((i) => i.id === itemId);
+    if (!item) return;
+
+    // Preserve original time, just change the date
+    const original = new Date(item.scheduledAt);
+    const newDate = setSeconds(
+      setMinutes(
+        setHours(day, original.getHours()),
+        original.getMinutes(),
+      ),
+      original.getSeconds(),
+    );
+
+    const newScheduledAt = newDate.toISOString();
+
+    (async () => {
+      try {
+        await apiPut(`/schedule/${itemId}`, { scheduledAt: newScheduledAt });
+        toast.success('Post rescheduled successfully');
+        globalMutate((key: unknown) => typeof key === 'string' && key.includes('/calendar'));
+      } catch (err) {
+        console.error('Failed to reschedule post:', err);
+        toast.error('Failed to reschedule post');
+      }
+    })();
+  }, [filtered, globalMutate]);
+
+  // ---------------------------------------------------------------------------
+  // Header subtitle
+  // ---------------------------------------------------------------------------
+
+  const headerSubtitle = useMemo(() => {
+    switch (viewMode) {
+      case 'day':
+        return format(currentDate, 'EEEE, MMMM d, yyyy');
+      case 'week':
+        return `${format(weekStart, 'MMM d')} \u2013 ${format(weekEnd, 'MMM d, yyyy')}`;
+      case 'month':
+        return format(currentDate, 'MMMM yyyy');
+    }
+  }, [viewMode, currentDate, weekStart, weekEnd]);
+
+  const navAriaLabel = useMemo(() => {
+    switch (viewMode) {
+      case 'day': return { prev: 'Previous day', next: 'Next day' };
+      case 'week': return { prev: 'Previous week', next: 'Next week' };
+      case 'month': return { prev: 'Previous month', next: 'Next month' };
+    }
+  }, [viewMode]);
+
+  // ---------------------------------------------------------------------------
+  // Shared item button renderer
+  // ---------------------------------------------------------------------------
+
+  function renderItemButton(item: CalendarItem, compact = false) {
+    const isDragging = dragItemId === item.id;
+    if (compact) {
+      // Month view: colored dot
+      return (
+        <button
+          key={item.id}
+          draggable
+          onDragStart={(e) => handleDragStart(e, item)}
+          onDragEnd={handleDragEnd}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (item.content?.id) router.push(`/content/${item.content.id}`);
+          }}
+          title={`${item.content?.title ?? 'Untitled'} (${item.channel?.name ?? 'Unknown'}) - ${format(new Date(item.scheduledAt), 'h:mm a')}`}
+          className={cn(
+            'w-2.5 h-2.5 rounded-full shrink-0 cursor-grab active:cursor-grabbing transition-opacity',
+            STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-gray-500',
+            isDragging && 'opacity-40',
+          )}
+        />
+      );
+    }
+
+    return (
+      <button
+        key={item.id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, item)}
+        onDragEnd={handleDragEnd}
+        onClick={() => item.content?.id && router.push(`/content/${item.content.id}`)}
+        aria-label={`${item.channel?.name ?? 'Unknown'} on ${item.platform} \u2014 ${item.content?.status ?? item.status}`}
+        className={cn(
+          'w-full text-left px-2 py-1.5 rounded-md text-caption transition-colors cursor-grab active:cursor-grabbing',
+          'bg-bg-tertiary hover:bg-bg-primary border border-border',
+          'flex items-center gap-1.5 group',
+          isDragging && 'opacity-40 border-accent-blue',
+        )}
+      >
+        <span
+          className={cn(
+            'w-2 h-2 rounded-full shrink-0',
+            STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-gray-500',
+          )}
+        />
+        <span className="shrink-0">{platformIcon(item.platform)}</span>
+        <span className="truncate text-text-primary group-hover:text-accent-blue">
+          {abbreviate(item.channel?.name ?? 'Unknown')}
+        </span>
+      </button>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Drop target cell wrapper
+  // ---------------------------------------------------------------------------
+
+  function isDropTarget(key: string): boolean {
+    return dropTargetKey === key && dragItemId !== null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <AppLayout>
@@ -191,47 +482,39 @@ export default function CalendarPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-page-title text-text-primary">Content Calendar</h1>
-          <p className="text-text-secondary mt-1">
-            {format(weekStart, 'MMM d')} &ndash; {format(weekEnd, 'MMM d, yyyy')}
-          </p>
+          <p className="text-text-secondary mt-1">{headerSubtitle}</p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Navigation */}
           <div className="flex items-center gap-1">
-            <button onClick={goToPrevWeek} className="btn-icon" aria-label="Previous week">
+            <button onClick={goToPrev} className="btn-icon" aria-label={navAriaLabel.prev}>
               <ChevronLeft size={18} />
             </button>
             <button onClick={goToToday} className="btn-secondary btn-sm">
               Today
             </button>
-            <button onClick={goToNextWeek} className="btn-icon" aria-label="Next week">
+            <button onClick={goToNext} className="btn-icon" aria-label={navAriaLabel.next}>
               <ChevronRight size={18} />
             </button>
           </div>
 
-          {/* View mode toggle — only week view is implemented */}
+          {/* View mode toggle */}
           <div className="flex rounded-md border border-border overflow-hidden">
-            {(['day', 'week', 'month'] as ViewMode[]).map((mode) => {
-              const implemented = mode === 'week';
-              return (
-                <button
-                  key={mode}
-                  onClick={() => implemented && setViewMode(mode)}
-                  disabled={!implemented}
-                  title={!implemented ? 'Coming soon' : undefined}
-                  className={cn(
-                    'px-3 py-1.5 text-caption font-medium transition-colors capitalize',
-                    viewMode === mode
-                      ? 'bg-accent-blue text-white'
-                      : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary',
-                    !implemented && 'opacity-40 cursor-not-allowed',
-                  )}
-                >
-                  {mode}
-                </button>
-              );
-            })}
+            {(['day', 'week', 'month'] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  'px-3 py-1.5 text-caption font-medium transition-colors capitalize',
+                  viewMode === mode
+                    ? 'bg-accent-blue text-white'
+                    : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary',
+                )}
+              >
+                {mode}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -298,12 +581,165 @@ export default function CalendarPage() {
         </select>
       </div>
 
-      {/* ---- Week Grid ---- */}
+      {/* ---- Calendar Content ---- */}
       {isLoading ? (
         <div className="flex items-center justify-center py-24">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
+      ) : viewMode === 'day' ? (
+        /* ================================================================ */
+        /* DAY VIEW                                                         */
+        /* ================================================================ */
+        <div className="card p-0 overflow-x-auto" role="grid" aria-label="Daily calendar">
+          {/* Day header */}
+          <div
+            className="grid border-b border-border"
+            style={{ gridTemplateColumns: '72px 1fr' }}
+            role="row"
+          >
+            <div className="p-2 border-r border-border" />
+            <div
+              className={cn(
+                'p-3 text-center',
+                dateIsToday(currentDate) && 'bg-accent-blue/5',
+              )}
+            >
+              <p className="text-caption text-text-secondary uppercase">
+                {format(currentDate, 'EEEE')}
+              </p>
+              <p
+                className={cn(
+                  'text-body font-semibold mt-0.5',
+                  dateIsToday(currentDate) ? 'text-accent-blue' : 'text-text-primary',
+                )}
+              >
+                {format(currentDate, 'MMMM d, yyyy')}
+              </p>
+            </div>
+          </div>
+
+          {/* Hourly rows */}
+          {dayTimeLabels.map((label, hour) => {
+            const slotItems = getDaySlotItems(hour);
+            const targetKey = `day-${hour}`;
+            return (
+              <div
+                key={label}
+                className="grid border-b border-border last:border-b-0"
+                style={{
+                  gridTemplateColumns: '72px 1fr',
+                  minHeight: '56px',
+                }}
+                role="row"
+              >
+                {/* Time label */}
+                <div className="p-2 text-caption text-text-secondary text-right pr-3 border-r border-border flex items-start justify-end pt-3">
+                  {label}
+                </div>
+
+                {/* Slot cell */}
+                <div
+                  className={cn(
+                    'p-1 min-h-[56px] transition-colors',
+                    dateIsToday(currentDate) && 'bg-accent-blue/5',
+                    isDropTarget(targetKey) && 'bg-accent-blue/15 ring-1 ring-inset ring-accent-blue/40',
+                  )}
+                  onDragOver={(e) => handleDragOver(e, targetKey)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDropOnSlot(e, currentDate, hour)}
+                >
+                  <div className="space-y-1">
+                    {slotItems.map((item) => renderItemButton(item))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : viewMode === 'month' ? (
+        /* ================================================================ */
+        /* MONTH VIEW                                                       */
+        /* ================================================================ */
+        <div className="card p-0 overflow-x-auto" role="grid" aria-label="Monthly calendar">
+          {/* Weekday headers */}
+          <div
+            className="grid border-b border-border"
+            style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}
+            role="row"
+          >
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+              <div
+                key={day}
+                className="p-2 text-center text-caption text-text-secondary uppercase font-medium border-r border-border last:border-r-0"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Day cells — render in rows of 7 */}
+          {Array.from({ length: Math.ceil(monthGridDays.length / 7) }, (_, weekIdx) => (
+            <div
+              key={weekIdx}
+              className="grid border-b border-border last:border-b-0"
+              style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}
+              role="row"
+            >
+              {monthGridDays.slice(weekIdx * 7, weekIdx * 7 + 7).map((day) => {
+                const inCurrentMonth = isSameMonth(day, currentDate);
+                const today = dateIsToday(day);
+                const dayItems = getDayItems(day);
+                const targetKey = `month-${format(day, 'yyyy-MM-dd')}`;
+
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={cn(
+                      'p-2 border-r border-border last:border-r-0 min-h-[90px] transition-colors',
+                      !inCurrentMonth && 'opacity-40',
+                      today && 'bg-accent-blue/5',
+                      isDropTarget(targetKey) && 'bg-accent-blue/15 ring-1 ring-inset ring-accent-blue/40',
+                    )}
+                    onDragOver={(e) => handleDragOver(e, targetKey)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDropOnDate(e, day)}
+                  >
+                    {/* Date number — click to switch to day view */}
+                    <button
+                      onClick={() => switchToDay(day)}
+                      className={cn(
+                        'text-sm font-medium mb-1 hover:text-accent-blue transition-colors',
+                        today
+                          ? 'text-accent-blue font-bold bg-accent-blue/10 rounded-full w-7 h-7 flex items-center justify-center'
+                          : inCurrentMonth
+                            ? 'text-text-primary'
+                            : 'text-text-secondary',
+                      )}
+                    >
+                      {format(day, 'd')}
+                    </button>
+
+                    {/* Post indicators — show up to 4 dots, then +N */}
+                    {dayItems.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {dayItems.slice(0, 4).map((item) => renderItemButton(item, true))}
+                        {dayItems.length > 4 && (
+                          <span className="text-[10px] text-text-secondary font-medium leading-none flex items-center">
+                            +{dayItems.length - 4}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       ) : (
+        /* ================================================================ */
+        /* WEEK VIEW (existing)                                             */
+        /* ================================================================ */
         <div className="card p-0 overflow-x-auto" role="grid" aria-label="Weekly calendar">
           {/* Day headers */}
           <div
@@ -314,13 +750,13 @@ export default function CalendarPage() {
             {/* Empty top-left cell */}
             <div className="p-2 border-r border-border" />
             {weekDays.map((day) => {
-              const isToday = isSameDay(day, new Date());
+              const today = dateIsToday(day);
               return (
                 <div
                   key={day.toISOString()}
                   className={cn(
                     'p-3 text-center border-r border-border last:border-r-0',
-                    isToday && 'bg-accent-blue/5',
+                    today && 'bg-accent-blue/5',
                   )}
                 >
                   <p className="text-caption text-text-secondary uppercase">
@@ -329,7 +765,7 @@ export default function CalendarPage() {
                   <p
                     className={cn(
                       'text-body font-semibold mt-0.5',
-                      isToday ? 'text-accent-blue' : 'text-text-primary',
+                      today ? 'text-accent-blue' : 'text-text-primary',
                     )}
                   >
                     {format(day, 'd')}
@@ -357,39 +793,24 @@ export default function CalendarPage() {
               {/* Day cells */}
               {weekDays.map((day) => {
                 const slotItems = getSlotItems(day, rowIndex);
-                const isToday = isSameDay(day, new Date());
+                const today = dateIsToday(day);
+                const slotHour = HOUR_START + rowIndex * HOUR_STEP;
+                const targetKey = `week-${format(day, 'yyyy-MM-dd')}-${slotHour}`;
+
                 return (
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      'p-1 border-r border-border last:border-r-0 min-h-[72px]',
-                      isToday && 'bg-accent-blue/5',
+                      'p-1 border-r border-border last:border-r-0 min-h-[72px] transition-colors',
+                      today && 'bg-accent-blue/5',
+                      isDropTarget(targetKey) && 'bg-accent-blue/15 ring-1 ring-inset ring-accent-blue/40',
                     )}
+                    onDragOver={(e) => handleDragOver(e, targetKey)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDropOnSlot(e, day, slotHour)}
                   >
                     <div className="space-y-1">
-                      {slotItems.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => item.content?.id && router.push(`/content/${item.content.id}`)}
-                          aria-label={`${item.channel?.name ?? 'Unknown'} on ${item.platform} — ${item.content?.status ?? item.status}`}
-                          className={cn(
-                            'w-full text-left px-2 py-1.5 rounded-md text-caption transition-colors',
-                            'bg-bg-tertiary hover:bg-bg-primary border border-border',
-                            'flex items-center gap-1.5 group',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'w-2 h-2 rounded-full shrink-0',
-                              STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-gray-500',
-                            )}
-                          />
-                          <span className="shrink-0">{platformIcon(item.platform)}</span>
-                          <span className="truncate text-text-primary group-hover:text-accent-blue">
-                            {abbreviate(item.channel?.name ?? 'Unknown')}
-                          </span>
-                        </button>
-                      ))}
+                      {slotItems.map((item) => renderItemButton(item))}
                     </div>
                   </div>
                 );

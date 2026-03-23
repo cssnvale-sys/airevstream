@@ -88,3 +88,9 @@
   .badge-idle { @apply bg-gray-500/15 text-gray-400; }
   .badge-human { @apply bg-accent-purple/15 text-accent-purple; }
 }
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}

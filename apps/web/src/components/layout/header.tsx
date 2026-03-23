@@ -21,7 +21,7 @@ export function Header({ onToggleAssistant }: { onToggleAssistant: () => void })
   const title = pageTitles[pathname] ?? pathname.split('/').pop() ?? 'Dashboard';
 
   return (
-    <header className="h-header bg-bg-secondary border-b border-border flex items-center px-6 gap-4 sticky top-0 z-30">
+    <header className="h-header bg-bg-secondary border-b border-border flex items-center px-6 pl-14 md:pl-6 gap-4 sticky top-0 z-30">
       <h2 className="text-section-heading text-text-primary">{title}</h2>
 
       <div className="flex-1 max-w-md mx-auto">

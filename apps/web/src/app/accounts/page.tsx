@@ -320,14 +320,29 @@ interface DetailAccount extends Omit<EmailAccount, 'socialAccounts'> {
 
 function SocialAccountActions({ accountId, socialId }: { accountId: string; socialId: string }) {
   const [acting, setActing] = useState<string | null>(null);
+  const [warmPopoverOpen, setWarmPopoverOpen] = useState(false);
+  const [warmDuration, setWarmDuration] = useState(30);
 
-  const handleAction = async (action: 'sync' | 'health-check' | 'warm') => {
+  const handleAction = async (action: 'sync' | 'health-check') => {
     setActing(action);
     try {
       await apiPost(`/accounts/${accountId}/socials/${socialId}/${action}`, {});
-      toast.success(`${action === 'sync' ? 'Sync' : action === 'health-check' ? 'Health check' : 'Warm-up'} started`);
+      toast.success(`${action === 'sync' ? 'Sync' : 'Health check'} started`);
     } catch {
       toast.error(`Failed to start ${action}`);
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const handleStartWarm = async () => {
+    setActing('warm');
+    try {
+      await apiPost(`/accounts/${accountId}/socials/${socialId}/warm`, { durationMinutes: warmDuration });
+      toast.success(`Warm-up started (${warmDuration} min)`);
+      setWarmPopoverOpen(false);
+    } catch {
+      toast.error('Failed to start warm-up');
     } finally {
       setActing(null);
     }
@@ -351,14 +366,61 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
       >
         <HeartPulse size={12} />
       </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); handleAction('warm'); }}
-        disabled={acting !== null}
-        title="Warm Up"
-        className="p-1 rounded text-text-secondary hover:text-accent-amber hover:bg-bg-primary transition-colors"
-      >
-        <Flame size={12} />
-      </button>
+      <div className="relative">
+        <button
+          onClick={(e) => { e.stopPropagation(); setWarmPopoverOpen((v) => !v); }}
+          disabled={acting !== null}
+          title="Warm Up"
+          className="p-1 rounded text-text-secondary hover:text-accent-amber hover:bg-bg-primary transition-colors"
+        >
+          <Flame size={12} />
+        </button>
+        {warmPopoverOpen && (
+          <>
+            {/* Invisible backdrop to close popover */}
+            <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setWarmPopoverOpen(false); }} />
+            <div
+              className="absolute right-0 bottom-full mb-2 z-50 w-56 bg-bg-secondary border border-border rounded-lg shadow-xl p-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-xs font-medium text-text-primary mb-2">Warm-up Duration</p>
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="range"
+                  min={15}
+                  max={120}
+                  step={5}
+                  value={warmDuration}
+                  onChange={(e) => setWarmDuration(Number(e.target.value))}
+                  className="flex-1 accent-accent-amber h-1.5 cursor-pointer"
+                />
+                <span className="text-xs font-medium text-text-primary w-12 text-right tabular-nums">
+                  {warmDuration} min
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-text-secondary mb-3">
+                <span>15 min</span>
+                <span>120 min</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleStartWarm}
+                  disabled={acting === 'warm'}
+                  className="btn-primary btn-sm flex-1 text-xs"
+                >
+                  {acting === 'warm' ? 'Starting...' : 'Start Warm-up'}
+                </button>
+                <button
+                  onClick={() => setWarmPopoverOpen(false)}
+                  className="btn-secondary btn-sm text-xs"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

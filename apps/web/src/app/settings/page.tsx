@@ -28,12 +28,17 @@ import {
   ArrowDownUp,
   Loader2,
   Zap,
+  Globe,
+  Database,
+  Download,
+  Activity,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { EmptyState } from '@/components/ui/empty-state';
+import { getToken } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,6 +95,22 @@ interface AppearanceSettings {
   sidebarPosition: 'left' | 'right';
 }
 
+interface ProxyEntry {
+  id: string;
+  name: string;
+  type: 'http' | 'socks5' | 'residential';
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+}
+
+interface RetentionSettings {
+  retentionDays: number;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -99,6 +120,8 @@ const TABS = [
   { id: 'ai', label: 'AI Services', icon: Cpu },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Shield },
+  { id: 'proxies', label: 'Proxies', icon: Globe },
+  { id: 'data', label: 'Data', icon: Database },
   { id: 'appearance', label: 'Appearance', icon: Palette },
 ] as const;
 
@@ -1014,6 +1037,435 @@ function AppearanceTab() {
   );
 }
 
+function ProxiesTab() {
+  const { data: proxiesRes, isLoading, mutate } = useApi<ProxyEntry[]>('/settings/proxies');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newProxy, setNewProxy] = useState({
+    name: '',
+    type: 'http' as 'http' | 'socks5' | 'residential',
+    host: '',
+    port: '',
+    username: '',
+    password: '',
+  });
+  const [adding, setAdding] = useState(false);
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const proxies = proxiesRes?.data ?? [];
+  const activeCount = proxies.filter((p) => p.status === 'active').length;
+  const inactiveCount = proxies.filter((p) => p.status === 'inactive').length;
+
+  const handleAddProxy = async () => {
+    const port = parseInt(newProxy.port, 10);
+    if (!newProxy.name || !newProxy.host || isNaN(port) || port < 1 || port > 65535) {
+      toast.error('Please fill in all required fields with valid values');
+      return;
+    }
+    setAdding(true);
+    try {
+      await apiPost('/settings/proxies', {
+        name: newProxy.name,
+        type: newProxy.type,
+        host: newProxy.host,
+        port,
+        ...(newProxy.username ? { username: newProxy.username } : {}),
+        ...(newProxy.password ? { password: newProxy.password } : {}),
+      });
+      setShowAddForm(false);
+      setNewProxy({ name: '', type: 'http', host: '', port: '', username: '', password: '' });
+      mutate();
+      toast.success('Proxy added');
+    } catch (err) {
+      console.error('Failed to add proxy:', err);
+      toast.error('Failed to add proxy');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDeleteProxy = async (id: string) => {
+    try {
+      await apiDelete(`/settings/proxies/${id}`);
+      mutate();
+      setDeleteTarget(null);
+      toast.success('Proxy removed');
+    } catch (err) {
+      console.error('Failed to delete proxy:', err);
+      toast.error('Failed to delete proxy');
+    }
+  };
+
+  const handleTestProxy = async (id: string) => {
+    setTestingId(id);
+    try {
+      const res = await apiPost<{ data: { reachable: boolean; status: string } }>(`/settings/proxies/${id}`);
+      if (res.data.reachable) {
+        toast.success('Proxy is reachable');
+      } else {
+        toast.error('Proxy is not reachable');
+      }
+      mutate();
+    } catch (err) {
+      console.error('Failed to test proxy:', err);
+      toast.error('Failed to test proxy');
+    } finally {
+      setTestingId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Pool Stats */}
+      <div className="grid grid-cols-3 gap-4 max-w-lg">
+        <div className="card text-center">
+          <div className="text-2xl font-bold text-text-primary">{proxies.length}</div>
+          <div className="text-xs text-text-secondary mt-1">Total</div>
+        </div>
+        <div className="card text-center">
+          <div className="text-2xl font-bold text-accent-green">{activeCount}</div>
+          <div className="text-xs text-text-secondary mt-1">Active</div>
+        </div>
+        <div className="card text-center">
+          <div className="text-2xl font-bold text-accent-red">{inactiveCount}</div>
+          <div className="text-xs text-text-secondary mt-1">Inactive</div>
+        </div>
+      </div>
+
+      {/* Proxy List */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-text-primary">Configured Proxies</h3>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn-primary btn-sm flex items-center gap-1"
+          >
+            <Plus size={14} /> Add Proxy
+          </button>
+        </div>
+
+        {showAddForm && (
+          <div className="card mb-4 border border-accent-blue/30">
+            <h4 className="text-sm font-medium text-text-primary mb-3">New Proxy</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Name</label>
+                <input
+                  value={newProxy.name}
+                  onChange={(e) => setNewProxy({ ...newProxy, name: e.target.value })}
+                  className="input w-full"
+                  placeholder="US Residential 1"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Type</label>
+                <select
+                  value={newProxy.type}
+                  onChange={(e) => setNewProxy({ ...newProxy, type: e.target.value as 'http' | 'socks5' | 'residential' })}
+                  className="input w-full"
+                >
+                  <option value="http">HTTP</option>
+                  <option value="socks5">SOCKS5</option>
+                  <option value="residential">Residential</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Host</label>
+                <input
+                  value={newProxy.host}
+                  onChange={(e) => setNewProxy({ ...newProxy, host: e.target.value })}
+                  className="input w-full"
+                  placeholder="proxy.example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Port</label>
+                <input
+                  value={newProxy.port}
+                  onChange={(e) => setNewProxy({ ...newProxy, port: e.target.value })}
+                  className="input w-full"
+                  placeholder="8080"
+                  type="number"
+                  min={1}
+                  max={65535}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Username (optional)</label>
+                <input
+                  value={newProxy.username}
+                  onChange={(e) => setNewProxy({ ...newProxy, username: e.target.value })}
+                  className="input w-full"
+                  placeholder="username"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1">Password (optional)</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newProxy.password}
+                    onChange={(e) => setNewProxy({ ...newProxy, password: e.target.value })}
+                    className="input w-full pr-10"
+                    placeholder="password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary p-1"
+                  >
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAddProxy}
+                disabled={adding || !newProxy.name || !newProxy.host || !newProxy.port}
+                className="btn-primary btn-sm flex items-center gap-1"
+              >
+                {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                Add
+              </button>
+              <button onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {proxies.length === 0 ? (
+          <EmptyState
+            icon={Globe}
+            title="No proxies configured"
+            description="Add a proxy to route browser automation traffic through different IP addresses."
+            actionLabel="Add Proxy"
+            onAction={() => setShowAddForm(true)}
+            className="py-8"
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left">
+                  <th className="pb-2 text-text-secondary font-medium">Name</th>
+                  <th className="pb-2 text-text-secondary font-medium">Type</th>
+                  <th className="pb-2 text-text-secondary font-medium">Host:Port</th>
+                  <th className="pb-2 text-text-secondary font-medium">Status</th>
+                  <th className="pb-2 text-text-secondary font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proxies.map((proxy) => (
+                  <tr key={proxy.id} className="border-b border-border/50">
+                    <td className="py-3 text-text-primary font-medium">{proxy.name}</td>
+                    <td className="py-3">
+                      <span className="badge badge-idle text-xs uppercase">{proxy.type}</span>
+                    </td>
+                    <td className="py-3 text-text-secondary font-mono text-xs">
+                      {proxy.host}:{proxy.port}
+                    </td>
+                    <td className="py-3">
+                      <span className={cn('badge text-xs', proxy.status === 'active' ? 'badge-active' : 'badge-error')}>
+                        {proxy.status}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleTestProxy(proxy.id)}
+                          disabled={testingId !== null}
+                          className="btn-secondary btn-sm flex items-center gap-1"
+                          title="Test connection"
+                        >
+                          {testingId === proxy.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <Activity size={12} />
+                          )}
+                          Test
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(proxy.id)}
+                          className="text-text-secondary hover:text-accent-red transition-colors p-1.5"
+                          title="Delete proxy"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Proxy"
+        message="This proxy will be permanently removed from the configuration. This action cannot be undone."
+        confirmLabel="Delete Proxy"
+        variant="danger"
+        onConfirm={() => deleteTarget && handleDeleteProxy(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </div>
+  );
+}
+
+function DataTab() {
+  const { data: retentionRes, isLoading } = useApi<RetentionSettings>('/settings/data/retention');
+  const [retentionDays, setRetentionDays] = useState(90);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (retentionRes?.data) {
+      setRetentionDays(retentionRes.data.retentionDays);
+    }
+  }, [retentionRes]);
+
+  const handleSaveRetention = async () => {
+    setSaving(true);
+    try {
+      await apiPut('/settings/data/retention', { retentionDays });
+      setSaved(true);
+      toast.success('Retention settings saved');
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error('Failed to save retention settings:', err);
+      toast.error('Failed to save retention settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleExport = async (type: 'content' | 'analytics' | 'accounts') => {
+    setExporting(type);
+    try {
+      const token = getToken();
+      const res = await fetch(`/api/v1/settings/data/export?type=${type}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        toast.error('Failed to export data');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const disposition = res.headers.get('Content-Disposition');
+      const filenameMatch = disposition?.match(/filename="(.+)"/);
+      link.download = filenameMatch?.[1] ?? `${type}-export.csv`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} exported successfully`);
+    } catch (err) {
+      console.error(`Failed to export ${type}:`, err);
+      toast.error('Failed to export data');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {[1, 2].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  const exportOptions = [
+    { type: 'content' as const, label: 'Content Items', description: 'Export all content items with title, type, status, quality score, and channel.' },
+    { type: 'analytics' as const, label: 'Analytics', description: 'Export posted content analytics with performance data and quality scores.' },
+    { type: 'accounts' as const, label: 'Accounts', description: 'Export email accounts and linked social accounts with status and health scores.' },
+  ];
+
+  return (
+    <div className="space-y-8 max-w-2xl">
+      {/* Export Section */}
+      <div>
+        <h3 className="text-base font-semibold text-text-primary mb-4">Export Data</h3>
+        <div className="space-y-3">
+          {exportOptions.map((opt) => (
+            <div key={opt.type} className="card flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-medium text-text-primary">{opt.label}</div>
+                <p className="text-xs text-text-secondary mt-0.5">{opt.description}</p>
+              </div>
+              <button
+                onClick={() => handleExport(opt.type)}
+                disabled={exporting !== null}
+                className="btn-secondary btn-sm flex items-center gap-1 shrink-0"
+              >
+                {exporting === opt.type ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                Export CSV
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Data Retention */}
+      <div>
+        <h3 className="text-base font-semibold text-text-primary mb-4">Data Retention</h3>
+        <p className="text-sm text-text-secondary mb-4">
+          Configure how long resolved alerts, old metrics, and completed jobs are retained before automatic cleanup.
+        </p>
+        <div className="max-w-sm">
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">Auto-cleanup Period</label>
+          <select
+            value={retentionDays}
+            onChange={(e) => setRetentionDays(Number(e.target.value))}
+            className="input w-full"
+          >
+            <option value={30}>30 days</option>
+            <option value={60}>60 days</option>
+            <option value={90}>90 days</option>
+            <option value={180}>180 days</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            onClick={handleSaveRetention}
+            disabled={saving}
+            className="btn-primary flex items-center gap-2"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+            {saved ? 'Saved' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Settings page
 // ---------------------------------------------------------------------------
@@ -1031,6 +1483,10 @@ export default function SettingsPage() {
         return <NotificationsTab />;
       case 'security':
         return <SecurityTab />;
+      case 'proxies':
+        return <ProxiesTab />;
+      case 'data':
+        return <DataTab />;
       case 'appearance':
         return <AppearanceTab />;
       default:

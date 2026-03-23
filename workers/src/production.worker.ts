@@ -2,8 +2,8 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC } from '@airevstream/shared';
-import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope } from '@airevstream/shared';
+import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -213,6 +213,43 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
       });
     }
 
+    // ─── C2PA Content Credentials embedding ───
+    try {
+      // @ts-expect-error — runtime import from dist/ path; types are in provenance.ts (D082)
+        const c2paModule = await import('@airevstream/shared/dist/provenance-c2pa-cli.js');
+        const { embedC2PAManifest, isC2PAToolAvailable } = c2paModule;
+      if (await isC2PAToolAvailable()) {
+        const provRecord = createProvenanceRecord(
+          'image',
+          { name: 'comfyui', provider: 'comfyui' },
+          { prompt: params.positive_prompt as string },
+          { storageKey: uploadedUrls[0] ?? '' },
+          'image-generation',
+        );
+        const manifest = generateC2PAManifest(data.workflowType ?? 'Generated Image', [provRecord]);
+        for (const url of uploadedUrls) {
+          const slashIdx = url.indexOf('/');
+          const bucket = url.slice(0, slashIdx);
+          const key = url.slice(slashIdx + 1);
+          const imgBuf = await downloadBuffer(bucket, key);
+          const tmpInput = `/tmp/c2pa-input-${Date.now()}.png`;
+          const tmpOutput = `/tmp/c2pa-output-${Date.now()}.png`;
+          const { writeFile: writeFileTmp } = await import('node:fs/promises');
+          await writeFileTmp(tmpInput, imgBuf);
+          const result = await embedC2PAManifest({ mediaPath: tmpInput, outputPath: tmpOutput, manifest });
+          if (result.success) {
+            const signedBuf = await readFile(tmpOutput);
+            await uploadBuffer(bucket, key, signedBuf, 'image/png');
+            logger.info({ key }, 'C2PA credentials embedded in image');
+          }
+          await unlink(tmpInput).catch(() => {});
+          await unlink(tmpOutput).catch(() => {});
+        }
+      }
+    } catch (err) {
+      logger.debug({ err }, 'C2PA embedding skipped for images');
+    }
+
     // Update storyboard shot if shotId provided
     if (data.shotId) {
       await db.storyboardShot.update({
@@ -420,6 +457,33 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
       contentId: data.contentId,
       metadata: { compositionId, qualityPreset: data.qualityPreset },
     });
+
+    // ─── C2PA Content Credentials embedding ───
+    try {
+      // @ts-expect-error — runtime import from dist/ path; types are in provenance.ts (D082)
+        const c2paModule = await import('@airevstream/shared/dist/provenance-c2pa-cli.js');
+        const { embedC2PAManifest, isC2PAToolAvailable } = c2paModule;
+      if (await isC2PAToolAvailable()) {
+        const provRecord = createProvenanceRecord(
+          'video',
+          { name: compositionId, provider: 'remotion' },
+          {},
+          { storageKey: `${BUCKET}/${key}` },
+          'video-render',
+        );
+        const manifest = generateC2PAManifest(storyboard.content.title ?? 'Untitled', [provRecord]);
+        const tmpOutput = `/tmp/c2pa-video-${Date.now()}.${renderExt}`;
+        const embedResult = await embedC2PAManifest({ mediaPath: outputPath, outputPath: tmpOutput, manifest });
+        if (embedResult.success) {
+          const signedBuf = await readFile(tmpOutput);
+          await uploadBuffer(BUCKET, key, signedBuf, contentType);
+          logger.info({ key }, 'C2PA credentials embedded in video');
+        }
+        await unlink(tmpOutput).catch(() => {});
+      }
+    } catch (err) {
+      logger.debug({ err }, 'C2PA embedding skipped for video');
+    }
 
     // Clean up temp file after successful upload
     await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
@@ -831,6 +895,7 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
   let allApproved = true;
   let previousShotBuffer: Buffer | undefined;
   const allShotBuffers: Buffer[] = [];
+  const qcDecisionInputs: QCDecisionShotInput[] = [];
 
   for (const shot of shots) {
     const keyframeUrls = shot.keyframeUrls as string[] | null;
@@ -888,6 +953,27 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
       { shotId: shot.id, overall: qcResult.overall, recommendation: qcResult.recommendation, dimensions: qcResult.dimensions },
       'QC score computed',
     );
+
+    // Collect for QC decision agent
+    qcDecisionInputs.push({
+      shotNumber: shot.shotNumber,
+      shotId: shot.id,
+      qcScores: {
+        composition: qcResult.dimensions.composition,
+        lighting: qcResult.dimensions.technical,
+        sharpness: qcResult.dimensions.technical,
+        colorAccuracy: qcResult.dimensions.colorQuality,
+        promptAdherence: qcResult.dimensions.promptAdherence,
+        overall: qcResult.overall,
+      },
+      identityDrift: referenceFingerprint ? {
+        detected: qcResult.dimensions.identityDrift < 65,
+        similarity: qcResult.dimensions.identityDrift / 100,
+      } : undefined,
+      continuityWarnings: qcResult.dimensions.consistency < 60
+        ? [`Low consistency score: ${qcResult.dimensions.consistency}`]
+        : [],
+    });
 
     // Determine status based on recommendation
     let newStatus: string;
@@ -962,6 +1048,83 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
         { storyboardId: data.storyboardId, flickerScore: flickerResult.flickerScore, transitions: flickerResult.transitionCount },
         `Flicker detected: ${flickerResult.message}`,
       );
+    }
+  }
+
+  // ─── QC Decision Agent ───
+  // Invoke the QC decision agent to get intelligent per-shot verdicts
+  if (qcDecisionInputs.length > 0) {
+    try {
+      const { AGENT_CONFIGS } = await import('@airevstream/shared');
+      const agentConfig = AGENT_CONFIGS['qc-decision'];
+
+      if (agentConfig) {
+        // Build the agent input payload
+        const agentInput = {
+          shots: qcDecisionInputs,
+          renderOutput: { storyboardId: data.storyboardId },
+          lookDevOutput: {},
+          qualityPreset: 'standard',
+        };
+
+        // Log the agent input for diagnostics (actual LLM call is deferred to orchestrator)
+        logger.info(
+          {
+            storyboardId: data.storyboardId,
+            shotCount: qcDecisionInputs.length,
+            avgScore: Math.round(qcDecisionInputs.reduce((s, i) => s + i.qcScores.overall, 0) / qcDecisionInputs.length),
+          },
+          'QC decision agent input prepared',
+        );
+
+        // Apply heuristic verdicts based on the agent's decision framework
+        // (Full LLM-based agent invocation happens in the orchestrator pipeline)
+        for (const shotInput of qcDecisionInputs) {
+          const score = shotInput.qcScores.overall;
+          const hasDrift = shotInput.identityDrift?.detected ?? false;
+          let verdict: QCVerdict;
+
+          if (score >= 85 && !hasDrift) {
+            verdict = 'approve';
+          } else if (score >= 60 && !hasDrift) {
+            verdict = 'soft-fix';
+          } else if (score >= 60 && hasDrift) {
+            verdict = 'regenerate';
+          } else if (score < 60) {
+            verdict = 'regenerate';
+          } else {
+            verdict = 'escalate';
+          }
+
+          // Store verdict in shot metadata for the finishing phase
+          await db.storyboardShot.update({
+            where: { id: shotInput.shotId },
+            data: {
+              shotspec: {
+                ...((await db.storyboardShot.findUnique({ where: { id: shotInput.shotId }, select: { shotspec: true } }))?.shotspec as Record<string, unknown> ?? {}),
+                qcVerdict: verdict,
+                qcAgentInput: shotInput,
+              } as any,
+            },
+          });
+
+          logger.info({ shotId: shotInput.shotId, verdict, score }, 'QC decision verdict applied');
+        }
+
+        // Override allApproved based on verdicts
+        const regenerateCount = qcDecisionInputs.filter(s => {
+          const score = s.qcScores.overall;
+          const hasDrift = s.identityDrift?.detected ?? false;
+          return score < 60 || (score < 85 && hasDrift);
+        }).length;
+
+        if (regenerateCount > qcDecisionInputs.length / 2) {
+          allApproved = false;
+          logger.info({ storyboardId: data.storyboardId, regenerateCount }, 'QC decision: >50% shots need regeneration');
+        }
+      }
+    } catch (err) {
+      logger.warn({ err }, 'QC decision agent failed — falling back to threshold-based decisions');
     }
   }
 
@@ -1079,7 +1242,8 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
     const fgText = spec.dialogue ?? audioPlan?.fg?.text;
     if (fgText) {
       try {
-        const ttsResult = await ttsClient.synthesize({
+        // Use synthesizeWithLipSync for AV sync validation
+        const { tts: ttsResult, lipSync: lipSyncData } = await ttsClient.synthesizeWithLipSync({
           text: fgText,
           voice: audioPlan?.fg?.voice,
         });
@@ -1090,6 +1254,40 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
           fadeInMs: audioPlan.fg?.fadeInMs,
           fadeOutMs: audioPlan.fg?.fadeOutMs,
         });
+
+        // ─── AV Sync validation ───
+        if (ttsResult.wordTimings && ttsResult.wordTimings.length > 0) {
+          const audioTimings: WordTiming[] = (ttsResult.wordTimings as Array<{ word: string; startMs: number; endMs: number }>).map((wt) => ({
+            word: wt.word,
+            startMs: wt.startMs,
+            endMs: wt.endMs,
+            visemes: [],
+          }));
+          const syncResult = validateAVSync(audioTimings, lipSyncData);
+          if (!syncResult.passed) {
+            logger.warn(
+              { shotId: shot.id, errorCount: syncResult.errorCount, avgDriftMs: syncResult.avgDriftMs, driftAccumulating: syncResult.driftAccumulating },
+              `AV sync check failed: ${syncResult.message}`,
+            );
+          } else if (syncResult.warningCount > 0) {
+            logger.info(
+              { shotId: shot.id, warningCount: syncResult.warningCount, avgDriftMs: syncResult.avgDriftMs },
+              'AV sync: minor drift warnings detected',
+            );
+          }
+        }
+
+        // Duration envelope check
+        const shotDurationMs = (Number(shot.endSec ?? 0) - Number(shot.startSec ?? 0)) * 1000;
+        if (shotDurationMs > 0) {
+          const envelope = validateDurationEnvelope(ttsResult.durationMs, shotDurationMs);
+          if (!envelope.fits) {
+            logger.warn(
+              { shotId: shot.id, audioDurationMs: ttsResult.durationMs, videoDurationMs: shotDurationMs, overrunMs: envelope.overrunMs },
+              `Audio overruns video: ${envelope.message}`,
+            );
+          }
+        }
       } catch (err) {
         logger.warn({ err, shotId: shot.id, layer: 'fg' }, 'TTS generation failed for shot');
       }

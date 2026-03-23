@@ -26,6 +26,8 @@ interface ProviderLimit {
   maxWidth?: number;
   maxHeight?: number;
   personGenerationDefault?: string;
+  supportsFirstFrame?: boolean;
+  supportsLastFrame?: boolean;
 }
 
 // ─── Provider Constraints ───
@@ -35,15 +37,21 @@ export const PROVIDER_CONSTRAINTS: Record<ProviderName, ProviderLimit> = {
     maxFps: 24,
     allowedAspects: ['16:9', '9:16'],
     personGenerationDefault: 'disallow',
+    supportsFirstFrame: true,
+    supportsLastFrame: true,
   },
   sora: {
     maxDuration: 60,
     allowedAspects: ['16:9', '9:16', '1:1'],
+    supportsFirstFrame: true,
+    supportsLastFrame: true,
   },
   comfyui: {
     maxSteps: 150,
     maxWidth: 4096,
     maxHeight: 4096,
+    supportsFirstFrame: true,
+    supportsLastFrame: false,
   },
 };
 
@@ -123,6 +131,41 @@ export function validateShotSpec(spec: ShotSpec, provider: ProviderName): Constr
         field: 'generation.height',
         message: `Height ${gen.height} exceeds ${provider} maximum of ${limits.maxHeight}`,
         severity: 'error',
+      });
+    }
+  }
+
+  // Frame anchor checks
+  if (spec.firstFrameRef) {
+    if (!spec.firstFrameRef.storageKey) {
+      violations.push({
+        field: 'firstFrameRef.storageKey',
+        message: 'firstFrameRef requires a storageKey',
+        severity: 'error',
+      });
+    }
+    if (!limits.supportsFirstFrame) {
+      violations.push({
+        field: 'firstFrameRef',
+        message: `Provider ${provider} does not support first frame anchoring`,
+        severity: 'warning',
+      });
+    }
+  }
+
+  if (spec.lastFrameRef) {
+    if (!spec.lastFrameRef.storageKey) {
+      violations.push({
+        field: 'lastFrameRef.storageKey',
+        message: 'lastFrameRef requires a storageKey',
+        severity: 'error',
+      });
+    }
+    if (!limits.supportsLastFrame) {
+      violations.push({
+        field: 'lastFrameRef',
+        message: `Provider ${provider} does not support last frame anchoring`,
+        severity: 'warning',
       });
     }
   }

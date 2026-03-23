@@ -397,6 +397,19 @@ export interface AudioPlan {
  */
 export type SeedPolicy = 'free' | 'shot-offset' | 'scene-lock' | 'series-lock';
 
+// ─── Frame Anchoring ───
+
+export interface FrameAnchor {
+  /** MinIO storage key for the anchor frame image */
+  storageKey: string;
+  /** Influence strength (0.0-1.0, default 0.75) */
+  strength?: number;
+  /** How to apply the anchor frame */
+  mode?: 'img2img' | 'controlnet';
+  /** ControlNet preprocessor type (only used when mode='controlnet') */
+  controlNetType?: 'depth' | 'canny' | 'softedge';
+}
+
 // ─── ShotSpec ───
 export interface ShotSpec {
   // --- Existing fields ---
@@ -423,6 +436,10 @@ export interface ShotSpec {
   vfx?: VfxSpec;
   aspect?: '16:9' | '9:16' | '4:3' | '2.39:1' | '1:1';
   outputType?: 'image' | 'video' | 'image+video';
+
+  // --- Frame Anchoring (editorial continuity) ---
+  firstFrameRef?: FrameAnchor;
+  lastFrameRef?: FrameAnchor;
 
   // --- Lip-sync ---
   lipSync?: {
@@ -483,11 +500,35 @@ export interface AssetRegistryEntry {
   type: 'image' | 'video' | 'audio' | 'model' | 'lora' | 'workflow';
   storageKey: string;
   hash?: string;
-  version?: string;
-  metadata?: Record<string, unknown>;
+  fileSize?: number;
+  mimeType?: string;
+  version: number;
+  parentAssetId?: string;
+  generatedBy?: string;
+  provenance?: Record<string, unknown>;
   contentId?: string;
   shotId?: string;
+  sequenceId?: string;
+  metadata?: Record<string, unknown>;
   createdAt: string;
+}
+
+// ─── Sequence ───
+export interface Sequence {
+  id: string;
+  channelId: string;
+  name: string;
+  description?: string;
+  status: 'draft' | 'active' | 'archived';
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SequenceItem {
+  sequenceId: string;
+  contentId: string;
+  position: number;
 }
 
 // ─── Timestamped Script ───

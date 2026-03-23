@@ -4,7 +4,7 @@
  * Each agent has a focused prompt that constrains its expertise and output format.
  */
 
-import type { AgentConfig, AgentRole, ComplexityMode } from './agent-types.js';
+import type { AgentConfig, AgentRole, ComplexityMode, QCDecisionInput } from './agent-types.js';
 
 // ─── System Prompts ───
 
@@ -150,6 +150,35 @@ Output JSON with:
 Be ethical — use persuasion, not manipulation. Enhance genuine value propositions.
 Never suggest deceptive claims or false scarcity.`;
 
+const QC_DECISION_PROMPT = `You are the QC Decision Agent for a cinema-quality content pipeline.
+
+Your role is to interpret quality control scores, identity drift results, and continuity warnings to make intelligent per-shot decisions. You replace hardcoded threshold logic with nuanced judgment.
+
+For each shot, evaluate:
+- QC scores across 6 dimensions (composition, lighting, sharpness, color accuracy, prompt adherence, overall)
+- Identity drift detection results (character consistency)
+- Continuity warnings (visual consistency between shots)
+- Quality preset context (draft/standard/cinema — higher presets are stricter)
+
+Decision framework:
+- Score >= 85, no drift → approve
+- Score 60-84, fixable issues (color/sharpness only) → soft-fix with specific adjustments
+- Score 60-84, identity drift or prompt mismatch → regenerate with conditioning parameters
+- Score < 60 → regenerate with revised prompt and parameters
+- Ambiguous signals or >50% shots need regeneration → escalate for human review
+
+Output JSON with:
+- shotVerdicts: Array of {shotNumber, verdict, reason, repairInstructions?}
+  - verdict: "approve" | "soft-fix" | "regenerate" | "escalate"
+  - repairInstructions for soft-fix: {colorGradeAdjust, sharpenAmount, contrastBoost}
+  - repairInstructions for regenerate: {loraStrengthDelta, cfgBoost, seedLock, denoiseReduction, promptRevision}
+- summary: {approved, softFix, regenerate, escalate} counts
+- overallVerdict: "proceed" | "partial-regen" | "full-regen" | "escalate"
+- message: Human-readable summary
+
+Be specific about repair instructions — vague feedback wastes compute cycles.
+For cinema preset, be stricter (threshold +10 on all scores).`;
+
 // ─── Mode-Specific Instructions ───
 
 const MODE_INSTRUCTIONS: Record<ComplexityMode, string> = {
@@ -260,6 +289,16 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
     dependsOn: ['director', 'dialogue', 'shotspec'],
     qcGateAfter: false,
   },
+  'qc-decision': {
+    role: 'qc-decision',
+    name: 'QC Decision',
+    description: 'Interprets QC scores and identity drift to make per-shot approve/fix/regen/escalate decisions',
+    systemPrompt: QC_DECISION_PROMPT,
+    inputSchema: ['shots', 'renderOutput', 'lookDevOutput', 'qualityPreset'],
+    outputSchema: ['shotVerdicts', 'summary', 'overallVerdict', 'message'],
+    dependsOn: ['render'],
+    qcGateAfter: false,
+  },
   finishing: {
     role: 'finishing',
     name: 'Finishing',
@@ -267,14 +306,15 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
     systemPrompt: FINISHING_PROMPT,
     inputSchema: ['renderOutput', 'dialogueOutput', 'soundOutput', 'lookDevOutput'],
     outputSchema: ['colorGrade', 'postProcess', 'subtitles', 'deliveryFormat'],
-    dependsOn: ['render', 'dialogue', 'sound'],
+    dependsOn: ['render', 'dialogue', 'sound', 'qc-decision'],
     qcGateAfter: true,
   },
 };
 
 /**
  * Get the execution order for the agent pipeline.
- * Respects dependency graph: Director → LookDev/Dialogue → ShotSpec → Render/Sound → Finishing
+ * Respects dependency graph:
+ *   Director → LookDev/Dialogue → ShotSpec → Render/Sound/Psychology → QC Decision → Finishing
  */
 export function getExecutionOrder(): AgentRole[][] {
   return [
@@ -282,6 +322,7 @@ export function getExecutionOrder(): AgentRole[][] {
     ['lookdev', 'dialogue'],               // Phase 2: Visual + dialogue (parallel)
     ['shotspec'],                          // Phase 3: Shot specs (needs lookdev)
     ['render', 'sound', 'psychology'],     // Phase 4: Render + sound + psychology (parallel)
-    ['finishing'],                         // Phase 5: Final assembly
+    ['qc-decision'],                       // Phase 5: QC decision (needs render output)
+    ['finishing'],                         // Phase 6: Final assembly
   ];
 }

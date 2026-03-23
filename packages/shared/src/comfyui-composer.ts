@@ -20,6 +20,7 @@ import type {
   RefinerSpec,
   RepairSpec,
   PromptBible,
+  FrameAnchor,
 } from './types.js';
 
 // ─── ComfyUI Workflow Types ───
@@ -434,6 +435,73 @@ export function addControlNetNodes(
   return updatedCtx;
 }
 
+// ─── First Frame Anchoring ───
+
+/**
+ * Add first-frame anchoring nodes. Two modes:
+ *
+ * - **img2img**: LoadImage → VAEEncode → replace EmptyLatentImage as KSampler input.
+ *   Sets denoise = 1 - strength (lower denoise = closer to reference).
+ *
+ * - **controlnet**: Delegates to addControlNetNodes with the anchor frame as source.
+ */
+export function addFirstFrameNodes(
+  workflow: ComfyUIWorkflow,
+  ctx: WorkflowContext,
+  anchor: FrameAnchor,
+  spec: ShotSpec,
+): WorkflowContext {
+  const mode = anchor.mode ?? 'img2img';
+  const strength = anchor.strength ?? 0.75;
+
+  if (mode === 'controlnet') {
+    // Delegate to ControlNet with the anchor frame as source
+    const cnType = anchor.controlNetType ?? 'softedge';
+    const cnModelMap: Record<string, string> = {
+      depth: 'control_v11f1p_sd15_depth',
+      canny: 'control_v11p_sd15_canny',
+      softedge: 'control_v11p_sd15_softedge',
+    };
+    return addControlNetNodes(workflow, ctx, [{
+      type: cnType,
+      model: cnModelMap[cnType] ?? cnModelMap.softedge,
+      strength,
+      sourceImage: anchor.storageKey,
+    }]);
+  }
+
+  // img2img mode: load image → VAE encode → rewire KSampler latent input
+  let updatedCtx = { ...ctx };
+
+  const loadImageId = String(updatedCtx.nextId++);
+  workflow[loadImageId] = {
+    class_type: 'LoadImage',
+    inputs: { image: anchor.storageKey },
+    _meta: { title: 'First Frame Reference' },
+  };
+
+  const vaeEncodeId = String(updatedCtx.nextId++);
+  workflow[vaeEncodeId] = {
+    class_type: 'VAEEncode',
+    inputs: {
+      pixels: [loadImageId, 0],
+      vae: ['1', 2], // VAE from checkpoint
+    },
+    _meta: { title: 'Encode First Frame' },
+  };
+
+  // Rewire KSampler to use encoded frame instead of EmptyLatentImage
+  workflow[ctx.samplerNodeId].inputs.latent_image = [vaeEncodeId, 0];
+  // Set denoise proportional to 1 - strength (stronger anchor = less noise)
+  workflow[ctx.samplerNodeId].inputs.denoise = 1 - strength;
+
+  // Remove the EmptyLatentImage node since it's no longer used
+  delete workflow[ctx.latentNodeId];
+
+  updatedCtx.latentNodeId = vaeEncodeId;
+  return updatedCtx;
+}
+
 // ─── Upscale Chain ───
 
 /**
@@ -836,6 +904,11 @@ export function composeWorkflow(
 ): ComfyUIWorkflow & { resolvedSeed?: number } {
   const { workflow, ctx } = buildBaseWorkflow(spec, bible, seedCtx);
   let currentCtx = ctx;
+
+  // Add first frame anchoring if specified (before LoRA/ControlNet)
+  if (spec.firstFrameRef) {
+    currentCtx = addFirstFrameNodes(workflow, currentCtx, spec.firstFrameRef, spec);
+  }
 
   // Add LoRA chain if specified
   if (spec.generation?.loras?.length) {

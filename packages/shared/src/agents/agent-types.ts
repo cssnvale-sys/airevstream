@@ -15,10 +15,11 @@ export type AgentRole =
   | 'dialogue'
   | 'sound'
   | 'psychology'
+  | 'qc-decision'
   | 'finishing';
 
 export const AGENT_ROLES: AgentRole[] = [
-  'director', 'lookdev', 'shotspec', 'render', 'dialogue', 'sound', 'psychology', 'finishing',
+  'director', 'lookdev', 'shotspec', 'render', 'dialogue', 'sound', 'psychology', 'qc-decision', 'finishing',
 ];
 
 // ─── Agent Configuration ───
@@ -232,6 +233,66 @@ export interface PsychologyOutput {
   }>;
   retentionTechniques: string[];
   persuasionScore: number;
+}
+
+// ─── QC Decision Agent I/O ───
+
+export type QCVerdict = 'approve' | 'soft-fix' | 'regenerate' | 'escalate';
+
+export interface QCDecisionShotInput {
+  shotNumber: number;
+  shotId: string;
+  qcScores: {
+    composition?: number;
+    lighting?: number;
+    sharpness?: number;
+    colorAccuracy?: number;
+    promptAdherence?: number;
+    overall: number;
+  };
+  identityDrift?: {
+    detected: boolean;
+    similarity: number;
+    details?: string;
+  };
+  continuityWarnings?: string[];
+}
+
+export interface QCDecisionInput {
+  shots: QCDecisionShotInput[];
+  renderOutput: RenderOutput;
+  lookDevOutput: LookDevOutput;
+  qualityPreset: 'draft' | 'standard' | 'cinema';
+}
+
+export interface QCDecisionShotVerdict {
+  shotNumber: number;
+  verdict: QCVerdict;
+  reason: string;
+  repairInstructions?: {
+    /** For soft-fix: post-process adjustments */
+    colorGradeAdjust?: Record<string, number>;
+    sharpenAmount?: number;
+    contrastBoost?: number;
+    /** For regenerate: generation parameter changes */
+    loraStrengthDelta?: number;
+    cfgBoost?: number;
+    seedLock?: boolean;
+    denoiseReduction?: number;
+    promptRevision?: string;
+  };
+}
+
+export interface QCDecisionOutput {
+  shotVerdicts: QCDecisionShotVerdict[];
+  summary: {
+    approved: number;
+    softFix: number;
+    regenerate: number;
+    escalate: number;
+  };
+  overallVerdict: 'proceed' | 'partial-regen' | 'full-regen' | 'escalate';
+  message: string;
 }
 
 // ─── Agent Task State ───

@@ -26,6 +26,8 @@ import type {
   RenderOutput,
   PsychologyInput,
   PsychologyOutput,
+  QCDecisionInput,
+  QCDecisionOutput,
   FinishingInput,
   FinishingOutput,
 } from './agent-types.js';
@@ -134,6 +136,7 @@ export class AgentOrchestrator {
         dialogue: createTask('dialogue'),
         sound: createTask('sound'),
         psychology: createTask('psychology'),
+        'qc-decision': createTask('qc-decision'),
         finishing: createTask('finishing'),
       },
     };
@@ -289,6 +292,14 @@ export class AgentOrchestrator {
           dialogueOutput: outputs.dialogue as DialogueOutput,
           shotSpecOutput: outputs.shotspec as ShotSpecOutput,
         } satisfies PsychologyInput;
+
+      case 'qc-decision':
+        return {
+          shots: [],  // Populated by worker with actual QC scores
+          renderOutput: outputs.render as RenderOutput,
+          lookDevOutput: outputs.lookdev as LookDevOutput,
+          qualityPreset: 'cinema',
+        } satisfies QCDecisionInput;
 
       case 'finishing':
         return {

@@ -21,6 +21,42 @@ const logger = createLogger('production-worker');
 const BUCKET = BUCKETS.PRODUCTION;
 const TEMPLATES_DIR = resolve(__dirname, '../../comfyui-workflows');
 
+// ─── Asset Registry Helper ───
+
+interface AssetRegistryParams {
+  type: 'image' | 'video' | 'audio';
+  storageKey: string;
+  fileSize?: number;
+  mimeType?: string;
+  generatedBy?: string;
+  contentId?: string;
+  shotId?: string;
+  provenance?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+async function registerAsset(params: AssetRegistryParams): Promise<void> {
+  try {
+    const db = getDb();
+    await db.assetRegistryEntry.create({
+      data: {
+        type: params.type,
+        storageKey: params.storageKey,
+        fileSize: params.fileSize,
+        mimeType: params.mimeType,
+        generatedBy: params.generatedBy,
+        contentId: params.contentId,
+        shotId: params.shotId,
+        provenance: (params.provenance ?? {}) as any,
+        metadata: (params.metadata ?? {}) as any,
+      },
+    });
+  } catch (err) {
+    // Non-critical — log but don't fail the pipeline
+    logger.warn({ err, storageKey: params.storageKey }, 'Failed to register asset');
+  }
+}
+
 // ─── ComfyUI Client Instance ───
 
 const comfyClient = new ComfyUIClient(
@@ -163,6 +199,18 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
       await uploadBuffer(BUCKET, key, imageData, 'image/png');
       uploadedUrls.push(`${BUCKET}/${key}`);
       logger.info({ key }, 'Image uploaded to storage');
+
+      // Register asset
+      await registerAsset({
+        type: 'image',
+        storageKey: `${BUCKET}/${key}`,
+        fileSize: imageData.length,
+        mimeType: 'image/png',
+        generatedBy: 'comfyui',
+        contentId: data.contentId,
+        shotId: data.shotId,
+        metadata: { workflowType: data.workflowType },
+      });
     }
 
     // Update storyboard shot if shotId provided
@@ -362,6 +410,17 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     const contentType = useProres ? 'video/quicktime' : 'video/mp4';
     await uploadBuffer(BUCKET, key, videoBuffer, contentType);
 
+    // Register video asset
+    await registerAsset({
+      type: 'video',
+      storageKey: `${BUCKET}/${key}`,
+      fileSize: videoBuffer.length,
+      mimeType: contentType,
+      generatedBy: 'remotion',
+      contentId: data.contentId,
+      metadata: { compositionId, qualityPreset: data.qualityPreset },
+    });
+
     // Clean up temp file after successful upload
     await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
 
@@ -495,6 +554,17 @@ async function handleGenerateAudio(data: ProductionGenerateAudioJob): Promise<vo
     const ext = result.format === 'mp3' ? 'mp3' : 'wav';
     const key = `audio/${data.contentId}/${Date.now()}.${ext}`;
     await uploadBuffer(BUCKET, key, result.audioBuffer, `audio/${ext}`);
+
+    // Register audio asset
+    await registerAsset({
+      type: 'audio',
+      storageKey: `${BUCKET}/${key}`,
+      fileSize: result.audioBuffer.length,
+      mimeType: `audio/${ext}`,
+      generatedBy: 'tts',
+      contentId: data.contentId,
+      metadata: { format: result.format, durationMs: result.durationMs },
+    });
 
     await db.workflowJob.create({
       data: {
@@ -637,6 +707,22 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         const key = `shots/${data.storyboardId}/${shotId}/${timestamp}-${img.filename}`;
         await uploadBuffer(BUCKET, key, imageData, 'image/png');
         uploadedUrls.push(`${BUCKET}/${key}`);
+
+        // Register shot keyframe asset
+        await registerAsset({
+          type: 'image',
+          storageKey: `${BUCKET}/${key}`,
+          fileSize: imageData.length,
+          mimeType: 'image/png',
+          generatedBy: 'comfyui',
+          contentId: data.contentId,
+          shotId,
+          metadata: {
+            seed: workflow.resolvedSeed,
+            steps: spec.generation?.steps,
+            cfg: spec.generation?.cfg,
+          },
+        });
       }
 
       // ─── Post-generation QC gate (Stage 2) ───

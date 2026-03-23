@@ -157,6 +157,7 @@ model Channel {
   affiliatePool      ChannelAffiliatePool[]
   affiliateClicks    AffiliateClick[]
   aiServiceUsage     AiServiceUsage[]
+  sequences          Sequence[]
 
   @@index([socialAccountId])
   @@index([familyId])
@@ -410,6 +411,8 @@ model ContentItem {
   aiServiceUsage  AiServiceUsage[]
   affiliateClicks AffiliateClick[]
   workflowJobs    WorkflowJob[]
+  assetRegistryEntries AssetRegistryEntry[]
+  sequenceItems   SequenceItem[]
 
   @@index([channelId])
   @@index([status])
@@ -470,6 +473,7 @@ model StoryboardShot {
 
   storyboard Storyboard @relation(fields: [storyboardId], references: [id], onDelete: Cascade)
   aiService  AiService? @relation(fields: [aiServiceId], references: [id], onDelete: SetNull)
+  assetRegistryEntries AssetRegistryEntry[]
 
   @@index([storyboardId, shotNumber])
   @@map("storyboard_shots")
@@ -967,4 +971,69 @@ model SeasoningEnrollment {
   @@index([nextScheduledAt])
   @@index([cohortId])
   @@map("seasoning_enrollments")
+}
+
+// ============================================================
+// ASSET REGISTRY & SEQUENCES
+// ============================================================
+
+model AssetRegistryEntry {
+  id            String   @id @default(uuid()) @db.Uuid
+  type          String   @db.VarChar(20) // image, video, audio, model, lora, workflow
+  storageKey    String   @map("storage_key")
+  hash          String?  @db.VarChar(128)
+  fileSize      Int?     @map("file_size")
+  mimeType      String?  @map("mime_type") @db.VarChar(100)
+  version       Int      @default(1)
+  parentAssetId String?  @map("parent_asset_id") @db.Uuid
+  generatedBy   String?  @map("generated_by") @db.VarChar(50) // comfyui, remotion, tts, manual
+  provenance    Json     @default("{}") @db.JsonB
+  contentId     String?  @map("content_id") @db.Uuid
+  shotId        String?  @map("shot_id") @db.Uuid
+  sequenceId    String?  @map("sequence_id") @db.Uuid
+  metadata      Json     @default("{}") @db.JsonB
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  content       ContentItem?       @relation(fields: [contentId], references: [id], onDelete: SetNull)
+  shot          StoryboardShot?    @relation(fields: [shotId], references: [id], onDelete: SetNull)
+  sequence      Sequence?          @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  parentAsset   AssetRegistryEntry? @relation("AssetVersions", fields: [parentAssetId], references: [id], onDelete: SetNull)
+  childAssets   AssetRegistryEntry[] @relation("AssetVersions")
+
+  @@index([contentId])
+  @@index([shotId])
+  @@index([type])
+  @@index([storageKey])
+  @@map("asset_registry_entries")
+}
+
+model Sequence {
+  id          String   @id @default(uuid()) @db.Uuid
+  channelId   String   @map("channel_id") @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?
+  status      String   @default("draft") @db.VarChar(20) // draft, active, archived
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  channel Channel              @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  items   SequenceItem[]
+  assets  AssetRegistryEntry[]
+
+  @@index([channelId])
+  @@map("sequences")
+}
+
+model SequenceItem {
+  sequenceId String @map("sequence_id") @db.Uuid
+  contentId  String @map("content_id") @db.Uuid
+  position   Int
+
+  sequence Sequence    @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  content  ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@id([sequenceId, contentId])
+  @@index([sequenceId, position])
+  @@map("sequence_items")
 }

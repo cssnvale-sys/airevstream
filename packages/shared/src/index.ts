@@ -20,8 +20,12 @@ export * from './types.js';
 export * from './utils.js';
 export type { ViralDiscoveryConfig, ViralDiscoveryResult, ViralItem } from './viral-discovery.js';
 export type { ExperimentConfig, ExperimentVariant, ExperimentResult } from './experiment-orchestrator.js';
-export type { QualityRegressionTest, RegressionResult } from './quality-regression.js';
+export type { QualityRegressionTest, RegressionResult, VMAFCompareOptions, VMAFCompareResult, ExecFn } from './quality-regression.js';
+// C2PA CLI and VMAF runtime: import directly from dist/ paths in workers (node: modules)
+// e.g. import { embedC2PAManifest } from '@airevstream/shared/dist/provenance-c2pa-cli.js'
+// e.g. import { runQualityRegression } from '@airevstream/shared/dist/quality-regression.js'
 export type { ChannelProfile, TopicSuggestion } from './channel-suggestions.js';
+export * from './av-sync-validator.js';
 export * from './seasoning-types.js';
 export * from './seasoning-config.js';
 export * from './seasoning-orchestrator.js';

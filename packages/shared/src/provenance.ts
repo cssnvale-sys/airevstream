@@ -463,3 +463,30 @@ export function generateC2PASidecar(manifest: C2PAManifest): {
     content: serializeManifest(manifest),
   };
 }
+
+// ─── C2PA CLI Embedding types (runtime in provenance-c2pa-cli.ts) ───
+
+export type C2PAExecFn = (
+  cmd: string,
+  args: string[],
+) => Promise<{ stdout: string; stderr: string }>;
+
+export interface C2PAEmbedOptions {
+  mediaPath: string;
+  outputPath: string;
+  manifest: C2PAManifest;
+  certPath?: string;
+  keyPath?: string;
+}
+
+export interface C2PAEmbedResult {
+  success: boolean;
+  outputPath: string;
+  error?: string;
+}
+
+export interface C2PAVerifyResult {
+  valid: boolean;
+  manifest?: Record<string, unknown>;
+  error?: string;
+}

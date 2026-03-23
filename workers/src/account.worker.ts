@@ -338,6 +338,7 @@ async function handleHealthCheck(data: AccountHealthCheckJob, job: Job) {
         title: `Account health critical: ${account.username ?? account.platform}`,
         message: `Health score dropped to ${newScore}. Issues: ${issues.join(', ') || 'unknown'}`,
         source: 'account-worker',
+        tenantId: account.emailAccount.tenantId ?? undefined,
         metadata: { socialAccountId: data.socialAccountId, platform: account.platform },
       },
     });
@@ -436,6 +437,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
               title: `Warming flagged: ${account.username ?? account.platform}`,
               message: `Account may have been flagged during warming session`,
               source: 'account-worker',
+              tenantId: account.emailAccount.tenantId ?? undefined,
               metadata: { socialAccountId: data.socialAccountId },
             },
           });

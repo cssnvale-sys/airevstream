@@ -81,6 +81,7 @@ Return a JSON array of objects with: topic, relevanceScore (0-10), platform, rea
     // Save to knowledge base in bulk
     await db.knowledgeBaseEntry.createMany({
       data: trends.map((trend) => ({
+        tenantId: data.tenantId,
         domain: 'platform_ops',
         category: 'trends',
         title: trend.topic,
@@ -138,6 +139,7 @@ Return a JSON array of objects with: topic, description, targetAudience, content
 
     await db.knowledgeBaseEntry.createMany({
       data: topics.map((topic) => ({
+        tenantId: data.tenantId,
         domain: 'platform_ops',
         category: `niche:${data.niche}`,
         title: topic.topic,
@@ -164,6 +166,7 @@ async function handleKnowledgeUpdate(data: ResearchKnowledgeUpdateJob) {
   if (data.sourceUrl) {
     await db.knowledgeBaseEntry.create({
       data: {
+        tenantId: data.tenantId,
         domain: data.domain,
         category: 'external',
         title: `Update from ${data.sourceUrl}`,
@@ -211,6 +214,7 @@ async function handlePopulateKnowledge(data: ResearchPopulateKnowledgeJob, job: 
         const relevanceScore = Math.min(Math.round((5.0 + lengthBonus + freshnessBonus) * 10) / 10, 10.0);
 
         newEntries.push({
+          tenantId: data.tenantId,
           domain,
           category: `research:${topic}`,
           title,
@@ -305,6 +309,7 @@ Return a JSON array of objects with: title, content (informative summary, max 50
       const relevanceScore = Math.min(Math.round((baseScore + lengthBonus) * 10) / 10, 10.0);
 
       newKbEntries.push({
+        tenantId: data.tenantId,
         domain,
         category: `research:${topic}`,
         title: entry.title,

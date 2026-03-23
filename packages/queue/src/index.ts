@@ -40,21 +40,25 @@ export interface AccountWarmJob {
 }
 
 export interface ResearchTrendsJob {
+  tenantId: string;
   platform?: string;
   keywords?: string[];
 }
 
 export interface ResearchTopicsJob {
+  tenantId: string;
   niche: string;
   count?: number;
 }
 
 export interface ResearchKnowledgeUpdateJob {
+  tenantId: string;
   domain: string;
   sourceUrl?: string;
 }
 
 export interface ResearchPopulateKnowledgeJob {
+  tenantId: string;
   domain: string;
   urls?: string[];
   topic: string;

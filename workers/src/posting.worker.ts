@@ -28,7 +28,7 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     where: { id: scheduledPostId },
     include: {
       content: true,
-      channel: { include: { socialAccount: true } },
+      channel: { include: { socialAccount: { include: { emailAccount: { select: { tenantId: true } } } } } },
     },
   });
 
@@ -177,6 +177,7 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
           title: `Posting failed after ${job.attemptsMade} attempts`,
           message: `Content "${scheduledPost.content.title}" failed to post to ${platform}: ${errMsg}`,
           source: 'posting-worker',
+          tenantId: scheduledPost.channel.socialAccount.emailAccount.tenantId ?? undefined,
           metadata: { contentId, channelId, platform, error: errMsg },
         },
       });

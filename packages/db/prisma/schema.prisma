@@ -23,11 +23,16 @@ model Tenant {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  users            User[]
-  emailAccounts    EmailAccount[]
-  subscriptions    Subscription[]
-  apiKeys          ApiKey[]
-  seasoningCohorts SeasoningCohort[]
+  users              User[]
+  emailAccounts      EmailAccount[]
+  subscriptions      Subscription[]
+  apiKeys            ApiKey[]
+  seasoningCohorts   SeasoningCohort[]
+  alerts             Alert[]
+  conversations      Conversation[]
+  knowledgeBaseEntries KnowledgeBaseEntry[]
+  promptTemplates    PromptTemplate[]
+  costBudgets        CostBudget[]
 
   @@map("tenants")
 }
@@ -605,6 +610,7 @@ model ApprovalTrustScore {
 
 model Conversation {
   id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
   title        String?  @db.VarChar(255)
   contextPage  String?  @map("context_page") @db.VarChar(100)
   modelUsed    String?  @map("model_used") @db.VarChar(100)
@@ -612,9 +618,11 @@ model Conversation {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  tenant   Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   messages ConversationMessage[]
   actions  ActionAuditLog[]
 
+  @@index([tenantId])
   @@index([updatedAt])
   @@map("conversations")
 }
@@ -704,6 +712,7 @@ model WorkflowJob {
 
 model Alert {
   id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String?   @map("tenant_id") @db.Uuid
   severity       String    @db.VarChar(10) // critical, warning, info
   category       String    @db.VarChar(50) // account_health, system, workflow, cost, content
   title          String    @db.VarChar(255)
@@ -717,6 +726,9 @@ model Alert {
   metadata       Json      @default("{}") @db.JsonB
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
   @@index([status, severity])
   @@index([status, resolvedAt])
   @@map("alerts")
@@ -747,6 +759,7 @@ model SystemSetting {
 
 model KnowledgeBaseEntry {
   id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
   domain         String   @db.VarChar(50) // platform_ops, civitai, remotion, huggingface, comfyui, video_production
   category       String?  @db.VarChar(100)
   title          String   @db.VarChar(500)
@@ -758,6 +771,9 @@ model KnowledgeBaseEntry {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
   @@index([domain])
   @@map("knowledge_base_entries")
 }
@@ -808,6 +824,7 @@ model StorefrontProduct {
 
 model PromptTemplate {
   id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
   name           String   @db.VarChar(255)
   category       String   @db.VarChar(50) // hook, intro, content, cta, thumbnail, description
   platform       String?  @db.VarChar(20) // youtube, tiktok, instagram, facebook, or null for all
@@ -821,6 +838,9 @@ model PromptTemplate {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
   @@index([category])
   @@index([platform])
   @@map("prompt_templates")
@@ -828,6 +848,7 @@ model PromptTemplate {
 
 model CostBudget {
   id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
   name           String   @db.VarChar(255)
   budgetType     String   @map("budget_type") @db.VarChar(30) // daily, weekly, monthly
   limitAmount    Decimal  @map("limit_amount") @db.Decimal(10, 2)
@@ -840,6 +861,9 @@ model CostBudget {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
   @@index([status])
   @@map("cost_budgets")
 }

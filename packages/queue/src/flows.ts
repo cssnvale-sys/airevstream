@@ -13,6 +13,7 @@ export function getFlowProducer(): FlowProducer {
 // ─── Basic Content Pipeline (existing, preserved) ───
 
 export interface ContentPipelineParams {
+  tenantId: string;
   contentId: string;
   channelId: string;
   topic: string;
@@ -46,6 +47,7 @@ export async function startContentPipeline(params: ContentPipelineParams) {
             name: 'research:populate-knowledge',
             queueName: 'research',
             data: {
+              tenantId: params.tenantId,
               domain: params.domain ?? 'content_creation',
               topic: params.topic,
               urls: [],
@@ -63,6 +65,7 @@ export async function startContentPipeline(params: ContentPipelineParams) {
 // ─── Cinema Production Pipeline (new) ───
 
 export interface CinemaPipelineParams {
+  tenantId: string;
   contentId: string;
   channelId: string;
   topic: string;
@@ -171,6 +174,7 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
                                 name: 'research:populate-knowledge',
                                 queueName: 'research',
                                 data: {
+                                  tenantId: params.tenantId,
                                   domain: 'content_creation',
                                   topic: params.topic,
                                   urls: [],

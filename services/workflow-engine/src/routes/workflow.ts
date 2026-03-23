@@ -156,8 +156,15 @@ export async function workflowRoutes(app: FastifyInstance) {
     }
 
     try {
+      // Resolve tenantId from authenticated user
+      const userId = request.user?.sub;
+      const user = userId ? await getDb().user.findUnique({ where: { id: userId }, select: { tenantId: true } }) : null;
+      if (!user?.tenantId) {
+        return reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
+      }
+
       const { startContentPipeline } = await import('@airevstream/queue');
-      const result = await startContentPipeline(parsed.data);
+      const result = await startContentPipeline({ ...parsed.data, tenantId: user.tenantId });
       return reply.status(201).send({ success: true, data: { flowJobId: result.job.id } });
     } catch (err) {
       request.log.error({ err }, 'Failed to start content pipeline');

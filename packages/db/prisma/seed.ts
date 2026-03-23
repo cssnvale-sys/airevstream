@@ -312,6 +312,7 @@ async function main() {
   // ─── 10. Knowledge Base Entries ───
   const kbEntries = [
     {
+      tenantId: defaultTenant.id,
       domain: 'platform_ops',
       category: 'best_practices',
       title: 'YouTube Shorts Best Practices',
@@ -319,6 +320,7 @@ async function main() {
       relevanceScore: 9.0,
     },
     {
+      tenantId: defaultTenant.id,
       domain: 'comfyui',
       category: 'workflows',
       title: 'SDXL Thumbnail Generation',

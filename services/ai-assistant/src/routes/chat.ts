@@ -89,8 +89,16 @@ export async function chatRoutes(app: FastifyInstance) {
     const body = request.body as { contextPage?: string } | undefined;
     const db = getDb();
 
+    // Resolve tenantId from the authenticated user
+    const userId = request.user?.sub;
+    const user = userId ? await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } }) : null;
+    if (!user?.tenantId) {
+      return reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
+    }
+
     const conversation = await db.conversation.create({
       data: {
+        tenantId: user.tenantId,
         title: 'New conversation',
         contextPage: body?.contextPage,
       },

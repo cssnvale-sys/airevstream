@@ -139,8 +139,9 @@ export default function CalendarPage() {
     if (filters.channelId !== 'all') p.set('channelId', filters.channelId);
     if (filters.platform !== 'all') p.set('platform', filters.platform);
     if (filters.status !== 'all') p.set('status', filters.status);
+    if (filters.language !== 'all') p.set('language', filters.language);
     return p.toString();
-  }, [weekStart, weekEnd, filters.channelId, filters.platform, filters.status]);
+  }, [weekStart, weekEnd, filters.channelId, filters.platform, filters.status, filters.language]);
 
   // API hooks
   const { data: calendarData, isLoading, error: calendarError } = useCalendar<CalendarItem[]>(rangeParams);
@@ -369,7 +370,7 @@ export default function CalendarPage() {
                       {slotItems.map((item) => (
                         <button
                           key={item.id}
-                          onClick={() => router.push(`/content/${item.content?.id ?? item.id}`)}
+                          onClick={() => item.content?.id && router.push(`/content/${item.content.id}`)}
                           aria-label={`${item.channel?.name ?? 'Unknown'} on ${item.platform} — ${item.content?.status ?? item.status}`}
                           className={cn(
                             'w-full text-left px-2 py-1.5 rounded-md text-caption transition-colors',

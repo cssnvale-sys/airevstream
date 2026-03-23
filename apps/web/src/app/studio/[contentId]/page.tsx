@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef, use } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useParams } from 'next/navigation';
 import { useApi, apiPut, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { ShotEditorPanel } from '@/components/cinema/shot-editor-panel';
@@ -27,6 +28,8 @@ interface StudioContent {
   title: string;
   status: string;
   contentType: string;
+  channelId: string;
+  channel?: { id: string; name: string };
   storyboards: Array<{
     id: string;
     status: string;
@@ -44,8 +47,8 @@ interface StudioContent {
   }>;
 }
 
-export default function StudioPage({ params }: { params: Promise<{ contentId: string }> }) {
-  const { contentId } = use(params);
+export default function StudioPage() {
+  const { contentId } = useParams<{ contentId: string }>();
   const { data, error, isLoading, mutate } = useApi<StudioContent>(`/content/${contentId}?include=storyboards`);
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'editor' | 'table'>('editor');
@@ -85,7 +88,7 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
         shotId,
         storyboardId: storyboard.id,
         contentId,
-        channelId: '',
+        channelId: content?.channelId ?? content?.channel?.id ?? '',
         repairType,
       });
       toast.success(`Shot ${repairType} repair started`);
@@ -98,15 +101,15 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
   const handleGenerateAll = useCallback(async () => {
     if (!storyboard) return;
     try {
-      const res = await apiPost<{ jobId?: string }>(`/pipeline/cinema`, {
+      const res = await apiPost<{ success: boolean; data: { flowJobId?: string } }>(`/pipeline/cinema`, {
         contentId,
-        channelId: '',
-        topic: content?.title ?? '',
-        contentType: 'short',
+        channelId: content?.channelId ?? content?.channel?.id ?? '',
+        topic: content?.title ?? 'Untitled',
+        contentType: content?.contentType ?? 'short',
         storyboardId: storyboard.id,
         shotIds: shots.map(s => s.id),
       });
-      if (res?.jobId) setActiveJobId(res.jobId);
+      if (res?.data?.flowJobId) setActiveJobId(res.data.flowJobId);
       toast.success('Cinema pipeline started');
       await mutate();
     } catch {
@@ -133,10 +136,10 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
 
     guidanceTimerRef.current = setTimeout(async () => {
       try {
-        const res = await apiPost<{ suggestions: GuidanceSuggestion[] }>('/ai/guidance', {
+        const res = await apiPost<{ success: boolean; data: { suggestions: GuidanceSuggestion[] } }>('/ai/guidance', {
           shotSpec: selectedShot.shotspec,
         });
-        setSuggestions(res?.suggestions ?? []);
+        setSuggestions(res?.data?.suggestions ?? []);
       } catch {
         // Silently fail — guidance is non-critical
         setSuggestions([]);
@@ -275,7 +278,9 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
               <ExportVariants
                 contentId={contentId}
                 storyboardId={storyboard.id}
-                channelId=""
+                channelId={content?.channelId ?? content?.channel?.id ?? ''}
+                topic={content?.title ?? 'Untitled'}
+                contentType={content?.contentType ?? 'short'}
                 qualityPreset="cinema"
               />
             )}

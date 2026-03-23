@@ -41,16 +41,19 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
     setLoading(true);
     try {
       const res = await apiPost<{
-        estimate: CostEstimate;
-        budget: { remaining: number | null; status: string; exceeded: boolean };
+        success: boolean;
+        data: {
+          estimate: CostEstimate;
+          budget: { remaining: number | null; status: string; exceeded: boolean };
+        };
       }>('/pipeline/cost-preview', {
         shots,
         qualityTier: qualityTier ?? 'standard',
         provider: provider ?? 'comfyui',
       });
-      if (res.estimate) {
-        setEstimate(res.estimate);
-        setBudgetStatus(res.budget);
+      if (res?.data?.estimate) {
+        setEstimate(res.data.estimate);
+        setBudgetStatus(res.data.budget);
       }
     } catch {
       // Silently fail — panel is informational

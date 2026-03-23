@@ -75,7 +75,7 @@ export function ShotTable({ shots, selectedShotId, onSelectShot }: ShotTableProp
                 <td className="px-3 py-2">
                   {thumb ? (
                     <div className="w-10 h-7 rounded bg-bg-tertiary overflow-hidden">
-                      <div className="w-full h-full bg-bg-tertiary" title="Thumbnail" />
+                      <img src={thumb} alt={`Shot ${shot.shotNumber}`} className="w-full h-full object-cover" />
                     </div>
                   ) : (
                     <div className="w-10 h-7 rounded bg-bg-tertiary" />

@@ -90,8 +90,8 @@ export function ProvenanceViewer({ contentId }: ProvenanceViewerProps) {
                     <span className="text-text-tertiary">seed:{r.parameters.seed}</span>
                   )}
                   {r.qualityScore != null && (
-                    <span className={r.qualityScore >= 85 ? 'text-accent-green' : r.qualityScore >= 60 ? 'text-accent-orange' : 'text-accent-red'}>
-                      QC:{r.qualityScore}
+                    <span className={Number(r.qualityScore) >= 85 ? 'text-accent-green' : Number(r.qualityScore) >= 60 ? 'text-accent-orange' : 'text-accent-red'}>
+                      QC:{Number(r.qualityScore)}
                     </span>
                   )}
                 </div>

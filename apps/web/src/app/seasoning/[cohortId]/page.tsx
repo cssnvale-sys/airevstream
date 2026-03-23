@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { AppLayout } from '@/components/layout/app-layout';
 import { useCohort, useEnrollments } from '@/hooks/use-seasoning';
 import { apiPost, apiPut } from '@/hooks/use-api';
 import { PhasePipeline } from '@/components/seasoning/phase-pipeline';
 import { EnrollmentTable } from '@/components/seasoning/enrollment-table';
 import { ArrowLeft, Play, Pause, RotateCw, UserPlus } from 'lucide-react';
 import Link from 'next/link';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface CohortDetail {
   id: string;
@@ -67,8 +68,8 @@ export default function CohortDetailPage() {
       toast.success(`Enrollment ${action}d`);
       mutateEnrollments();
       mutateCohort();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Failed to ${action} enrollment`);
+    } catch {
+      toast.error(`Failed to ${action} enrollment`);
     }
   };
 
@@ -85,18 +86,19 @@ export default function CohortDetailPage() {
       setShowEnroll(false);
       mutateCohort();
       mutateEnrollments();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to enroll accounts');
+    } catch {
+      toast.error('Failed to enroll accounts');
     } finally {
       setEnrolling(false);
     }
   };
 
   if (!cohort) {
-    return <div className="animate-pulse h-64 bg-bg-tertiary rounded-lg" />;
+    return <AppLayout><div className="animate-pulse h-64 bg-bg-tertiary rounded-lg" /></AppLayout>;
   }
 
   return (
+    <AppLayout>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -193,5 +195,6 @@ export default function CohortDetailPage() {
         <EnrollmentTable enrollments={enrollments} onAction={handleEnrollmentAction} />
       </div>
     </div>
+    </AppLayout>
   );
 }

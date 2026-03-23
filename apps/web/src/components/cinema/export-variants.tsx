@@ -10,6 +10,8 @@ interface ExportVariantsProps {
   contentId: string;
   storyboardId: string;
   channelId: string;
+  topic?: string;
+  contentType?: string;
   qualityPreset: string;
 }
 
@@ -55,7 +57,7 @@ const VARIANT_OPTIONS: VariantOption[] = [
   },
 ];
 
-export function ExportVariants({ contentId, storyboardId, channelId, qualityPreset }: ExportVariantsProps) {
+export function ExportVariants({ contentId, storyboardId, channelId, topic, contentType, qualityPreset }: ExportVariantsProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set(['youtube-16:9']));
   const [exporting, setExporting] = useState(false);
 
@@ -87,8 +89,8 @@ export function ExportVariants({ contentId, storyboardId, channelId, qualityPres
           contentId,
           storyboardId,
           channelId,
-          topic: '',
-          contentType: 'short',
+          topic: topic ?? 'Untitled',
+          contentType: contentType ?? 'short',
           qualityPreset,
           exportVariant: {
             label: variant.label,

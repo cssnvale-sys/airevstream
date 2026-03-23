@@ -41,7 +41,7 @@ export function ShotList({ shots, selectedId, onSelect }: ShotListProps) {
           <div className="text-xs text-text-tertiary mt-0.5">
             {shot.startSec}s - {shot.endSec}s
             {shot.qualityScore != null && (
-              <span className="ml-2">QC: {shot.qualityScore}</span>
+              <span className="ml-2">QC: {Number(shot.qualityScore)}</span>
             )}
           </div>
           {shot.keyframeUrls.length > 0 && (

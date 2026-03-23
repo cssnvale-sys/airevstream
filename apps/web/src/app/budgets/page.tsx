@@ -251,8 +251,10 @@ export default function BudgetsPage() {
       ) : (
         <div className="space-y-3">
           {budgets.map((budget) => {
-            const percentUsed = budget.limitAmount > 0
-              ? Math.min((budget.currentSpend / budget.limitAmount) * 100, 100)
+            const limitAmt = Number(budget.limitAmount);
+            const currentAmt = Number(budget.currentSpend);
+            const percentUsed = limitAmt > 0
+              ? Math.min((currentAmt / limitAmt) * 100, 100)
               : 0;
             const overThreshold = percentUsed >= Number(budget.alertThreshold) * 100;
 

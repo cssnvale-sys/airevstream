@@ -79,6 +79,12 @@ export const FIELD_VISIBILITY = {
   create: {
     affiliate: 'advanced' as ComplexityMode,
   },
+
+  // Cost preview panel
+  costPreview: 'advanced' as ComplexityMode,
+
+  // Shot table view
+  shotTable: 'advanced' as ComplexityMode,
 } as const;
 
 export const STORAGE_KEY = 'airevstream_complexity_mode';

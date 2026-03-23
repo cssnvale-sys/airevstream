@@ -5,6 +5,8 @@ import { ShotList } from './shot-list';
 import { ShotPreview } from './shot-preview';
 import { ShotProperties } from './shot-properties';
 import { PresetPicker } from './preset-picker';
+import { StyleCardPicker } from './style-card-picker';
+import { ProjectTypePicker } from './project-type-picker';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible } from '@/lib/complexity-fields';
 import {
@@ -36,6 +38,7 @@ interface ShotEditorPanelProps {
 
 export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerateAll, onRepairShot }: ShotEditorPanelProps) {
   const [selectedShotId, setSelectedShotId] = useState<string | null>(shots[0]?.id ?? null);
+  const [selectedProjectType, setSelectedProjectType] = useState<string | undefined>();
   const selectedShot = shots.find((s) => s.id === selectedShotId) ?? null;
   const { mode } = useComplexityMode();
 
@@ -106,7 +109,18 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
               spec={selectedShot.shotspec}
               onChange={handleSpecChange}
             />
-            {isVisible('advanced', mode) && (
+            {mode === 'simple' ? (
+              <>
+                <ProjectTypePicker
+                  onSelect={(type, overrides) => {
+                    setSelectedProjectType(type);
+                    handleApplyPreset(overrides);
+                  }}
+                  selectedType={selectedProjectType}
+                />
+                <StyleCardPicker onApply={handleApplyPreset} />
+              </>
+            ) : (
               <PresetPicker
                 onApplyPreset={handleApplyPreset}
                 onApplyRecipe={handleApplyRecipe}

@@ -22,6 +22,7 @@ const SHORTCUTS: { section: string; items: Shortcut[] }[] = [
       { keys: ['N'], description: 'Go to Create page' },
       { keys: ['L'], description: 'Go to Library' },
       { keys: ['A'], description: 'Go to Analytics' },
+      { keys: ['W'], description: 'Go to Workflows' },
     ],
   },
 ];

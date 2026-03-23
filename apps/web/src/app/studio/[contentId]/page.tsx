@@ -4,18 +4,23 @@ import { useState, useCallback, useEffect, useRef, use } from 'react';
 import { useApi, apiPut, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { ShotEditorPanel } from '@/components/cinema/shot-editor-panel';
+import { ShotTable } from '@/components/cinema/shot-table';
 import { Timeline } from '@/components/cinema/timeline';
 import { PipelineProgress } from '@/components/cinema/pipeline-progress';
 import { AiGuidancePanel } from '@/components/cinema/ai-guidance-panel';
+import { CostPreviewPanel } from '@/components/cinema/cost-preview-panel';
 import type { ShotData } from '@/components/cinema/shot-editor-panel';
 import type { GuidanceSuggestion } from '@/components/cinema/ai-guidance-panel';
 import Link from 'next/link';
+import { List, Table2 } from 'lucide-react';
 import { ComplexityToggle } from '@/components/ui/complexity-toggle';
 import { ExportVariants } from '@/components/cinema/export-variants';
 import { ProvenanceViewer } from '@/components/cinema/provenance-viewer';
 import { ViralScorePanel } from '@/components/cinema/viral-score-panel';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible } from '@/lib/complexity-fields';
+import { cn } from '@/lib/utils';
+import { useJobStatus } from '@/hooks/use-job-status';
 
 interface StudioContent {
   id: string;
@@ -43,7 +48,10 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
   const { contentId } = use(params);
   const { data, error, isLoading, mutate } = useApi<StudioContent>(`/content/${contentId}?include=storyboards`);
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'editor' | 'table'>('editor');
   const [suggestions, setSuggestions] = useState<GuidanceSuggestion[]>([]);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const { progress: jobProgress, status: jobStatus, isComplete: jobDone } = useJobStatus(activeJobId);
   const guidanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { mode } = useComplexityMode();
 
@@ -90,7 +98,7 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
   const handleGenerateAll = useCallback(async () => {
     if (!storyboard) return;
     try {
-      await apiPost(`/pipeline/cinema`, {
+      const res = await apiPost<{ jobId?: string }>(`/pipeline/cinema`, {
         contentId,
         channelId: '',
         topic: content?.title ?? '',
@@ -98,6 +106,7 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
         storyboardId: storyboard.id,
         shotIds: shots.map(s => s.id),
       });
+      if (res?.jobId) setActiveJobId(res.jobId);
       toast.success('Cinema pipeline started');
       await mutate();
     } catch {
@@ -174,6 +183,24 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
         </div>
         <div className="flex items-center gap-3">
           <ComplexityToggle />
+          {isVisible('advanced', mode) && (
+            <div className="flex items-center border border-border rounded-md">
+              <button
+                onClick={() => setViewMode('editor')}
+                className={cn('p-1.5', viewMode === 'editor' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
+                title="Editor view"
+              >
+                <List size={14} />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={cn('p-1.5', viewMode === 'table' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
+                title="Table view"
+              >
+                <Table2 size={14} />
+              </button>
+            </div>
+          )}
           <button
             onClick={handleGenerateAll}
             className="px-3 py-1.5 bg-accent-blue text-white rounded-md text-sm hover:bg-accent-blue/90"
@@ -186,16 +213,24 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
       {/* Main content area */}
       <div className="flex-1 overflow-hidden">
         <div className="grid grid-cols-12 h-full">
-          {/* Shot editor (10 cols) */}
+          {/* Shot editor / table (10 cols) */}
           <div className="col-span-10 p-4 overflow-hidden">
             {shots.length > 0 ? (
-              <ShotEditorPanel
-                shots={shots}
-                onUpdateShot={handleUpdateShot}
-                onGenerateShot={handleGenerateShot}
-                onGenerateAll={handleGenerateAll}
-                onRepairShot={handleRepairShot}
-              />
+              isVisible('advanced', mode) && viewMode === 'table' ? (
+                <ShotTable
+                  shots={shots}
+                  selectedShotId={selectedShotId ?? undefined}
+                  onSelectShot={setSelectedShotId}
+                />
+              ) : (
+                <ShotEditorPanel
+                  shots={shots}
+                  onUpdateShot={handleUpdateShot}
+                  onGenerateShot={handleGenerateShot}
+                  onGenerateAll={handleGenerateAll}
+                  onRepairShot={handleRepairShot}
+                />
+              )
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
@@ -218,6 +253,18 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
               onApplyAction={handleApplyGuidance}
             />
             <PipelineProgress contentId={contentId} />
+            {activeJobId && !jobDone && (
+              <div className="p-3 rounded-lg bg-bg-tertiary">
+                <p className="text-xs text-text-secondary mb-1">Job Progress</p>
+                <div className="w-full bg-bg-primary rounded-full h-2">
+                  <div
+                    className="bg-accent-blue h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${jobProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-text-secondary mt-1">{jobStatus ?? 'waiting'} — {jobProgress}%</p>
+              </div>
+            )}
             {isVisible('advanced', mode) && (
               <ViralScorePanel contentId={contentId} />
             )}
@@ -230,6 +277,15 @@ export default function StudioPage({ params }: { params: Promise<{ contentId: st
                 storyboardId={storyboard.id}
                 channelId=""
                 qualityPreset="cinema"
+              />
+            )}
+            {isVisible('advanced', mode) && shots.length > 0 && (
+              <CostPreviewPanel
+                shots={shots.map(s => ({
+                  duration: s.endSec - s.startSec,
+                  outputType: 'image',
+                }))}
+                qualityTier="standard"
               />
             )}
           </div>

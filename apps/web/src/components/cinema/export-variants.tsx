@@ -113,14 +113,22 @@ export function ExportVariants({ contentId, storyboardId, channelId, qualityPres
     <div className="border border-border rounded-md overflow-hidden">
       <div className="px-3 py-2 bg-bg-tertiary border-b border-border flex items-center justify-between">
         <span className="text-sm font-medium text-text-primary">Export Variants</span>
-        <button
-          onClick={handleExport}
-          disabled={exporting || selected.size === 0}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-accent-blue text-white rounded text-xs hover:bg-accent-blue/90 disabled:opacity-50"
-        >
-          {exporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-          Export ({selected.size})
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setSelected(new Set(VARIANT_OPTIONS.map(v => v.id)))}
+            className="text-xs px-2 py-1 text-text-secondary hover:text-text-primary border border-border rounded"
+          >
+            All
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={exporting || selected.size === 0}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-accent-blue text-white rounded text-xs hover:bg-accent-blue/90 disabled:opacity-50"
+          >
+            {exporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+            Export ({selected.size})
+          </button>
+        </div>
       </div>
       <div className="p-2 space-y-1.5">
         {VARIANT_OPTIONS.map((variant) => (

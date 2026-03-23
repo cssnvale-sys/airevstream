@@ -20,6 +20,8 @@ import {
   PanelLeftOpen,
   HelpCircle,
   ClipboardCheck,
+  Sprout,
+  GitBranch,
 } from 'lucide-react';
 import { removeToken } from '@/lib/auth';
 import { useState, useEffect, useCallback } from 'react';
@@ -28,6 +30,7 @@ import { KeyboardShortcutsModal } from '@/components/ui/keyboard-shortcuts';
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/accounts', label: 'Accounts', icon: Users },
+  { href: '/seasoning', label: 'Seasoning', icon: Sprout },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/create', label: 'Create', icon: Sparkles },
   { href: '/studio', label: 'Studio', icon: Film },
@@ -35,6 +38,7 @@ const navItems = [
   { href: '/approvals', label: 'Approvals', icon: ClipboardCheck },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/system', label: 'System', icon: Activity },
+  { href: '/workflows', label: 'Workflows', icon: GitBranch },
   { href: '/affiliate', label: 'Affiliate', icon: BadgeDollarSign },
   { href: '/budgets', label: 'Budgets', icon: Wallet },
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -85,6 +89,10 @@ export function Sidebar() {
       case 'a':
       case 'A':
         if (!e.metaKey && !e.ctrlKey) router.push('/analytics');
+        break;
+      case 'w':
+      case 'W':
+        if (!e.metaKey && !e.ctrlKey) router.push('/workflows');
         break;
     }
   }, [router]);

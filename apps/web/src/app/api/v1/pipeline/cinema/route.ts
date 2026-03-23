@@ -53,6 +53,23 @@ export async function POST(req: NextRequest) {
       return error('NOT_FOUND', 'Content item not found', 404);
     }
 
+    // Pre-flight validation if shotIds provided
+    if (body.shotIds?.length) {
+      const { runPreGenQC } = await import('@airevstream/shared');
+      const shots = await ctx.db.storyboardShot.findMany({
+        where: { id: { in: body.shotIds } },
+        select: { shotspec: true },
+      });
+      const specs = shots.map(s => (s.shotspec as Record<string, unknown>) ?? { promptBlocks: [] });
+      const provider = (body as Record<string, unknown>).provider as string ?? 'comfyui';
+      const qcResult = runPreGenQC(specs as any[], provider as any);
+
+      const qcErrors = qcResult.violations.filter(v => v.severity === 'error');
+      if (qcErrors.length > 0) {
+        return error('VALIDATION_ERROR', `Pre-flight check failed: ${qcErrors.length} violation(s)`, 400);
+      }
+    }
+
     // Start the cinema pipeline
     const flowJob = await startCinemaPipeline({
       contentId: body.contentId,

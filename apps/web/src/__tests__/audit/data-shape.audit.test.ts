@@ -62,7 +62,7 @@ describe('Bug Class 5: Data shape mismatches', () => {
         if (paginatedCall) {
           const varName = paginatedCall[1];
           // If it doesn't look like a plural/array variable, flag it
-          if (!/(?:items|data|list|results|accounts|channels|entries|posts|products|shots|clicks|jobs|alerts|metrics|scores|budgets|templates|storefronts|messages|logs|subscriptions|keys|converted|mapped|serialized|conversations|paged|errors|users|families|services|avatars|bibles|pools|records|rows)\b/.test(varName)) {
+          if (!/(?:items|data|list|results|accounts|channels|entries|posts|products|shots|clicks|jobs|alerts|metrics|scores|budgets|templates|storefronts|messages|logs|subscriptions|keys|converted|mapped|serialized|conversations|paged|errors|users|families|services|avatars|bibles|pools|records|rows|cohorts|enrollments)\b/.test(varName)) {
             violations.push(
               `${route.relativePath}:${handler.startLine} — paginated() called with possibly non-array: ${varName}`,
             );

@@ -18,6 +18,9 @@ const LABEL_MAP: Record<string, string> = {
   settings: 'Settings',
   workflows: 'Workflows',
   profile: 'Profile',
+  seasoning: 'Seasoning',
+  budgets: 'Budgets',
+  studio: 'Studio',
 };
 
 function segmentLabel(segment: string): string {

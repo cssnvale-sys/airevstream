@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useApi } from '@/hooks/use-api';
 import { useDebounce } from '@/hooks/use-debounce';
 import { cn } from '@/lib/utils';
-import { Search, FileText, Film, Image, Video, Mic, ImageIcon, Radio, Users, X } from 'lucide-react';
+import {
+  Search, FileText, Film, Image, Video, Mic, ImageIcon, Radio, Users, X,
+  LayoutDashboard, CalendarDays, Sparkles, Library, BarChart3, Activity,
+  BadgeDollarSign, Wallet, Settings, ClipboardCheck, Sprout, GitBranch,
+} from 'lucide-react';
 
 interface SearchResults {
   content: Array<{ id: string; title: string | null; contentType: string; status: string }>;
@@ -25,6 +29,23 @@ function contentTypeIcon(type: string) {
   }
 }
 
+const PAGE_LINKS = [
+  { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Accounts', href: '/accounts', icon: Users },
+  { label: 'Seasoning', href: '/seasoning', icon: Sprout },
+  { label: 'Calendar', href: '/calendar', icon: CalendarDays },
+  { label: 'Create', href: '/create', icon: Sparkles },
+  { label: 'Studio', href: '/studio', icon: Film },
+  { label: 'Library', href: '/library', icon: Library },
+  { label: 'Approvals', href: '/approvals', icon: ClipboardCheck },
+  { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'System', href: '/system', icon: Activity },
+  { label: 'Workflows', href: '/workflows', icon: GitBranch },
+  { label: 'Affiliate', href: '/affiliate', icon: BadgeDollarSign },
+  { label: 'Budgets', href: '/budgets', icon: Wallet },
+  { label: 'Settings', href: '/settings', icon: Settings },
+];
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -40,6 +61,17 @@ export function CommandPalette() {
 
   // Build flat list of results for keyboard navigation
   const flatResults: Array<{ type: string; id: string; label: string; href: string; icon: typeof FileText }> = [];
+
+  // Add matching page links
+  const lowerQuery = query.toLowerCase();
+  const matchingPages = query.length === 0
+    ? PAGE_LINKS
+    : PAGE_LINKS.filter((p) => p.label.toLowerCase().includes(lowerQuery));
+  for (const page of matchingPages) {
+    flatResults.push({ type: 'page', id: page.href, label: page.label, href: page.href, icon: page.icon });
+  }
+
+  // Add API search results when query >= 2 chars
   if (results) {
     for (const item of results.content) {
       const Icon = contentTypeIcon(item.contentType);
@@ -119,11 +151,7 @@ export function CommandPalette() {
 
         {/* Results */}
         <div className="max-h-72 overflow-y-auto">
-          {query.length < 2 ? (
-            <div className="px-4 py-8 text-center text-sm text-text-secondary">
-              Type at least 2 characters to search...
-            </div>
-          ) : flatResults.length === 0 ? (
+          {flatResults.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-text-secondary">
               No results found
             </div>

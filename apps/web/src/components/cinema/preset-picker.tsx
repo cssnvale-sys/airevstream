@@ -19,6 +19,10 @@ const FAMILY_LABELS: Record<PresetFamily, string> = {
   audio: 'Audio',
   edit: 'Edit',
   output: 'Output',
+  project: 'Project',
+  story: 'Story',
+  dialogue: 'Dialogue',
+  continuity: 'Continuity',
 };
 
 const FAMILY_COLORS: Record<PresetFamily, string> = {
@@ -27,6 +31,10 @@ const FAMILY_COLORS: Record<PresetFamily, string> = {
   audio: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
   edit: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400',
   output: 'bg-orange-500/15 border-orange-500/30 text-orange-400',
+  project: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400',
+  story: 'bg-pink-500/15 border-pink-500/30 text-pink-400',
+  dialogue: 'bg-teal-500/15 border-teal-500/30 text-teal-400',
+  continuity: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400',
 };
 
 type TabValue = 'recipes' | PresetFamily;

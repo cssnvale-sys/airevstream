@@ -12,7 +12,7 @@ import { ShotGallery } from '@/components/content/shot-gallery';
 import {
   ArrowLeft, Check, X, Clock, Send, Archive,
   FileText, Film, Video, Image, Mic, ImageIcon,
-  Loader2, Calendar, Globe, Tag, Cpu,
+  Loader2, Calendar, Globe, Tag, Cpu, BarChart3,
 } from 'lucide-react';
 
 interface ContentDetail {
@@ -102,7 +102,7 @@ export default function ContentDetailPage() {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
-  const handleAction = async (action: 'approve' | 'reject' | 'schedule' | 'archive') => {
+  const handleAction = async (action: 'approve' | 'reject' | 'schedule' | 'archive' | 'publish' | 'rescore') => {
     setActing(true);
     try {
       if (action === 'approve') {
@@ -119,6 +119,12 @@ export default function ContentDetailPage() {
       } else if (action === 'archive') {
         await apiPut(`/content/${id}`, { status: 'archived' });
         toast.success('Content archived');
+      } else if (action === 'publish') {
+        await apiPost(`/content/${id}/publish`);
+        toast.success('Publish started');
+      } else if (action === 'rescore') {
+        await apiPost(`/content/${id}/rescore`);
+        toast.success('Rescore started');
       }
       mutate();
     } catch {
@@ -192,8 +198,19 @@ export default function ContentDetailPage() {
               </>
             )}
             {item.status === 'approved' && (
-              <button onClick={() => handleAction('schedule')} disabled={acting} className="btn-primary flex items-center gap-1.5">
-                <Send size={14} /> Schedule
+              <>
+                <button onClick={() => handleAction('schedule')} disabled={acting} className="btn-primary flex items-center gap-1.5">
+                  <Send size={14} /> Schedule
+                </button>
+                <button onClick={() => handleAction('publish')} disabled={acting} className="btn-secondary flex items-center gap-1.5">
+                  {acting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  Publish Now
+                </button>
+              </>
+            )}
+            {item.storyboards.length > 0 && item.status !== 'draft' && (
+              <button onClick={() => handleAction('rescore')} disabled={acting} className="btn-secondary flex items-center gap-1.5">
+                <BarChart3 size={14} /> Rescore
               </button>
             )}
             {!['archived', 'failed'].includes(item.status) && (

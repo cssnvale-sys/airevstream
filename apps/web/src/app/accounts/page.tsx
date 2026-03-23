@@ -9,6 +9,7 @@ import { cn, formatRelativeTime, statusColor, platformIcon } from '@/lib/utils';
 import {
   Plus, Upload, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   X, Mail, Activity, Hash, Globe, Tag, Palette, User, Trash2,
+  RefreshCw, HeartPulse, Flame,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -316,6 +317,51 @@ interface DetailAccount extends Omit<EmailAccount, 'socialAccounts'> {
   socialAccounts: DetailSocialAccount[];
 }
 
+function SocialAccountActions({ accountId, socialId }: { accountId: string; socialId: string }) {
+  const [acting, setActing] = useState<string | null>(null);
+
+  const handleAction = async (action: 'sync' | 'health-check' | 'warm') => {
+    setActing(action);
+    try {
+      await apiPost(`/accounts/${accountId}/socials/${socialId}/${action}`, {});
+      toast.success(`${action === 'sync' ? 'Sync' : action === 'health-check' ? 'Health check' : 'Warm-up'} started`);
+    } catch {
+      toast.error(`Failed to start ${action}`);
+    } finally {
+      setActing(null);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={(e) => { e.stopPropagation(); handleAction('sync'); }}
+        disabled={acting !== null}
+        title="Sync"
+        className="p-1 rounded text-text-secondary hover:text-accent-blue hover:bg-bg-primary transition-colors"
+      >
+        <RefreshCw size={12} className={acting === 'sync' ? 'animate-spin' : ''} />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); handleAction('health-check'); }}
+        disabled={acting !== null}
+        title="Health Check"
+        className="p-1 rounded text-text-secondary hover:text-accent-green hover:bg-bg-primary transition-colors"
+      >
+        <HeartPulse size={12} />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); handleAction('warm'); }}
+        disabled={acting !== null}
+        title="Warm Up"
+        className="p-1 rounded text-text-secondary hover:text-accent-amber hover:bg-bg-primary transition-colors"
+      >
+        <Flame size={12} />
+      </button>
+    </div>
+  );
+}
+
 function DetailPanel({
   accountId,
   onClose,
@@ -412,21 +458,26 @@ function DetailPanel({
               ) : (
                 <div className="space-y-2">
                   {account.socialAccounts.map((sa) => (
-                    <div key={sa.id} className="flex items-center justify-between bg-bg-tertiary rounded-lg px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span>{platformIcon(sa.platform)}</span>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">{sa.username ?? sa.platform}</p>
-                          <p className="text-xs text-text-secondary">{sa.platform}</p>
+                    <div key={sa.id} className="bg-bg-tertiary rounded-lg px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span>{platformIcon(sa.platform)}</span>
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">{sa.username ?? sa.platform}</p>
+                            <p className="text-xs text-text-secondary">{sa.platform}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={cn('text-xs font-medium', healthColor(sa.healthScore))}>
+                            {sa.healthScore}%
+                          </span>
+                          <span className={cn('text-xs px-1.5 py-0.5 rounded', statusColor(sa.status))}>
+                            {sa.status}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className={cn('text-xs font-medium', healthColor(sa.healthScore))}>
-                          {sa.healthScore}%
-                        </span>
-                        <span className={cn('text-xs px-1.5 py-0.5 rounded', statusColor(sa.status))}>
-                          {sa.status}
-                        </span>
+                      <div className="flex items-center justify-end mt-1 border-t border-border/30 pt-1">
+                        <SocialAccountActions accountId={account.id} socialId={sa.id} />
                       </div>
                     </div>
                   ))}

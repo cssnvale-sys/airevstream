@@ -384,6 +384,14 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
 
   return (
     <div className="space-y-4">
+      <FieldGroup label="Logline">
+        <textarea
+          value={(data.logline as string) ?? ''}
+          onChange={(e) => update('logline', e.target.value)}
+          placeholder="One-line summary of the project's visual and narrative identity"
+          className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[60px] focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
+        />
+      </FieldGroup>
       <FieldGroup label="Global Style">
         <textarea
           value={(data.globalStyle as string) ?? ''}
@@ -857,6 +865,164 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
           placeholder="Negative prompt block applied to all generations"
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[100px] focus:ring-1 focus:ring-accent-blue outline-none"
         />
+      </FieldGroup>
+      <FieldGroup label="Slot Rules (slot name → allowed values)">
+        <div className="space-y-2">
+          {Object.entries((data.slotRules as Record<string, string[]>) ?? {}).map(([slot, values]) => (
+            <div key={slot} className="flex gap-2">
+              <input
+                type="text"
+                value={slot}
+                onChange={(e) => {
+                  const rules = { ...((data.slotRules as Record<string, string[]>) ?? {}) };
+                  const oldValues = rules[slot] ?? [];
+                  delete rules[slot];
+                  rules[e.target.value] = oldValues;
+                  update('slotRules', rules);
+                }}
+                placeholder="Slot name"
+                className="w-1/3 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+              <input
+                type="text"
+                value={(values ?? []).join(', ')}
+                onChange={(e) => {
+                  const rules = { ...((data.slotRules as Record<string, string[]>) ?? {}) };
+                  rules[slot] = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                  update('slotRules', rules);
+                }}
+                placeholder="Allowed values (comma-separated)"
+                className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+              <button
+                onClick={() => {
+                  const rules = { ...((data.slotRules as Record<string, string[]>) ?? {}) };
+                  delete rules[slot];
+                  update('slotRules', rules);
+                }}
+                className="text-red-400 hover:text-red-300 text-sm px-2"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => {
+              const rules = { ...((data.slotRules as Record<string, string[]>) ?? {}) };
+              rules[`slot_${Object.keys(rules).length + 1}`] = [];
+              update('slotRules', rules);
+            }}
+            className="text-accent-blue text-sm hover:underline"
+          >
+            + Add slot rule
+          </button>
+        </div>
+      </FieldGroup>
+      <FieldGroup label="Per-Character Prompt Blocks">
+        <div className="space-y-3">
+          {Object.entries((data.perCharacterBlocks as Record<string, string[]>) ?? {}).map(([charKey, blocks]) => (
+            <div key={charKey} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <input
+                  type="text"
+                  value={charKey}
+                  onChange={(e) => {
+                    const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
+                    const oldBlocks = pcb[charKey] ?? [];
+                    delete pcb[charKey];
+                    pcb[e.target.value] = oldBlocks;
+                    update('perCharacterBlocks', pcb);
+                  }}
+                  placeholder="Character name"
+                  className="bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm font-medium focus:ring-1 focus:ring-accent-blue outline-none"
+                />
+                <button
+                  onClick={() => {
+                    const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
+                    delete pcb[charKey];
+                    update('perCharacterBlocks', pcb);
+                  }}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                >
+                  Remove
+                </button>
+              </div>
+              <textarea
+                value={(blocks ?? []).join('\n')}
+                onChange={(e) => {
+                  const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
+                  pcb[charKey] = e.target.value.split('\n').filter(Boolean);
+                  update('perCharacterBlocks', pcb);
+                }}
+                placeholder="One prompt block per line"
+                className="w-full bg-bg-secondary text-text-primary border border-border rounded-md p-2 text-xs resize-y min-h-[60px] focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+            </div>
+          ))}
+          <button
+            onClick={() => {
+              const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
+              pcb[`character_${Object.keys(pcb).length + 1}`] = [];
+              update('perCharacterBlocks', pcb);
+            }}
+            className="text-accent-blue text-sm hover:underline"
+          >
+            + Add character block
+          </button>
+        </div>
+      </FieldGroup>
+      <FieldGroup label="Per-Environment Prompt Blocks">
+        <div className="space-y-3">
+          {Object.entries((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}).map(([envKey, blocks]) => (
+            <div key={envKey} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <input
+                  type="text"
+                  value={envKey}
+                  onChange={(e) => {
+                    const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
+                    const oldBlocks = peb[envKey] ?? [];
+                    delete peb[envKey];
+                    peb[e.target.value] = oldBlocks;
+                    update('perEnvironmentBlocks', peb);
+                  }}
+                  placeholder="Environment name"
+                  className="bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm font-medium focus:ring-1 focus:ring-accent-blue outline-none"
+                />
+                <button
+                  onClick={() => {
+                    const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
+                    delete peb[envKey];
+                    update('perEnvironmentBlocks', peb);
+                  }}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                >
+                  Remove
+                </button>
+              </div>
+              <textarea
+                value={(blocks ?? []).join('\n')}
+                onChange={(e) => {
+                  const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
+                  peb[envKey] = e.target.value.split('\n').filter(Boolean);
+                  update('perEnvironmentBlocks', peb);
+                }}
+                placeholder="One prompt block per line"
+                className="w-full bg-bg-secondary text-text-primary border border-border rounded-md p-2 text-xs resize-y min-h-[60px] focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+            </div>
+          ))}
+          <button
+            onClick={() => {
+              const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
+              peb[`environment_${Object.keys(peb).length + 1}`] = [];
+              update('perEnvironmentBlocks', peb);
+            }}
+            className="text-accent-blue text-sm hover:underline"
+          >
+            + Add environment block
+          </button>
+        </div>
       </FieldGroup>
     </div>
   );

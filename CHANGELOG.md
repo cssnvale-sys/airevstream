@@ -21,7 +21,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Maintenance repeatable jobs** (Session 26): cleanup (7d), metrics (5m) registered alongside backup (24h)
 - **Research repeatable job** (Session 26): trends research every 12 hours
 
+- **Storefronts tab** (Session 26): Full CRUD UI in affiliate page — table view, inline editing, create modal, delete confirmation, connected to existing storefront API routes
+- **MediaPreview in content detail** (Session 26): Shows image/video/audio preview from MinIO when fileUrl or thumbnailUrl exists
+- **apiPatch helper** (Session 26): PATCH method support in use-api.ts for routes that use PATCH instead of PUT
+
 ### Changed
+- **Pagination component wired** (Session 26): Accounts and library pages now use reusable Pagination component instead of inline duplicated logic
 - **Stub module exports** (Session 26): Tier-3 stubs (viral-discovery, experiment-orchestrator, quality-regression, channel-suggestions) now use type-only exports from barrel — throwing functions no longer exported from @airevstream/shared
 - **Audit test** (Session 26): Added cohorts/enrollments to paginated variable name allowlist
 

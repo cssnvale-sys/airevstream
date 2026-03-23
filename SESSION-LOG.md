@@ -41,9 +41,16 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 #### Audit Fix
 - Added `cohorts` and `enrollments` to paginated variable name allowlist in data-shape audit test (pre-existing false positive from Session 25)
 
+#### Remaining Orphan Fixes (3 items from post-implementation audit)
+- **Bible editor API path**: Verified correct — `useApi` auto-prepends `/api/v1`, so `/comfyui/models` is correct (audit false positive)
+- **Pagination component wired up**: Replaced inline pagination in `accounts/page.tsx` and `library/page.tsx` with the reusable `Pagination` component. Removed duplicated ChevronLeft/ChevronRight imports and startItem/endItem calculations
+- **MediaPreview wired into content detail**: Added MediaPreview component to content detail page right panel — shows image/video/audio preview from MinIO when fileUrl or thumbnailUrl exists, with type detection based on contentType
+- **Storefronts tab added to affiliate page**: Created full StorefrontsTab with CRUD UI (table view, inline editing, create modal, delete confirmation), connected to existing `/affiliate/storefronts` and `/affiliate/storefronts/[id]` API routes
+- Added `apiPatch()` helper to `use-api.ts` for PATCH method support (storefronts route uses PATCH not PUT)
+
 ### Build Status
 - 14 packages building, all tests pass (27 test tasks), 24 audit tests pass
-- 6 new API route files, 12 modified files
+- 6 new API route files, 17 modified files total
 - New route count: ~130 API route files
 
 ### Decisions

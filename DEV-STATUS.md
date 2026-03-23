@@ -164,6 +164,7 @@
 | OI-B3 | Account action API routes + UI | Done | 3 action routes (sync/health-check/warm), research dispatcher, action buttons in detail panel |
 | OI-B4 | Content lifecycle actions + job status | Done | Publish/rescore API routes, Publish Now + Rescore buttons, useJobStatus wired in studio |
 | OI-B5 | Tier-3 stub cleanup | Done | Type-only barrel exports, @internal JSDoc on stub functions |
+| OI-B6 | Remaining orphan fixes | Done | Pagination component wired (accounts+library), MediaPreview in content detail, Storefronts tab in affiliate page, apiPatch helper |
 
 ### Phase 9: UI Audit & Fixes (Session 23) — COMPLETE
 | Step | Feature | Status | Notes |

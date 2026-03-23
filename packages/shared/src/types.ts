@@ -441,6 +441,26 @@ export interface ShotSpec {
   shotClass?: string;
 }
 
+// ─── Multi-Language Types ───
+
+export type LanguageCode =
+  | 'en' | 'es' | 'fr' | 'de' | 'pt' | 'ja' | 'ko' | 'zh' | 'ar' | 'hi'
+  | 'it' | 'nl' | 'ru' | 'tr' | 'pl' | 'sv' | 'th' | 'vi' | 'id';
+
+export type LanguageMode = 'separate' | 'multi-audio';
+
+export interface LanguageConfig {
+  languages: LanguageCode[];
+  mode: LanguageMode;
+  primaryLanguage: LanguageCode;
+}
+
+export interface TranslatedScript {
+  language: LanguageCode;
+  script: string;
+  translatedAt: string;
+}
+
 // ─── WebSocket Event Types ───
 export type WebSocketEvent =
   | 'content:status'

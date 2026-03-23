@@ -1,8 +1,8 @@
 /**
  * Specialized Agent Type Definitions
  *
- * Seven cinema production agents with schema-bound I/O:
- *   Director → LookDev → ShotSpec → Render → Dialogue → Sound → Finishing
+ * Eight cinema production agents with schema-bound I/O:
+ *   Director → LookDev → ShotSpec → Render → Dialogue → Sound → Psychology → Finishing
  */
 
 // ─── Agent Roles ───
@@ -14,10 +14,11 @@ export type AgentRole =
   | 'render'
   | 'dialogue'
   | 'sound'
+  | 'psychology'
   | 'finishing';
 
 export const AGENT_ROLES: AgentRole[] = [
-  'director', 'lookdev', 'shotspec', 'render', 'dialogue', 'sound', 'finishing',
+  'director', 'lookdev', 'shotspec', 'render', 'dialogue', 'sound', 'psychology', 'finishing',
 ];
 
 // ─── Agent Configuration ───
@@ -203,6 +204,34 @@ export interface FinishingOutput {
     height: number;
     fps: number;
   };
+}
+
+export interface PsychologyInput {
+  directorOutput: DirectorOutput;
+  dialogueOutput: DialogueOutput;
+  shotSpecOutput: ShotSpecOutput;
+}
+
+export interface PsychologyOutput {
+  hookOptimizations: Array<{
+    shotNumber: number;
+    original: string;
+    optimized: string;
+    technique: string;
+  }>;
+  ctaRewrites: Array<{
+    shotNumber: number;
+    original: string;
+    optimized: string;
+    framework: string;
+  }>;
+  emotionalTriggers: Array<{
+    shotNumber: number;
+    trigger: string;
+    placement: string;
+  }>;
+  retentionTechniques: string[];
+  persuasionScore: number;
 }
 
 // ─── Agent Task State ───

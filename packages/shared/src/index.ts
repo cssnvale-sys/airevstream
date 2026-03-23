@@ -10,6 +10,7 @@ export * from './constants.js';
 export * from './constraint-validator.js';
 export * from './cost-estimator.js';
 export * from './pre-generation-qc.js';
+export * from './post-generation-qc.js';
 export * from './workflow-registry.js';
 export * from './errors.js';
 export * from './logger.js';

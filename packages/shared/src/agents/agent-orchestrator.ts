@@ -24,6 +24,8 @@ import type {
   SoundOutput,
   RenderInput,
   RenderOutput,
+  PsychologyInput,
+  PsychologyOutput,
   FinishingInput,
   FinishingOutput,
 } from './agent-types.js';
@@ -131,6 +133,7 @@ export class AgentOrchestrator {
         render: createTask('render'),
         dialogue: createTask('dialogue'),
         sound: createTask('sound'),
+        psychology: createTask('psychology'),
         finishing: createTask('finishing'),
       },
     };
@@ -279,6 +282,13 @@ export class AgentOrchestrator {
           dialogueOutput: outputs.dialogue as DialogueOutput,
           shotSpecOutput: outputs.shotspec as ShotSpecOutput,
         } satisfies SoundInput;
+
+      case 'psychology':
+        return {
+          directorOutput: outputs.director as DirectorOutput,
+          dialogueOutput: outputs.dialogue as DialogueOutput,
+          shotSpecOutput: outputs.shotspec as ShotSpecOutput,
+        } satisfies PsychologyInput;
 
       case 'finishing':
         return {

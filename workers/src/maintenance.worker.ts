@@ -158,7 +158,63 @@ async function handleMetrics() {
   ]);
 
   logger.info({ cpu: cpuUsage.toFixed(1), ram: ramUsagePercent.toFixed(1), queueDepth: queuedJobs }, 'Metrics collected');
+
+  // Alert escalation: check unacknowledged critical alerts
+  await escalateAlerts(db);
+
   return { cpu: cpuUsage, ram: ramUsagePercent, queueDepth: queuedJobs };
+}
+
+const ESCALATION_EMAIL_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
+const ESCALATION_SLACK_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+
+async function escalateAlerts(db: ReturnType<typeof getDb>) {
+  try {
+    const criticalAlerts = await db.alert.findMany({
+      where: {
+        severity: 'critical',
+        status: { in: ['open'] },
+      },
+    });
+
+    if (criticalAlerts.length === 0) return;
+
+    const now = Date.now();
+
+    for (const alert of criticalAlerts) {
+      const ageMs = now - new Date(alert.createdAt).getTime();
+      const metadata = (alert.metadata as Record<string, unknown>) ?? {};
+
+      let needsUpdate = false;
+
+      // Email escalation: > 15 min old and not yet escalated via email
+      if (ageMs > ESCALATION_EMAIL_THRESHOLD_MS && !metadata.emailEscalatedAt) {
+        logger.warn({ alertId: alert.id, ageMinutes: Math.round(ageMs / 60000) },
+          'Would send email escalation for alert %s', alert.id);
+        metadata.emailEscalatedAt = new Date().toISOString();
+        needsUpdate = true;
+      }
+
+      // Slack escalation: > 30 min old and not yet escalated via Slack
+      if (ageMs > ESCALATION_SLACK_THRESHOLD_MS && !metadata.slackEscalatedAt) {
+        logger.warn({ alertId: alert.id, ageMinutes: Math.round(ageMs / 60000) },
+          'Would send Slack escalation for alert %s', alert.id);
+        metadata.slackEscalatedAt = new Date().toISOString();
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        await db.alert.update({
+          where: { id: alert.id },
+          data: { metadata: metadata as any },
+        });
+      }
+    }
+
+    logger.info({ criticalAlertCount: criticalAlerts.length }, 'Alert escalation check completed');
+  } catch (err) {
+    logger.error({ err }, 'Alert escalation check failed');
+  }
 }
 
 export function startMaintenanceWorker() {

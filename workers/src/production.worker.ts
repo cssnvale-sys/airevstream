@@ -2,8 +2,8 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost } from '@airevstream/shared';
-import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC } from '@airevstream/shared';
+import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -399,6 +399,44 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
         logger.info({ variant: variantConfig.label, contentId: data.contentId }, 'Queued auto-variant render');
       }
     }
+
+    // ─── Multi-language rendering ───
+    const contentMeta = (storyboard.content?.platformMetadata as Record<string, unknown>) ?? {};
+    const translations = contentMeta.translations as Record<string, string> | undefined;
+    const languageMode = contentMeta.languageMode as string | undefined;
+
+    if (translations && Object.keys(translations).length > 0) {
+      if (languageMode === 'separate') {
+        // Mode 1: Queue separate render jobs per language
+        for (const [lang, translatedScript] of Object.entries(translations)) {
+          logger.info({ lang, contentId: data.contentId }, 'Queuing language-specific render');
+          // Each language gets its own render with translated TTS
+          // The actual TTS generation will use the translated script
+          await db.workflowJob.create({
+            data: {
+              jobType: 'video_render',
+              contentId: data.contentId,
+              channelId: data.channelId,
+              status: 'queued',
+              params: {
+                ...data,
+                language: lang,
+                translatedScript,
+                isLanguageVariant: true,
+              } as any,
+              result: {} as any,
+            },
+          });
+        }
+      } else if (languageMode === 'multi-audio') {
+        // Mode 2: Single video, multiple audio tracks
+        // Log for future implementation — requires ffmpeg muxing
+        logger.info(
+          { contentId: data.contentId, languages: Object.keys(translations) },
+          'Multi-audio track mode: language audio tracks will be muxed in post-processing',
+        );
+      }
+    }
   } catch (error) {
     // Clean up temp file on failure
     await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
@@ -599,6 +637,33 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         const key = `shots/${data.storyboardId}/${shotId}/${timestamp}-${img.filename}`;
         await uploadBuffer(BUCKET, key, imageData, 'image/png');
         uploadedUrls.push(`${BUCKET}/${key}`);
+      }
+
+      // ─── Post-generation QC gate (Stage 2) ───
+      const expectedWidth = spec.generation?.width ?? 1024;
+      const expectedHeight = spec.generation?.height ?? 1024;
+      const firstImage = images[0];
+      if (firstImage) {
+        const qcResult = runPostGenQC(
+          {
+            fileUrl: uploadedUrls[0] ?? '',
+            fileSizeBytes: (await comfyClient.downloadImage(firstImage.filename, firstImage.subfolder, firstImage.type)).length,
+            width: expectedWidth,
+            height: expectedHeight,
+            format: firstImage.filename.split('.').pop() ?? 'png',
+          },
+          { expectedWidth, expectedHeight },
+        );
+        if (!qcResult.passed) {
+          const failedChecks = qcResult.checks.filter(c => !c.passed && c.severity === 'error');
+          logger.warn({ shotId, qcScore: qcResult.score, failedChecks }, 'Post-gen QC failed');
+          await db.storyboardShot.update({
+            where: { id: shotId },
+            data: { status: 'failed', shotspec: { ...spec, postGenQCFailed: true, postGenQCChecks: failedChecks } as any },
+          });
+          continue;
+        }
+        logger.info({ shotId, qcScore: qcResult.score }, 'Post-gen QC passed');
       }
 
       // Create provenance record

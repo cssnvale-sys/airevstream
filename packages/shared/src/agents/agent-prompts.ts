@@ -4,8 +4,7 @@
  * Each agent has a focused prompt that constrains its expertise and output format.
  */
 
-import type { AgentConfig, AgentRole } from './agent-types.js';
-import type { ComplexityMode } from './agent-types.js';
+import type { AgentConfig, AgentRole, ComplexityMode } from './agent-types.js';
 
 // ─── System Prompts ───
 
@@ -127,6 +126,30 @@ Output JSON with:
 Apply subtle corrections — avoid over-processing. Film grain adds character (15-30 for cinematic feel).
 Generate subtitles from dialogue tracks with proper timing. Use h264 for web, prores for archival.`;
 
+const PSYCHOLOGY_PROMPT = `You are the Human Psychology Agent for a cinema-quality content pipeline.
+
+Your role is to optimize content for maximum psychological engagement, viewer retention, and conversion using proven persuasion frameworks.
+
+Analyze the Director's narrative, Dialogue tracks, and Shot specifications to suggest:
+
+1. Hook Optimizations: Improve opening hooks using pattern interrupts, curiosity gaps, or bold claims
+2. CTA Rewrites: Optimize calls-to-action using AIDA (Attention, Interest, Desire, Action) framework
+3. Emotional Triggers: Place scarcity, urgency, social proof, authority, and reciprocity cues
+4. Retention Techniques: Micro-hooks, open loops, and payoff timing
+
+Output JSON with:
+- hookOptimizations: Array of {shotNumber, original, optimized, technique}
+  - technique: "pattern_interrupt" | "curiosity_gap" | "bold_claim" | "question_hook" | "story_hook"
+- ctaRewrites: Array of {shotNumber, original, optimized, framework}
+  - framework: "AIDA" | "PAS" | "FOMO" | "social_proof" | "scarcity"
+- emotionalTriggers: Array of {shotNumber, trigger, placement}
+  - trigger: "urgency" | "scarcity" | "social_proof" | "authority" | "reciprocity" | "curiosity"
+- retentionTechniques: Array of technique descriptions applied
+- persuasionScore: 0-100 overall persuasion effectiveness estimate
+
+Be ethical — use persuasion, not manipulation. Enhance genuine value propositions.
+Never suggest deceptive claims or false scarcity.`;
+
 // ─── Mode-Specific Instructions ───
 
 const MODE_INSTRUCTIONS: Record<ComplexityMode, string> = {
@@ -227,6 +250,16 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
     dependsOn: ['director', 'dialogue', 'shotspec'],
     qcGateAfter: false,
   },
+  psychology: {
+    role: 'psychology',
+    name: 'Psychology',
+    description: 'Persuasion optimization, hook improvement, CTA rewriting, emotional triggers',
+    systemPrompt: PSYCHOLOGY_PROMPT,
+    inputSchema: ['directorOutput', 'dialogueOutput', 'shotSpecOutput'],
+    outputSchema: ['hookOptimizations', 'ctaRewrites', 'emotionalTriggers', 'retentionTechniques', 'persuasionScore'],
+    dependsOn: ['director', 'dialogue', 'shotspec'],
+    qcGateAfter: false,
+  },
   finishing: {
     role: 'finishing',
     name: 'Finishing',
@@ -245,10 +278,10 @@ export const AGENT_CONFIGS: Record<AgentRole, AgentConfig> = {
  */
 export function getExecutionOrder(): AgentRole[][] {
   return [
-    ['director'],                   // Phase 1: Creative direction
-    ['lookdev', 'dialogue'],        // Phase 2: Visual + dialogue (parallel)
-    ['shotspec'],                   // Phase 3: Shot specs (needs lookdev)
-    ['render', 'sound'],            // Phase 4: Render + sound (parallel)
-    ['finishing'],                  // Phase 5: Final assembly
+    ['director'],                          // Phase 1: Creative direction
+    ['lookdev', 'dialogue'],               // Phase 2: Visual + dialogue (parallel)
+    ['shotspec'],                          // Phase 3: Shot specs (needs lookdev)
+    ['render', 'sound', 'psychology'],     // Phase 4: Render + sound + psychology (parallel)
+    ['finishing'],                         // Phase 5: Final assembly
   ];
 }

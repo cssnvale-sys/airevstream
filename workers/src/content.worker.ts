@@ -132,6 +132,38 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
       },
     });
 
+    await job.updateProgress(80);
+
+    // ─── Multi-language translation step ───
+    const metadata = (content.platformMetadata as Record<string, unknown>) ?? {};
+    const languages = (metadata.languages as string[]) ?? [];
+    if (languages.length > 0 && resultContent && registry) {
+      const translations: Record<string, string> = {};
+      for (const lang of languages) {
+        try {
+          const translationPrompt = `Translate the following script to ${lang}. Maintain the same tone, timing markers like [HOOK], [INTRO], [CONTENT], [CTA], and formatting. Only output the translated text, nothing else.\n\n${resultContent}`;
+          const translationResult = await registry.generate({ type: 'text', task: 'translation', prompt: translationPrompt, maxTokens: 4096 });
+          translations[lang] = translationResult.content;
+          logger.info({ contentId: data.contentId, lang }, 'Script translated');
+        } catch (translateErr) {
+          logger.warn({ contentId: data.contentId, lang, err: translateErr }, 'Translation failed for language');
+        }
+      }
+      if (Object.keys(translations).length > 0) {
+        await db.contentItem.update({
+          where: { id: data.contentId },
+          data: {
+            platformMetadata: {
+              ...metadata,
+              script: resultContent,
+              translations,
+              translatedAt: new Date().toISOString(),
+            },
+          },
+        });
+      }
+    }
+
     await job.updateProgress(100);
     logger.info({ contentId: data.contentId }, 'Content generated successfully');
 

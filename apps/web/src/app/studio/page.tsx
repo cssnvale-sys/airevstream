@@ -28,7 +28,8 @@ export default function StudioIndexPage() {
   const query = new URLSearchParams({
     page: '1',
     limit: '50',
-    sort: 'updatedAt:desc',
+    sort: 'updatedAt',
+    order: 'desc',
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
   });
 

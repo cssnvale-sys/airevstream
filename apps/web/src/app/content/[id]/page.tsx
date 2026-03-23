@@ -6,7 +6,6 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost, apiPut } from '@/hooks/use-api';
 import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
 import { toast } from '@/lib/toast';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
 import { QualityBreakdown } from '@/components/content/quality-breakdown';
 import { ShotGallery } from '@/components/content/shot-gallery';
@@ -110,16 +109,19 @@ export default function ContentDetailPage() {
         await apiPost(`/content/${id}/approve`);
         toast.success('Content approved');
       } else if (action === 'reject') {
-        await apiPost(`/content/${id}/reject`, { reason: rejectReason });
+        await apiPost(`/content/${id}/reject`, { feedback: rejectReason || undefined });
         toast.success('Content rejected');
         setRejectOpen(false);
         setRejectReason('');
+      } else if (action === 'schedule') {
+        router.push(`/calendar?schedule=${id}`);
+        return;
       } else if (action === 'archive') {
         await apiPut(`/content/${id}`, { status: 'archived' });
         toast.success('Content archived');
       }
       mutate();
-    } catch (err) {
+    } catch {
       toast.error(`Failed to ${action} content`);
     } finally {
       setActing(false);
@@ -387,16 +389,51 @@ export default function ContentDetailPage() {
         </div>
 
         {/* Reject dialog */}
-        <ConfirmDialog
-          open={rejectOpen}
-          title="Reject Content"
-          message="This content will be rejected and moved back to draft. Optionally provide a reason."
-          confirmLabel="Reject"
-          variant="warning"
-          onConfirm={() => handleAction('reject')}
-          onCancel={() => { setRejectOpen(false); setRejectReason(''); }}
-          loading={acting}
-        />
+        {rejectOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => !acting && (setRejectOpen(false), setRejectReason(''))}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="card w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-start gap-3 mb-4">
+                <div className="p-2 rounded-lg shrink-0 bg-accent-amber/10">
+                  <X size={18} className="text-accent-amber" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-text-primary">Reject Content</h3>
+                  <p className="text-sm text-text-secondary mt-1">
+                    This content will be rejected and moved back to draft.
+                  </p>
+                </div>
+              </div>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Reason for rejection (optional)"
+                rows={3}
+                className="w-full px-3 py-2 mb-4 text-sm rounded-lg bg-bg-tertiary border border-border text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent-blue resize-none"
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => { setRejectOpen(false); setRejectReason(''); }}
+                  disabled={acting}
+                  className="btn-secondary text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleAction('reject')}
+                  disabled={acting}
+                  className="btn-primary text-sm"
+                >
+                  {acting ? 'Rejecting...' : 'Reject'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

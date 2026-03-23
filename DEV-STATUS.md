@@ -132,6 +132,17 @@
 | LE-4 | C2PA provenance + safety | Done | ProvenanceRecord, C2PAManifest, prompt safety linting, ProvenanceViewer |
 | LE-3 | Viral scoring + A/B testing | Done | 6-dimension scoring, trend matching, significance calculator, ViralScorePanel |
 
+### Phase 9: UI Audit & Fixes (Session 23) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| 9.1 | PUT /storyboard-shots/[shotId] | Done | Shot property updates with tenant scoping |
+| 9.2 | POST /storyboard-shots/[shotId]/generate | Done | Individual shot generation trigger |
+| 9.3 | GET /content/[id]/pipeline-status | Done | 8-step pipeline progress derived from DB state |
+| 9.4 | Content reject field fix | Done | `reason` → `feedback` matching API schema |
+| 9.5 | Content reject dialog textarea | Done | Inline dialog with reason textarea |
+| 9.6 | Schedule action handler | Done | Redirects to calendar page |
+| 9.7 | Studio sort param fix | Done | Separate sort/order params matching parseQuery |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|

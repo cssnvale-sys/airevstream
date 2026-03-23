@@ -260,6 +260,11 @@
 **Decision**: A/B test statistical significance uses a two-proportion z-test with Abramowitz & Stegun normal CDF approximation.
 **Rationale**: The z-test is the standard approach for comparing two proportions (engagement rates). The Abramowitz & Stegun approximation is fast and accurate to 7+ decimal places. No external statistics library needed.
 
+## D054: Pipeline Status Derived from DB State
+**Date**: 2026-03-22
+**Decision**: The pipeline-status endpoint derives step completion from content status, storyboard/shot statuses, and QC scores rather than tracking BullMQ job progress directly.
+**Rationale**: Avoids Redis dependency in the API layer. DB state is the single source of truth. No need to correlate job IDs across 8 steps. The 8-step pipeline maps naturally to observable DB states (has storyboard? has shots? shots generated? QC scores present? etc.).
+
 ## D035: Studio UI Architecture
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.

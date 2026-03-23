@@ -28,6 +28,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **qualityPreset in render job** (Session 20): `ProductionRenderVideoJob` now carries `qualityPreset` field, propagated through cinema pipeline DAG
 
 ### Fixed
+- **Missing storyboard-shots API routes** (Session 23): Created PUT /storyboard-shots/[shotId] and POST /storyboard-shots/[shotId]/generate — Studio shot saves and individual generation buttons now functional
+- **Missing pipeline-status API route** (Session 23): Created GET /content/[id]/pipeline-status — Studio pipeline progress panel now shows actual step statuses instead of spinning forever
+- **Content reject field mismatch** (Session 23): Frontend sent `{ reason }` but API expected `{ feedback }` — fixed field name to match API schema
+- **Content reject dialog missing textarea** (Session 23): Replaced bare ConfirmDialog with inline dialog including a textarea for rejection reason
+- **Missing schedule action handler** (Session 23): Schedule button on content detail page now redirects to calendar
+- **Studio sort parameter format** (Session 23): Fixed `sort: 'updatedAt:desc'` to separate `sort`/`order` params matching backend `parseQuery()` convention
 - **TextOverlay exit animation bug** (Session 19): Both ternary branches were identical, causing exit animations to play like enter animations
 - **request.userId bug** (Session 19): Workflow-engine approve/bulk-approve used non-existent `(request as any).userId`; changed to `request.user?.sub`
 - **Silent catch blocks** (Session 19): 4 file cleanup `.catch(() => {})` in production/maintenance workers now log errors

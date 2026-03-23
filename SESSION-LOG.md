@@ -4,6 +4,43 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 23 — UI Audit & Missing Route Fixes
+
+**Date:** 2026-03-22
+**Focus:** Comprehensive UI audit — find and fix all broken buttons, dead routes, and data mismatches.
+
+### What Was Done
+
+#### UI Audit
+- Launched 5 parallel Explore agents auditing every page, button, and user flow
+- Identified 6 broken items and 7 suspicious items
+- Fixed all 6 broken items, resolved 2 suspicious items, triaged 5 as non-critical
+
+#### Missing API Routes Created
+- `PUT /api/v1/storyboard-shots/[shotId]` — update shot properties (shotspec, status) with tenant scoping
+- `POST /api/v1/storyboard-shots/[shotId]/generate` — trigger individual shot generation, marks shot as generating, queues production job
+- `GET /api/v1/content/[id]/pipeline-status` — derives 8-step pipeline progress from content/storyboard/shot states
+
+#### Content Detail Page Fixes
+- Fixed `{ reason }` → `{ feedback }` to match reject API's Zod schema
+- Replaced ConfirmDialog (no textarea support) with inline dialog containing a rejection reason textarea
+- Added `schedule` action handler — redirects to calendar page
+
+#### Studio Page Fix
+- Fixed sort query param: `sort: 'updatedAt:desc'` → `sort: 'updatedAt', order: 'desc'` matching backend `parseQuery()`
+
+### Architecture Decisions
+- D054: Pipeline-status endpoint derives step completion from DB state (content status, shot statuses, QC scores) rather than tracking BullMQ job progress directly — simpler, no Redis dependency in the API layer
+
+### Triaged Non-Critical Issues
+- Library AI model filter is client-side within paginated results (works but doesn't filter across pages)
+- Cinema-bible handleCreate response destructuring is actually correct (false positive)
+- AI services health-check route already exists (false positive)
+- Export variant parameter passed through to job data (worker handles as extra metadata)
+- Calendar page doesn't auto-open schedule dialog for query param — enhancement, not bug
+
+---
+
 ## Session 22 — LE-1 through LE-6 Cinema Pipeline Enhancements
 
 **Date:** 2026-03-22

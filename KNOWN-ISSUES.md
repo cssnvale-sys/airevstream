@@ -67,6 +67,18 @@ The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level stati
 `LookBible.loras`, `LookBible.lensKit`, `CharacterBible.characterLoras`, `EnvironmentBible.lightingSetups` are all typed but have no UI editor in the Cinema Bible settings page.
 **Action**: Add LoRA picker (from ComfyUI model list API), lens kit editor, color pipeline editor to Bible tabs.
 
+### KI-059: Library AI Model Filter is Client-Side
+**Severity**: Low
+**Status**: Open (Session 23 audit)
+The library page's AI model filter applies client-side after pagination, so it only filters items on the current page. To fix, add `aiServiceId` as a server-side query param in the content list API route.
+**Action**: Add `aiServiceId` filter to GET /content route and pass from frontend.
+
+### KI-060: Calendar Schedule Query Param Not Handled
+**Severity**: Low
+**Status**: Open (Session 23 audit)
+The content detail "Schedule" button redirects to `/calendar?schedule={id}` but the calendar page doesn't read this query param to auto-open a scheduling dialog.
+**Action**: Read `schedule` search param in calendar page and open the schedule creation form pre-populated with the content ID.
+
 ### KI-058: Empty ComfyUI Workflow Subdirectories
 **Severity**: Low
 **Status**: Open (Session 20 gap analysis)

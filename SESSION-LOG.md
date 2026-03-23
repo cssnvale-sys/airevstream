@@ -4,6 +4,63 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 29 — Gap Closure: 8 Batches of Spec-vs-Implementation Features
+
+**Date:** 2026-03-23
+**Focus:** Implement 8 batches of spec gaps identified by the gap analysis (14 fully implemented, 9 partial, 24 missing).
+
+### What Was Done
+
+#### Step 0: Gap Analysis Document
+- Committed `docs/GAP-ANALYSIS.md` with full spec-vs-implementation comparison
+
+#### Batch 1: Calendar Day/Month Views + Drag-and-Drop
+- Day view: 24-hour single column with scheduled posts
+- Month view: 7-column grid with colored platform dots
+- Native HTML5 drag-and-drop rescheduling with toast feedback
+
+#### Batch 2: Settings Proxy & Data Tabs + Alert Escalation
+- Proxies tab: CRUD for proxy configs, test connectivity, pool stats
+- Data tab: CSV export (content/analytics/accounts), data retention setting
+- Alert escalation: email (15m) + Slack (30m) in maintenance worker
+
+#### Batch 3: Content Repurpose + Distribute
+- Repurpose API: creates child ContentItem with target format
+- Distribute API: multi-channel ScheduledPost creation
+- Engagement API: GET/POST for performance metrics
+- UI: modals for repurpose format + distribute channel selection
+
+#### Batch 4: Fallback Chain API
+- GET/PUT for AI provider fallback ordering stored in SystemSetting
+
+#### Batch 5: Psychology Agent + Post-Gen QC
+- 8th agent (psychology) with AIDA framework, hook optimization, CTA rewrites
+- Post-gen QC gate: aspect ratio, resolution, duration, file size checks
+- Continuity check across shots
+
+#### Batch 6: Mobile Responsive
+- Hamburger menu, slide-out drawer sidebar, scroll lock, escape key
+- Safe-area-inset CSS for iOS, mobile header padding
+
+#### Batch 7: Warming Duration UI
+- Popover with range slider (15-120 min), replaces instant warm button
+
+#### Batch 8: Multi-Language Video
+- 19 language codes, separate vs multi-audio modes
+- Language selection UI in create wizard (advanced+ mode)
+- Translation step in content worker via AI registry
+- Multi-language rendering in production worker
+
+### Build Status
+- 14/14 packages build, 27/27 test tasks pass, 24/24 audit tests pass
+- 25 files changed, ~2700 lines added
+
+### Decisions
+- D074: Native HTML5 DnD over @dnd-kit to avoid dependency
+- D075: Multi-language modes (separate/multi-audio) stored in platformMetadata
+
+---
+
 ## Session 28 — UI Audit: Response Shape Fixes & Dead Button Cleanup
 
 **Date:** 2026-03-23

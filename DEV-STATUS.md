@@ -34,14 +34,14 @@
 | 4.1 | Auth pages | Done | Login + register with JWT (scrypt hashing) |
 | 4.2 | Dashboard (Home) | Done | KPI cards, approval queue, timeline, workflows, system health, platform coverage widget, activity feed |
 | 4.3 | Accounts | Done | Full CRUD, bulk import (JSON + CSV), detail panel with tabs, social accounts, channel linking |
-| 4.4 | Calendar | Done | Week/Day/Month grid, drag scheduling, filter by channel/platform/status |
+| 4.4 | Calendar | Done | Day/Week/Month views, HTML5 drag-and-drop rescheduling, filter by channel/platform/status |
 | 4.5 | Create (Wizard) | Done | 6-step wizard: Channel → Concept → Script (H.I.C.C.) → Storyboard → Generate → Review |
 | 4.6 | Content Library | Done | Grid/List views, multi-filter, sort, type-coded thumbnails, quality scores |
 | 4.7 | Analytics | Done | Revenue/Engagement/Content/Costs/Audience tabs with Recharts, KPI cards, export |
 | 4.8 | System Health | Done | Resource usage, services grid, active workflows, alerts, error log |
-| 4.9 | Settings | Done | General/AI Services/Notifications/Security/Appearance tabs |
+| 4.9 | Settings | Done | General/AI Services/Notifications/Security/Appearance/Proxies/Data tabs |
 | 4.10 | Affiliate Manager | Done | Products CRUD, channel pools, links, performance matrix |
-| 4.11 | API Routes | Done | 106 Next.js API route files under /api/v1/ covering all endpoint groups |
+| 4.11 | API Routes | Done | ~130 Next.js API route files under /api/v1/ covering all endpoint groups |
 | 4.12 | Design System | Done | CSS variable tokens (dark/light), component classes, layout components |
 | 4.13 | AI Assistant Panel | Done | Collapsible 380px chat panel, context-aware |
 | 4.14 | Notification Center | Done | Bell icon with badge, dropdown panel, mark all read, sonner toast integration |
@@ -177,6 +177,18 @@
 | UI-6 | Seasoning cohort AppLayout | Done | Added missing wrapper |
 | UI-7 | Calendar language filter wiring | Done | UI → API query params |
 | UI-8 | Calendar content navigation | Done | Fallback to scheduledPost ID removed |
+
+### Phase 14: Spec Gap Closure (Session 29) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| GC-B1 | Calendar Day/Month views + DnD | Done | 24h Day column, Month dot grid, HTML5 drag-and-drop reschedule |
+| GC-B2 | Settings Proxies + Data tabs | Done | Proxy CRUD + test, CSV export, data retention, alert escalation |
+| GC-B3 | Content repurpose + distribute | Done | Repurpose API (child content), distribute API (multi-channel), engagement API |
+| GC-B4 | Fallback chain API | Done | GET/PUT for AI provider ordering in SystemSetting |
+| GC-B5 | Psychology agent + post-gen QC | Done | 8th agent (AIDA), post-gen QC gate, continuity check |
+| GC-B6 | Mobile responsive sidebar | Done | Hamburger menu, slide-out drawer, scroll lock, safe-area-inset |
+| GC-B7 | Warming duration UI | Done | Popover with range slider (15-120 min) |
+| GC-B8 | Multi-language video | Done | 19 languages, separate/multi-audio modes, create wizard, translation pipeline |
 
 ### Phase 9: UI Audit & Fixes (Session 23) — COMPLETE
 | Step | Feature | Status | Notes |

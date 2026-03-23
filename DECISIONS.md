@@ -364,3 +364,14 @@
 **Date**: 2026-03-19
 **Decision**: Full-screen workspace: shot list (left), preview (center), properties (right), timeline (bottom), AI guidance (sidebar). Components are composable and independently testable.
 **Rationale**: Professional video editing UIs (DaVinci Resolve, Premiere) use this layout pattern. The component decomposition allows each panel to be developed and tested independently while the Studio page composes them into a cohesive workspace.
+
+
+## D074: Native HTML5 Drag-and-Drop for Calendar
+**Date**: 2026-03-23
+**Decision**: Use native HTML5 DnD API instead of @dnd-kit for calendar rescheduling.
+**Rationale**: Avoids adding a new dependency. The calendar DnD use case is simple (move a post to a new time slot) and doesn't need the advanced features of @dnd-kit (sortable lists, collision detection). Native DnD is well-supported and sufficient.
+
+## D075: Multi-Language Modes in platformMetadata
+**Date**: 2026-03-23
+**Decision**: Store language configuration (languages[], languageMode) in ContentItem.platformMetadata rather than adding new DB columns.
+**Rationale**: The language config is only needed during pipeline processing. Adding schema columns would require a migration and only serve a subset of content items. JSON storage in platformMetadata is flexible and doesn't require schema changes.

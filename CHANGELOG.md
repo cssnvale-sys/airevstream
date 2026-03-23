@@ -6,6 +6,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Calendar Day view** (Session 29): 24-hour single column with positioned scheduled posts
+- **Calendar Month view** (Session 29): 7-column grid with colored platform dots per date
+- **Calendar drag-and-drop** (Session 29): Native HTML5 DnD rescheduling with toast feedback
+- **Settings Proxies tab** (Session 29): CRUD for proxy configs, test connectivity, pool stats
+- **Settings Data tab** (Session 29): CSV export (content/analytics/accounts) + data retention
+- **Content repurpose API** (Session 29): POST /content/:id/repurpose creates child content item
+- **Content distribute API** (Session 29): POST /content/:id/distribute creates multi-channel scheduled posts
+- **Content engagement API** (Session 29): GET/POST for performance metrics on content items
+- **Fallback chain API** (Session 29): GET/PUT for AI provider ordering in SystemSetting
+- **Psychology agent** (Session 29): 8th cinema agent — AIDA framework, hook optimization, CTA rewrites, emotional triggers
+- **Post-generation QC** (Session 29): Validates aspect ratio, resolution, duration, file size after render
+- **Continuity check** (Session 29): Cross-shot consistency validation (resolution, duration outliers)
+- **Alert escalation** (Session 29): Maintenance worker escalates unacknowledged critical alerts (email 15m, Slack 30m)
+- **Mobile sidebar** (Session 29): Hamburger menu, slide-out drawer, scroll lock, escape-to-close, safe-area-inset
+- **Warming duration popover** (Session 29): Range slider (15-120 min) replaces instant warm button
+- **Multi-language types** (Session 29): 19 LanguageCode values, LanguageMode, LanguageConfig, TranslatedScript
+- **Multi-language wizard** (Session 29): Language selection + mode radio in create wizard Step 2 (advanced+)
+- **Multi-language pipeline** (Session 29): Translation step in content worker, separate/multi-audio rendering in production worker
+
 ### Fixed
 - **CostPreviewPanel response shape** (Session 28): Fixed `res.estimate` → `res.data.estimate`, `res.budget` → `res.data.budget`
 - **Studio AI guidance response** (Session 28): Fixed `res.suggestions` → `res.data.suggestions`

@@ -322,3 +322,144 @@ export function generateC2PAManifest(
 export function serializeManifest(manifest: C2PAManifest): string {
   return JSON.stringify(manifest, null, 2);
 }
+
+// ─── Provenance Chain ───
+
+export interface ProvenanceChain {
+  /** Ordered records from first generation to final output */
+  records: ProvenanceRecord[];
+  /** C2PA manifest if generated */
+  manifest?: C2PAManifest;
+}
+
+/**
+ * Build a provenance chain from an array of records.
+ * Links records by chronological order (input→output relationships).
+ */
+export function buildProvenanceChain(records: ProvenanceRecord[]): ProvenanceChain {
+  // Sort by timestamp
+  const sorted = [...records].sort((a, b) =>
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  return {
+    records: sorted,
+  };
+}
+
+/**
+ * Build a complete provenance chain with C2PA manifest.
+ */
+export function buildProvenanceChainWithManifest(
+  title: string,
+  records: ProvenanceRecord[],
+): ProvenanceChain {
+  const chain = buildProvenanceChain(records);
+  chain.manifest = generateC2PAManifest(title, chain.records);
+  return chain;
+}
+
+// ─── Copyright / License Tracking ───
+
+export interface CopyrightInfo {
+  /** Type of copyrighted asset */
+  type: 'model' | 'lora' | 'image' | 'audio' | 'video';
+  /** Name of the asset */
+  name: string;
+  /** License identifier (SPDX or custom) */
+  license: string;
+  /** Attribution text (required by some licenses) */
+  attribution?: string;
+  /** Source URL */
+  source?: string;
+}
+
+export interface CopyrightComplianceResult {
+  /** Whether all assets are compliant */
+  compliant: boolean;
+  /** Issues found */
+  issues: Array<{
+    asset: string;
+    issue: string;
+    severity: 'error' | 'warning';
+  }>;
+}
+
+/** Known open-source model licenses */
+export const KNOWN_LICENSES: Record<string, { name: string; commercial: boolean; attribution: boolean }> = {
+  'openrail++': { name: 'OpenRAIL++', commercial: true, attribution: false },
+  'openrail-m': { name: 'OpenRAIL-M', commercial: true, attribution: false },
+  'creativeml-openrail-m': { name: 'CreativeML OpenRAIL-M', commercial: true, attribution: false },
+  'apache-2.0': { name: 'Apache 2.0', commercial: true, attribution: true },
+  'mit': { name: 'MIT', commercial: true, attribution: true },
+  'cc-by-4.0': { name: 'CC BY 4.0', commercial: true, attribution: true },
+  'cc-by-sa-4.0': { name: 'CC BY-SA 4.0', commercial: true, attribution: true },
+  'cc-by-nc-4.0': { name: 'CC BY-NC 4.0', commercial: false, attribution: true },
+  'cc-by-nc-sa-4.0': { name: 'CC BY-NC-SA 4.0', commercial: false, attribution: true },
+  'cc0-1.0': { name: 'CC0 1.0', commercial: true, attribution: false },
+};
+
+/**
+ * Check copyright compliance for a set of assets.
+ * Flags non-commercial licenses used in commercial contexts
+ * and missing attributions.
+ */
+export function checkCopyrightCompliance(
+  assets: CopyrightInfo[],
+  isCommercial = true,
+): CopyrightComplianceResult {
+  const issues: CopyrightComplianceResult['issues'] = [];
+
+  for (const asset of assets) {
+    const licenseKey = asset.license.toLowerCase().replace(/\s+/g, '-');
+    const licenseInfo = KNOWN_LICENSES[licenseKey];
+
+    if (!licenseInfo) {
+      issues.push({
+        asset: asset.name,
+        issue: `Unknown license "${asset.license}" — manual review required`,
+        severity: 'warning',
+      });
+      continue;
+    }
+
+    if (isCommercial && !licenseInfo.commercial) {
+      issues.push({
+        asset: asset.name,
+        issue: `License "${licenseInfo.name}" does not allow commercial use`,
+        severity: 'error',
+      });
+    }
+
+    if (licenseInfo.attribution && !asset.attribution) {
+      issues.push({
+        asset: asset.name,
+        issue: `License "${licenseInfo.name}" requires attribution but none provided`,
+        severity: 'warning',
+      });
+    }
+  }
+
+  return {
+    compliant: !issues.some(i => i.severity === 'error'),
+    issues,
+  };
+}
+
+// ─── C2PA Sidecar Embedding ───
+
+/**
+ * Write a C2PA manifest as a sidecar JSON file.
+ * Real C2PA embedding requires the c2pa-js library — this generates
+ * the sidecar JSON that can be later embedded.
+ */
+export function generateC2PASidecar(manifest: C2PAManifest): {
+  filename: string;
+  content: string;
+} {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return {
+    filename: `c2pa-manifest-${timestamp}.json`,
+    content: serializeManifest(manifest),
+  };
+}

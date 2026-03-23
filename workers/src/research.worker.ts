@@ -1,4 +1,4 @@
-import { createWorker, type ResearchTrendsJob, type ResearchTopicsJob, type ResearchKnowledgeUpdateJob, type ResearchPopulateKnowledgeJob } from '@airevstream/queue';
+import { createWorker, getQueue, type ResearchTrendsJob, type ResearchTopicsJob, type ResearchKnowledgeUpdateJob, type ResearchPopulateKnowledgeJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { generateJSON, createServiceRegistry } from '@airevstream/ai-client';
 import { createLogger } from '@airevstream/shared';
@@ -343,6 +343,14 @@ export function startResearchWorker() {
 
   worker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'Research job failed');
+  });
+
+  // Set up repeatable trends research (every 12 hours)
+  const researchQueue = getQueue('research');
+  researchQueue.add('research:trends', {} as any, {
+    repeat: { every: 12 * 60 * 60 * 1000 }, // every 12 hours
+    removeOnComplete: true,
+    removeOnFail: 10,
   });
 
   logger.info('Research worker started');

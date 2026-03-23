@@ -130,3 +130,111 @@ export function formatCost(cost: number): string {
   if (cost < 0.01) return '< $0.01';
   return `$${cost.toFixed(2)}`;
 }
+
+// ─── Shot-Level Cost Estimation ───
+
+/** Cost rates per provider (approximate, per unit) */
+const PROVIDER_RATES: Record<string, { perImage: number; perVideoSec: number; perTtsSec: number }> = {
+  comfyui: { perImage: 0, perVideoSec: 0, perTtsSec: 0 }, // Local — free
+  veo: { perImage: 0.05, perVideoSec: 0.15, perTtsSec: 0 },
+  sora: { perImage: 0.06, perVideoSec: 0.20, perTtsSec: 0 },
+  runway: { perImage: 0.05, perVideoSec: 0.10, perTtsSec: 0 },
+  kling: { perImage: 0.04, perVideoSec: 0.08, perTtsSec: 0 },
+};
+
+/**
+ * Estimate cost for a single shot based on its spec and provider.
+ */
+export function estimateShotCost(
+  spec: { duration?: number; outputType?: string; generation?: { width?: number; height?: number } },
+  provider: string,
+): CostBreakdownItem[] {
+  const rates = PROVIDER_RATES[provider] ?? PROVIDER_RATES['comfyui']!;
+  const items: CostBreakdownItem[] = [];
+
+  // Image generation
+  items.push({
+    category: 'image',
+    description: `Keyframe generation (${provider})`,
+    estimatedCost: rates.perImage,
+    unit: 'images',
+    quantity: 1,
+  });
+
+  // Video generation (if video output)
+  const duration = spec.duration ?? 5;
+  if (spec.outputType === 'video' || spec.outputType === 'image+video') {
+    items.push({
+      category: 'video',
+      description: `Video generation (${provider})`,
+      estimatedCost: duration * rates.perVideoSec,
+      unit: 'seconds',
+      quantity: duration,
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Estimate total cost from an array of shots and a resolved pipeline configuration.
+ */
+export function estimateFromResolvedConfig(
+  shots: Array<{ duration?: number; outputType?: string; generation?: { width?: number; height?: number } }>,
+  config: {
+    provider?: string;
+    qualityTier?: 'quick' | 'standard' | 'cinema';
+    ttsCostPerSec?: number;
+    audioLayers?: number;
+  },
+): CostEstimate {
+  const provider = config.provider ?? 'comfyui';
+  const breakdown: CostBreakdownItem[] = [];
+
+  // Per-shot costs
+  for (const shot of shots) {
+    const shotItems = estimateShotCost(shot, provider);
+    for (const item of shotItems) {
+      // Merge into breakdown by category
+      const existing = breakdown.find(b => b.category === item.category);
+      if (existing) {
+        existing.estimatedCost += item.estimatedCost;
+        existing.quantity += item.quantity;
+      } else {
+        breakdown.push({ ...item });
+      }
+    }
+  }
+
+  // TTS cost (aggregate)
+  const totalDuration = shots.reduce((sum, s) => sum + (s.duration ?? 5), 0);
+  const audioLayers = config.audioLayers ?? 1;
+  const ttsCost = totalDuration * audioLayers * (config.ttsCostPerSec ?? 0);
+  if (ttsCost > 0) {
+    breakdown.push({
+      category: 'audio',
+      description: `TTS generation (${audioLayers} layer${audioLayers > 1 ? 's' : ''})`,
+      estimatedCost: ttsCost,
+      unit: 'seconds',
+      quantity: totalDuration * audioLayers,
+    });
+  }
+
+  // Upscale (cinema tier only)
+  if (config.qualityTier === 'cinema') {
+    const rates = PROVIDER_RATES[provider] ?? PROVIDER_RATES['comfyui']!;
+    const upscaleCost = shots.length * rates.perImage * 0.5;
+    if (upscaleCost > 0) {
+      breakdown.push({
+        category: 'upscale',
+        description: 'Upscale refinement pass',
+        estimatedCost: upscaleCost,
+        unit: 'images',
+        quantity: shots.length,
+      });
+    }
+  }
+
+  const totalCost = breakdown.reduce((sum, item) => sum + item.estimatedCost, 0);
+  return { totalCost, breakdown };
+}

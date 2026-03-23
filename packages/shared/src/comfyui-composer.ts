@@ -82,8 +82,42 @@ export function composePrompt(
     }
   }
 
-  // Shot prompt blocks
-  parts.push(...spec.promptBlocks);
+  // Prompt slot substitution
+  const processedBlocks = spec.promptBlocks.map(block => {
+    let processed = block;
+    // Replace {slotName} patterns with values from spec.promptSlots
+    if (spec.promptSlots) {
+      for (const [slot, value] of Object.entries(spec.promptSlots)) {
+        processed = processed.replace(new RegExp(`\\{${slot}\\}`, 'g'), value);
+      }
+    }
+    // Per-character blocks from bible
+    if (bible?.perCharacterBlocks) {
+      for (const [charKey, blocks] of Object.entries(bible.perCharacterBlocks)) {
+        processed = processed.replace(new RegExp(`\\{char:${charKey}\\}`, 'g'), blocks.join(', '));
+      }
+    }
+    // Per-environment blocks from bible
+    if (bible?.perEnvironmentBlocks) {
+      for (const [envKey, blocks] of Object.entries(bible.perEnvironmentBlocks)) {
+        processed = processed.replace(new RegExp(`\\{env:${envKey}\\}`, 'g'), blocks.join(', '));
+      }
+    }
+    return processed;
+  });
+
+  // Validate slot values against rules (warnings only)
+  if (spec.promptSlots && bible?.slotRules) {
+    for (const [slot, value] of Object.entries(spec.promptSlots)) {
+      const allowedValues = bible.slotRules[slot];
+      if (allowedValues && !allowedValues.includes(value)) {
+        console.warn(`[ComfyUI Composer] Slot "${slot}" value "${value}" not in allowed list: ${allowedValues.join(', ')}`);
+      }
+    }
+  }
+
+  // Shot prompt blocks (with slots resolved)
+  parts.push(...processedBlocks);
 
   // Camera/lighting descriptors
   if (spec.camera?.framing) parts.push(spec.camera.framing);

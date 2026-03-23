@@ -42,6 +42,7 @@ export type {
   HiccScript,
   ShortFormVideoProps,
   LongFormVideoProps,
+  ThumbnailVariant,
   ThumbnailProps,
 
   // Cinema Types

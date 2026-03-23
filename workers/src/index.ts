@@ -5,6 +5,7 @@ import { startPostingWorker } from './posting.worker.js';
 import { startResearchWorker } from './research.worker.js';
 import { startMaintenanceWorker } from './maintenance.worker.js';
 import { startProductionWorker } from './production.worker.js';
+import { startSeasoningWorker } from './account.worker.js';
 
 const logger = createLogger('workers');
 
@@ -18,6 +19,7 @@ async function main() {
     startResearchWorker(),
     startMaintenanceWorker(),
     startProductionWorker(),
+    startSeasoningWorker(),
   ];
 
   logger.info(`All ${workers.length} workers started`);

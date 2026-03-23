@@ -88,6 +88,10 @@ export interface ProductionRenderVideoJob {
   qualityPreset?: 'draft' | 'standard' | 'cinema';
   /** If set, renders this specific variant instead of the default */
   exportVariant?: ExportVariant;
+  /** If true, automatically queue variant renders after primary render */
+  autoVariants?: boolean;
+  /** Variant configurations to auto-render */
+  variantConfigs?: ExportVariant[];
 }
 
 export interface ProductionGenerateImageJob {
@@ -168,6 +172,39 @@ export interface ProductionRepairShotJob {
   denoise?: number;
 }
 
+// ─── Seasoning Job Types ───
+
+export interface SeasoningEnrollJob {
+  cohortId: string;
+  emailAccountId: string;
+  platform: string;
+  tenantId: string;
+}
+
+export interface SeasoningSignupJob {
+  enrollmentId: string;
+  emailAccountId: string;
+  platform: string;
+  tenantId: string;
+}
+
+export interface SeasoningWarmJob {
+  enrollmentId: string;
+  socialAccountId: string;
+  platform: string;
+  phase: string;
+  tenantId: string;
+}
+
+export interface SeasoningCheckJob {
+  _trigger?: 'repeatable';
+}
+
+export interface SeasoningGraduateJob {
+  enrollmentId: string;
+  socialAccountId: string;
+}
+
 // ─── Queue Name → Job Data Mapping ───
 
 export interface QueueJobMap {
@@ -177,6 +214,7 @@ export interface QueueJobMap {
   research: ResearchTrendsJob | ResearchTopicsJob | ResearchKnowledgeUpdateJob | ResearchPopulateKnowledgeJob;
   maintenance: MaintenanceCleanupJob | MaintenanceBackupJob | MaintenanceMetricsJob;
   production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob | ProductionGenerateShotsJob | ProductionQCGateJob | ProductionMixAudioJob | ProductionRepairShotJob;
+  seasoning: SeasoningEnrollJob | SeasoningSignupJob | SeasoningWarmJob | SeasoningCheckJob | SeasoningGraduateJob;
 }
 
 export type QueueName = keyof QueueJobMap;
@@ -282,5 +320,5 @@ export async function closeAllQueues(): Promise<void> {
 export { Queue, Worker, QueueEvents, Job };
 
 export { FlowProducer } from 'bullmq';
-export { getFlowProducer, startContentPipeline, startCinemaPipeline, closeFlowProducer } from './flows.js';
-export type { ContentPipelineParams, CinemaPipelineParams } from './flows.js';
+export { getFlowProducer, startContentPipeline, startCinemaPipeline, startSeasoningPipeline, closeFlowProducer } from './flows.js';
+export type { ContentPipelineParams, CinemaPipelineParams, SeasoningPipelineParams } from './flows.js';

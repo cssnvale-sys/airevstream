@@ -264,3 +264,86 @@ export function visemeTimelineToFrames(
 
   return frames;
 }
+
+// ─── Phoneme Timestamp Types ───
+
+/** Phoneme timing data from TTS providers */
+export interface PhonemeTimestamp {
+  /** The phoneme (CMU ARPAbet or IPA) */
+  phoneme: string;
+  /** Start time in milliseconds */
+  startMs: number;
+  /** End time in milliseconds */
+  endMs: number;
+}
+
+// ─── CMU ARPAbet → Viseme Mapping ───
+
+/**
+ * Map CMU ARPAbet phonemes (39 phonemes) to the 15-viseme system.
+ * ARPAbet is the standard phoneme set used by most TTS engines.
+ */
+const CMU_PHONEME_TO_VISEME: Record<string, Viseme> = {
+  // Stops
+  'B': 'PP', 'P': 'PP', 'M': 'PP',
+  'D': 'DD', 'T': 'DD', 'N': 'NN',
+  'G': 'KK', 'K': 'KK', 'NG': 'KK',
+  // Fricatives
+  'F': 'FF', 'V': 'FF',
+  'TH': 'TH', 'DH': 'TH',
+  'S': 'SS', 'Z': 'SS',
+  'SH': 'CH', 'ZH': 'CH',
+  'HH': 'IH',
+  // Affricates
+  'CH': 'CH', 'JH': 'CH',
+  // Approximants
+  'L': 'DD', 'R': 'RR', 'W': 'OO', 'Y': 'EE',
+  // Vowels
+  'AA': 'AA', 'AE': 'AA', 'AH': 'AA', 'AO': 'OH',
+  'AW': 'AA', 'AY': 'AA',
+  'EH': 'EE', 'ER': 'RR', 'EY': 'EE',
+  'IH': 'IH', 'IY': 'EE',
+  'OW': 'OH', 'OY': 'OH',
+  'UH': 'OO', 'UW': 'OO',
+  // Silence
+  'SIL': 'IDLE', 'SP': 'IDLE',
+};
+
+/**
+ * Generate a viseme track from phoneme timestamp data.
+ * Uses the CMU ARPAbet mapping for accurate phoneme-to-viseme conversion.
+ * Falls back to letter-based approximation if phoneme is unknown.
+ */
+export function generateVisemeTrackFromPhonemes(
+  timestamps: PhonemeTimestamp[],
+): VisemeKeyframe[] {
+  if (timestamps.length === 0) {
+    return [{ timeMs: 0, viseme: 'IDLE', weight: 1, durationMs: 0 }];
+  }
+
+  const keyframes: VisemeKeyframe[] = [];
+
+  for (const ts of timestamps) {
+    const phonemeUpper = ts.phoneme.toUpperCase().replace(/[0-9]/g, ''); // Strip stress markers
+    const viseme = CMU_PHONEME_TO_VISEME[phonemeUpper] ?? 'IH';
+    const durationMs = ts.endMs - ts.startMs;
+
+    keyframes.push({
+      timeMs: ts.startMs,
+      viseme,
+      weight: 1.0,
+      durationMs,
+    });
+  }
+
+  // Add trailing IDLE
+  const lastTs = timestamps[timestamps.length - 1]!;
+  keyframes.push({
+    timeMs: lastTs.endMs,
+    viseme: 'IDLE',
+    weight: 1.0,
+    durationMs: 0,
+  });
+
+  return keyframes;
+}

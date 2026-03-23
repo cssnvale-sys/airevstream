@@ -50,6 +50,7 @@ export interface DirectorInput {
     minDuration?: number;
     aspectRatio?: string;
   };
+  complexityMode?: 'simple' | 'advanced' | 'complex';
 }
 
 export interface DirectorOutput {
@@ -230,3 +231,5 @@ export interface AgentPipelineState {
   completedAt?: string;
   currentAgent?: AgentRole;
 }
+
+export type ComplexityMode = 'simple' | 'advanced' | 'complex';

@@ -5,6 +5,7 @@
  */
 
 import type { AgentConfig, AgentRole } from './agent-types.js';
+import type { ComplexityMode } from './agent-types.js';
 
 // ─── System Prompts ───
 
@@ -125,6 +126,43 @@ Output JSON with:
 
 Apply subtle corrections — avoid over-processing. Film grain adds character (15-30 for cinematic feel).
 Generate subtitles from dialogue tracks with proper timing. Use h264 for web, prores for archival.`;
+
+// ─── Mode-Specific Instructions ───
+
+const MODE_INSTRUCTIONS: Record<ComplexityMode, string> = {
+  simple: `\n\nCOMPLEXITY MODE: Simple
+Output essential fields only. Use preset defaults for LoRA, camera, audio.
+Do not include raw workflow parameters, ControlNet specs, or advanced generation settings.
+Focus on: concept, shots, timing, and basic camera. Skip technical implementation details.`,
+  advanced: `\n\nCOMPLEXITY MODE: Advanced
+Include camera, color grade, audio layers, and bounded generation parameters.
+Provide LoRA recommendations and basic ControlNet guidance where appropriate.
+Include seed policies and quality tier recommendations.`,
+  complex: `\n\nCOMPLEXITY MODE: Complex
+Include all fields with full technical detail, workflow references, seed policies,
+ControlNet configurations, repair specs, and VFX passes.
+Provide exact model names, step counts, CFG values, and sampler choices.`,
+};
+
+/** Fields to skip per mode — agents should omit these from output */
+const MODE_FIELD_SKIP: Record<ComplexityMode, string[]> = {
+  simple: ['generation', 'controlNets', 'upscale', 'refiner', 'vfx', 'postProcess', 'seedPolicy'],
+  advanced: ['vfx', 'refiner'],
+  complex: [],
+};
+
+/**
+ * Get an agent's system prompt with mode-specific instructions appended.
+ */
+export function getAgentPromptForMode(role: AgentRole, mode: ComplexityMode): string {
+  const config = AGENT_CONFIGS[role];
+  const modeInstructions = MODE_INSTRUCTIONS[mode];
+  const skipFields = MODE_FIELD_SKIP[mode];
+  const skipNote = skipFields.length > 0
+    ? `\nOmit these fields from output: ${skipFields.join(', ')}`
+    : '';
+  return config.systemPrompt + modeInstructions + skipNote;
+}
 
 // ─── Agent Configurations ───
 

@@ -233,6 +233,10 @@ export interface PromptBible {
   avoidTokens?: string;
   defaultSeedPolicy?: SeedPolicy;
   baseSeed?: number;
+  logline?: string;
+  slotRules?: Record<string, string[]>;
+  perCharacterBlocks?: Record<string, string[]>;
+  perEnvironmentBlocks?: Record<string, string[]>;
 }
 
 // ─── Cinema Pipeline Types ───
@@ -397,6 +401,13 @@ export interface ShotSpec {
     exaggeration?: number;
     characterId?: string;
   };
+
+  // --- Prompt & Script ---
+  promptSlots?: Record<string, string>;
+  dialogue?: string;
+  transition?: string;
+  beat?: string;
+  shotClass?: string;
 }
 
 // ─── WebSocket Event Types ───
@@ -413,4 +424,27 @@ export interface WebSocketPayload {
   event: WebSocketEvent;
   data: Record<string, unknown>;
   timestamp: string;
+}
+
+// ─── Asset Registry ───
+export interface AssetRegistryEntry {
+  id: string;
+  type: 'image' | 'video' | 'audio' | 'model' | 'lora' | 'workflow';
+  storageKey: string;
+  hash?: string;
+  version?: string;
+  metadata?: Record<string, unknown>;
+  contentId?: string;
+  shotId?: string;
+  createdAt: string;
+}
+
+// ─── Timestamped Script ───
+export interface TimestampedScript {
+  sections: Array<{
+    type: 'CAM' | 'ACTION' | 'DIALOGUE' | 'AUDIO' | 'VFX';
+    text: string;
+    startSec: number;
+    endSec: number;
+  }>;
 }

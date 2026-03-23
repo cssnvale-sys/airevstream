@@ -91,3 +91,39 @@ export function resolvePresets(
 
   return resolved as unknown as ShotSpec;
 }
+
+/**
+ * Get active ranges from the preset stack.
+ * Merges ranges from recipe presets and individual presets.
+ * Later presets override earlier ones for the same range key.
+ */
+export function getActiveRanges(
+  presets: Preset[],
+  recipe?: Recipe,
+  allPresets?: Preset[],
+): Record<string, { min: number; max: number }> {
+  const ranges: Record<string, { min: number; max: number }> = {};
+
+  // Layer 1: Recipe preset ranges
+  if (recipe && allPresets) {
+    for (const presetId of recipe.presetIds) {
+      const preset = allPresets.find((p) => p.id === presetId);
+      if (preset?.ranges) {
+        for (const [key, range] of Object.entries(preset.ranges)) {
+          ranges[key] = range;
+        }
+      }
+    }
+  }
+
+  // Layer 2: Individual preset ranges (override recipe)
+  for (const preset of presets) {
+    if (preset?.ranges) {
+      for (const [key, range] of Object.entries(preset.ranges)) {
+        ranges[key] = range;
+      }
+    }
+  }
+
+  return ranges;
+}

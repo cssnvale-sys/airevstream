@@ -7,8 +7,13 @@ export {
   CAMERA_PRESETS,
   AUDIO_PRESETS,
   OUTPUT_PRESETS,
+  PROJECT_PRESETS,
+  STORY_PRESETS,
+  DIALOGUE_PRESETS,
+  CONTINUITY_PRESETS,
+  EDIT_PRESETS,
   BUILT_IN_RECIPES,
 } from './built-in.js';
 
-export { resolvePresets } from './resolver.js';
+export { resolvePresets, getActiveRanges } from './resolver.js';
 export type { ResolveOptions } from './resolver.js';

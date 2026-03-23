@@ -195,6 +195,58 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
   return result;
 }
 
+// ─── Seasoning Pipeline ───
+
+export interface SeasoningPipelineParams {
+  cohortId: string;
+  tenantId: string;
+  emailAccountIds: string[];
+  platforms: string[];
+  staggerMinutes?: { min: number; max: number };
+}
+
+/**
+ * Start a seasoning pipeline for a cohort.
+ * Queues enrollment jobs with staggered delays per account+platform combination.
+ */
+export async function startSeasoningPipeline(params: SeasoningPipelineParams) {
+  const { cohortId, tenantId, emailAccountIds, platforms, staggerMinutes } = params;
+  const staggerMin = (staggerMinutes?.min ?? 1) * 60 * 1000;
+  const staggerMax = (staggerMinutes?.max ?? 5) * 60 * 1000;
+
+  // Import addJob dynamically to avoid circular dependency
+  const { addJob } = await import('./index.js');
+
+  const jobs: Promise<unknown>[] = [];
+  let index = 0;
+
+  for (const emailAccountId of emailAccountIds) {
+    for (const platform of platforms) {
+      const delay = index * (staggerMin + Math.floor(Math.random() * (staggerMax - staggerMin)));
+
+      jobs.push(
+        addJob('seasoning', 'seasoning:enroll', {
+          cohortId,
+          emailAccountId,
+          platform,
+          tenantId,
+        }, {
+          delay,
+          attempts: 2,
+          backoff: { type: 'exponential', delay: 30000 },
+        }),
+      );
+      index++;
+    }
+  }
+
+  const results = await Promise.allSettled(jobs);
+  const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+  const failed = results.filter((r) => r.status === 'rejected').length;
+
+  return { totalJobs: jobs.length, succeeded, failed };
+}
+
 export async function closeFlowProducer(): Promise<void> {
   if (_flowProducer) {
     await _flowProducer.close();

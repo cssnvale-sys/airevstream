@@ -1,0 +1,80 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "{{model|sd_xl_base_1.0.safetensors}}"
+    },
+    "_meta": {
+      "title": "Load SDXL Checkpoint"
+    }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "{{positive_prompt|cinematic establishing wide shot, 24mm wide angle lens, deep depth of field, dramatic lighting, environment, landscape, detailed background, professional cinematography, 4k quality}}",
+      "clip": ["1", 1]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Positive)"
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "{{negative_prompt|blurry, low quality, watermark, text, deformed, noisy, jpeg artifacts, close-up, portrait, indoor}}",
+      "clip": ["1", 1]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Negative)"
+    }
+  },
+  "4": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1280,
+      "height": 720,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "Empty Latent Image (1280x720 Wide)"
+    }
+  },
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["4", 0],
+      "seed": "{{seed|0}}",
+      "steps": 35,
+      "cfg": 8.0,
+      "sampler_name": "dpmpp_sde",
+      "scheduler": "karras",
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["5", 0],
+      "vae": ["1", 2]
+    },
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["6", 0],
+      "filename_prefix": "{{filename_prefix|establishing_wide}}"
+    },
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}

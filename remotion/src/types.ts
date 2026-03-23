@@ -211,6 +211,9 @@ export interface LongFormVideoProps {
   showLowerThird: boolean;
 }
 
+/** Still variant affecting layout */
+export type ThumbnailVariant = 'thumbnail' | 'title-card' | 'episode-cover' | 'social-promo';
+
 /** Props for ThumbnailRenderer (static image) */
 export interface ThumbnailProps {
   /** Main title text */
@@ -227,6 +230,8 @@ export interface ThumbnailProps {
   titleFontSize: number;
   /** Overlay text font size */
   overlayFontSize: number;
+  /** Still variant affecting layout (default: 'thumbnail') */
+  variant?: ThumbnailVariant;
 }
 
 // ─── Component Props ───

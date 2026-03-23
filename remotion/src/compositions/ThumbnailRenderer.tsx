@@ -3,17 +3,68 @@ import {
   AbsoluteFill,
   Img,
 } from 'remotion';
-import type { ThumbnailProps } from '../types';
+import type { ThumbnailProps, ThumbnailVariant } from '../types';
+
+// ─── Variant-Specific Style Configuration ───
+
+interface VariantStyle {
+  /** Multiplier applied to titleFontSize */
+  titleScale: number;
+  /** Multiplier applied to overlayFontSize */
+  overlayScale: number;
+  /** Whether to show the overlay text block */
+  showOverlay: boolean;
+  /** Whether to show the channel avatar badge */
+  showAvatar: boolean;
+  /** Optional badge text shown in top-right corner */
+  badgeText: string | null;
+  /** Optional subtitle text below the title */
+  subtitle: string | null;
+}
+
+const VARIANT_STYLES: Record<ThumbnailVariant, VariantStyle> = {
+  'thumbnail': {
+    titleScale: 1,
+    overlayScale: 1,
+    showOverlay: true,
+    showAvatar: true,
+    badgeText: null,
+    subtitle: null,
+  },
+  'title-card': {
+    titleScale: 1.4,
+    overlayScale: 1,
+    showOverlay: false,
+    showAvatar: true,
+    badgeText: 'TITLE CARD',
+    subtitle: 'EPISODE',
+  },
+  'episode-cover': {
+    titleScale: 1.15,
+    overlayScale: 1.1,
+    showOverlay: true,
+    showAvatar: true,
+    badgeText: null,
+    subtitle: null,
+  },
+  'social-promo': {
+    titleScale: 1.1,
+    overlayScale: 1.3,
+    showOverlay: true,
+    showAvatar: false,
+    badgeText: null,
+    subtitle: null,
+  },
+};
 
 /**
- * ThumbnailRenderer — Static 1280x720 composition for rendering thumbnails.
+ * ThumbnailRenderer — Static composition for rendering thumbnails and stills.
  *
- * Designed for YouTube and social media thumbnails. This is a still frame
- * composition (1 frame long) that renders a thumbnail image with:
- * - Background image with gradient overlay
- * - Large, eye-catching overlay text
- * - Title text
- * - Channel avatar/logo
+ * Supports multiple variants:
+ * - `thumbnail` (default): Standard 1280x720 YouTube thumbnail
+ * - `title-card`: Larger title, no overlay text, "EPISODE" subtitle, "TITLE CARD" badge
+ * - `episode-cover`: Medium title with episode number badge support
+ * - `social-promo`: Bolder overlay text, no avatar (square-friendly)
  *
  * Rendered as a still using `remotion still`.
  */
@@ -25,7 +76,12 @@ export const ThumbnailRenderer: React.FC<ThumbnailProps> = ({
   gradientColor,
   titleFontSize,
   overlayFontSize,
+  variant = 'thumbnail',
 }) => {
+  const style = VARIANT_STYLES[variant];
+  const scaledTitleSize = Math.round(titleFontSize * style.titleScale);
+  const scaledOverlaySize = Math.round(overlayFontSize * style.overlayScale);
+
   return (
     <AbsoluteFill
       style={{
@@ -60,25 +116,31 @@ export const ThumbnailRenderer: React.FC<ThumbnailProps> = ({
       />
 
       {/* Layer 4: Large overlay text (the attention grabber) */}
-      {overlayText && (
+      {style.showOverlay && overlayText && (
         <OverlayTextBlock
           text={overlayText}
-          fontSize={overlayFontSize}
+          fontSize={scaledOverlaySize}
         />
       )}
 
-      {/* Layer 5: Title text (lower portion) */}
+      {/* Layer 5: Variant badge (top-right corner) */}
+      {style.badgeText && (
+        <VariantBadge text={style.badgeText} />
+      )}
+
+      {/* Layer 6: Title text (lower portion) */}
       <TitleBlock
         title={title}
-        fontSize={titleFontSize}
+        fontSize={scaledTitleSize}
+        subtitle={style.subtitle}
       />
 
-      {/* Layer 6: Channel avatar */}
-      {channelAvatar && (
+      {/* Layer 7: Channel avatar */}
+      {style.showAvatar && channelAvatar && (
         <AvatarBadge src={channelAvatar} />
       )}
 
-      {/* Layer 7: Subtle border/frame */}
+      {/* Layer 8: Subtle border/frame */}
       <ThumbnailFrame />
     </AbsoluteFill>
   );
@@ -154,14 +216,50 @@ const OverlayTextBlock: React.FC<OverlayTextBlockProps> = ({ text, fontSize }) =
   );
 };
 
+// ─── Variant Badge (top-right corner) ───
+
+interface VariantBadgeProps {
+  text: string;
+}
+
+const VariantBadge: React.FC<VariantBadgeProps> = ({ text }) => (
+  <div
+    style={{
+      position: 'absolute',
+      top: 24,
+      right: 24,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      padding: '6px 16px',
+      borderRadius: 4,
+      backdropFilter: 'blur(8px)',
+      border: '1px solid rgba(255, 255, 255, 0.15)',
+      zIndex: 8,
+    }}
+  >
+    <span
+      style={{
+        fontSize: 14,
+        fontWeight: 700,
+        color: '#ffffff',
+        letterSpacing: 2,
+        fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+        textTransform: 'uppercase',
+      }}
+    >
+      {text}
+    </span>
+  </div>
+);
+
 // ─── Title Block ───
 
 interface TitleBlockProps {
   title: string;
   fontSize: number;
+  subtitle: string | null;
 }
 
-const TitleBlock: React.FC<TitleBlockProps> = ({ title, fontSize }) => (
+const TitleBlock: React.FC<TitleBlockProps> = ({ title, fontSize, subtitle }) => (
   <div
     style={{
       position: 'absolute',
@@ -193,6 +291,21 @@ const TitleBlock: React.FC<TitleBlockProps> = ({ title, fontSize }) => (
       >
         {title}
       </p>
+      {subtitle && (
+        <p
+          style={{
+            fontSize: Math.round(fontSize * 0.55),
+            fontWeight: 600,
+            color: 'rgba(255, 255, 255, 0.6)',
+            letterSpacing: 3,
+            fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+            margin: '6px 0 0 0',
+            textTransform: 'uppercase',
+          }}
+        >
+          {subtitle}
+        </p>
+      )}
     </div>
   </div>
 );

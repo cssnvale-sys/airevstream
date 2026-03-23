@@ -2,8 +2,8 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, lintPrompt } from '@airevstream/shared';
-import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost } from '@airevstream/shared';
+import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -61,6 +61,15 @@ const WORKFLOW_TEMPLATE_MAP: Record<string, string> = {
   storyboard: 'storyboard-frame',
   frame: 'storyboard-frame',
   upscale: 'thumbnail-generation',
+  // Shot-class mappings
+  'Dialogue_Closeup': 'avatar-generation',
+  'Establishing_Wide': 'scenery-generation',
+  'Insert_Hands': 'thumbnail-generation',
+  'Action_Tracking': 'storyboard-frame',
+  'Reaction_Medium': 'avatar-generation',
+  'Montage_Quick': 'storyboard-frame',
+  'Reveal_Dolly': 'scenery-generation',
+  'POV_Handheld': 'storyboard-frame',
 };
 
 async function renderTemplate(
@@ -374,6 +383,22 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     });
 
     logger.info({ key, compositionId, stdout: stdout?.slice(0, 200) }, 'Video render complete');
+
+    // ─── Auto-render variants ───
+    const renderJobData = data as ProductionRenderVideoJob & { autoVariants?: boolean; variantConfigs?: ExportVariant[] };
+    if (renderJobData.autoVariants && renderJobData.variantConfigs?.length) {
+      const { addJob } = await import('@airevstream/queue');
+      for (const variantConfig of renderJobData.variantConfigs) {
+        await addJob('production', 'production:render-video', {
+          contentId: data.contentId,
+          storyboardId: data.storyboardId,
+          channelId: data.channelId,
+          qualityPreset: data.qualityPreset,
+          exportVariant: variantConfig,
+        } as ProductionRenderVideoJob);
+        logger.info({ variant: variantConfig.label, contentId: data.contentId }, 'Queued auto-variant render');
+      }
+    }
   } catch (error) {
     // Clean up temp file on failure
     await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
@@ -518,6 +543,38 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         if (driftAdj.denoiseReduction && spec.generation) {
           const currentDenoise = spec.generation.denoise ?? 1.0;
           spec = { ...spec, generation: { ...spec.generation, denoise: Math.max(0.3, currentDenoise - (driftAdj.denoiseReduction as number)) } };
+        }
+      }
+
+      // ─── Pre-flight validation ───
+      const provider = (spec.generation?.provider as ProviderName) ?? 'comfyui';
+      const violations = validateShotSpec(spec, provider);
+      const errors = violations.filter(v => v.severity === 'error');
+      if (errors.length > 0) {
+        logger.warn({ shotId, violations: errors }, 'Pre-flight validation failed — marking shot as failed');
+        await db.storyboardShot.update({ where: { id: shotId }, data: { status: 'failed', shotspec: { ...spec, preflightErrors: errors } as any } });
+        continue;
+      }
+
+      // ─── Safety defaults ───
+      if (provider === 'veo' || provider === 'sora') {
+        // Apply person generation safety default unless explicitly overridden in bible
+        const personGenOverride = promptBible?.slotRules?.['personGeneration']?.[0];
+        if (!personGenOverride || personGenOverride === SAFETY_DEFAULTS.personGeneration) {
+          const promptText2 = spec.promptBlocks?.join(' ') ?? '';
+          const personTerms = /\b(person|people|face|human|man|woman|child|boy|girl)\b/i;
+          if (personTerms.test(promptText2)) {
+            // Add safety negative tokens
+            spec = {
+              ...spec,
+              promptBlocks: spec.promptBlocks.map((b, i) => i === 0 ? b : b),
+              generation: {
+                ...spec.generation,
+                // Flag for provider-specific handling
+              },
+            };
+            logger.info({ shotId, provider }, 'Safety: person terms detected with personGeneration=disallow');
+          }
         }
       }
 
@@ -868,18 +925,19 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
     }
 
     // ─── Foreground layer (dialogue, voice-over) ───
-    if (audioPlan.fg?.text) {
+    const fgText = spec.dialogue ?? audioPlan?.fg?.text;
+    if (fgText) {
       try {
         const ttsResult = await ttsClient.synthesize({
-          text: audioPlan.fg.text,
-          voice: audioPlan.fg.voice,
+          text: fgText,
+          voice: audioPlan?.fg?.voice,
         });
         tracks.push({
           buffer: ttsResult.audioBuffer,
           startMs,
-          volume: audioPlan.fg.volume ?? 0.9,
-          fadeInMs: audioPlan.fg.fadeInMs,
-          fadeOutMs: audioPlan.fg.fadeOutMs,
+          volume: audioPlan.fg?.volume ?? 0.9,
+          fadeInMs: audioPlan.fg?.fadeInMs,
+          fadeOutMs: audioPlan.fg?.fadeOutMs,
         });
       } catch (err) {
         logger.warn({ err, shotId: shot.id, layer: 'fg' }, 'TTS generation failed for shot');

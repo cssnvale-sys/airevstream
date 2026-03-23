@@ -23,10 +23,11 @@ model Tenant {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  users         User[]
-  emailAccounts EmailAccount[]
-  subscriptions Subscription[]
-  apiKeys       ApiKey[]
+  users            User[]
+  emailAccounts    EmailAccount[]
+  subscriptions    Subscription[]
+  apiKeys          ApiKey[]
+  seasoningCohorts SeasoningCohort[]
 
   @@map("tenants")
 }
@@ -78,8 +79,9 @@ model EmailAccount {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant         Tenant?          @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  socialAccounts SocialAccount[]
+  tenant               Tenant?               @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  socialAccounts       SocialAccount[]
+  seasoningEnrollments SeasoningEnrollment[]
 
   @@index([tenantId])
   @@map("email_accounts")
@@ -100,9 +102,10 @@ model SocialAccount {
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  emailAccount EmailAccount @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
-  channels     Channel[]
-  postings     ScheduledPost[]
+  emailAccount         EmailAccount          @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  channels             Channel[]
+  postings             ScheduledPost[]
+  seasoningEnrollments SeasoningEnrollment[]
 
   @@unique([emailAccountId, platform])
   @@index([emailAccountId])
@@ -881,4 +884,63 @@ model ApiKey {
 
   @@index([tenantId])
   @@map("api_keys")
+}
+
+// ============================================================
+// ACCOUNT SEASONING PIPELINE
+// ============================================================
+
+model SeasoningCohort {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  name              String    @db.VarChar(255)
+  status            String    @default("pending") @db.VarChar(20) // pending, enrolling, active, paused, completed
+  platforms         String[]  @default([])
+  scheduleConfig    Json      @default("{}") @map("schedule_config") @db.JsonB
+  proxyConfig       Json      @default("{}") @map("proxy_config") @db.JsonB
+  totalAccounts     Int       @default(0) @map("total_accounts")
+  completedAccounts Int       @default(0) @map("completed_accounts")
+  failedAccounts    Int       @default(0) @map("failed_accounts")
+  startedAt         DateTime? @map("started_at") @db.Timestamptz
+  completedAt       DateTime? @map("completed_at") @db.Timestamptz
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments SeasoningEnrollment[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("seasoning_cohorts")
+}
+
+model SeasoningEnrollment {
+  id                  String    @id @default(uuid()) @db.Uuid
+  cohortId            String    @map("cohort_id") @db.Uuid
+  emailAccountId      String    @map("email_account_id") @db.Uuid
+  socialAccountId     String?   @map("social_account_id") @db.Uuid
+  platform            String    @db.VarChar(20)
+  status              String    @default("pending") @db.VarChar(20) // pending, signing_up, needs_human, phase_1..4, seasoned, failed, graduated, paused
+  currentPhase        String?   @map("current_phase") @db.VarChar(20)
+  phaseStartedAt      DateTime? @map("phase_started_at") @db.Timestamptz
+  proxyServer         String?   @map("proxy_server") @db.VarChar(255)
+  fingerprintId       String?   @map("fingerprint_id") @db.VarChar(100)
+  activitiesCompleted Int       @default(0) @map("activities_completed")
+  lastActivityAt      DateTime? @map("last_activity_at") @db.Timestamptz
+  nextScheduledAt     DateTime? @map("next_scheduled_at") @db.Timestamptz
+  failureCount        Int       @default(0) @map("failure_count")
+  failureReason       String?   @map("failure_reason")
+  activityLog         Json      @default("[]") @map("activity_log") @db.JsonB
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  cohort       SeasoningCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  emailAccount EmailAccount    @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  socialAccount SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
+
+  @@unique([cohortId, emailAccountId, platform])
+  @@index([status])
+  @@index([nextScheduledAt])
+  @@index([cohortId])
+  @@map("seasoning_enrollments")
 }

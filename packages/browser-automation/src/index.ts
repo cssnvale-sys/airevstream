@@ -28,6 +28,16 @@ export { HumanBehavior } from './human-behavior.js';
 export { ProxyManager } from './proxy-manager.js';
 export { SessionManager } from './session-manager.js';
 
+// ─── Seasoning Infrastructure ───
+export { AccountProxyPinning } from './account-proxy-pinning.js';
+export { FingerprintStore } from './fingerprint-store.js';
+
+// ─── External Service Stubs ───
+export { CaptchaSolver } from './captcha-solver.js';
+export type { CaptchaInfo, CaptchaSolveResult } from './captcha-solver.js';
+export { SmsVerifier } from './sms-verifier.js';
+export type { SmsActivation } from './sms-verifier.js';
+
 // ─── Platform Workflows ───
 export {
   BasePlatformWorkflow,

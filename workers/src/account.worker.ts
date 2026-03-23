@@ -1,6 +1,15 @@
-import { createWorker, type AccountCreateJob, type AccountSyncJob, type AccountHealthCheckJob, type AccountWarmJob } from '@airevstream/queue';
+import {
+  createWorker, getQueue,
+  type AccountCreateJob, type AccountSyncJob, type AccountHealthCheckJob, type AccountWarmJob,
+  type SeasoningEnrollJob, type SeasoningSignupJob, type SeasoningWarmJob, type SeasoningCheckJob, type SeasoningGraduateJob,
+} from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
-import { createLogger } from '@airevstream/shared';
+import {
+  createLogger,
+  determineNextAction, calculateNextSessionTime, selectActivitiesForSession, assessRisk,
+  DEFAULT_SEASONING_SCHEDULE, SEASONING_RISK_THRESHOLDS, getNextPhase,
+  type SeasoningPhase, type ActivityLogEntry,
+} from '@airevstream/shared';
 import { decrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import type { Job } from 'bullmq';
@@ -10,6 +19,8 @@ let BrowserContextManager: typeof import('@airevstream/browser-automation').Brow
 let SessionManager: typeof import('@airevstream/browser-automation').SessionManager | null = null;
 let ProxyManager: typeof import('@airevstream/browser-automation').ProxyManager | null = null;
 let createWorkflow: typeof import('@airevstream/browser-automation').createWorkflow | null = null;
+let AccountProxyPinning: typeof import('@airevstream/browser-automation').AccountProxyPinning | null = null;
+let FingerprintStore: typeof import('@airevstream/browser-automation').FingerprintStore | null = null;
 
 async function loadBrowserAutomation() {
   if (!BrowserContextManager) {
@@ -19,6 +30,8 @@ async function loadBrowserAutomation() {
       SessionManager = mod.SessionManager;
       ProxyManager = mod.ProxyManager;
       createWorkflow = mod.createWorkflow;
+      AccountProxyPinning = mod.AccountProxyPinning;
+      FingerprintStore = mod.FingerprintStore;
       return true;
     } catch (err) {
       logger.warn({ err }, 'Browser automation package not available — using placeholder mode');
@@ -55,7 +68,7 @@ function decryptCredential(encrypted: string): string {
   return decrypt(encrypted, config.ENCRYPTION_KEY);
 }
 
-async function processAccountJob(job: Job<AccountCreateJob | AccountSyncJob | AccountHealthCheckJob | AccountWarmJob>) {
+async function processAccountJob(job: Job) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing account job');
 
   if (job.name === 'account:create') {
@@ -69,6 +82,23 @@ async function processAccountJob(job: Job<AccountCreateJob | AccountSyncJob | Ac
   }
   if (job.name === 'account:warm') {
     return handleWarm(job.data as AccountWarmJob, job);
+  }
+
+  // ─── Seasoning Pipeline Jobs ───
+  if (job.name === 'seasoning:enroll') {
+    return handleSeasoningEnroll(job.data as SeasoningEnrollJob);
+  }
+  if (job.name === 'seasoning:signup') {
+    return handleSeasoningSignup(job.data as SeasoningSignupJob);
+  }
+  if (job.name === 'seasoning:warm') {
+    return handleSeasoningWarm(job.data as SeasoningWarmJob);
+  }
+  if (job.name === 'seasoning:check-due') {
+    return handleSeasoningCheckDue();
+  }
+  if (job.name === 'seasoning:graduate') {
+    return handleSeasoningGraduate(job.data as SeasoningGraduateJob);
   }
 
   logger.warn({ jobName: job.name }, 'Unknown job name');
@@ -443,6 +473,483 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
   return { socialAccountId: data.socialAccountId, status: 'warmed', durationMinutes };
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SEASONING PIPELINE HANDLERS
+// ═══════════════════════════════════════════════════════════════════
+
+async function handleSeasoningEnroll(data: SeasoningEnrollJob) {
+  const db = getDb();
+  logger.info({ cohortId: data.cohortId, emailAccountId: data.emailAccountId, platform: data.platform }, 'Enrolling account in seasoning');
+
+  // Create enrollment record
+  const enrollment = await db.seasoningEnrollment.create({
+    data: {
+      cohortId: data.cohortId,
+      emailAccountId: data.emailAccountId,
+      platform: data.platform,
+      status: 'pending',
+    },
+  });
+
+  // Update cohort account count
+  await db.seasoningCohort.update({
+    where: { id: data.cohortId },
+    data: { totalAccounts: { increment: 1 } },
+  });
+
+  // Queue the signup job
+  const queue = getQueue('seasoning');
+  await queue.add('seasoning:signup', {
+    enrollmentId: enrollment.id,
+    emailAccountId: data.emailAccountId,
+    platform: data.platform,
+    tenantId: data.tenantId,
+  } as any, {
+    delay: Math.floor(Math.random() * 5 * 60 * 1000), // Random 0-5 min stagger
+    attempts: 2,
+    backoff: { type: 'exponential', delay: 60000 },
+  });
+
+  logger.info({ enrollmentId: enrollment.id }, 'Seasoning enrollment created, signup queued');
+  return { enrollmentId: enrollment.id };
+}
+
+async function handleSeasoningSignup(data: SeasoningSignupJob) {
+  const db = getDb();
+  const automationAvailable = await loadBrowserAutomation();
+
+  const enrollment = await db.seasoningEnrollment.findUnique({
+    where: { id: data.enrollmentId },
+    include: { emailAccount: true },
+  });
+
+  if (!enrollment) {
+    logger.warn({ enrollmentId: data.enrollmentId }, 'Seasoning enrollment not found');
+    return;
+  }
+
+  // Mark as signing up
+  await db.seasoningEnrollment.update({
+    where: { id: data.enrollmentId },
+    data: { status: 'signing_up' },
+  });
+
+  if (!automationAvailable || !createWorkflow || !BrowserContextManager) {
+    logger.error({ enrollmentId: data.enrollmentId }, 'Browser automation unavailable for signup');
+    await db.seasoningEnrollment.update({
+      where: { id: data.enrollmentId },
+      data: {
+        status: 'failed',
+        failureCount: { increment: 1 },
+        failureReason: 'Browser automation unavailable',
+      },
+    });
+    throw new Error('Browser automation required for seasoning signup');
+  }
+
+  const mgr = await getBrowserManager();
+  if (!mgr) {
+    await db.seasoningEnrollment.update({
+      where: { id: data.enrollmentId },
+      data: { status: 'failed', failureReason: 'Browser manager init failed' },
+    });
+    return;
+  }
+
+  // Use fingerprint store for consistent browser profile
+  let fingerprintConfig = undefined;
+  if (FingerprintStore) {
+    const fpStore = new FingerprintStore();
+    fingerprintConfig = fpStore.generateFingerprint(data.enrollmentId);
+  }
+
+  const contextEntry = await mgr.createContext({
+    headless: true,
+    viewport: fingerprintConfig?.screenResolution ?? { width: 1920, height: 1080 },
+    fingerprint: fingerprintConfig,
+  } as any);
+
+  try {
+    const workflow = createWorkflow(data.platform as any, contextEntry.context);
+    const password = decryptCredential(enrollment.emailAccount.passwordEnc);
+
+    const result = await workflow.createAccount({
+      email: enrollment.emailAccount.email,
+      password,
+      platform: data.platform as any,
+    });
+
+    if (result.needsHuman) {
+      await db.seasoningEnrollment.update({
+        where: { id: data.enrollmentId },
+        data: { status: 'needs_human', failureReason: result.humanTaskDescription ?? 'Manual verification needed' },
+      });
+      logger.info({ enrollmentId: data.enrollmentId, platform: data.platform }, 'Signup needs human intervention');
+      return { status: 'needs_human' };
+    }
+
+    if (result.success) {
+      // Create social account and link to enrollment
+      const social = await db.socialAccount.create({
+        data: {
+          emailAccountId: data.emailAccountId,
+          platform: data.platform,
+          status: 'active',
+        },
+      });
+
+      const now = new Date();
+      await db.seasoningEnrollment.update({
+        where: { id: data.enrollmentId },
+        data: {
+          socialAccountId: social.id,
+          status: 'phase_1',
+          currentPhase: 'phase_1',
+          phaseStartedAt: now,
+          fingerprintId: data.enrollmentId, // Use enrollment ID as fingerprint seed
+          nextScheduledAt: calculateNextSessionTime(
+            { ...enrollment, status: 'phase_1', currentPhase: 'phase_1', phaseStartedAt: now, activityLog: [], createdAt: enrollment.createdAt } as any,
+            DEFAULT_SEASONING_SCHEDULE.phases.phase_1,
+          ),
+        },
+      });
+
+      logger.info({ enrollmentId: data.enrollmentId, socialAccountId: social.id }, 'Signup successful, entering phase_1');
+      return { status: 'phase_1', socialAccountId: social.id };
+    }
+
+    // Signup failed
+    await db.seasoningEnrollment.update({
+      where: { id: data.enrollmentId },
+      data: {
+        status: 'failed',
+        failureCount: { increment: 1 },
+        failureReason: result.error ?? 'Signup failed',
+      },
+    });
+    return { status: 'failed' };
+  } catch (err) {
+    logger.error({ err, enrollmentId: data.enrollmentId }, 'Seasoning signup automation failed');
+    await db.seasoningEnrollment.update({
+      where: { id: data.enrollmentId },
+      data: {
+        status: 'failed',
+        failureCount: { increment: 1 },
+        failureReason: String(err),
+      },
+    });
+    throw err;
+  } finally {
+    await mgr.closeContext(contextEntry.id).catch((closeErr) => logger.error({ closeErr }, 'Failed to close context'));
+  }
+}
+
+async function handleSeasoningWarm(data: SeasoningWarmJob) {
+  const db = getDb();
+  const automationAvailable = await loadBrowserAutomation();
+
+  const enrollment = await db.seasoningEnrollment.findUnique({
+    where: { id: data.enrollmentId },
+    include: { emailAccount: true, socialAccount: true },
+  });
+
+  if (!enrollment || !enrollment.socialAccount) {
+    logger.warn({ enrollmentId: data.enrollmentId }, 'Enrollment or social account not found');
+    return;
+  }
+
+  // Risk check before warming
+  const activityLog = (Array.isArray(enrollment.activityLog) ? enrollment.activityLog : []) as unknown as ActivityLogEntry[];
+  const risk = assessRisk({
+    ...enrollment,
+    activityLog,
+    status: enrollment.status as any,
+  });
+
+  if (risk.level === 'high') {
+    logger.warn({ enrollmentId: data.enrollmentId, riskScore: risk.score, factors: risk.factors }, 'High risk — pausing enrollment');
+    await db.seasoningEnrollment.update({
+      where: { id: data.enrollmentId },
+      data: { status: 'paused', failureReason: `High risk: ${risk.factors.join(', ')}` },
+    });
+    return { status: 'paused', risk };
+  }
+
+  // Determine current phase config
+  const phaseKey = (data.phase || enrollment.currentPhase || 'phase_1') as 'phase_1' | 'phase_2' | 'phase_3' | 'phase_4';
+  const phaseConfig = DEFAULT_SEASONING_SCHEDULE.phases[phaseKey];
+  if (!phaseConfig) {
+    logger.warn({ enrollmentId: data.enrollmentId, phase: phaseKey }, 'Unknown phase');
+    return;
+  }
+
+  // Select activities for this session
+  const selectedActivities = selectActivitiesForSession(phaseKey as SeasoningPhase, phaseConfig);
+  const durationMinutes = Math.floor(
+    phaseConfig.minSessionMinutes + Math.random() * (phaseConfig.maxSessionMinutes - phaseConfig.minSessionMinutes),
+  );
+
+  let success = false;
+  let warmError: string | undefined;
+
+  if (automationAvailable && createWorkflow && BrowserContextManager) {
+    const mgr = await getBrowserManager();
+    const sessMgr = await getSessionManager();
+    if (mgr) {
+      // Use persistent fingerprint
+      let fingerprintConfig = undefined;
+      if (FingerprintStore && enrollment.fingerprintId) {
+        const fpStore = new FingerprintStore();
+        fingerprintConfig = fpStore.generateFingerprint(enrollment.fingerprintId);
+      }
+
+      const contextEntry = await mgr.createContext({
+        headless: true,
+        viewport: fingerprintConfig?.screenResolution ?? { width: 1920, height: 1080 },
+        fingerprint: fingerprintConfig,
+      } as any);
+
+      try {
+        // Restore session
+        if (sessMgr?.hasSession(data.socialAccountId, enrollment.socialAccount.platform as any)) {
+          await sessMgr.loadSession(data.socialAccountId, enrollment.socialAccount.platform as any, contextEntry.context);
+        }
+
+        const workflow = createWorkflow(data.platform as any, contextEntry.context);
+
+        // Login if no session
+        if (!sessMgr?.hasSession(data.socialAccountId, enrollment.socialAccount.platform as any)) {
+          const password = decryptCredential(enrollment.emailAccount.passwordEnc);
+          await workflow.login({
+            email: enrollment.emailAccount.email,
+            password,
+            platform: data.platform as any,
+          });
+        }
+
+        const warmResult = await workflow.warmAccount({
+          platform: data.platform as any,
+          durationMinutes,
+          activities: selectedActivities,
+          intensity: phaseConfig.intensity,
+        });
+
+        // Save session
+        if (sessMgr) {
+          await sessMgr.saveSession(data.socialAccountId, data.platform as any, contextEntry.context);
+        }
+
+        success = !warmResult.flagged;
+
+        if (warmResult.flagged) {
+          warmError = 'Account flagged during warming';
+        }
+      } catch (err) {
+        logger.error({ err, enrollmentId: data.enrollmentId }, 'Seasoning warm automation failed');
+        warmError = String(err);
+      } finally {
+        await mgr.closeContext(contextEntry.id).catch((closeErr) => logger.error({ closeErr }, 'Failed to close context'));
+      }
+    }
+  } else {
+    // No automation — can't warm
+    warmError = 'Browser automation unavailable';
+  }
+
+  // Log activity
+  const logEntry: ActivityLogEntry = {
+    timestamp: new Date().toISOString(),
+    phase: phaseKey as SeasoningPhase,
+    activities: selectedActivities,
+    durationMs: durationMinutes * 60 * 1000,
+    success,
+    error: warmError,
+  };
+
+  const updatedLog = [...activityLog, logEntry];
+
+  // Check phase advancement
+  let newStatus = enrollment.status;
+  let newPhase = enrollment.currentPhase;
+  let phaseStartedAt = enrollment.phaseStartedAt;
+
+  if (success) {
+    const enrollForCheck = {
+      ...enrollment,
+      activityLog: updatedLog,
+      activitiesCompleted: enrollment.activitiesCompleted + selectedActivities.length,
+      status: enrollment.status as any,
+    };
+
+    const shouldAdvance = enrollment.phaseStartedAt &&
+      (new Date().getTime() - new Date(enrollment.phaseStartedAt).getTime()) / (1000 * 60 * 60 * 24) >= phaseConfig.durationDays;
+
+    if (shouldAdvance) {
+      const nextPhase = getNextPhase(phaseKey as SeasoningPhase);
+      if (nextPhase && nextPhase !== 'seasoned') {
+        newStatus = nextPhase;
+        newPhase = nextPhase;
+        phaseStartedAt = new Date();
+        logger.info({ enrollmentId: data.enrollmentId, from: phaseKey, to: nextPhase }, 'Phase advanced');
+      } else if (nextPhase === 'seasoned') {
+        newStatus = 'seasoned';
+        newPhase = 'seasoned';
+        logger.info({ enrollmentId: data.enrollmentId }, 'Account seasoned — ready for graduation');
+      }
+    }
+  }
+
+  // Calculate next session time
+  const currentPhaseConfig = newPhase && newPhase !== 'seasoned'
+    ? DEFAULT_SEASONING_SCHEDULE.phases[newPhase as 'phase_1' | 'phase_2' | 'phase_3' | 'phase_4']
+    : phaseConfig;
+
+  const nextScheduledAt = calculateNextSessionTime(
+    { ...enrollment, activityLog: updatedLog, status: newStatus as any } as any,
+    currentPhaseConfig,
+  );
+
+  await db.seasoningEnrollment.update({
+    where: { id: data.enrollmentId },
+    data: {
+      status: newStatus,
+      currentPhase: newPhase,
+      phaseStartedAt,
+      activitiesCompleted: { increment: selectedActivities.length },
+      lastActivityAt: new Date(),
+      nextScheduledAt,
+      failureCount: success ? 0 : { increment: 1 },
+      failureReason: warmError ?? null,
+      activityLog: updatedLog as any,
+    },
+  });
+
+  logger.info({
+    enrollmentId: data.enrollmentId,
+    phase: phaseKey,
+    activities: selectedActivities.length,
+    success,
+    nextScheduledAt: nextScheduledAt.toISOString(),
+  }, 'Seasoning warm completed');
+
+  return { status: newStatus, success, nextScheduledAt };
+}
+
+async function handleSeasoningCheckDue() {
+  const db = getDb();
+  const now = new Date();
+
+  // Find enrollments due for their next session
+  const dueEnrollments = await db.seasoningEnrollment.findMany({
+    where: {
+      nextScheduledAt: { lte: now },
+      status: { in: ['phase_1', 'phase_2', 'phase_3', 'phase_4'] },
+    },
+    include: { cohort: true },
+    take: 20, // Process in batches
+  });
+
+  if (dueEnrollments.length === 0) {
+    logger.debug('No seasoning enrollments due');
+    return { processed: 0 };
+  }
+
+  logger.info({ count: dueEnrollments.length }, 'Processing due seasoning enrollments');
+  const queue = getQueue('seasoning');
+
+  for (let i = 0; i < dueEnrollments.length; i++) {
+    const enrollment = dueEnrollments[i];
+    if (!enrollment.socialAccountId) continue;
+
+    // Stagger jobs with random delays to avoid burst
+    const staggerMs = i * (30 + Math.floor(Math.random() * 60)) * 1000; // 30-90s between jobs
+
+    await queue.add('seasoning:warm', {
+      enrollmentId: enrollment.id,
+      socialAccountId: enrollment.socialAccountId,
+      platform: enrollment.platform,
+      phase: enrollment.currentPhase ?? 'phase_1',
+      tenantId: enrollment.cohort.tenantId,
+    } as any, {
+      delay: staggerMs,
+      attempts: 2,
+      backoff: { type: 'exponential', delay: 30000 },
+    });
+  }
+
+  // Also check for enrollments that have been 'seasoned' and ready for graduation
+  const seasonedEnrollments = await db.seasoningEnrollment.findMany({
+    where: { status: 'seasoned' },
+    take: 10,
+  });
+
+  for (const enrollment of seasonedEnrollments) {
+    if (!enrollment.socialAccountId) continue;
+    await queue.add('seasoning:graduate', {
+      enrollmentId: enrollment.id,
+      socialAccountId: enrollment.socialAccountId,
+    } as any);
+  }
+
+  return { processed: dueEnrollments.length, graduated: seasonedEnrollments.length };
+}
+
+async function handleSeasoningGraduate(data: SeasoningGraduateJob) {
+  const db = getDb();
+
+  const enrollment = await db.seasoningEnrollment.findUnique({
+    where: { id: data.enrollmentId },
+    include: { cohort: true },
+  });
+
+  if (!enrollment) {
+    logger.warn({ enrollmentId: data.enrollmentId }, 'Enrollment not found for graduation');
+    return;
+  }
+
+  // Transition to graduated
+  await db.seasoningEnrollment.update({
+    where: { id: data.enrollmentId },
+    data: {
+      status: 'graduated',
+      nextScheduledAt: null,
+    },
+  });
+
+  // Mark social account as fully active
+  if (data.socialAccountId) {
+    await db.socialAccount.update({
+      where: { id: data.socialAccountId },
+      data: { status: 'active' },
+    });
+  }
+
+  // Update cohort completion count
+  await db.seasoningCohort.update({
+    where: { id: enrollment.cohortId },
+    data: { completedAccounts: { increment: 1 } },
+  });
+
+  // Check if entire cohort is done
+  const remaining = await db.seasoningEnrollment.count({
+    where: {
+      cohortId: enrollment.cohortId,
+      status: { notIn: ['graduated', 'failed'] },
+    },
+  });
+
+  if (remaining === 0) {
+    await db.seasoningCohort.update({
+      where: { id: enrollment.cohortId },
+      data: { status: 'completed', completedAt: new Date() },
+    });
+    logger.info({ cohortId: enrollment.cohortId }, 'Seasoning cohort fully completed');
+  }
+
+  logger.info({ enrollmentId: data.enrollmentId, socialAccountId: data.socialAccountId }, 'Account graduated from seasoning');
+  return { status: 'graduated' };
+}
+
 export function startAccountWorker() {
   const worker = createWorker('account', processAccountJob, { concurrency: 3 });
 
@@ -455,5 +962,28 @@ export function startAccountWorker() {
   });
 
   logger.info('Account worker started');
+  return worker;
+}
+
+export function startSeasoningWorker() {
+  const worker = createWorker('seasoning', processAccountJob as any, { concurrency: 3 });
+
+  worker.on('completed', (job) => {
+    logger.info({ jobId: job.id }, 'Seasoning job completed');
+  });
+
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'Seasoning job failed');
+  });
+
+  // Register repeatable check-due job (every 15 minutes)
+  const queue = getQueue('seasoning');
+  queue.add('seasoning:check-due', { _trigger: 'repeatable' } as any, {
+    repeat: { every: 15 * 60 * 1000 }, // 15 minutes
+    removeOnComplete: 10,
+    removeOnFail: 50,
+  }).catch((err) => logger.error({ err }, 'Failed to register seasoning:check-due repeatable job'));
+
+  logger.info('Seasoning worker started');
   return worker;
 }

@@ -13,6 +13,10 @@ export const PresetFamilySchema = z.enum([
   'audio',
   'edit',
   'output',
+  'project',
+  'story',
+  'dialogue',
+  'continuity',
 ]);
 export type PresetFamily = z.infer<typeof PresetFamilySchema>;
 
@@ -28,6 +32,10 @@ export const PresetSchema = z.object({
   builtIn: z.boolean().default(false),
   /** Partial ShotSpec overrides that this preset applies */
   overrides: z.record(z.unknown()),
+  /** Complexity tier visibility — which modes can see this preset */
+  tier: z.enum(['simple', 'advanced', 'complex']).optional(),
+  /** Constrained ranges for numeric overrides */
+  ranges: z.record(z.object({ min: z.number(), max: z.number() })).optional(),
 });
 
 export type Preset = z.infer<typeof PresetSchema>;

@@ -172,10 +172,20 @@ export function startMaintenanceWorker() {
     logger.error({ jobId: job?.id, err }, 'Maintenance job failed');
   });
 
-  // Set up daily backup job
+  // Set up repeatable jobs
   const maintenanceQueue = getQueue('maintenance');
   maintenanceQueue.add('maintenance:backup', { target: 'database' } as any, {
     repeat: { every: 24 * 60 * 60 * 1000 }, // every 24 hours
+    removeOnComplete: true,
+    removeOnFail: 10,
+  });
+  maintenanceQueue.add('maintenance:cleanup', { olderThanDays: 30 } as any, {
+    repeat: { every: 7 * 24 * 60 * 60 * 1000 }, // every 7 days
+    removeOnComplete: true,
+    removeOnFail: 10,
+  });
+  maintenanceQueue.add('maintenance:metrics', {} as any, {
+    repeat: { every: 5 * 60 * 1000 }, // every 5 minutes
     removeOnComplete: true,
     removeOnFail: 10,
   });

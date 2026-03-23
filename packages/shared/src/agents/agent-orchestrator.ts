@@ -11,6 +11,7 @@ import type {
   AgentTask,
   AgentPipelineState,
   AgentTaskStatus,
+  ComplexityMode,
   DirectorInput,
   DirectorOutput,
   LookDevInput,
@@ -26,7 +27,7 @@ import type {
   FinishingInput,
   FinishingOutput,
 } from './agent-types.js';
-import { AGENT_CONFIGS, getExecutionOrder } from './agent-prompts.js';
+import { AGENT_CONFIGS, getExecutionOrder, getAgentPromptForMode } from './agent-prompts.js';
 
 // ─── Agent Runner Interface ───
 
@@ -85,6 +86,7 @@ export interface OrchestratorOptions {
   runner: AgentRunner;
   qcGate?: QCGate;
   maxRetries?: number;
+  complexityMode?: ComplexityMode;
   onTaskUpdate?: (role: AgentRole, task: AgentTask) => void;
 }
 
@@ -102,12 +104,14 @@ export class AgentOrchestrator {
   private runner: AgentRunner;
   private qcGate: QCGate;
   private maxRetries: number;
+  private complexityMode: ComplexityMode;
   private onTaskUpdate?: (role: AgentRole, task: AgentTask) => void;
 
   constructor(options: OrchestratorOptions) {
     this.runner = options.runner;
     this.qcGate = options.qcGate ?? new DefaultQCGate();
     this.maxRetries = options.maxRetries ?? 2;
+    this.complexityMode = options.complexityMode ?? 'advanced';
     this.onTaskUpdate = options.onTaskUpdate;
   }
 
@@ -161,6 +165,11 @@ export class AgentOrchestrator {
               state.completedAt = new Date().toISOString();
               return state;
             }
+
+            // In simple mode, skip non-critical agent failures gracefully
+            if (this.complexityMode === 'simple' && !['director', 'shotspec', 'render'].includes(role)) {
+              state.tasks[role].status = 'skipped';
+            }
           }
         }
       }
@@ -199,7 +208,8 @@ export class AgentOrchestrator {
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
-        const output = await this.runner.run(role, config.systemPrompt, agentInput);
+        const prompt = getAgentPromptForMode(role, this.complexityMode);
+        const output = await this.runner.run(role, prompt, agentInput);
 
         // QC gate check if configured
         if (config.qcGateAfter) {

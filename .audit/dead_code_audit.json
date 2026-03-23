@@ -1,0 +1,376 @@
+{
+  "audit_date": "2026-03-23",
+  "audit_agent": "Agent D — Dead Code & Import Resolver",
+  "summary": {
+    "unused_exports_count": 39,
+    "broken_imports_count": 0,
+    "circular_dependencies_count": 1,
+    "unreachable_code_count": 1,
+    "unused_components_count": 0,
+    "unused_hooks_count": 2,
+    "orphaned_files_count": 2,
+    "notes": "All React components are consumed. Main issues are unused package-level exports (functions/types exported but never imported by consumers) and two orphaned utility files."
+  },
+  "unused_exports": [
+    {
+      "file": "packages/crypto/src/index.ts",
+      "export_name": "generateKey",
+      "type": "function",
+      "note": "Exported but only referenced in its own test file. No consumer imports it."
+    },
+    {
+      "file": "packages/storage/src/index.ts",
+      "export_name": "resetStorageClient",
+      "type": "function",
+      "note": "Only referenced in its own test file."
+    },
+    {
+      "file": "packages/storage/src/index.ts",
+      "export_name": "uploadStream",
+      "type": "function",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/storage/src/index.ts",
+      "export_name": "getPresignedPutUrl",
+      "type": "function",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/storage/src/index.ts",
+      "export_name": "getObjectStat",
+      "type": "function",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/db/src/index.ts",
+      "export_name": "disconnectDb",
+      "type": "function",
+      "note": "Only referenced in its own test file. No production consumer calls it."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "getAiClient",
+      "type": "function",
+      "note": "Deprecated legacy export. Only referenced in its own test file."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "resetAiClient",
+      "type": "function",
+      "note": "Deprecated legacy export. Only referenced in its own test file."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "streamText",
+      "type": "function",
+      "note": "Deprecated legacy export. Only referenced in its own test file."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "listModels",
+      "type": "function",
+      "note": "Deprecated legacy export. Only referenced in its own test file. Wraps OllamaProvider.listModels()."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "pullModel",
+      "type": "function",
+      "note": "Deprecated legacy export. No external consumer. Only used internally in ai-client."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "isModelAvailable",
+      "type": "function",
+      "note": "Deprecated legacy export. No external consumer. Only used internally in ai-client."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "ComfyUIVideoProvider",
+      "type": "class",
+      "note": "Exported but never imported outside the ai-client package."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "VeoProvider",
+      "type": "class",
+      "note": "Exported but never imported outside the ai-client package."
+    },
+    {
+      "file": "packages/ai-client/src/index.ts",
+      "export_name": "SoraProvider",
+      "type": "class",
+      "note": "Exported but never imported outside the ai-client package."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "export_name": "closeAllQueues",
+      "type": "function",
+      "note": "Only referenced in its own test file."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "export_name": "getQueueEvents",
+      "type": "function",
+      "note": "Exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "export_name": "resetConnection",
+      "type": "function",
+      "note": "Only used internally (closeAllQueues) and in its own test file."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "export_name": "QueueEvents",
+      "type": "re-export (bullmq)",
+      "note": "Re-exported from BullMQ but never imported by any consumer."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "export_name": "FlowProducer",
+      "type": "re-export (bullmq)",
+      "note": "Re-exported from BullMQ but only used internally in flows.ts."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "export_name": "ContentPipelineParams",
+      "type": "type",
+      "note": "Exported but never imported outside the queue package."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "export_name": "SeasoningPipelineParams",
+      "type": "type",
+      "note": "Exported but never imported outside the queue package."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "ViralDiscoveryConfig",
+      "type": "type",
+      "note": "Tier 3 stub type. Only defined in viral-discovery.ts and re-exported. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "ViralDiscoveryResult",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "ViralItem",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "ExperimentConfig",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "ExperimentVariant",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "ExperimentResult",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "QualityRegressionTest",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "RegressionResult",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "ChannelProfile",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/index.ts",
+      "export_name": "TopicSuggestion",
+      "type": "type",
+      "note": "Tier 3 stub type. No consumer imports it."
+    },
+    {
+      "file": "packages/shared/src/types.ts",
+      "export_name": "WebSocketEvent",
+      "type": "type",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/shared/src/types.ts",
+      "export_name": "WebSocketPayload",
+      "type": "type",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/shared/src/types.ts",
+      "export_name": "AssetRegistryEntry",
+      "type": "type",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/shared/src/types.ts",
+      "export_name": "TimestampedScript",
+      "type": "type",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/shared/src/types.ts",
+      "export_name": "JobPriority",
+      "type": "enum",
+      "note": "Defined and exported but never imported by any consumer."
+    },
+    {
+      "file": "packages/shared/src/types.ts",
+      "export_name": "BEAT_PRESETS",
+      "type": "constant",
+      "note": "Exported but never imported outside shared package. Remotion has its own BeatPreset definition."
+    },
+    {
+      "file": "packages/shared/src/comfyui-composer.ts",
+      "export_name": "resolveSeed",
+      "type": "function",
+      "note": "Exported but only used internally within comfyui-composer.ts. No external consumer imports it."
+    }
+  ],
+  "unused_exports_by_severity": {
+    "high": [
+      "packages/shared/src/types.ts: WebSocketEvent, WebSocketPayload (superseded by SSE event-types.ts)",
+      "packages/shared/src/types.ts: AssetRegistryEntry, TimestampedScript, JobPriority (no consumers)",
+      "packages/shared/src/types.ts: BEAT_PRESETS (unused constant)",
+      "packages/ai-client/src/index.ts: 6 deprecated legacy functions (getAiClient, resetAiClient, streamText, listModels, pullModel, isModelAvailable)"
+    ],
+    "medium": [
+      "packages/storage/src/index.ts: uploadStream, getPresignedPutUrl, getObjectStat (never used)",
+      "packages/queue/src/index.ts: getQueueEvents, QueueEvents, FlowProducer, closeAllQueues, resetConnection (internal-only)",
+      "packages/shared/src/comfyui-composer.ts: resolveSeed (internal-only)"
+    ],
+    "low": [
+      "packages/shared/src/index.ts: 10 Tier 3 stub types (ViralDiscovery*, Experiment*, QualityRegression*, Channel*) — expected, stubs for future features",
+      "packages/crypto/src/index.ts: generateKey (utility, may be needed for setup scripts)",
+      "packages/db/src/index.ts: disconnectDb (cleanup utility, likely needed for graceful shutdown)"
+    ]
+  },
+  "broken_imports": [],
+  "broken_imports_notes": "No broken imports found. All import paths resolve to existing files. Package cross-references are valid. The .js extensions in import paths are correct for ESM module resolution with TypeScript.",
+  "circular_dependencies": [
+    {
+      "cycle": [
+        "@airevstream/shared",
+        "@airevstream/browser-automation",
+        "@airevstream/shared"
+      ],
+      "details": "shared/seasoning-types.ts, shared/seasoning-config.ts, and shared/seasoning-orchestrator.ts import type { WarmingActivity } from '@airevstream/browser-automation'. Meanwhile, browser-automation/types.ts imports type { Platform } from '@airevstream/shared', and multiple browser-automation files import { createLogger } from '@airevstream/shared'. This is a type-only import from shared->browser-automation, so it works at runtime (type imports are erased), but it creates a logical circular dependency between the two packages.",
+      "severity": "medium",
+      "suggestion": "Move the WarmingActivity type definition to @airevstream/shared to break the cycle. browser-automation can then import it from shared instead of defining it."
+    }
+  ],
+  "unreachable_code": [
+    {
+      "file": "packages/shared/src/utils.ts",
+      "line": 57,
+      "description": "The throw statement at line 57 ('Retry failed') is documented as unreachable — it exists only to satisfy TypeScript's control flow analysis. The for loop above always either returns or throws, making this line dead code by design."
+    }
+  ],
+  "unused_components": [],
+  "unused_components_notes": "All 37 React components in apps/web/src/components/ are imported and rendered by at least one parent component or page. No orphaned components found.",
+  "unused_hooks": [
+    {
+      "file": "apps/web/src/lib/sse.ts",
+      "hook_name": "useSSE",
+      "note": "SSE client hook defined with full reconnection logic, but never imported by any component or page. The system events SSE endpoint exists (apps/web/src/app/api/v1/events/stream/route.ts), but no client-side component consumes it."
+    },
+    {
+      "file": "apps/web/src/lib/sse.ts",
+      "hook_name": "useSystemEvents",
+      "note": "Convenience wrapper around useSSE for system events. Never imported by any component. Both hooks in this file are dead code."
+    }
+  ],
+  "orphaned_files": [
+    {
+      "file": "apps/web/src/lib/sse.ts",
+      "reason": "Contains two hooks (useSSE, useSystemEvents) that are never imported by any component, page, or other module. The file defines a complete SSE client-side implementation but no part of the frontend uses it. The server-side SSE route at /api/v1/events/stream exists but has no client consumer."
+    },
+    {
+      "file": "apps/web/src/lib/api.ts",
+      "reason": "Legacy API client with pre-built request functions (auth, content, accounts, channels, chat, generate). Never imported by any file. Superseded by the SWR-based hooks in apps/web/src/hooks/use-api.ts (useApi, apiPost, apiPut, apiDelete)."
+    }
+  ],
+  "additional_findings": {
+    "unused_error_classes": {
+      "file": "packages/shared/src/errors.ts",
+      "classes": [
+        "AppError",
+        "NotFoundError",
+        "ValidationError",
+        "AuthenticationError",
+        "AuthorizationError",
+        "ConflictError",
+        "RateLimitError",
+        "ExternalServiceError"
+      ],
+      "note": "All 8 error classes are exported from @airevstream/shared but only consumed by their own test file (packages/shared/src/__tests__/errors.test.ts). No service, worker, or API route uses these custom error classes — they use inline error() helper responses instead. These classes are part of the shared package's public API but have zero production consumers."
+    },
+    "unused_constants": {
+      "file": "packages/shared/src/constants.ts",
+      "constants": [
+        "QUEUES",
+        "JWT_REFRESH_EXPIRY",
+        "PLATFORM_LIMITS",
+        "PORTS",
+        "FALLBACK_GROUPS",
+        "SYSTEM_THRESHOLDS",
+        "APPROVAL_DEFAULTS",
+        "BEAT_AUDIO_PRESETS",
+        "CINEMA_PRESETS"
+      ],
+      "note": "These constants are defined and exported but most have no external consumers. CINEMA_PRESETS is only used in its own test. QUEUES, JWT_REFRESH_EXPIRY, PLATFORM_LIMITS, PORTS, FALLBACK_GROUPS, SYSTEM_THRESHOLDS, APPROVAL_DEFAULTS, and BEAT_AUDIO_PRESETS are never imported outside the constants file itself."
+    },
+    "unused_util_functions": {
+      "file": "packages/shared/src/utils.ts",
+      "functions": [
+        "slugify",
+        "parsePagination",
+        "paginate",
+        "sleep",
+        "truncate",
+        "pick",
+        "omit"
+      ],
+      "note": "All utility functions except 'retry' are only consumed by the utils test file. 'retry' is used in production code (workers, API routes). The rest (slugify, parsePagination, paginate, sleep, truncate, pick, omit) have zero external production consumers."
+    },
+    "unused_presets_exports": {
+      "file": "packages/shared/src/presets/index.ts",
+      "exports": [
+        "PresetSchema",
+        "RecipeSchema",
+        "PresetFamilySchema",
+        "getActiveRanges",
+        "ResolveOptions"
+      ],
+      "note": "These Zod schemas and the getActiveRanges function are exported but have no consumer outside the presets package. PresetSchema/RecipeSchema/PresetFamilySchema are only used in schema.ts. getActiveRanges and ResolveOptions are only used in resolver.ts."
+    },
+    "duplicate_code": {
+      "description": "ComfyUIClient class is defined in both packages/shared/src/comfyui-client.ts and services/production-pipeline/src/comfyui-client.ts. The shared version is used by workers/production.worker.ts and the web API route. The service-local version is used by routes/image.ts within production-pipeline. Both have identical interfaces but separate implementations.",
+      "severity": "low"
+    },
+    "audio_engine_no_external_consumers": {
+      "note": "The @airevstream/audio-engine package is imported by workers/production.worker.ts (TTSClient, AudioMixer) but its type exports (TTSConfig, TTSRequest, TTSResult, AudioMixConfig, AudioTrack, AudioMixResult, AudioDuckingConfig, LoudnessConfig, VoiceProfile) are never imported outside the package. The loudness utility exports (measureLufs, normalizeLufs, applyTruePeakLimiter) are only consumed internally by the mixer.",
+      "severity": "low"
+    }
+  }
+}

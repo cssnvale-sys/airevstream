@@ -1,0 +1,407 @@
+{
+  "snapshot_date": "2026-03-23",
+  "snapshot_agent": "Phase 0A Environment Snapshot Agent",
+  "schema_models": [
+    {
+      "name": "Tenant",
+      "fieldCount": 8,
+      "relations": ["User[]", "EmailAccount[]", "Subscription[]", "ApiKey[]", "SeasoningCohort[]"]
+    },
+    {
+      "name": "User",
+      "fieldCount": 9,
+      "relations": ["Tenant?", "RefreshToken[]"]
+    },
+    {
+      "name": "RefreshToken",
+      "fieldCount": 5,
+      "relations": ["User"]
+    },
+    {
+      "name": "EmailAccount",
+      "fieldCount": 8,
+      "relations": ["Tenant?", "SocialAccount[]", "SeasoningEnrollment[]"]
+    },
+    {
+      "name": "SocialAccount",
+      "fieldCount": 13,
+      "relations": ["EmailAccount", "Channel[]", "ScheduledPost[]", "SeasoningEnrollment[]"]
+    },
+    {
+      "name": "Channel",
+      "fieldCount": 16,
+      "relations": ["SocialAccount", "ChannelAvatar[]", "BrandingPackage[]", "ChannelScenery[]", "CinemaBible[]", "ContentItem[]", "ScheduledPost[]", "ChannelAffiliatePool[]", "AffiliateClick[]", "AiServiceUsage[]"]
+    },
+    {
+      "name": "Avatar",
+      "fieldCount": 8,
+      "relations": ["ChannelAvatar[]"]
+    },
+    {
+      "name": "ChannelAvatar",
+      "fieldCount": 4,
+      "relations": ["Channel", "Avatar"]
+    },
+    {
+      "name": "BrandingPackage",
+      "fieldCount": 8,
+      "relations": ["Channel"]
+    },
+    {
+      "name": "SceneryAsset",
+      "fieldCount": 7,
+      "relations": ["ChannelScenery[]"]
+    },
+    {
+      "name": "ChannelScenery",
+      "fieldCount": 2,
+      "relations": ["Channel", "SceneryAsset"]
+    },
+    {
+      "name": "CinemaBible",
+      "fieldCount": 9,
+      "relations": ["Channel"]
+    },
+    {
+      "name": "AiService",
+      "fieldCount": 19,
+      "relations": ["AiServiceUsage[]", "ContentItem[]", "StoryboardShot[]"]
+    },
+    {
+      "name": "AiServiceUsage",
+      "fieldCount": 12,
+      "relations": ["AiService", "ContentItem?", "Channel?"]
+    },
+    {
+      "name": "ContentItem",
+      "fieldCount": 24,
+      "relations": ["Channel", "AiService?", "AffiliateProduct?", "ContentItem? (parent)", "ContentItem[] (children)", "Storyboard[]", "ScheduledPost[]", "AiServiceUsage[]", "AffiliateClick[]", "WorkflowJob[]"]
+    },
+    {
+      "name": "Storyboard",
+      "fieldCount": 9,
+      "relations": ["ContentItem", "StoryboardShot[]"]
+    },
+    {
+      "name": "StoryboardShot",
+      "fieldCount": 14,
+      "relations": ["Storyboard", "AiService?"]
+    },
+    {
+      "name": "ScheduledPost",
+      "fieldCount": 14,
+      "relations": ["ContentItem", "Channel", "SocialAccount?"]
+    },
+    {
+      "name": "AffiliateProduct",
+      "fieldCount": 15,
+      "relations": ["ChannelAffiliatePool[]", "AffiliateClick[]", "ContentItem[]"]
+    },
+    {
+      "name": "ChannelAffiliatePool",
+      "fieldCount": 5,
+      "relations": ["Channel", "AffiliateProduct"]
+    },
+    {
+      "name": "AffiliateClick",
+      "fieldCount": 9,
+      "relations": ["AffiliateProduct", "ContentItem?", "Channel?"]
+    },
+    {
+      "name": "ApprovalTrustScore",
+      "fieldCount": 9,
+      "relations": []
+    },
+    {
+      "name": "Conversation",
+      "fieldCount": 7,
+      "relations": ["ConversationMessage[]", "ActionAuditLog[]"]
+    },
+    {
+      "name": "ConversationMessage",
+      "fieldCount": 6,
+      "relations": ["Conversation"]
+    },
+    {
+      "name": "ActionAuditLog",
+      "fieldCount": 8,
+      "relations": ["Conversation?"]
+    },
+    {
+      "name": "WorkflowJob",
+      "fieldCount": 18,
+      "relations": ["ContentItem?"]
+    },
+    {
+      "name": "Alert",
+      "fieldCount": 10,
+      "relations": []
+    },
+    {
+      "name": "SystemMetric",
+      "fieldCount": 4,
+      "relations": []
+    },
+    {
+      "name": "SystemSetting",
+      "fieldCount": 2,
+      "relations": []
+    },
+    {
+      "name": "KnowledgeBaseEntry",
+      "fieldCount": 8,
+      "relations": []
+    },
+    {
+      "name": "Storefront",
+      "fieldCount": 11,
+      "relations": ["StorefrontProduct[]"]
+    },
+    {
+      "name": "StorefrontProduct",
+      "fieldCount": 7,
+      "relations": ["Storefront"]
+    },
+    {
+      "name": "PromptTemplate",
+      "fieldCount": 12,
+      "relations": []
+    },
+    {
+      "name": "CostBudget",
+      "fieldCount": 10,
+      "relations": []
+    },
+    {
+      "name": "Subscription",
+      "fieldCount": 9,
+      "relations": ["Tenant"]
+    },
+    {
+      "name": "ApiKey",
+      "fieldCount": 10,
+      "relations": ["Tenant"]
+    },
+    {
+      "name": "SeasoningCohort",
+      "fieldCount": 13,
+      "relations": ["Tenant", "SeasoningEnrollment[]"]
+    },
+    {
+      "name": "SeasoningEnrollment",
+      "fieldCount": 17,
+      "relations": ["SeasoningCohort", "EmailAccount", "SocialAccount?"]
+    }
+  ],
+  "total_models": 38,
+  "roles": [
+    "admin",
+    "operator",
+    "viewer"
+  ],
+  "role_source": "Inline in Prisma schema (User.role field comment) and apps/web/src/lib/api-server.ts. No enum — role is a VarChar(20) string field with default 'operator'.",
+  "seed_data": {
+    "summary": "Development seed with 1 tenant, 1 admin user, 3 AI services, 1 email account, 1 social account, 1 channel, 1 cinema bible, 5 content items, 1 affiliate product, 4 system metrics, and 2 knowledge base entries.",
+    "entities": [
+      {
+        "model": "Tenant",
+        "count": 1,
+        "details": "Default Workspace (slug: 'default', plan: 'enterprise')"
+      },
+      {
+        "model": "User",
+        "count": 1,
+        "details": "admin@airevstream.local (role: admin, password: 'changeme123')"
+      },
+      {
+        "model": "AiService",
+        "count": 3,
+        "details": [
+          "ollama-qwen3 (text, local, active, ID: ...0001)",
+          "comfyui-local (image, local, active, ID: ...0002)",
+          "openai-gpt4o-mini (text, cloud, disabled, ID: ...0003)"
+        ]
+      },
+      {
+        "model": "EmailAccount",
+        "count": 1,
+        "details": "demo@airevstream.example (tier1, active)"
+      },
+      {
+        "model": "SocialAccount",
+        "count": 1,
+        "details": "DemoChannel (youtube, active, ID: ...0010)"
+      },
+      {
+        "model": "Channel",
+        "count": 1,
+        "details": "TechVerse (niches: technology/AI/gadgets, ID: ...0020)"
+      },
+      {
+        "model": "CinemaBible",
+        "count": 1,
+        "details": "v1 for TechVerse (cyberpunk+clean-tech style, ID: ...0030)"
+      },
+      {
+        "model": "ContentItem",
+        "count": 5,
+        "details": [
+          "AI in 2026 (video_short, pending_approval, quality: 8.2, ID: ...0040)",
+          "5 Gadgets (video_long, approved, quality: 7.5, ID: ...0041)",
+          "Best Budget Laptop (text, posted, quality: 9.0, ID: ...0042)",
+          "Coding with AI (video_short, generating, ID: ...0043)",
+          "Why Privacy Matters (video_long, draft, ID: ...0044)"
+        ]
+      },
+      {
+        "model": "AffiliateProduct",
+        "count": 1,
+        "details": "NordVPN Annual Plan (commission: 40%, ID: ...0050)"
+      },
+      {
+        "model": "ChannelAffiliatePool",
+        "count": 1,
+        "details": "NordVPN -> TechVerse (performance: 85.0)"
+      },
+      {
+        "model": "SystemMetric",
+        "count": 4,
+        "details": "cpu: 35.2%, ram: 62.1%, disk: 45.0%, queue_depth: 3"
+      },
+      {
+        "model": "KnowledgeBaseEntry",
+        "count": 2,
+        "details": [
+          "YouTube Shorts Best Practices (platform_ops)",
+          "SDXL Thumbnail Generation (comfyui)"
+        ]
+      }
+    ],
+    "well_known_ids": {
+      "ollama_text_service": "00000000-0000-0000-0000-000000000001",
+      "comfyui_service": "00000000-0000-0000-0000-000000000002",
+      "openai_service": "00000000-0000-0000-0000-000000000003",
+      "social_account": "00000000-0000-0000-0000-000000000010",
+      "channel": "00000000-0000-0000-0000-000000000020",
+      "cinema_bible": "00000000-0000-0000-0000-000000000030",
+      "content_items": [
+        "00000000-0000-0000-0000-000000000040",
+        "00000000-0000-0000-0000-000000000041",
+        "00000000-0000-0000-0000-000000000042",
+        "00000000-0000-0000-0000-000000000043",
+        "00000000-0000-0000-0000-000000000044"
+      ],
+      "affiliate_product": "00000000-0000-0000-0000-000000000050"
+    },
+    "upsert_strategy": "All seed entities use upsert (idempotent). SystemMetric and KnowledgeBaseEntry use create (additive)."
+  },
+  "external_services": [
+    {
+      "name": "PostgreSQL",
+      "type": "database",
+      "config_source": ".env.example (DATABASE_URL)",
+      "default_endpoint": "localhost:5432",
+      "version": "16-alpine (docker-compose)"
+    },
+    {
+      "name": "Redis",
+      "type": "cache_and_queue",
+      "config_source": ".env.example (REDIS_URL)",
+      "default_endpoint": "localhost:6379",
+      "version": "7-alpine (docker-compose)"
+    },
+    {
+      "name": "MinIO",
+      "type": "object_storage",
+      "config_source": ".env.example (MINIO_ENDPOINT, MINIO_PORT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY)",
+      "default_endpoint": "localhost:9000 (API), localhost:9001 (console)",
+      "version": "latest (docker-compose)"
+    },
+    {
+      "name": "Ollama",
+      "type": "local_llm",
+      "config_source": ".env.example (OLLAMA_BASE_URL)",
+      "default_endpoint": "localhost:11434",
+      "version": "not pinned (host-installed)"
+    },
+    {
+      "name": "ComfyUI",
+      "type": "image_generation",
+      "config_source": ".env.example (COMFYUI_URL, COMFYUI_TIMEOUT_MS)",
+      "default_endpoint": "localhost:8188",
+      "version": "not pinned (host-installed)"
+    },
+    {
+      "name": "OpenAI API",
+      "type": "cloud_llm",
+      "config_source": "Seed data (AiService model, disabled by default)",
+      "default_endpoint": "https://api.openai.com/v1",
+      "version": "gpt-4o-mini / gpt-4o"
+    },
+    {
+      "name": "TTS (Piper / ElevenLabs)",
+      "type": "text_to_speech",
+      "config_source": ".env.example (TTS_BASE_URL, TTS_API_KEY — commented out, optional)",
+      "default_endpoint": "localhost:5500",
+      "version": "not pinned"
+    }
+  ],
+  "infrastructure": {
+    "docker_compose_file": "docker-compose.yml",
+    "services": [
+      {
+        "name": "postgres",
+        "image": "postgres:16-alpine",
+        "container_name": "airevstream-postgres",
+        "ports": ["5432:5432"],
+        "volumes": ["postgres_data:/var/lib/postgresql/data"],
+        "healthcheck": true
+      },
+      {
+        "name": "redis",
+        "image": "redis:7-alpine",
+        "container_name": "airevstream-redis",
+        "ports": ["6379:6379"],
+        "volumes": ["redis_data:/data"],
+        "healthcheck": true
+      },
+      {
+        "name": "minio",
+        "image": "minio/minio:latest",
+        "container_name": "airevstream-minio",
+        "ports": ["9000:9000", "9001:9001"],
+        "volumes": ["minio_data:/data"],
+        "healthcheck": true
+      }
+    ],
+    "named_volumes": ["postgres_data", "redis_data", "minio_data"]
+  },
+  "process_management": {
+    "tool": "PM2",
+    "config_file": "ecosystem.config.js",
+    "processes": [
+      { "name": "web", "cwd": "./apps/web", "port": 3000, "max_memory": "512M" },
+      { "name": "workflow-engine", "cwd": "./services/workflow-engine", "port": 3001, "max_memory": "256M" },
+      { "name": "production-pipeline", "cwd": "./services/production-pipeline", "port": 3002, "max_memory": "256M" },
+      { "name": "ai-assistant", "cwd": "./services/ai-assistant", "port": 3003, "max_memory": "256M" },
+      { "name": "worker-content", "cwd": ".", "port": null, "max_memory": "256M" },
+      { "name": "worker-account", "cwd": ".", "port": null, "max_memory": "512M" },
+      { "name": "worker-posting", "cwd": ".", "port": null, "max_memory": "256M" },
+      { "name": "worker-research", "cwd": ".", "port": null, "max_memory": "256M" },
+      { "name": "worker-maintenance", "cwd": ".", "port": null, "max_memory": "128M" },
+      { "name": "worker-production", "cwd": ".", "port": null, "max_memory": "512M" }
+    ]
+  },
+  "security_config": {
+    "encryption": "AES-256-GCM (ENCRYPTION_KEY env var, 32-byte hex)",
+    "auth": "JWT (JWT_SECRET, JWT_REFRESH_SECRET env vars)",
+    "password_hashing": "scrypt (64-byte key, 16-byte salt)",
+    "cors": "Configurable via CORS_ORIGINS env var (default: http://localhost:3000)",
+    "registration": "Toggleable via REGISTRATION_DISABLED env var"
+  },
+  "prisma_config": {
+    "provider": "postgresql",
+    "preview_features": ["fullTextSearchPostgres"],
+    "database_url_env": "DATABASE_URL"
+  }
+}

@@ -1,0 +1,200 @@
+[
+  {
+    "id": "P2A_001",
+    "file": "apps/web/src/app/api/v1/auth/reset-password/route.ts",
+    "line": 55,
+    "severity": "CRITICAL",
+    "type": "security",
+    "description": "Password reset does not set passwordChangedAt, so existing JWT tokens remain valid after a password reset",
+    "intended_behavior": "When a user resets their password (e.g., because their account was compromised), all previously issued JWT tokens should be invalidated. The authenticate() function checks passwordChangedAt against the token's iat to enforce this.",
+    "actual_behavior": "The reset-password route updates passwordHash but does NOT update passwordChangedAt. The change-password route correctly sets `passwordChangedAt: new Date()` (line 40), but reset-password omits it. This means an attacker who has a valid JWT for the account can continue using it even after the legitimate user resets their password.",
+    "proposed_fix": "Add `passwordChangedAt: new Date()` to the data object in the db.user.update call at line 57: `data: { passwordHash: hashPassword(newPassword), passwordChangedAt: new Date() }`"
+  },
+  {
+    "id": "P2A_002",
+    "file": "apps/web/src/app/api/v1/auth/register/route.ts",
+    "line": 37,
+    "severity": "MEDIUM",
+    "type": "race_condition",
+    "description": "TOCTOU race condition in email uniqueness check — findUnique is outside the transaction",
+    "intended_behavior": "If two concurrent registration requests arrive with the same email, only one should succeed and the other should return a 409 Conflict with a meaningful 'email already exists' message.",
+    "actual_behavior": "The email uniqueness check (findUnique at line 37) is outside the $transaction (lines 49-64). Two concurrent requests could both pass the check, then one would fail with a Prisma P2002 unique constraint error that gets caught by the generic catch block, returning 'An unexpected error occurred' (500) instead of the intended 'A user with this email already exists' (409). The registration partially succeeds for the first request, while the second creates an orphaned Tenant without a User if the user.create fails after tenant.create.",
+    "proposed_fix": "Move the existence check inside the transaction, or catch the Prisma P2002 error specifically in the catch block: `if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') return error('CONFLICT', 'A user with this email already exists', 409);`"
+  },
+  {
+    "id": "P2A_003",
+    "file": "apps/web/src/lib/auth.ts",
+    "line": 14,
+    "severity": "MEDIUM",
+    "type": "security",
+    "description": "Session indicator cookie lacks Secure flag, making it transmittable over plain HTTP",
+    "intended_behavior": "The session indicator cookie should only be sent over HTTPS connections to prevent session hijacking via network sniffing.",
+    "actual_behavior": "The cookie is set with `samesite=strict` but without the `Secure` flag: `document.cookie = '${AUTH_COOKIE}=1; path=/; samesite=strict'`. In production over HTTPS, a MITM attacker on an HTTP downgrade could observe the cookie. While this cookie is only an indicator (the real JWT is in localStorage), its presence causes the middleware to allow access to protected pages, which could expose page content/structure even without API data.",
+    "proposed_fix": "Add Secure flag conditionally: `document.cookie = '${AUTH_COOKIE}=1; path=/; samesite=strict${window.location.protocol === 'https:' ? '; secure' : ''}'`"
+  },
+  {
+    "id": "P2A_004",
+    "file": "apps/web/src/app/api/v1/api-keys/route.ts",
+    "line": 9,
+    "severity": "MEDIUM",
+    "type": "missing_check",
+    "description": "API key scopes accept arbitrary strings — no validation against allowed values",
+    "intended_behavior": "API key scopes should be validated to only allow known values: 'read', 'write', 'admin'. The authenticateApiKey() function in api-server.ts checks `key.scopes.includes(requiredScope)` against these exact values.",
+    "actual_behavior": "Both the create schema (`z.array(z.string()).default(['read'])`) and update schema (`z.array(z.string()).optional()`) accept any string value for scopes. A user could create an API key with scopes like `['read', 'write', 'anything']` — the extra values would be stored but ignored. More critically, a user could create a key with `['admin']` scope and escalate their own privileges via the API key, since authenticateApiKey() grants role='admin' when scopes include 'admin' (line 210 of api-server.ts).",
+    "proposed_fix": "Restrict scopes in both Zod schemas: `scopes: z.array(z.enum(['read', 'write', 'admin'])).default(['read'])`. Additionally, add a check in POST that prevents non-admin users from assigning the 'admin' scope to their API keys."
+  },
+  {
+    "id": "P2A_005",
+    "file": "apps/web/src/app/api/v1/api-keys/route.ts",
+    "line": 40,
+    "severity": "LOW",
+    "type": "missing_check",
+    "description": "Status filter in API keys GET handler is not validated against an allowlist",
+    "intended_behavior": "The statusFilter should be validated against known status values ('active', 'revoked') before being passed to the Prisma where clause, consistent with the pattern used in other routes like subscriptions (line 39) and tenants (line 49).",
+    "actual_behavior": "The statusFilter from the query parameter is passed directly to the where clause without validation: `if (statusFilter) where.status = statusFilter`. While Prisma will simply return no results for invalid status values (no injection risk), it's inconsistent with the validated pattern used elsewhere and could cause confusing behavior.",
+    "proposed_fix": "Add validation: `const validStatuses = ['active', 'revoked']; if (statusFilter && validStatuses.includes(statusFilter)) where.status = statusFilter;`"
+  },
+  {
+    "id": "P2A_006",
+    "file": "apps/web/src/lib/api-server.ts",
+    "line": 75,
+    "severity": "MEDIUM",
+    "type": "security",
+    "description": "JWT role claim is trusted without DB verification — role changes are not reflected until token expires",
+    "intended_behavior": "When a user's role is changed (e.g., from admin to viewer, or operator to admin), the change should take effect immediately on the next request.",
+    "actual_behavior": "The authenticate() function reads the role from the JWT payload at line 75: `const role = (payload.role as string) ?? 'operator'`. It does NOT verify this against the database. The DB query at line 79 only fetches `tenantId` and `passwordChangedAt`. A user demoted from admin to viewer would retain admin access for up to 7 days (the JWT expiration time). Conversely, a promotion would not take effect until re-login.",
+    "proposed_fix": "Include `role` in the select clause of the user DB lookup and use the DB role instead of the JWT role: `const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true, passwordChangedAt: true, role: true } }); ... return { userId, role: user.role, tenantId: user.tenantId, db };`"
+  },
+  {
+    "id": "P2A_007",
+    "file": "apps/web/src/lib/api-server.ts",
+    "line": 255,
+    "severity": "LOW",
+    "type": "security",
+    "description": "parseQuery() returns raw sort field without validation — relies on each caller to sanitize",
+    "intended_behavior": "The sort parameter should be safe to use in Prisma orderBy clauses without risking errors from invalid field names.",
+    "actual_behavior": "parseQuery() returns the raw sort string from query params at line 255: `const sort = url.searchParams.get('sort') ?? 'createdAt'`. While all current callers sanitize via allowedSorts arrays, this is a defense-in-depth gap. A new route that forgets to add the allowedSorts check would pass arbitrary field names to Prisma's orderBy, which could cause errors (though not SQL injection, since Prisma parameterizes).",
+    "proposed_fix": "This is an acceptable pattern since all callers do validate. As a defense-in-depth improvement, parseQuery could accept an optional allowedSorts parameter and do the validation internally."
+  },
+  {
+    "id": "P2A_008",
+    "file": "apps/web/src/lib/rate-limit.ts",
+    "line": 1,
+    "severity": "MEDIUM",
+    "type": "incomplete_feature",
+    "description": "In-memory rate limiter is not shared across serverless instances or Next.js hot reloads",
+    "intended_behavior": "Rate limiting should consistently enforce limits regardless of which server instance handles the request.",
+    "actual_behavior": "The rate limiter uses a plain `Map` in process memory. In a serverless/edge deployment (Vercel, multiple pods), each instance has its own independent store — an attacker can bypass rate limits by having requests routed to different instances. Additionally, Next.js HMR in development clears the module state, resetting all rate limits. In production with a single long-running Node process (PM2), this works correctly.",
+    "proposed_fix": "For production multi-instance deployments, migrate to Redis-backed rate limiting (e.g., using the existing Redis dependency via BullMQ). For the current single-instance PM2 deployment, this is acceptable. Document this limitation."
+  },
+  {
+    "id": "P2A_009",
+    "file": "apps/web/src/lib/rate-limit.ts",
+    "line": 117,
+    "severity": "LOW",
+    "type": "security",
+    "description": "getClientIp trusts X-Forwarded-For header without reverse proxy validation",
+    "intended_behavior": "The client IP should be reliably extracted and not spoofable by end users.",
+    "actual_behavior": "getClientIp() reads X-Forwarded-For and X-Real-IP headers directly. These headers can be set by any client. The IP_PATTERN validation at line 110 only checks format, not authenticity. Without a trusted reverse proxy that strips/overwrites these headers, an attacker can spoof their IP to bypass rate limits entirely (e.g., send a different X-Forwarded-For on each request).",
+    "proposed_fix": "Document that a reverse proxy (nginx, Caddy, etc.) MUST be configured to strip and set X-Forwarded-For. Consider adding a TRUSTED_PROXY_IPS env var to only accept forwarded headers from known proxy IPs. For the current self-hosted setup, this is mitigated by the nginx reverse proxy recommendation."
+  },
+  {
+    "id": "P2A_010",
+    "file": "apps/web/src/middleware.ts",
+    "line": 37,
+    "severity": "LOW",
+    "type": "security",
+    "description": "Middleware redirect includes raw pathname in query string without encoding",
+    "intended_behavior": "The redirect parameter should be safely encoded to prevent any injection or misinterpretation.",
+    "actual_behavior": "At line 37, the pathname is set directly as a query parameter: `loginUrl.searchParams.set('redirect', pathname)`. The `URLSearchParams.set()` method does auto-encode, so this is actually safe. However, the middleware passes the full pathname which could include sensitive path segments. The login page validates the redirect on the client side (startsWith '/' and not '//'), which is correct.",
+    "proposed_fix": "No code change needed — the current implementation is safe. URLSearchParams.set handles encoding, and the client validates the redirect. Noting for completeness."
+  },
+  {
+    "id": "P2A_011",
+    "file": "apps/web/src/lib/auth.ts",
+    "line": 27,
+    "severity": "LOW",
+    "type": "logic_error",
+    "description": "isAuthenticated() uses atob() for base64 decoding instead of base64url — technically incorrect for JWTs",
+    "intended_behavior": "JWT payloads are base64url-encoded (RFC 7519). The decoding should use base64url decoding that replaces '-' with '+' and '_' with '/'.",
+    "actual_behavior": "The function uses `atob(token.split('.')[1])` which is standard base64 decoding. JWTs use base64url encoding. For most JWT payloads (which are short JSON objects), the difference rarely manifests because the problematic characters (+, /) are statistically rare in short payloads. The catch block handles any decode failures gracefully by returning false. In practice this works, but could fail for payloads containing certain character sequences.",
+    "proposed_fix": "Replace `atob(token.split('.')[1])` with proper base64url decoding: `const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); const payload = JSON.parse(atob(b64));`. Or use the `Buffer.from(str, 'base64url')` in environments that support it."
+  },
+  {
+    "id": "P2A_012",
+    "file": "apps/web/src/app/api/v1/auth/login/route.ts",
+    "line": 29,
+    "severity": "LOW",
+    "type": "missing_check",
+    "description": "Login route uses getDb() instead of tenant-scoped context, but this is correct since login is pre-auth",
+    "intended_behavior": "Login, register, forgot-password, and reset-password routes run before authentication, so they correctly use getDb() to look up users by email across all tenants.",
+    "actual_behavior": "These routes use getDb() as expected for pre-authentication flows. This is NOT a bug — it is the correct pattern. Documenting for completeness and to prevent false positives in future audits.",
+    "proposed_fix": "No fix needed. This is intentional and correct. Pre-auth routes must use getDb() because there is no authenticated context yet."
+  },
+  {
+    "id": "P2A_013",
+    "file": "apps/web/src/app/api/v1/auth/change-password/route.ts",
+    "line": 29,
+    "severity": "LOW",
+    "type": "missing_check",
+    "description": "Change password allows setting the same password as the current one",
+    "intended_behavior": "Best practice is to prevent users from 'changing' their password to the same value, which provides no security benefit and may mask a confused user flow.",
+    "actual_behavior": "The route validates currentPassword against the stored hash and then hashes newPassword, but never checks if newPassword equals currentPassword. The passwordChangedAt timestamp gets updated, invalidating existing tokens, even though the password is unchanged. This is a minor UX issue, not a security vulnerability.",
+    "proposed_fix": "Add a check: `if (currentPassword === newPassword) return validationError('New password must be different from current password');`"
+  },
+  {
+    "id": "P2A_014",
+    "file": "apps/web/src/app/api/v1/api-keys/route.ts",
+    "line": 111,
+    "severity": "LOW",
+    "type": "security",
+    "description": "API key creation uses node:crypto createHash directly instead of the shared sha256 utility",
+    "intended_behavior": "API key hashing should use the same sha256 implementation as the authenticateApiKey() function to ensure hash consistency.",
+    "actual_behavior": "The POST handler imports `createHash` from 'node:crypto' and computes the hash inline (line 111: `createHash('sha256').update(rawKey).digest('hex')`), while authenticateApiKey() uses `sha256` from '@airevstream/crypto' (which internally does the same thing). Both produce identical hex SHA-256 outputs, so there is no functional bug. However, using two different code paths for the same operation is a maintenance risk — if one changes, the other must too.",
+    "proposed_fix": "Import and use `sha256` from '@airevstream/crypto' instead of the inline createHash call: `import { sha256 } from '@airevstream/crypto'; const keyHash = sha256(rawKey);`"
+  },
+  {
+    "id": "P2A_015",
+    "file": "apps/web/src/app/api/v1/api-keys/[id]/route.ts",
+    "line": 99,
+    "severity": "LOW",
+    "type": "missing_check",
+    "description": "API key PATCH allows updating rateLimitRpm but the schema omits the field",
+    "intended_behavior": "If rateLimitRpm is part of the API key configuration, it should be updatable via PATCH. If it should not be updatable, the field should not be accepted.",
+    "actual_behavior": "The updateApiKeySchema (line 8-12) includes name, scopes, and status but omits rateLimitRpm. The create schema includes rateLimitRpm. This means once an API key is created, its rate limit cannot be changed via the PATCH endpoint. This may be intentional, but it is inconsistent with having the field exposed in the GET response and configurable at creation time.",
+    "proposed_fix": "If rateLimitRpm should be updatable, add it to the update schema: `rateLimitRpm: z.number().int().min(1).max(10000).optional()`. Also add it to the data construction block."
+  },
+  {
+    "id": "P2A_016",
+    "file": "apps/web/src/lib/api-server.ts",
+    "line": 204,
+    "severity": "LOW",
+    "type": "unhandled_rejection",
+    "description": "Fire-and-forget lastUsedAt update has a .catch but the error path only logs — could mask persistent DB issues",
+    "intended_behavior": "The lastUsedAt update is non-critical and should not block API key authentication. However, persistent failures should be surfaced.",
+    "actual_behavior": "The fire-and-forget update at line 204-207 correctly catches errors and logs them. This is the right approach for non-critical operations. The only concern is that in high-frequency use, the console.error could flood logs if the DB is unreachable. This is a minor operational concern, not a code bug.",
+    "proposed_fix": "Consider adding a simple debounce or rate-limiting on the error log to prevent log flooding during DB outages. This is very low priority."
+  },
+  {
+    "id": "P2A_017",
+    "file": "apps/web/src/lib/api-server.ts",
+    "line": 13,
+    "severity": "MEDIUM",
+    "type": "security",
+    "description": "Default JWT secret 'dev-secret-change-me' in non-production environments could be exploited if NODE_ENV is misconfigured",
+    "intended_behavior": "The JWT secret should always be a strong, unique secret. In production it throws if missing. In development it uses a fallback.",
+    "actual_behavior": "If NODE_ENV is not explicitly set to 'production' (e.g., 'staging', undefined, or typo like 'Production'), the fallback secret 'dev-secret-change-me' is used. This is a well-known string that an attacker could use to forge JWTs. The check at line 10 only requires the secret in `production` specifically.",
+    "proposed_fix": "Change the check to require JWT_SECRET in all non-development environments: `if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'development')`. Or require it unconditionally and always fail startup without it."
+  },
+  {
+    "id": "P2A_018",
+    "file": "apps/web/src/app/api/v1/auth/forgot-password/route.ts",
+    "line": 44,
+    "severity": "LOW",
+    "type": "incomplete_feature",
+    "description": "Password reset token is a JWT signed with the same secret as session tokens — no audience or issuer differentiation",
+    "intended_behavior": "Reset tokens should be distinct from session tokens to prevent cross-purpose use. A session JWT should not be usable as a reset token and vice versa.",
+    "actual_behavior": "The reset token includes `purpose: 'password-reset'` in the payload, and the reset-password route checks for this claim. However, the token is signed with the same secret and algorithm as session JWTs. The `purpose` claim is the only distinguisher. If the reset-password endpoint ever had a bug that skipped the purpose check, a regular session JWT could be used to reset any user's password. The current code does check the purpose correctly, but using a separate signing key or JWT audience would provide defense in depth.",
+    "proposed_fix": "Consider adding `aud: 'password-reset'` and `iss: 'airevstream'` claims to the reset token, and verifying them in jwtVerify options. This provides an additional layer of validation beyond the custom purpose claim."
+  }
+]

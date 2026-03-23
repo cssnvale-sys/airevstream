@@ -1,0 +1,233 @@
+[
+  {
+    "id": "P2D_001",
+    "file": "apps/web/src/app/seasoning/page.tsx",
+    "line": 10,
+    "severity": "MEDIUM",
+    "type": "inconsistent-import",
+    "description": "Imports `toast` directly from 'sonner' instead of '@/lib/toast'",
+    "intended_behavior": "All pages should use the project's toast wrapper from '@/lib/toast' for consistent behavior and potential future abstraction",
+    "actual_behavior": "Uses raw sonner import, bypassing any wrapper logic. The same issue exists in apps/web/src/app/seasoning/[cohortId]/page.tsx line 11",
+    "proposed_fix": "Change `import { toast } from 'sonner'` to `import { toast } from '@/lib/toast'` in both seasoning page files"
+  },
+  {
+    "id": "P2D_002",
+    "file": "apps/web/src/app/seasoning/page.tsx",
+    "line": 49,
+    "severity": "HIGH",
+    "type": "error-message-leak",
+    "description": "Displays raw err.message to user in toast: `toast.error(err instanceof Error ? err.message : 'Failed to create cohort')`",
+    "intended_behavior": "Per security rules (07-security.md), frontend mutations should use static toast messages, never pass raw API error messages to the user",
+    "actual_behavior": "If the API returns an internal error message (e.g., Prisma constraint violation), it will be displayed directly to the user. Same issue in [cohortId]/page.tsx lines 71 and 89",
+    "proposed_fix": "Replace with `toast.error('Failed to create cohort')` (static message). Do the same for enrollment action and enroll errors in the cohort detail page"
+  },
+  {
+    "id": "P2D_003",
+    "file": "apps/web/src/app/seasoning/page.tsx",
+    "line": 35,
+    "severity": "HIGH",
+    "type": "missing-loading-state",
+    "description": "Seasoning page does not handle loading state from useCohorts or useSeasoningStats hooks",
+    "intended_behavior": "Should show a skeleton or loading spinner while data is being fetched, similar to all other pages in the app",
+    "actual_behavior": "The page destructures `data` from hooks but never checks `isLoading` or `error`. When data is loading, cohorts will be empty array and stats will be undefined, showing the empty state falsely before data arrives",
+    "proposed_fix": "Destructure `isLoading` and `error` from both hooks. Show a loading skeleton while isLoading is true and an error banner when error exists"
+  },
+  {
+    "id": "P2D_004",
+    "file": "apps/web/src/app/seasoning/page.tsx",
+    "line": 54,
+    "severity": "MEDIUM",
+    "type": "missing-layout-wrapper",
+    "description": "Seasoning page does not wrap content in AppLayout",
+    "intended_behavior": "All app pages use <AppLayout> to get consistent sidebar, header, and page structure",
+    "actual_behavior": "Returns a bare <div> with no AppLayout. This means the page lacks the sidebar navigation, breadcrumbs, and consistent padding that all other pages have",
+    "proposed_fix": "Wrap the page content in <AppLayout> and import it from '@/components/layout/app-layout'"
+  },
+  {
+    "id": "P2D_005",
+    "file": "apps/web/src/app/studio/[contentId]/page.tsx",
+    "line": 109,
+    "severity": "CRITICAL",
+    "type": "data-shape-mismatch",
+    "description": "Cinema pipeline job ID extracted incorrectly: `res?.jobId` but API returns `flowJobId` inside `data`",
+    "intended_behavior": "After starting the cinema pipeline, the Studio page should capture the job ID from the API response and use it for progress tracking via useJobStatus",
+    "actual_behavior": "apiPost returns the full response `{ success: true, data: { flowJobId: '...' } }`. The code does `if (res?.jobId)` which will always be undefined because: (1) the field is at `res.data.flowJobId`, not `res.jobId`, and (2) the field name is `flowJobId` not `jobId`. Job progress tracking in the Studio page never activates.",
+    "proposed_fix": "Change line 109 from `if (res?.jobId) setActiveJobId(res.jobId)` to `if (res?.data?.flowJobId) setActiveJobId(res.data.flowJobId)` and update the apiPost type parameter to match: `apiPost<{ success: boolean; data: { flowJobId: string } }>`"
+  },
+  {
+    "id": "P2D_006",
+    "file": "apps/web/src/app/studio/[contentId]/page.tsx",
+    "line": 62,
+    "severity": "MEDIUM",
+    "type": "missing-console-error",
+    "description": "Multiple catch blocks in Studio page lack console.error logging",
+    "intended_behavior": "Per backend rules (06-backend.md), every catch must log the error with context for debugging",
+    "actual_behavior": "handleUpdateShot (line 66), handleGenerateShot (line 76), handleRepairShot (line 93), and handleGenerateAll (line 112) all have `catch { toast.error(...) }` without `console.error`. This makes debugging production issues difficult",
+    "proposed_fix": "Add `console.error('Context message:', err)` before each `toast.error()` call, capturing `err` in the catch clause"
+  },
+  {
+    "id": "P2D_007",
+    "file": "apps/web/src/app/studio/[contentId]/page.tsx",
+    "line": 140,
+    "severity": "LOW",
+    "type": "silent-catch",
+    "description": "AI guidance fetch silently swallows errors without any logging",
+    "intended_behavior": "Even non-critical operations should log errors for debugging, though not showing them to users",
+    "actual_behavior": "The catch block has a comment `// Silently fail - guidance is non-critical` and sets suggestions to empty array, but doesn't even log to console. This makes it impossible to diagnose guidance API failures.",
+    "proposed_fix": "Add `console.warn('AI guidance fetch failed:', e)` to the catch block (warn, not error, since it's non-critical)"
+  },
+  {
+    "id": "P2D_008",
+    "file": "apps/web/src/app/budgets/page.tsx",
+    "line": 93,
+    "severity": "MEDIUM",
+    "type": "missing-console-error",
+    "description": "Budgets page catch blocks lack console.error logging",
+    "intended_behavior": "All catch blocks should log errors for debugging",
+    "actual_behavior": "handleSave (line 93), handleDelete (line 117), and handleToggleStatus (line 128) all have `catch { toast.error(...) }` without capturing or logging the error",
+    "proposed_fix": "Add `(err)` to catch clauses and `console.error('operation failed:', err)` before each toast"
+  },
+  {
+    "id": "P2D_009",
+    "file": "apps/web/src/app/budgets/page.tsx",
+    "line": 55,
+    "severity": "LOW",
+    "type": "missing-error-state",
+    "description": "Budgets page does not handle or display fetch errors from useApi",
+    "intended_behavior": "Should show an error banner when the budget list fails to load, with a retry option",
+    "actual_behavior": "Only destructures `data`, `isLoading`, and `mutate` from useApi. If the API returns an error, the page shows the empty state instead of an error message",
+    "proposed_fix": "Destructure `error` from useApi and show an error banner with retry button when error is truthy, similar to accounts/library pages"
+  },
+  {
+    "id": "P2D_010",
+    "file": "apps/web/src/app/accounts/page.tsx",
+    "line": 753,
+    "severity": "LOW",
+    "type": "missing-console-error",
+    "description": "handleBulkDelete catch block lacks console.error",
+    "intended_behavior": "All catch blocks should log errors",
+    "actual_behavior": "Catches error but only shows toast, doesn't log to console",
+    "proposed_fix": "Add `console.error('Bulk delete failed:', err)` before the toast.error call"
+  },
+  {
+    "id": "P2D_011",
+    "file": "apps/web/src/app/approvals/page.tsx",
+    "line": 57,
+    "severity": "LOW",
+    "type": "missing-console-error",
+    "description": "handleAction catch block lacks console.error",
+    "intended_behavior": "All catch blocks should log errors",
+    "actual_behavior": "`catch (err) { toast.error(...) }` without console.error",
+    "proposed_fix": "Add `console.error('Approval action failed:', err)` before the toast"
+  },
+  {
+    "id": "P2D_012",
+    "file": "apps/web/src/app/affiliate/page.tsx",
+    "line": 1734,
+    "severity": "LOW",
+    "type": "missing-console-error",
+    "description": "Multiple storefront mutation catch blocks lack console.error logging",
+    "intended_behavior": "All catch blocks should log errors for debugging",
+    "actual_behavior": "Lines 1734 and 1749 have catch blocks with toast.error but no console.error. Same pattern at line 1964",
+    "proposed_fix": "Add console.error before each toast.error call in the storefront mutations"
+  },
+  {
+    "id": "P2D_013",
+    "file": "apps/web/src/app/studio/[contentId]/page.tsx",
+    "line": 101,
+    "severity": "MEDIUM",
+    "type": "data-shape-mismatch",
+    "description": "handleGenerateAll sends empty channelId, but the cinema pipeline API requires it",
+    "intended_behavior": "The channelId should be extracted from the content item's channel relation",
+    "actual_behavior": "Passes `channelId: ''` (empty string) which will fail the API validation at line 23 of the cinema route: `if (!body.contentId || !body.channelId || !body.topic || !body.contentType)`. The same empty channelId issue exists in handleRepairShot (line 88) and ExportVariants (line 278)",
+    "proposed_fix": "The StudioContent interface should include `channel: { id: string }` and the content's channelId should be passed. Alternatively, the API route should look up the channelId from the contentId"
+  },
+  {
+    "id": "P2D_014",
+    "file": "apps/web/src/app/content/[id]/page.tsx",
+    "line": 148,
+    "severity": "LOW",
+    "type": "missing-console-error",
+    "description": "handleAction catch block lacks console.error logging",
+    "intended_behavior": "All catch blocks should log errors for debugging",
+    "actual_behavior": "Has `catch { toast.error(...) }` without logging. Debugging content approval/rejection failures requires checking server logs only",
+    "proposed_fix": "Change to `catch (err) { console.error('Content action failed:', err); toast.error(...); }`"
+  },
+  {
+    "id": "P2D_015",
+    "file": "apps/web/src/app/calendar/page.tsx",
+    "line": 115,
+    "severity": "LOW",
+    "type": "missing-empty-state",
+    "description": "Calendar page shows empty grid with no items but no explicit empty state message",
+    "intended_behavior": "When no calendar items exist for the selected week, should show a helpful empty state",
+    "actual_behavior": "Shows the full grid with empty cells. While not technically broken, it provides no guidance to the user about why there are no items or how to add them",
+    "proposed_fix": "Add an empty state check: if items.length === 0 and not loading, show a message like 'No scheduled posts for this week' within the grid area"
+  },
+  {
+    "id": "P2D_016",
+    "file": "apps/web/src/app/dashboard/page.tsx",
+    "line": 189,
+    "severity": "LOW",
+    "type": "inefficient-computation",
+    "description": "postedTodayCount filters all content items (up to 100) on every render",
+    "intended_behavior": "The count of items posted today could be more efficiently retrieved",
+    "actual_behavior": "Fetches 100 content items just to count how many were posted today. The `useMemo` helps but the underlying data fetch is wasteful. This is a minor efficiency concern",
+    "proposed_fix": "Consider adding a dedicated lightweight API endpoint (e.g., `/api/v1/content/stats`) that returns counts by status for today, or add query params to the existing endpoint"
+  },
+  {
+    "id": "P2D_017",
+    "file": "apps/web/src/app/settings/page.tsx",
+    "line": 502,
+    "severity": "LOW",
+    "type": "missing-swr-revalidation",
+    "description": "NotificationsTab does not call mutate() after saving notification settings",
+    "intended_behavior": "After saving notification settings, the SWR cache should be revalidated to reflect the saved state",
+    "actual_behavior": "The save handler calls apiPut but does not call mutate() to revalidate the useApi hook. If the user navigates away and back, they'll see stale data until the next automatic refresh",
+    "proposed_fix": "Destructure `mutate` from the useApi hook in NotificationsTab and call `mutate()` after the successful apiPut"
+  },
+  {
+    "id": "P2D_018",
+    "file": "apps/web/src/app/settings/page.tsx",
+    "line": 155,
+    "severity": "LOW",
+    "type": "missing-swr-revalidation",
+    "description": "GeneralTab does not call mutate() after saving general settings",
+    "intended_behavior": "After saving settings, SWR cache should be revalidated",
+    "actual_behavior": "Calls apiPut but does not mutate the SWR cache. While the local state tracks changes via setForm, the SWR cache remains stale",
+    "proposed_fix": "Destructure `mutate` from useApi and call it after successful save"
+  },
+  {
+    "id": "P2D_019",
+    "file": "apps/web/src/app/settings/page.tsx",
+    "line": 898,
+    "severity": "LOW",
+    "type": "missing-swr-revalidation",
+    "description": "AppearanceTab does not call mutate() after saving appearance settings",
+    "intended_behavior": "After saving settings, SWR cache should be revalidated",
+    "actual_behavior": "Calls apiPut but does not mutate the SWR cache",
+    "proposed_fix": "Destructure `mutate` from useApi and call it after successful save"
+  },
+  {
+    "id": "P2D_020",
+    "file": "apps/web/src/app/analytics/page.tsx",
+    "line": 177,
+    "severity": "LOW",
+    "type": "missing-decimal-wrapping",
+    "description": "Analytics KPI values from API may be Decimal strings that aren't wrapped with Number()",
+    "intended_behavior": "Revenue, cost, and profit values from Prisma Decimal fields should be wrapped with Number()",
+    "actual_behavior": "The analytics data is cast as `AnalyticsData` and KPI values are used directly in formatCurrency(). If the API route returns Decimal strings (not numbers), formatCurrency would show NaN. However, this depends on whether the analytics overview API route performs Number() conversion. This is a defensive coding concern.",
+    "proposed_fix": "Ensure the analytics overview API route wraps all Decimal fields with Number(), or add Number() wrapping in the frontend where KPI values are consumed"
+  },
+  {
+    "id": "P2D_021",
+    "file": "apps/web/src/app/studio/[contentId]/page.tsx",
+    "line": 49,
+    "severity": "MEDIUM",
+    "type": "data-shape-mismatch",
+    "description": "Studio page fetches content with `?include=storyboards` query param but the content API route may not support this parameter",
+    "intended_behavior": "The content detail API should return storyboard data including shots when requested",
+    "actual_behavior": "The useApi call passes `?include=storyboards` but the content/[id] GET route always includes storyboards regardless of query params (it has a hardcoded Prisma include). The query param is silently ignored but doesn't cause bugs because storyboards are always included. Minor inconsistency.",
+    "proposed_fix": "Remove the unused `?include=storyboards` query parameter from the useApi call for clarity"
+  }
+]

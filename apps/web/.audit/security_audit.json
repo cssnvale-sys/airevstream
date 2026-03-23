@@ -1,0 +1,447 @@
+{
+  "audit_date": "2026-03-23",
+  "agent": "Agent E — Security Surface Scanner",
+  "scope": "apps/web/src/app/api/v1/ (124 route files), middleware, auth infrastructure, crypto package",
+  "total_routes_scanned": 124,
+
+  "unprotected_routes": [
+    {
+      "file": "apps/web/src/app/api/v1/auth/login/route.ts",
+      "method": "POST",
+      "description": "Expected: public login endpoint. Uses getDb() correctly. Has rate limiting."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/auth/register/route.ts",
+      "method": "POST",
+      "description": "Expected: public registration. Uses getDb() correctly. Has rate limiting and REGISTRATION_DISABLED guard."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/auth/forgot-password/route.ts",
+      "method": "POST",
+      "description": "Expected: public forgot-password. Uses getDb() correctly. Has rate limiting. Returns constant message to prevent email enumeration."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/auth/reset-password/route.ts",
+      "method": "POST",
+      "description": "Expected: public reset-password. Uses getDb() correctly. Has rate limiting. Validates reset token."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/affiliate/redirect/[shortCode]/route.ts",
+      "method": "GET",
+      "description": "Expected: public affiliate redirect. Uses getDb() correctly. Validates URL protocol before redirect. No rate limiting — see missing_rate_limit section."
+    }
+  ],
+
+  "missing_rate_limit": [
+    {
+      "file": "apps/web/src/app/api/v1/affiliate/redirect/[shortCode]/route.ts",
+      "method": "GET",
+      "severity": "medium",
+      "description": "Public endpoint with no auth and no rate limiting. Could be abused to inflate click counts or perform click fraud via automated requests."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/health/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only system health endpoint. Authenticated but no rate limit. Moderate DB load per request (5 parallel queries)."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/metrics/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only system metrics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only alerts list. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/errors/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only errors list. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/workflows/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only workflows list. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/trending/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only trending topics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/users/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Admin-only user list. Authenticated with admin check but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/events/stream/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "SSE endpoint. Authenticated via authenticateSSE(). Long-lived connection, but no rate limit on connection establishment."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/content/viral-score/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Triggers viral scoring computation and updates DB. Authenticated but no rate limit. Can cause write amplification."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/content/provenance/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only provenance data. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/content/[id]/versions/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only content versions. Authenticated but no rate limit. Could trigger chain of DB lookups (walks parent chain up to 50 depth)."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/content/[id]/pipeline-status/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only pipeline status. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/seasoning/stats/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only stats. Authenticated but no rate limit. Runs 6 parallel aggregation queries."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/seasoning/cohorts/[id]/enrollments/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only enrollments list. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/auth/me/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only user profile. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/workflows/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only workflows list. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/workflows/hitl/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only HITL workflows. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/comfyui/models/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only ComfyUI model list. Authenticated but no rate limit. Makes external HTTP call to ComfyUI server."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/budgets/check/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only budget check. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/activity/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only activity feed. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/usage/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only usage data. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/calendar/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only calendar data. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/approvals/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only approvals list. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/accounts/stats/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only account stats. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/assistant/capabilities/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only capabilities. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/assistant/conversations/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only conversations list. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/settings/ai/fallback-chains/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only settings. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/affiliate/analytics/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only analytics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/affiliate/clicks/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only click data. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/affiliate/revenue/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only revenue data. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/affiliate/products/[id]/analytics/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only product analytics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/analytics/overview/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only analytics overview. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/analytics/engagement/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only engagement analytics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/analytics/revenue/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only revenue analytics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/analytics/costs/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only cost analytics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/analytics/content-performance/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only performance analytics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/analytics/audience/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Read-only audience analytics. Authenticated but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/ai-services/costs/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Admin-only AI costs. Has admin check but no rate limit."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/ai-services/usage/route.ts",
+      "method": "GET",
+      "severity": "low",
+      "description": "Admin-only AI usage. Has admin check but no rate limit."
+    }
+  ],
+
+  "injection_risks": [],
+
+  "xss_risks": [],
+
+  "idor_risks": [
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/[id]/acknowledge/route.ts",
+      "description": "IDOR: Alert acknowledged by ID without any tenant scoping. Any authenticated non-viewer user can acknowledge any alert from any tenant by guessing the alert UUID. The Alert model appears to be a global (non-tenant-scoped) model, so this is accessible cross-tenant."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/[id]/snooze/route.ts",
+      "description": "IDOR: Alert snoozed by ID without tenant scoping. Any authenticated non-viewer user can snooze any alert from any tenant."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/acknowledge-all/route.ts",
+      "description": "IDOR: Acknowledges ALL open alerts globally without tenant scoping. Any authenticated non-viewer user can acknowledge all alerts across all tenants."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/route.ts",
+      "description": "IDOR: Lists all alerts without tenant filtering. Any authenticated user can see all alerts from all tenants. The Alert model appears to lack a tenantId field."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/errors/route.ts",
+      "description": "IDOR: Lists all error-severity alerts without tenant scoping. Any authenticated user can see all error alerts across all tenants."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/events/stream/route.ts",
+      "description": "IDOR (partial): The SSE pollAlerts() function at line 25 queries alerts without tenant scoping — alerts from all tenants are broadcast to any authenticated user. However, pollWorkflows and pollContent are properly tenant-scoped."
+    }
+  ],
+
+  "error_leaks": [
+    {
+      "file": "apps/web/src/app/api/v1/media/[...path]/route.ts",
+      "line": 35,
+      "description": "Checks err.message for 'Not Found' string but does NOT pass err.message to the error response — instead uses static string 'Object not found'. This is acceptable. No actual leak."
+    }
+  ],
+
+  "tenant_scope_gaps": [
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/route.ts",
+      "description": "GET: No tenantId filter. Queries all alerts globally. The Alert model may be intentionally global (system-wide alerts), but this means any tenant user can see alerts about other tenants' systems."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/[id]/acknowledge/route.ts",
+      "description": "POST: No tenantId check. Any authenticated non-viewer can acknowledge any alert by ID."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/[id]/snooze/route.ts",
+      "description": "POST: No tenantId check. Any authenticated non-viewer can snooze any alert by ID."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/alerts/acknowledge-all/route.ts",
+      "description": "POST: No tenantId filter on updateMany. Acknowledges ALL open alerts globally across all tenants."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/errors/route.ts",
+      "description": "GET: No tenantId filter. Queries all critical/error alerts globally."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/events/stream/route.ts",
+      "description": "GET (SSE): pollAlerts() at line 25 does not filter by tenant. Alert events from all tenants are pushed to any authenticated user's SSE stream."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/trending/route.ts",
+      "description": "GET: Queries knowledgeBaseEntry with category='trends' without tenant scoping. KnowledgeBaseEntry may be intentionally global, but could leak tenant-specific research data if entries are tenant-owned."
+    },
+    {
+      "file": "Multiple routes using conditional tenant scoping",
+      "description": "PATTERN: Many routes use the pattern ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}). If ctx.tenantId is null (which the type allows), the tenant filter is entirely skipped, giving access to all records. This is by design for admin users (who may have null tenantId), but should be explicitly documented and guarded. Affected files include all routes listed in the ternary tenant-scoping grep results."
+    }
+  ],
+
+  "other_issues": [
+    {
+      "file": "apps/web/src/lib/api-server.ts",
+      "type": "weak_default_secret",
+      "severity": "critical",
+      "description": "JWT_SECRET falls back to 'dev-secret-change-me' in non-production. While there IS a production guard (line 11 throws if JWT_SECRET is not set AND NODE_ENV=production), this means any dev or staging environment without JWT_SECRET set uses a well-known static secret. An attacker could forge valid JWTs for non-production deployments."
+    },
+    {
+      "file": "apps/web/src/middleware.ts",
+      "type": "weak_session_check",
+      "severity": "medium",
+      "description": "Middleware only checks for the presence of the 'airevstream_auth' cookie, not its validity. It checks authCookie?.value is truthy but does not verify the JWT signature. This is a client-side redirect guard only — actual security is enforced by authenticate() in API routes. However, if a user sets any non-empty cookie value, they can access page routes (though API calls will still fail)."
+    },
+    {
+      "file": "apps/web/src/middleware.ts",
+      "type": "api_route_bypass",
+      "severity": "low",
+      "description": "PUBLIC_PATHS includes '/api/' which exempts ALL API routes from the cookie check. This is correct because API routes have their own JWT auth, but it means the middleware provides zero protection for API routes — security is entirely dependent on each route calling authenticate()."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/auth/login/route.ts",
+      "type": "jwt_long_expiry",
+      "severity": "low",
+      "description": "JWT tokens expire after 7 days (line 44: setExpirationTime('7d')). While the password-change revocation mechanism mitigates this somewhat, a stolen JWT remains valid for up to 7 days. Consider shorter expiry with refresh tokens."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/affiliate/redirect/[shortCode]/route.ts",
+      "type": "click_fraud_vector",
+      "severity": "medium",
+      "description": "The affiliate redirect endpoint has no rate limiting and no authentication. An attacker could inflate click counts by automated requests. The ipHash provides some deduplication but doesn't prevent same-IP flooding."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/content/viral-score/route.ts",
+      "type": "unauthenticated_write_via_get",
+      "severity": "medium",
+      "description": "GET request triggers a DB write (ctx.db.contentItem.update at line 107 to cache the viral score). This violates HTTP semantics (GET should be idempotent/safe). No rate limiting applied, so repeated calls trigger repeated scoring and DB writes."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/system/errors/[id]/retry/route.ts",
+      "type": "weak_tenant_check",
+      "severity": "medium",
+      "description": "Lines 33-36: The OR clause includes { emailAccountId: { not: null } } which matches ANY job with an emailAccountId, not just ones belonging to the tenant. The follow-up check on lines 42-48 mitigates this for emailAccountId jobs, but jobs without contentId AND without emailAccountId (system jobs with channelId=null, emailAccountId=null) are not matched by either OR branch and thus cannot be retried."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/jobs/[id]/route.ts",
+      "type": "tenant_bypass_when_no_channel_or_account",
+      "severity": "low",
+      "description": "Line 38: if (ctx.tenantId && (job.channelId || job.emailAccountId)) — the tenant check is only performed when the job has a channelId or emailAccountId. Jobs with neither (system-level jobs) are returned to any authenticated user regardless of tenant."
+    },
+    {
+      "file": "apps/web/src/lib/rate-limit.ts",
+      "type": "in_memory_rate_limiter",
+      "severity": "low",
+      "description": "Rate limiting uses an in-memory Map store. In a multi-instance deployment (e.g., multiple Next.js server replicas), rate limits are not shared between instances. An attacker can distribute requests across instances to bypass limits. Consider using Redis-backed rate limiting for production."
+    },
+    {
+      "file": "apps/web/src/lib/rate-limit.ts",
+      "type": "ip_spoofing_risk",
+      "severity": "low",
+      "description": "getClientIp() trusts x-forwarded-for and x-real-ip headers. Without a trusted proxy configuration, an attacker can spoof these headers to bypass per-IP rate limiting. The IP_PATTERN regex validates format but not authenticity."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/auth/reset-password/route.ts",
+      "type": "password_reset_no_token_revocation",
+      "severity": "low",
+      "description": "After successfully resetting a password, the passwordChangedAt field is NOT updated (line 57 only sets passwordHash). This means existing JWT sessions issued before the reset are not revoked. Compare with change-password route (line 40) which correctly sets passwordChangedAt."
+    },
+    {
+      "file": "apps/web/src/app/api/v1/assistant/actions/route.ts",
+      "type": "large_action_surface",
+      "severity": "info",
+      "description": "This route (486 lines) acts as a dispatcher for multiple assistant actions. The large surface area increases risk of missing authorization checks for individual action types. Each action path should be reviewed independently."
+    }
+  ],
+
+  "summary": {
+    "critical": 1,
+    "high": 0,
+    "medium": 5,
+    "low": 12,
+    "info": 1,
+    "total_findings": 19,
+    "notes": [
+      "No SQL injection risks found — all database access uses Prisma ORM with parameterized queries.",
+      "No XSS risks found — no dangerouslySetInnerHTML usage anywhere in the codebase.",
+      "No error message leaks — all error() calls use static strings. Two conditional checks of err.message in media and SSE routes do not pass err.message to clients.",
+      "No raw SQL found — all queries go through Prisma client.",
+      "Affiliate redirect has proper URL protocol validation (http/https only) — open redirect risk is mitigated.",
+      "Encryption (packages/crypto) uses AES-256-GCM correctly with random IVs and auth tags.",
+      "Auth routes (login, register, forgot-password, reset-password) correctly use getDb() not ctx.db — they run before authentication context exists.",
+      "All 5 unprotected routes are intentionally public (auth flow + affiliate redirect).",
+      "129 of 124 route files call an authenticate function (some files are counted multiple times in the grep). All data routes are authenticated.",
+      "The most significant issues are: (1) JWT dev-secret fallback, (2) global Alert model accessible cross-tenant, (3) viral-score GET doing writes without rate limiting, (4) password reset not updating passwordChangedAt."
+    ]
+  }
+}

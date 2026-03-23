@@ -1,0 +1,529 @@
+{
+  "audit_date": "2026-03-23",
+  "audit_type": "dependency",
+  "summary": {
+    "total_workspaces": 14,
+    "total_external_deps": 36,
+    "total_internal_deps": 22,
+    "version_conflicts": 4,
+    "potential_issues": 18,
+    "lock_file_present": true,
+    "npm_ls_errors": 0
+  },
+  "root": {
+    "path": "package.json",
+    "name": "airevstream",
+    "version": "0.1.0",
+    "packageManager": "npm@10.8.2",
+    "devDependencies": {
+      "@playwright/test": "^1.58.2",
+      "turbo": "^2.0.0",
+      "typescript": "^5.4.0"
+    }
+  },
+  "workspaces": [
+    {
+      "path": "apps/web",
+      "name": "@airevstream/web",
+      "dependencies": {
+        "@airevstream/db": "*",
+        "@airevstream/queue": "*",
+        "@airevstream/crypto": "*",
+        "@airevstream/shared": "*",
+        "@airevstream/ai-client": "*",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "date-fns": "^4.1.0",
+        "jose": "^6.0.11",
+        "lucide-react": "^0.460.0",
+        "next": "^14.2.0",
+        "react": "^18.3.0",
+        "react-dom": "^18.3.0",
+        "recharts": "^3.8.0",
+        "sonner": "^2.0.7",
+        "swr": "^2.4.1",
+        "tailwind-merge": "^3.5.0",
+        "zod": "^3.25.76"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "@types/react": "^18.3.0",
+        "@types/react-dom": "^18.3.0",
+        "autoprefixer": "^10.4.0",
+        "postcss": "^8.4.0",
+        "tailwindcss": "^3.4.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "packages/shared",
+      "name": "@airevstream/shared",
+      "dependencies": {
+        "dotenv": "^16.4.0",
+        "pino": "^9.0.0",
+        "zod": "^3.23.0"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "packages/db",
+      "name": "@airevstream/db",
+      "dependencies": {
+        "@prisma/client": "^6.0.0"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "prisma": "^6.0.0",
+        "tsx": "^4.19.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "packages/crypto",
+      "name": "@airevstream/crypto",
+      "dependencies": {},
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "packages/storage",
+      "name": "@airevstream/storage",
+      "dependencies": {
+        "minio": "^8.0.0"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "packages/queue",
+      "name": "@airevstream/queue",
+      "dependencies": {
+        "bullmq": "^5.0.0"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "packages/ai-client",
+      "name": "@airevstream/ai-client",
+      "dependencies": {
+        "@airevstream/shared": "*",
+        "ollama": "^0.5.0"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "packages/audio-engine",
+      "name": "@airevstream/audio-engine",
+      "dependencies": {
+        "@airevstream/shared": "*",
+        "@airevstream/storage": "*"
+      },
+      "devDependencies": {
+        "typescript": "^5.6.3",
+        "vitest": "^2.1.8"
+      }
+    },
+    {
+      "path": "packages/browser-automation",
+      "name": "@airevstream/browser-automation",
+      "dependencies": {
+        "@airevstream/crypto": "*",
+        "@airevstream/shared": "*",
+        "playwright": "^1.58.2",
+        "playwright-extra": "^4.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2"
+      },
+      "devDependencies": {
+        "typescript": "^5.6.3",
+        "vitest": "^2.1.8"
+      }
+    },
+    {
+      "path": "services/workflow-engine",
+      "name": "@airevstream/workflow-engine",
+      "dependencies": {
+        "@airevstream/crypto": "*",
+        "@airevstream/db": "*",
+        "@airevstream/queue": "*",
+        "@airevstream/shared": "*",
+        "@fastify/cors": "^10.0.0",
+        "@fastify/jwt": "^9.0.0",
+        "@fastify/rate-limit": "^10.3.0",
+        "bcrypt": "^6.0.0",
+        "fastify": "^5.0.0",
+        "zod": "^3.23.0"
+      },
+      "devDependencies": {
+        "@types/bcrypt": "^5.0.0",
+        "@types/node": "^25.5.0",
+        "tsx": "^4.0.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "services/ai-assistant",
+      "name": "@airevstream/ai-assistant",
+      "dependencies": {
+        "@airevstream/ai-client": "*",
+        "@airevstream/db": "*",
+        "@airevstream/shared": "*",
+        "@fastify/cors": "^10.0.0",
+        "@fastify/jwt": "^9.0.0",
+        "@fastify/rate-limit": "^10.3.0",
+        "@fastify/websocket": "^11.0.0",
+        "fastify": "^5.0.0",
+        "fastify-plugin": "^5.0.0",
+        "zod": "^3.23.0"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "tsx": "^4.0.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "services/production-pipeline",
+      "name": "@airevstream/production-pipeline",
+      "dependencies": {
+        "@airevstream/db": "*",
+        "@airevstream/queue": "*",
+        "@airevstream/shared": "*",
+        "@airevstream/storage": "*",
+        "@fastify/cors": "^10.0.0",
+        "@fastify/jwt": "^9.0.0",
+        "@fastify/rate-limit": "^10.3.0",
+        "fastify": "^5.0.0",
+        "fastify-plugin": "^5.0.0",
+        "zod": "^3.23.0"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "tsx": "^4.0.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "workers",
+      "name": "@airevstream/workers",
+      "dependencies": {
+        "@airevstream/shared": "*",
+        "@airevstream/db": "*",
+        "@airevstream/queue": "*",
+        "@airevstream/ai-client": "*",
+        "@airevstream/storage": "*",
+        "@airevstream/crypto": "*",
+        "@airevstream/browser-automation": "*",
+        "@airevstream/audio-engine": "*"
+      },
+      "devDependencies": {
+        "@types/node": "^25.5.0",
+        "tsx": "^4.0.0",
+        "typescript": "^5.4.0",
+        "vitest": "^2.0.0"
+      }
+    },
+    {
+      "path": "remotion",
+      "name": "@airevstream/remotion",
+      "dependencies": {
+        "remotion": "^4.0.0",
+        "@remotion/cli": "^4.0.0",
+        "@remotion/player": "^4.0.0",
+        "@remotion/media-utils": "^4.0.0",
+        "react": "^18.3.0",
+        "react-dom": "^18.3.0"
+      },
+      "devDependencies": {
+        "@types/react": "^18.3.0",
+        "@types/react-dom": "^18.3.0",
+        "@types/node": "^25.5.0",
+        "typescript": "^5.4.0"
+      }
+    }
+  ],
+  "installed_versions": {
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "5.9.3",
+    "zod": "3.25.76",
+    "prisma": "6.19.2",
+    "@prisma/client": "6.19.2",
+    "bullmq": "5.71.0",
+    "fastify": "5.8.2",
+    "pino": "9.14.0",
+    "vitest": "2.1.9",
+    "remotion": "4.0.436",
+    "@remotion/cli": "4.0.436",
+    "@remotion/player": "4.0.436",
+    "@remotion/media-utils": "4.0.436",
+    "playwright": "1.58.2",
+    "@playwright/test": "1.58.2",
+    "swr": "2.4.1",
+    "jose": "6.2.1",
+    "dotenv": "16.6.1",
+    "minio": "8.0.7",
+    "ollama": "0.5.18",
+    "turbo": "2.8.17",
+    "tailwindcss": "3.4.19",
+    "postcss": "8.5.8",
+    "autoprefixer": "10.4.27",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "sonner": "2.0.7",
+    "tailwind-merge": "3.5.0",
+    "date-fns": "4.1.0",
+    "lucide-react": "0.460.0",
+    "recharts": "3.8.0",
+    "bcrypt": "6.0.0",
+    "@types/bcrypt": "5.0.2",
+    "tsx": "4.21.0",
+    "@fastify/cors": "10.1.0",
+    "@fastify/jwt": "9.1.0",
+    "@fastify/rate-limit": "10.3.0",
+    "@fastify/websocket": "11.2.0",
+    "fastify-plugin": "5.1.0",
+    "playwright-extra": "4.3.6",
+    "puppeteer-extra-plugin-stealth": "2.11.2"
+  },
+  "latest_available_versions": {
+    "next": "16.2.1",
+    "react": "19.2.4",
+    "typescript": "5.9.3",
+    "vitest": "4.1.1",
+    "tailwindcss": "4.2.2",
+    "@prisma/client": "7.5.0",
+    "zod": "4.3.6"
+  },
+  "version_conflicts": [
+    {
+      "package": "typescript",
+      "versions": ["^5.4.0", "^5.6.3"],
+      "details": "12 workspaces use ^5.4.0, 2 workspaces (audio-engine, browser-automation) use ^5.6.3. All resolve to 5.9.3 at runtime due to hoisting — cosmetic inconsistency only.",
+      "severity": "low"
+    },
+    {
+      "package": "zod",
+      "versions": ["^3.23.0", "^3.25.76"],
+      "details": "4 workspaces (shared, workflow-engine, ai-assistant, production-pipeline) use ^3.23.0, 1 workspace (web) uses ^3.25.76. All resolve to 3.25.76 at runtime due to hoisting — cosmetic inconsistency only.",
+      "severity": "low"
+    },
+    {
+      "package": "vitest",
+      "versions": ["^2.0.0", "^2.1.8"],
+      "details": "11 workspaces use ^2.0.0, 2 workspaces (audio-engine, browser-automation) use ^2.1.8. All resolve to 2.1.9 at runtime — cosmetic inconsistency only.",
+      "severity": "low"
+    },
+    {
+      "package": "tsx",
+      "versions": ["^4.0.0", "^4.19.0"],
+      "details": "4 workspaces (workflow-engine, ai-assistant, production-pipeline, workers) use ^4.0.0, 1 workspace (db) uses ^4.19.0. All resolve to 4.21.0 at runtime — cosmetic inconsistency only.",
+      "severity": "low"
+    }
+  ],
+  "potential_issues": [
+    {
+      "type": "outdated_major",
+      "package": "next",
+      "description": "Next.js 14.2.35 installed, latest is 16.x (15 released Oct 2024, 16 released 2025). Pinned at ^14.2.0 — intentional, but 2 major versions behind. Next.js 14 is in maintenance mode.",
+      "severity": "medium",
+      "workspace": "apps/web"
+    },
+    {
+      "type": "outdated_major",
+      "package": "react",
+      "description": "React 18.3.1 installed, latest is 19.x (released Dec 2024). React 19 requires migration work (new hooks, ref changes). Also held back by Next.js 14 compatibility — upgrade these together.",
+      "severity": "medium",
+      "workspace": "apps/web, remotion"
+    },
+    {
+      "type": "outdated_major",
+      "package": "vitest",
+      "description": "Vitest 2.1.9 installed, latest is 4.x. Vitest 3 released Jan 2025. Two major versions behind. May contain important bugfixes and performance improvements.",
+      "severity": "low",
+      "workspace": "all workspaces with tests"
+    },
+    {
+      "type": "outdated_major",
+      "package": "tailwindcss",
+      "description": "TailwindCSS 3.4.19 installed, latest is 4.x (released early 2025). Tailwind v4 is a significant rewrite. Upgrade requires config migration.",
+      "severity": "low",
+      "workspace": "apps/web"
+    },
+    {
+      "type": "outdated_major",
+      "package": "@prisma/client",
+      "description": "Prisma 6.19.2 installed, latest is 7.x. Prisma 7 may include breaking schema changes. Evaluate before upgrading.",
+      "severity": "low",
+      "workspace": "packages/db"
+    },
+    {
+      "type": "outdated_major",
+      "package": "zod",
+      "description": "Zod 3.25.76 installed, latest is 4.x. Zod v4 has API changes. Current version is functional and stable.",
+      "severity": "low",
+      "workspace": "multiple"
+    },
+    {
+      "type": "unused_dependency",
+      "package": "class-variance-authority",
+      "description": "Listed in apps/web dependencies (^0.7.1) but never imported in any source file under apps/web/src/. No import of 'cva' found either. Can be safely removed.",
+      "severity": "low",
+      "workspace": "apps/web"
+    },
+    {
+      "type": "unused_dependency",
+      "package": "@fastify/websocket",
+      "description": "Listed in services/ai-assistant dependencies (^11.0.0) but never imported or referenced in any source file under services/ai-assistant/src/. Can be safely removed.",
+      "severity": "low",
+      "workspace": "services/ai-assistant"
+    },
+    {
+      "type": "unused_dependency",
+      "package": "playwright-extra",
+      "description": "Listed in packages/browser-automation dependencies (^4.3.6) but never imported in source files. Stealth functionality is implemented inline via buildStealthScript(). Can be safely removed.",
+      "severity": "low",
+      "workspace": "packages/browser-automation"
+    },
+    {
+      "type": "unused_dependency",
+      "package": "puppeteer-extra-plugin-stealth",
+      "description": "Listed in packages/browser-automation dependencies (^2.11.2) but never imported in source files. The stealth anti-detection is done via custom init scripts, not via this plugin. Can be safely removed.",
+      "severity": "low",
+      "workspace": "packages/browser-automation"
+    },
+    {
+      "type": "types_version_mismatch",
+      "package": "@types/bcrypt",
+      "description": "Declared as ^5.0.0 in services/workflow-engine but bcrypt itself is ^6.0.0. The @types/bcrypt@5.0.2 installed may lack types for bcrypt v6 APIs. Latest @types/bcrypt is 6.0.0. Update to ^6.0.0.",
+      "severity": "medium",
+      "workspace": "services/workflow-engine"
+    },
+    {
+      "type": "missing_dev_dependency",
+      "package": "@types/node",
+      "description": "packages/audio-engine and packages/browser-automation are missing @types/node in devDependencies. They rely on the hoisted version from the root, which works but is implicit. All other packages declare it explicitly.",
+      "severity": "low",
+      "workspace": "packages/audio-engine, packages/browser-automation"
+    },
+    {
+      "type": "version_range_inconsistency",
+      "package": "typescript",
+      "description": "audio-engine and browser-automation declare ^5.6.3 while all other workspaces declare ^5.4.0. Both resolve to the same installed version (5.9.3). Should be normalized to ^5.4.0 for consistency.",
+      "severity": "low",
+      "workspace": "packages/audio-engine, packages/browser-automation"
+    },
+    {
+      "type": "version_range_inconsistency",
+      "package": "vitest",
+      "description": "audio-engine and browser-automation declare ^2.1.8 while all other workspaces declare ^2.0.0. Both resolve to the same installed version (2.1.9). Should be normalized for consistency.",
+      "severity": "low",
+      "workspace": "packages/audio-engine, packages/browser-automation"
+    },
+    {
+      "type": "version_range_inconsistency",
+      "package": "zod",
+      "description": "apps/web declares ^3.25.76 while shared and services declare ^3.23.0. All resolve to 3.25.76. Should be normalized.",
+      "severity": "low",
+      "workspace": "apps/web vs packages/shared, services/*"
+    },
+    {
+      "type": "security_consideration",
+      "package": "bcrypt",
+      "description": "bcrypt is a native C++ addon requiring node-gyp compilation. Consider migrating to 'bcryptjs' (pure JS) or Node.js built-in crypto.scrypt for fewer build dependencies and better portability.",
+      "severity": "info",
+      "workspace": "services/workflow-engine"
+    },
+    {
+      "type": "duplicate_react",
+      "package": "react",
+      "description": "React is declared in both apps/web (^18.3.0) and remotion (^18.3.0). npm hoists correctly and both resolve to 18.3.1. Not a runtime issue, but ensure only one copy is bundled.",
+      "severity": "info",
+      "workspace": "apps/web, remotion"
+    },
+    {
+      "type": "missing_test_runner",
+      "package": "vitest",
+      "description": "remotion/ workspace has no vitest or test script defined. All other workspaces include vitest. Not necessarily an issue if remotion compositions are tested via render commands instead.",
+      "severity": "info",
+      "workspace": "remotion"
+    }
+  ],
+  "lock_file": {
+    "exists": true,
+    "path": "package-lock.json",
+    "size_bytes": 331344,
+    "consistent": true,
+    "npm_ls_errors": 0,
+    "npm_ls_warnings": 0
+  },
+  "peer_dependencies": {
+    "status": "all_satisfied",
+    "details": [
+      {
+        "package": "next",
+        "peer": "react@^18.2.0",
+        "satisfied": true,
+        "installed": "18.3.1"
+      },
+      {
+        "package": "next",
+        "peer": "react-dom@^18.2.0",
+        "satisfied": true,
+        "installed": "18.3.1"
+      },
+      {
+        "package": "next",
+        "peer": "@opentelemetry/api@^1.1.0",
+        "satisfied": true,
+        "note": "optional peer dep"
+      },
+      {
+        "package": "next",
+        "peer": "sass@^1.3.0",
+        "satisfied": true,
+        "note": "optional peer dep, not used"
+      },
+      {
+        "package": "remotion",
+        "peer": "react@>=16.8.0",
+        "satisfied": true,
+        "installed": "18.3.1"
+      },
+      {
+        "package": "remotion",
+        "peer": "react-dom@>=16.8.0",
+        "satisfied": true,
+        "installed": "18.3.1"
+      }
+    ]
+  },
+  "playwright_alignment": {
+    "playwright_test_version": "1.58.2",
+    "playwright_version": "1.58.2",
+    "aligned": true
+  }
+}

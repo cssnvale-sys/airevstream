@@ -1,0 +1,254 @@
+{
+  "audit_date": "2026-03-23",
+  "auditor": "Agent C — Env & Config Scanner",
+
+  "env_files_found": [
+    ".env",
+    ".env.example",
+    ".env.production.example"
+  ],
+
+  "env_vars_used": [
+    { "name": "DATABASE_URL", "source_files": ["packages/shared/src/config.ts", "workers/src/maintenance.worker.ts"], "in_env_example": true },
+    { "name": "REDIS_URL", "source_files": ["packages/shared/src/config.ts", "packages/queue/src/index.ts"], "in_env_example": true },
+    { "name": "MINIO_ENDPOINT", "source_files": ["packages/shared/src/config.ts", "packages/storage/src/index.ts"], "in_env_example": true },
+    { "name": "MINIO_PORT", "source_files": ["packages/shared/src/config.ts", "packages/storage/src/index.ts"], "in_env_example": true },
+    { "name": "MINIO_ACCESS_KEY", "source_files": ["packages/shared/src/config.ts", "packages/storage/src/index.ts"], "in_env_example": true },
+    { "name": "MINIO_SECRET_KEY", "source_files": ["packages/shared/src/config.ts", "packages/storage/src/index.ts"], "in_env_example": true },
+    { "name": "ENCRYPTION_KEY", "source_files": ["packages/shared/src/config.ts", "packages/db/prisma/seed.ts", "apps/web/src/app/api/v1/assistant/actions/route.ts", "apps/web/src/app/api/v1/ai-services/route.ts", "apps/web/src/app/api/v1/accounts/route.ts", "workers/src/posting.worker.ts", "workers/src/account.worker.ts", "services/workflow-engine/src/routes/account.ts"], "in_env_example": true },
+    { "name": "JWT_SECRET", "source_files": ["packages/shared/src/config.ts", "apps/web/src/lib/api-server.ts"], "in_env_example": true },
+    { "name": "JWT_REFRESH_SECRET", "source_files": ["packages/shared/src/config.ts"], "in_env_example": true },
+    { "name": "OLLAMA_BASE_URL", "source_files": ["packages/shared/src/config.ts", "packages/ai-client/src/index.ts", "packages/ai-client/src/providers/ollama.ts"], "in_env_example": true },
+    { "name": "COMFYUI_URL", "source_files": ["packages/shared/src/config.ts", "packages/shared/src/comfyui-client.ts", "packages/ai-client/src/providers/video/comfyui-video.ts", "services/production-pipeline/src/comfyui-client.ts", "workers/src/production.worker.ts"], "in_env_example": true },
+    { "name": "COMFYUI_TIMEOUT_MS", "source_files": ["workers/src/production.worker.ts"], "in_env_example": true },
+    { "name": "CORS_ORIGINS", "source_files": ["packages/shared/src/config.ts"], "in_env_example": true },
+    { "name": "NODE_ENV", "source_files": ["packages/shared/src/config.ts", "packages/shared/src/logger.ts", "packages/db/src/index.ts", "apps/web/src/lib/api-server.ts", "apps/web/src/app/api/v1/auth/forgot-password/route.ts"], "in_env_example": false },
+    { "name": "NEXT_PUBLIC_APP_URL", "source_files": ["apps/web/src/app/api/v1/auth/forgot-password/route.ts"], "in_env_example": true },
+    { "name": "REGISTRATION_DISABLED", "source_files": ["apps/web/src/app/api/v1/auth/register/route.ts"], "in_env_example": true },
+    { "name": "PORT", "source_files": ["services/workflow-engine/src/index.ts", "services/ai-assistant/src/index.ts", "services/production-pipeline/src/index.ts"], "in_env_example": false },
+    { "name": "GOOGLE_VEO_API_KEY", "source_files": ["packages/ai-client/src/providers/video/veo.ts"], "in_env_example": false },
+    { "name": "OPENAI_API_KEY", "source_files": ["packages/ai-client/src/providers/video/sora.ts"], "in_env_example": false },
+    { "name": "TTS_API_KEY", "source_files": ["packages/audio-engine/src/tts-client.ts"], "in_env_example": true },
+    { "name": "TTS_BASE_URL", "source_files": ["packages/audio-engine/src/tts-client.ts"], "in_env_example": true },
+    { "name": "INSTAGRAM_API_VERSION", "source_files": ["workers/src/platform-adapters.ts"], "in_env_example": true },
+    { "name": "FACEBOOK_API_VERSION", "source_files": ["workers/src/platform-adapters.ts"], "in_env_example": true },
+    { "name": "E2E_BASE_URL", "source_files": ["e2e/playwright.config.ts"], "in_env_example": false },
+    { "name": "MINIO_USE_SSL", "source_files": [], "in_env_example": false, "note": "Referenced in .env.production.example but never read by code" }
+  ],
+
+  "missing_from_env_example": [
+    {
+      "name": "GOOGLE_VEO_API_KEY",
+      "source_file": "packages/ai-client/src/providers/video/veo.ts",
+      "severity": "low",
+      "note": "Optional video provider API key, falls back to empty string"
+    },
+    {
+      "name": "OPENAI_API_KEY",
+      "source_file": "packages/ai-client/src/providers/video/sora.ts",
+      "severity": "low",
+      "note": "Optional video provider API key, falls back to empty string"
+    },
+    {
+      "name": "E2E_BASE_URL",
+      "source_file": "e2e/playwright.config.ts",
+      "severity": "info",
+      "note": "Test-only variable, defaults to http://localhost:3000"
+    },
+    {
+      "name": "PORT",
+      "source_file": "services/*/src/index.ts",
+      "severity": "info",
+      "note": "Generic PORT used by all 3 Fastify services, set via ecosystem.config.js"
+    }
+  ],
+
+  "hardcoded_secrets": [
+    {
+      "file": "apps/web/src/lib/api-server.ts",
+      "line": 13,
+      "pattern": "JWT_SECRET ?? 'dev-secret-change-me'",
+      "severity": "high",
+      "description": "Hardcoded JWT fallback secret used when JWT_SECRET env var is not set. Production guard exists (line 10-12) that throws if NODE_ENV=production, but in dev/test this weak secret is used for signing tokens."
+    },
+    {
+      "file": "packages/storage/src/index.ts",
+      "line": 19,
+      "pattern": "MINIO_ACCESS_KEY ?? 'airevstream'",
+      "severity": "medium",
+      "description": "Hardcoded MinIO access key fallback. Acceptable for local dev but would be a security issue if deployed without .env."
+    },
+    {
+      "file": "packages/storage/src/index.ts",
+      "line": 20,
+      "pattern": "MINIO_SECRET_KEY ?? 'airevstream_dev_secret_key_change_me'",
+      "severity": "medium",
+      "description": "Hardcoded MinIO secret key fallback. Same value in shared config.ts default. Acceptable for local dev only."
+    },
+    {
+      "file": "packages/shared/src/config.ts",
+      "line": 11,
+      "pattern": "DATABASE_URL default: 'postgresql://airevstream:airevstream_dev@localhost:5432/airevstream'",
+      "severity": "medium",
+      "description": "Default database URL with dev credentials in Zod schema. Contains username 'airevstream' and password 'airevstream_dev'."
+    },
+    {
+      "file": "workers/src/maintenance.worker.ts",
+      "line": 86,
+      "pattern": "DATABASE_URL ?? 'postgresql://airevstream:airevstream_dev@localhost:5432/airevstream'",
+      "severity": "medium",
+      "description": "Hardcoded DATABASE_URL fallback with dev credentials in maintenance worker (used for pg_dump)."
+    },
+    {
+      "file": "packages/queue/src/index.ts",
+      "line": 238,
+      "pattern": "REDIS_URL ?? 'redis://localhost:6379'",
+      "severity": "low",
+      "description": "Hardcoded Redis URL fallback. No credentials exposed but hardcodes localhost assumption."
+    },
+    {
+      "file": "packages/db/prisma/seed.ts",
+      "line": 46,
+      "pattern": "hashPassword('changeme123')",
+      "severity": "medium",
+      "description": "Default admin password in seed file. Expected for dev seeding but should be documented as requiring change."
+    },
+    {
+      "file": "e2e/fixtures/test-data.ts",
+      "line": 7,
+      "pattern": "password: 'changeme123'",
+      "severity": "low",
+      "description": "Test password matching seed data. Acceptable for E2E test fixtures."
+    }
+  ],
+
+  "config_issues": [
+    {
+      "type": "env_var_name_mismatch",
+      "file": ".env.production.example",
+      "description": "Uses OLLAMA_URL but code reads OLLAMA_BASE_URL. Production deployments using this example will have a broken Ollama connection since the env var name does not match.",
+      "severity": "high"
+    },
+    {
+      "type": "missing_production_env_vars",
+      "file": ".env.production.example",
+      "description": "Missing several env vars that code references: NEXT_PUBLIC_APP_URL, CORS_ORIGINS, JWT_REFRESH_SECRET, REGISTRATION_DISABLED, COMFYUI_TIMEOUT_MS, TTS_BASE_URL, TTS_API_KEY. Production deployments may have issues if these are not set.",
+      "severity": "medium"
+    },
+    {
+      "type": "csp_unsafe_eval",
+      "file": "apps/web/next.config.js",
+      "description": "Content-Security-Policy includes 'unsafe-inline' and 'unsafe-eval' for script-src and 'unsafe-inline' for style-src. While common for Next.js apps, this weakens XSS protections. Consider using nonce-based CSP for production.",
+      "severity": "medium"
+    },
+    {
+      "type": "env_var_not_in_zod_schema",
+      "file": "packages/shared/src/config.ts",
+      "description": "Several env vars read directly via process.env are not validated in the central Zod envSchema: PORT, GOOGLE_VEO_API_KEY, OPENAI_API_KEY, E2E_BASE_URL, TTS_API_KEY, TTS_BASE_URL, COMFYUI_TIMEOUT_MS, INSTAGRAM_API_VERSION, FACEBOOK_API_VERSION. These bypass centralized validation.",
+      "severity": "medium"
+    },
+    {
+      "type": "minio_use_ssl_not_read",
+      "file": ".env.production.example",
+      "description": "MINIO_USE_SSL is defined in .env.production.example but the storage package hardcodes useSSL: false (line 21) and never reads this env var. SSL will never be enabled via env config.",
+      "severity": "medium"
+    },
+    {
+      "type": "duplicate_env_reading",
+      "file": "packages/storage/src/index.ts",
+      "description": "Storage package reads MINIO_* env vars directly (process.env.MINIO_*) instead of using the centralized getConfig() from @airevstream/shared. Same defaults are duplicated in both places.",
+      "severity": "low"
+    },
+    {
+      "type": "duplicate_env_reading",
+      "file": "packages/queue/src/index.ts",
+      "description": "Queue package reads REDIS_URL directly via process.env instead of using getConfig(). Default value is duplicated.",
+      "severity": "low"
+    },
+    {
+      "type": "duplicate_env_reading",
+      "file": "packages/ai-client/src/providers/ollama.ts",
+      "description": "Ollama provider reads OLLAMA_BASE_URL directly via process.env in 5 places instead of using getConfig(). Default 'http://localhost:11434' is duplicated across all occurrences.",
+      "severity": "low"
+    },
+    {
+      "type": "duplicate_env_reading",
+      "file": "workers/src/production.worker.ts",
+      "description": "Production worker reads COMFYUI_URL and COMFYUI_TIMEOUT_MS directly via process.env instead of using getConfig().",
+      "severity": "low"
+    },
+    {
+      "type": "no_production_guard",
+      "file": "packages/shared/src/config.ts",
+      "description": "ENCRYPTION_KEY and JWT_SECRET are optional in the Zod schema. The production guard only exists in api-server.ts for JWT_SECRET. No centralized guard prevents starting without ENCRYPTION_KEY in production, which would cause runtime errors when encrypting credentials.",
+      "severity": "medium"
+    },
+    {
+      "type": "turbo_global_dependency",
+      "file": "turbo.json",
+      "description": "globalDependencies includes .env which means any .env change invalidates all Turbo caches. This is correct behavior but may cause unnecessary rebuilds during local development.",
+      "severity": "info"
+    },
+    {
+      "type": "pm2_worker_paths",
+      "file": "ecosystem.config.js",
+      "description": "Worker scripts reference dist/workers/*.js but workers build to workers/dist/ (the cwd is '.', not './workers'). Verify the built output path matches. If workers use a root-level build step, this is fine; otherwise the paths may be wrong.",
+      "severity": "low"
+    },
+    {
+      "type": "experimental_next_config",
+      "file": "apps/web/next.config.js",
+      "description": "Uses experimental.serverComponentsExternalPackages which was moved to a stable config key in Next.js 14.1+. Should use serverExternalPackages instead.",
+      "severity": "low"
+    },
+    {
+      "type": "jwt_refresh_secret_unused",
+      "file": "packages/shared/src/config.ts",
+      "description": "JWT_REFRESH_SECRET is defined in .env.example and the Zod config schema but is never referenced in any source code. It appears to be an unused env var.",
+      "severity": "info"
+    }
+  ],
+
+  "gitignore_coverage": {
+    "patterns_checked": [
+      { "pattern": ".env", "status": "ignored", "note": "Covered by *.env glob" },
+      { "pattern": ".env.local", "status": "ignored", "note": "Covered by *.env.local glob" },
+      { "pattern": ".env.production", "status": "ignored", "note": "Covered by *.env glob (matches .env.production)" },
+      { "pattern": "node_modules/", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": "dist/", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": ".next/", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": ".turbo/", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": "coverage/", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": "logs/", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": "*.log", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": "*.tsbuildinfo", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": ".DS_Store", "status": "ignored", "note": "Properly ignored" },
+      { "pattern": "e2e/.auth/", "status": "ignored", "note": "Properly ignored — contains session state" },
+      { "pattern": ".env.example", "status": "tracked", "note": "Correctly committed (template only)" },
+      { "pattern": ".env.production.example", "status": "tracked", "note": "Correctly committed (template only)" }
+    ],
+    "missing_patterns": [
+      {
+        "pattern": ".audit/",
+        "severity": "info",
+        "note": "The .audit/ directory contains generated audit artifacts. Consider adding to .gitignore if these should not be committed."
+      }
+    ]
+  },
+
+  "summary": {
+    "total_env_vars_used": 25,
+    "vars_missing_from_env_example": 4,
+    "hardcoded_secrets_found": 8,
+    "config_issues_found": 14,
+    "critical_issues": [
+      "HIGH: .env.production.example uses OLLAMA_URL but code reads OLLAMA_BASE_URL — production Ollama will be broken",
+      "HIGH: JWT fallback 'dev-secret-change-me' used when JWT_SECRET not set (production guard exists but dev/test insecure)",
+      "MEDIUM: MINIO_USE_SSL in .env.production.example is never read by code — SSL cannot be enabled via env config",
+      "MEDIUM: Several env vars bypass centralized Zod validation (read directly via process.env)",
+      "MEDIUM: No production guard for ENCRYPTION_KEY — will cause runtime errors encrypting credentials",
+      "MEDIUM: .env.production.example missing JWT_REFRESH_SECRET, NEXT_PUBLIC_APP_URL, CORS_ORIGINS, REGISTRATION_DISABLED"
+    ],
+    "gitignore_status": "Good — all sensitive patterns properly ignored. .env files never committed to git history."
+  }
+}

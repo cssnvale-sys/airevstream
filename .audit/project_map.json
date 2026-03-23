@@ -1,0 +1,981 @@
+{
+  "generated_at": "2026-03-23",
+  "generated_by": "Agent A — Architecture Mapper",
+
+  "framework": {
+    "name": "Next.js",
+    "version": "14.2.x",
+    "router": "App Router",
+    "port": 3000,
+    "output": "standalone",
+    "react_version": "18.3.x",
+    "typescript_version": "5.4.x",
+    "strict_mode": true,
+    "transpile_packages": [
+      "@airevstream/shared",
+      "@airevstream/db",
+      "@airevstream/queue",
+      "@airevstream/crypto"
+    ],
+    "external_packages": ["@prisma/client", "bullmq"],
+    "security_headers": [
+      "X-Content-Type-Options: nosniff",
+      "X-Frame-Options: DENY",
+      "X-XSS-Protection: 1; mode=block",
+      "Referrer-Policy: strict-origin-when-cross-origin",
+      "Permissions-Policy: camera=(), microphone=(), geolocation=()",
+      "Content-Security-Policy (self, unsafe-inline, unsafe-eval)"
+    ]
+  },
+
+  "build_system": {
+    "monorepo_tool": "Turborepo 2.x",
+    "package_manager": "npm 10.8.2",
+    "workspaces": [
+      "apps/*",
+      "packages/*",
+      "services/*",
+      "workers",
+      "remotion"
+    ],
+    "turbo_tasks": {
+      "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] },
+      "dev": { "cache": false, "persistent": true },
+      "lint": {},
+      "test": { "dependsOn": ["build"] },
+      "db:generate": { "cache": false },
+      "db:migrate": { "cache": false },
+      "audit": { "dependsOn": ["^build"], "inputs": ["src/app/api/**/*.ts", "src/__tests__/audit/**/*.ts"] }
+    },
+    "root_scripts": {
+      "dev": "turbo dev --concurrency=20",
+      "build": "turbo build",
+      "test": "turbo test",
+      "lint": "turbo lint",
+      "db:generate": "turbo db:generate --filter=@airevstream/db",
+      "db:migrate": "turbo db:migrate --filter=@airevstream/db",
+      "infra:up": "docker compose up -d",
+      "infra:down": "docker compose down",
+      "infra:reset": "docker compose down -v && docker compose up -d",
+      "audit": "turbo audit",
+      "test:e2e": "playwright test --config=e2e/playwright.config.ts",
+      "test:e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui"
+    },
+    "process_manager": "PM2 (ecosystem.config.js)"
+  },
+
+  "entry_points": {
+    "web_app": {
+      "path": "apps/web",
+      "package_name": "@airevstream/web",
+      "entry": "next dev --port 3000 | next start",
+      "root_layout": "apps/web/src/app/layout.tsx",
+      "providers": "apps/web/src/app/providers.tsx (ComplexityProvider)"
+    },
+    "services": {
+      "workflow_engine": {
+        "path": "services/workflow-engine/src/index.ts",
+        "app_builder": "services/workflow-engine/src/app.ts",
+        "package_name": "@airevstream/workflow-engine",
+        "port": 3001,
+        "framework": "Fastify",
+        "routes": [
+          "services/workflow-engine/src/routes/health.ts",
+          "services/workflow-engine/src/routes/auth.ts",
+          "services/workflow-engine/src/routes/account.ts",
+          "services/workflow-engine/src/routes/workflow.ts",
+          "services/workflow-engine/src/routes/content.ts"
+        ]
+      },
+      "production_pipeline": {
+        "path": "services/production-pipeline/src/index.ts",
+        "app_builder": "services/production-pipeline/src/app.ts",
+        "package_name": "@airevstream/production-pipeline",
+        "port": 3002,
+        "framework": "Fastify",
+        "routes": [
+          "services/production-pipeline/src/routes/asset.ts",
+          "services/production-pipeline/src/routes/video.ts",
+          "services/production-pipeline/src/routes/image.ts"
+        ]
+      },
+      "ai_assistant": {
+        "path": "services/ai-assistant/src/index.ts",
+        "app_builder": "services/ai-assistant/src/app.ts",
+        "package_name": "@airevstream/ai-assistant",
+        "port": 3003,
+        "framework": "Fastify",
+        "routes": [
+          "services/ai-assistant/src/routes/generate.ts",
+          "services/ai-assistant/src/routes/chat.ts"
+        ]
+      }
+    },
+    "workers": {
+      "entry": "workers/src/index.ts",
+      "package_name": "@airevstream/workers",
+      "files": [
+        "workers/src/content.worker.ts",
+        "workers/src/account.worker.ts",
+        "workers/src/posting.worker.ts",
+        "workers/src/research.worker.ts",
+        "workers/src/maintenance.worker.ts",
+        "workers/src/production.worker.ts",
+        "workers/src/platform-adapters.ts"
+      ],
+      "worker_functions": [
+        "startContentWorker",
+        "startAccountWorker",
+        "startPostingWorker",
+        "startResearchWorker",
+        "startMaintenanceWorker",
+        "startProductionWorker",
+        "startSeasoningWorker"
+      ]
+    },
+    "remotion": {
+      "path": "remotion/src/index.ts",
+      "compositions": [
+        "remotion/src/compositions/ShortFormVideo.tsx",
+        "remotion/src/compositions/LongFormVideo.tsx",
+        "remotion/src/compositions/CinemaVideo.tsx",
+        "remotion/src/compositions/ThumbnailRenderer.tsx"
+      ],
+      "components": [
+        "ShotSequence",
+        "TextOverlay",
+        "AudioVisualization",
+        "CameraMotion",
+        "ColorGrade",
+        "MultiTrackAudio",
+        "SubtitleOverlay"
+      ]
+    }
+  },
+
+  "routing": {
+    "pages": {
+      "total": 23,
+      "list": [
+        { "path": "/", "file": "apps/web/src/app/page.tsx", "description": "Root (redirects to dashboard)" },
+        { "path": "/dashboard", "file": "apps/web/src/app/dashboard/page.tsx" },
+        { "path": "/library", "file": "apps/web/src/app/library/page.tsx" },
+        { "path": "/content/[id]", "file": "apps/web/src/app/content/[id]/page.tsx" },
+        { "path": "/create", "file": "apps/web/src/app/create/page.tsx" },
+        { "path": "/studio", "file": "apps/web/src/app/studio/page.tsx" },
+        { "path": "/studio/[contentId]", "file": "apps/web/src/app/studio/[contentId]/page.tsx" },
+        { "path": "/accounts", "file": "apps/web/src/app/accounts/page.tsx" },
+        { "path": "/calendar", "file": "apps/web/src/app/calendar/page.tsx" },
+        { "path": "/analytics", "file": "apps/web/src/app/analytics/page.tsx" },
+        { "path": "/workflows", "file": "apps/web/src/app/workflows/page.tsx" },
+        { "path": "/approvals", "file": "apps/web/src/app/approvals/page.tsx" },
+        { "path": "/affiliate", "file": "apps/web/src/app/affiliate/page.tsx" },
+        { "path": "/budgets", "file": "apps/web/src/app/budgets/page.tsx" },
+        { "path": "/settings", "file": "apps/web/src/app/settings/page.tsx" },
+        { "path": "/settings/cinema-bible", "file": "apps/web/src/app/settings/cinema-bible/page.tsx" },
+        { "path": "/system", "file": "apps/web/src/app/system/page.tsx" },
+        { "path": "/seasoning", "file": "apps/web/src/app/seasoning/page.tsx" },
+        { "path": "/seasoning/[cohortId]", "file": "apps/web/src/app/seasoning/[cohortId]/page.tsx" },
+        { "path": "/auth/login", "file": "apps/web/src/app/auth/login/page.tsx" },
+        { "path": "/auth/register", "file": "apps/web/src/app/auth/register/page.tsx" },
+        { "path": "/auth/forgot-password", "file": "apps/web/src/app/auth/forgot-password/page.tsx" },
+        { "path": "/auth/reset-password", "file": "apps/web/src/app/auth/reset-password/page.tsx" }
+      ],
+      "layouts": [
+        "apps/web/src/app/layout.tsx",
+        "apps/web/src/app/dashboard/layout.tsx",
+        "apps/web/src/app/accounts/layout.tsx",
+        "apps/web/src/app/calendar/layout.tsx",
+        "apps/web/src/app/create/layout.tsx",
+        "apps/web/src/app/library/layout.tsx",
+        "apps/web/src/app/analytics/layout.tsx",
+        "apps/web/src/app/settings/layout.tsx",
+        "apps/web/src/app/workflows/layout.tsx",
+        "apps/web/src/app/approvals/layout.tsx",
+        "apps/web/src/app/affiliate/layout.tsx",
+        "apps/web/src/app/system/layout.tsx",
+        "apps/web/src/app/content/[id]/layout.tsx",
+        "apps/web/src/app/studio/layout.tsx",
+        "apps/web/src/app/studio/[contentId]/layout.tsx",
+        "apps/web/src/app/seasoning/layout.tsx"
+      ],
+      "error_boundaries": 16,
+      "loading_skeletons": 15,
+      "not_found": "apps/web/src/app/not-found.tsx"
+    },
+    "api_routes": {
+      "total": 124,
+      "base_path": "/api/v1",
+      "groups": {
+        "auth": {
+          "count": 6,
+          "routes": [
+            "auth/login (POST)",
+            "auth/register (POST)",
+            "auth/me (GET)",
+            "auth/forgot-password (POST)",
+            "auth/reset-password (POST)",
+            "auth/change-password (POST)"
+          ]
+        },
+        "accounts": {
+          "count": 9,
+          "routes": [
+            "accounts (GET, POST)",
+            "accounts/[id] (GET, PUT, DELETE)",
+            "accounts/[id]/socials (GET, POST)",
+            "accounts/[id]/socials/[socialId]/health-check (POST)",
+            "accounts/[id]/socials/[socialId]/sync (POST)",
+            "accounts/[id]/socials/[socialId]/warm (POST)",
+            "accounts/stats (GET)",
+            "accounts/bulk-import (POST)",
+            "accounts/bulk-delete (POST)"
+          ]
+        },
+        "channels": {
+          "count": 6,
+          "routes": [
+            "channels (GET, POST)",
+            "channels/[id] (GET, PUT, DELETE)",
+            "channels/[id]/avatars (GET, POST)",
+            "channels/[id]/cinema-bible (GET, POST)",
+            "channels/[id]/affiliate-pool (GET, POST, DELETE)",
+            "channels/families (GET)"
+          ]
+        },
+        "content": {
+          "count": 16,
+          "routes": [
+            "content (GET, POST)",
+            "content/[id] (GET, PUT, DELETE)",
+            "content/[id]/versions (GET)",
+            "content/[id]/variants (GET, POST)",
+            "content/[id]/storyboard (GET, POST)",
+            "content/[id]/approve (POST)",
+            "content/[id]/reject (POST)",
+            "content/[id]/regenerate (POST)",
+            "content/[id]/quality-score (GET, POST)",
+            "content/[id]/publish (POST)",
+            "content/[id]/pipeline-status (GET)",
+            "content/[id]/rescore (POST)",
+            "content/generate (POST)",
+            "content/generate-script (POST)",
+            "content/generate-storyboard (POST)",
+            "content/generate-shot (POST)",
+            "content/provenance (GET, POST)",
+            "content/viral-score (POST)",
+            "content/repair-shot (POST)"
+          ]
+        },
+        "storyboard_shots": {
+          "count": 2,
+          "routes": [
+            "storyboard-shots/[shotId] (GET, PUT, DELETE)",
+            "storyboard-shots/[shotId]/generate (POST)"
+          ]
+        },
+        "pipeline": {
+          "count": 2,
+          "routes": [
+            "pipeline/cinema (POST)",
+            "pipeline/cost-preview (POST)"
+          ]
+        },
+        "analytics": {
+          "count": 7,
+          "routes": [
+            "analytics/overview (GET)",
+            "analytics/engagement (GET)",
+            "analytics/revenue (GET)",
+            "analytics/costs (GET)",
+            "analytics/content-performance (GET)",
+            "analytics/audience (GET)",
+            "analytics/export (GET)"
+          ]
+        },
+        "affiliate": {
+          "count": 8,
+          "routes": [
+            "affiliate/products (GET, POST)",
+            "affiliate/products/[id] (GET, PUT, DELETE)",
+            "affiliate/products/[id]/analytics (GET)",
+            "affiliate/links (GET, POST)",
+            "affiliate/storefronts (GET, POST)",
+            "affiliate/storefronts/[id] (GET, PUT, DELETE)",
+            "affiliate/storefronts/[id]/products (GET, POST)",
+            "affiliate/storefronts/[id]/products/[productId] (PUT, DELETE)",
+            "affiliate/clicks (GET)",
+            "affiliate/revenue (GET)",
+            "affiliate/analytics (GET)",
+            "affiliate/redirect/[shortCode] (GET)"
+          ]
+        },
+        "ai_services": {
+          "count": 5,
+          "routes": [
+            "ai-services (GET, POST)",
+            "ai-services/[id] (GET, PUT, DELETE)",
+            "ai-services/costs (GET)",
+            "ai-services/usage (GET)",
+            "ai-services/health-check (POST)"
+          ]
+        },
+        "ai": {
+          "count": 2,
+          "routes": [
+            "ai/guidance (POST)",
+            "ai/agents (GET)"
+          ]
+        },
+        "assistant": {
+          "count": 4,
+          "routes": [
+            "assistant/chat (POST)",
+            "assistant/conversations (GET, POST)",
+            "assistant/conversations/[id] (GET, DELETE)",
+            "assistant/actions (POST)",
+            "assistant/capabilities (GET)"
+          ]
+        },
+        "settings": {
+          "count": 6,
+          "routes": [
+            "settings/general (GET, PUT)",
+            "settings/appearance (GET, PUT)",
+            "settings/notifications (GET, PUT)",
+            "settings/security (GET, PUT)",
+            "settings/api-keys (GET, POST)",
+            "settings/api-keys/[id]/revoke (POST)",
+            "settings/ai/fallback-chains (GET, PUT)"
+          ]
+        },
+        "system": {
+          "count": 8,
+          "routes": [
+            "system/health (GET)",
+            "system/metrics (GET)",
+            "system/workflows (GET)",
+            "system/alerts (GET)",
+            "system/alerts/[id]/acknowledge (POST)",
+            "system/alerts/[id]/snooze (POST)",
+            "system/alerts/acknowledge-all (POST)",
+            "system/errors (GET)",
+            "system/errors/[id]/retry (POST)"
+          ]
+        },
+        "seasoning": {
+          "count": 6,
+          "routes": [
+            "seasoning/cohorts (GET, POST)",
+            "seasoning/cohorts/[id] (GET, PUT, DELETE)",
+            "seasoning/cohorts/[id]/enroll (POST)",
+            "seasoning/cohorts/[id]/enrollments (GET)",
+            "seasoning/enrollments/[id] (GET, PUT)",
+            "seasoning/stats (GET)"
+          ]
+        },
+        "other": {
+          "routes": [
+            "budgets (GET, POST)",
+            "budgets/[id] (GET, PUT, DELETE)",
+            "budgets/check (POST)",
+            "calendar (GET)",
+            "cinema-bible (GET, POST)",
+            "cinema-bible/[id] (GET, PUT, DELETE)",
+            "comfyui/models (GET)",
+            "events/stream (GET — SSE)",
+            "jobs/[id] (GET)",
+            "knowledge-base (GET, POST)",
+            "knowledge-base/[id] (GET, PUT, DELETE)",
+            "media/[...path] (GET)",
+            "prompts (GET, POST)",
+            "prompts/[id] (GET, PUT, DELETE)",
+            "prompts/[id]/score (POST)",
+            "research (POST)",
+            "schedule (GET, POST)",
+            "schedule/[id] (GET, PUT, DELETE)",
+            "search (GET)",
+            "subscriptions (GET, POST)",
+            "subscriptions/[id] (GET, PUT, DELETE)",
+            "tenants (GET, POST)",
+            "tenants/[id] (GET, PUT, DELETE)",
+            "trending (GET)",
+            "usage (GET)",
+            "users (GET, POST)",
+            "users/[id] (GET, PUT, DELETE)",
+            "users/invite (POST)",
+            "workflows (GET, POST)",
+            "workflows/hitl (GET)",
+            "workflows/hitl/[id]/complete (POST)",
+            "approvals (GET)",
+            "approvals/[id]/[action] (POST)",
+            "approvals/bulk (POST)",
+            "activity (GET)",
+            "api-keys (GET, POST)",
+            "api-keys/[id] (GET, PUT, DELETE)"
+          ]
+        }
+      }
+    }
+  },
+
+  "state_management": {
+    "data_fetching": {
+      "library": "SWR 2.4.x",
+      "base_hook": "useApi<T>(path, config?) — wraps useSWR with Bearer token auth",
+      "file": "apps/web/src/hooks/use-api.ts",
+      "mutation_helpers": ["apiPost", "apiPut", "apiPatch", "apiDelete"],
+      "typed_hooks": [
+        "useAccounts",
+        "useAccount",
+        "useChannels",
+        "useChannel",
+        "useContent",
+        "useApprovals",
+        "useCalendar",
+        "useAffiliateProducts",
+        "useAiServices",
+        "useSystemHealth (30s refresh)",
+        "useSystemMetrics (15s refresh)",
+        "useAlerts",
+        "useWorkflows",
+        "useAnalytics"
+      ]
+    },
+    "react_context": [
+      {
+        "name": "ComplexityProvider",
+        "file": "apps/web/src/hooks/use-complexity-mode.tsx",
+        "hook": "useComplexityMode()",
+        "state": "ComplexityMode: 'simple' | 'advanced' | 'complex'",
+        "persistence": "localStorage (key: airevstream_complexity_mode)"
+      }
+    ],
+    "custom_hooks": [
+      { "name": "useJobStatus", "file": "apps/web/src/hooks/use-job-status.ts", "purpose": "Poll job status at 2s interval" },
+      { "name": "usePresignedUrl", "file": "apps/web/src/hooks/use-presigned-url.ts", "purpose": "MinIO presigned URL with 50-min cache" },
+      { "name": "useDebounce", "file": "apps/web/src/hooks/use-debounce.ts", "purpose": "Debounce values with 300ms delay" },
+      { "name": "useUnsavedChanges", "file": "apps/web/src/hooks/use-unsaved-changes.ts", "purpose": "beforeunload warning" },
+      { "name": "useSeasoning", "file": "apps/web/src/hooks/use-seasoning.ts", "purpose": "SWR hooks for seasoning cohorts/enrollments" }
+    ],
+    "real_time": {
+      "mechanism": "Server-Sent Events (SSE)",
+      "hook": "useSSE(url, options) — apps/web/src/lib/sse.ts",
+      "system_hook": "useSystemEvents() — apps/web/src/lib/sse.ts",
+      "endpoint": "/api/v1/events/stream",
+      "event_types": ["alert", "workflow-update", "content-status", "system-metric", "connected"],
+      "event_types_file": "apps/web/src/lib/event-types.ts",
+      "auth": "Token passed as query parameter (EventSource does not support custom headers)",
+      "reconnection": "Exponential backoff (1s-30s, 2x multiplier)"
+    }
+  },
+
+  "api_layer": {
+    "pattern": "BFF (Backend-for-Frontend) — Next.js API routes proxy to services",
+    "helpers_file": "apps/web/src/lib/api-server.ts",
+    "response_helpers": {
+      "success(data, meta?)": "{ success: true, data, meta? }",
+      "paginated(data, total, page, limit)": "{ success: true, data, meta: { total, page, limit, pages } }",
+      "error(code, message, status)": "{ success: false, error: { code, message } }",
+      "notFound(message)": "error('NOT_FOUND', message, 404)",
+      "validationError(message)": "error('VALIDATION_ERROR', message, 400)",
+      "forbidden(message)": "error('FORBIDDEN', message, 403)"
+    },
+    "query_parsing": "parseQuery(req) — page, limit, skip, sort, order, search",
+    "rate_limiting": {
+      "file": "apps/web/src/lib/rate-limit.ts",
+      "mechanism": "In-memory sliding window with 5-minute cleanup",
+      "max_store_size": 50000,
+      "presets": {
+        "login": "5/15min per IP",
+        "register": "3/30min per IP",
+        "forgotPassword": "3/1hr per IP",
+        "resetPassword": "5/15min per IP",
+        "contentGeneration": "20/1hr per user",
+        "bulkOperation": "5/1hr per user",
+        "analyticsExport": "10/1hr per user",
+        "standardWrite": "60/1min per user",
+        "adminWrite": "30/1min per user"
+      }
+    },
+    "validation": "Zod (runtime schema validation)",
+    "middleware_file": "apps/web/src/middleware.ts"
+  },
+
+  "auth_system": {
+    "strategy": "JWT (jose library)",
+    "token_storage": "localStorage (key: airevstream_token)",
+    "session_cookie": "airevstream_auth (indicator cookie for middleware, value: '1')",
+    "auth_file_client": "apps/web/src/lib/auth.ts",
+    "auth_file_server": "apps/web/src/lib/api-server.ts",
+    "password_file": "apps/web/src/lib/password.ts",
+    "jwt_secret": "getJwtSecret() — lazy initialization, Uint8Array from process.env.JWT_SECRET",
+    "auth_functions": {
+      "authenticate(req)": "JWT Bearer token → ApiContext { userId, role, tenantId, db }",
+      "authenticateSSE(req)": "JWT via header or query param → ApiContext",
+      "authenticateApiKey(req, scope)": "X-API-Key header → ApiContext (validates hash, expiry, scope, rate limit)",
+      "authenticateAny(req, scope)": "JWT first, falls back to API key",
+      "requireAdmin(ctx)": "Returns 403 if ctx.role !== 'admin'"
+    },
+    "middleware": {
+      "file": "apps/web/src/middleware.ts",
+      "mechanism": "Cookie-based session indicator check on protected routes",
+      "public_paths": ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password", "/api/", "/r/", "/_next/", "/favicon.ico"],
+      "redirect": "/auth/login?redirect=<pathname>",
+      "matcher": "/((?!_next/static|_next/image|favicon.ico).*)"
+    },
+    "token_revocation": "Tokens issued before passwordChangedAt are rejected",
+    "api_key_auth": {
+      "prefix": "ars_",
+      "storage": "SHA-256 hash in ApiKey model",
+      "scopes": ["read", "write", "admin"],
+      "rate_limiting": "Per-key RPM (default 60)"
+    },
+    "client_side": {
+      "getToken": "Read from localStorage",
+      "setToken": "Write to localStorage + set airevstream_auth cookie",
+      "removeToken": "Clear localStorage + expire cookie",
+      "isAuthenticated": "Check token exists and not expired (JWT exp claim)",
+      "auto_redirect": "fetcher in use-api.ts redirects to /auth/login on 401"
+    }
+  },
+
+  "db_layer": {
+    "orm": "Prisma ORM",
+    "provider": "PostgreSQL 16",
+    "schema_file": "packages/db/prisma/schema.prisma",
+    "client_file": "packages/db/src/index.ts",
+    "package_name": "@airevstream/db",
+    "client_pattern": "globalThis singleton (getDb()) to survive Next.js HMR",
+    "preview_features": ["fullTextSearchPostgres"],
+    "models": {
+      "total": 38,
+      "list": [
+        "Tenant",
+        "User",
+        "RefreshToken",
+        "EmailAccount",
+        "SocialAccount",
+        "Channel",
+        "Avatar",
+        "ChannelAvatar",
+        "BrandingPackage",
+        "SceneryAsset",
+        "ChannelScenery",
+        "CinemaBible",
+        "AiService",
+        "AiServiceUsage",
+        "ContentItem",
+        "Storyboard",
+        "StoryboardShot",
+        "ScheduledPost",
+        "AffiliateProduct",
+        "ChannelAffiliatePool",
+        "AffiliateClick",
+        "ApprovalTrustScore",
+        "Conversation",
+        "ConversationMessage",
+        "ActionAuditLog",
+        "WorkflowJob",
+        "Alert",
+        "SystemMetric",
+        "SystemSetting",
+        "KnowledgeBaseEntry",
+        "Storefront",
+        "StorefrontProduct",
+        "PromptTemplate",
+        "CostBudget",
+        "Subscription",
+        "ApiKey",
+        "SeasoningCohort",
+        "SeasoningEnrollment"
+      ]
+    },
+    "tenant_scoping": {
+      "pattern": "ctx.db with tenantId from JWT + DB lookup",
+      "rule": "API routes MUST use ctx.db, never getDb() directly",
+      "exception": "Workers use getDb() with tenantId from job data"
+    },
+    "decimal_fields": [
+      "AiService.successRate",
+      "AiService.avgQualityScore",
+      "AiServiceUsage.durationSec",
+      "AiServiceUsage.cost",
+      "AiServiceUsage.qualityScore",
+      "ContentItem.qualityScore",
+      "ContentItem.durationSec",
+      "ContentItem.approvalGateWindowHrs",
+      "Storyboard.totalDurationSec",
+      "StoryboardShot.qualityScore",
+      "StoryboardShot.generationCost",
+      "StoryboardShot.startSec",
+      "StoryboardShot.endSec",
+      "AffiliateProduct.commissionRate",
+      "AffiliateProduct.totalRevenue",
+      "AffiliateClick.revenue",
+      "ApprovalTrustScore.trustScore",
+      "ApprovalTrustScore.gateWindowHrs",
+      "ApprovalTrustScore.avgOutcomeScore",
+      "ChannelAffiliatePool.performanceScore",
+      "KnowledgeBaseEntry.relevanceScore",
+      "PromptTemplate.avgScore",
+      "CostBudget.limitAmount",
+      "CostBudget.currentSpend",
+      "CostBudget.alertThreshold",
+      "SystemMetric.value"
+    ]
+  },
+
+  "packages": {
+    "shared": {
+      "path": "packages/shared",
+      "name": "@airevstream/shared",
+      "entry": "packages/shared/src/index.ts",
+      "exports": [
+        "agents/*",
+        "comfyui-client",
+        "provenance",
+        "viral-scoring",
+        "lip-sync",
+        "identity-drift",
+        "comfyui-composer",
+        "config",
+        "constants",
+        "constraint-validator",
+        "cost-estimator",
+        "pre-generation-qc",
+        "workflow-registry",
+        "errors",
+        "logger",
+        "presets/*",
+        "qc-scoring",
+        "types",
+        "utils",
+        "viral-discovery (types only)",
+        "experiment-orchestrator (types only)",
+        "quality-regression (types only)",
+        "channel-suggestions (types only)",
+        "seasoning-types",
+        "seasoning-config",
+        "seasoning-orchestrator"
+      ]
+    },
+    "db": {
+      "path": "packages/db",
+      "name": "@airevstream/db",
+      "entry": "packages/db/src/index.ts",
+      "exports": ["getDb", "disconnectDb", "PrismaClient"]
+    },
+    "crypto": {
+      "path": "packages/crypto",
+      "name": "@airevstream/crypto",
+      "entry": "packages/crypto/src/index.ts",
+      "exports": ["encrypt", "decrypt", "generateKey", "sha256"]
+    },
+    "storage": {
+      "path": "packages/storage",
+      "name": "@airevstream/storage",
+      "entry": "packages/storage/src/index.ts",
+      "exports": ["getStorageClient", "resetStorageClient", "ensureBucket", "uploadBuffer", "uploadStream", "downloadStream", "downloadBuffer", "getPresignedUrl", "getPresignedPutUrl", "deleteObject", "listObjects", "getObjectStat"],
+      "backend": "MinIO (S3-compatible)"
+    },
+    "queue": {
+      "path": "packages/queue",
+      "name": "@airevstream/queue",
+      "entry": "packages/queue/src/index.ts",
+      "exports": ["getQueue", "addJob", "createWorker", "getQueueEvents", "closeAllQueues", "FlowProducer", "getFlowProducer", "startContentPipeline", "startCinemaPipeline", "startSeasoningPipeline", "closeFlowProducer"],
+      "backend": "BullMQ + Redis",
+      "queue_names": ["content", "account", "posting", "research", "maintenance", "production", "seasoning"]
+    },
+    "ai_client": {
+      "path": "packages/ai-client",
+      "name": "@airevstream/ai-client",
+      "entry": "packages/ai-client/src/index.ts",
+      "exports": ["ServiceRegistry", "createServiceRegistry", "OllamaProvider", "OpenAICompatProvider", "HttpProvider", "ComfyUIVideoProvider", "VeoProvider", "SoraProvider"],
+      "legacy_exports": ["getAiClient (deprecated)", "generateText (deprecated)", "chat (deprecated)", "streamText (deprecated)", "generateJSON (deprecated)", "listModels (deprecated)", "pullModel (deprecated)"]
+    },
+    "audio_engine": {
+      "path": "packages/audio-engine",
+      "name": "@airevstream/audio-engine",
+      "entry": "packages/audio-engine/src/index.ts",
+      "exports": ["TTSClient", "AudioMixer", "measureLufs", "normalizeLufs", "applyTruePeakLimiter"]
+    },
+    "browser_automation": {
+      "path": "packages/browser-automation",
+      "name": "@airevstream/browser-automation",
+      "entry": "packages/browser-automation/src/index.ts",
+      "exports": ["BrowserContextManager", "HumanBehavior", "ProxyManager", "SessionManager", "AccountProxyPinning", "FingerprintStore", "CaptchaSolver", "SmsVerifier", "BasePlatformWorkflow", "YouTubeWorkflow", "TikTokWorkflow", "InstagramWorkflow", "FacebookWorkflow", "createWorkflow"]
+    }
+  },
+
+  "background_workers": {
+    "content_worker": {
+      "file": "workers/src/content.worker.ts",
+      "queue": "content",
+      "job_types": ["content:generate", "content:approve", "content:publish", "content:final-review", "content:viral-score"]
+    },
+    "account_worker": {
+      "file": "workers/src/account.worker.ts",
+      "queue": "account",
+      "job_types": ["account:create", "account:sync", "account:health-check", "account:warm"],
+      "also_handles": ["seasoning:enroll", "seasoning:signup", "seasoning:warm", "seasoning:check-due", "seasoning:graduate"]
+    },
+    "posting_worker": {
+      "file": "workers/src/posting.worker.ts",
+      "queue": "posting",
+      "job_types": ["posting:schedule", "posting:publish", "posting:check-scheduled"]
+    },
+    "research_worker": {
+      "file": "workers/src/research.worker.ts",
+      "queue": "research",
+      "job_types": ["research:trends", "research:topics", "research:knowledge-update", "research:populate-knowledge"]
+    },
+    "maintenance_worker": {
+      "file": "workers/src/maintenance.worker.ts",
+      "queue": "maintenance",
+      "job_types": ["maintenance:cleanup", "maintenance:backup", "maintenance:metrics"]
+    },
+    "production_worker": {
+      "file": "workers/src/production.worker.ts",
+      "queue": "production",
+      "job_types": ["production:render-video", "production:generate-image", "production:generate-audio", "production:generate-storyboard", "production:generate-shots", "production:qc-gate", "production:mix-audio", "production:repair-shot"]
+    },
+    "seasoning_worker": {
+      "file": "workers/src/account.worker.ts (startSeasoningWorker export)",
+      "queue": "seasoning",
+      "job_types": ["seasoning:enroll", "seasoning:signup", "seasoning:warm", "seasoning:check-due", "seasoning:graduate"]
+    }
+  },
+
+  "cron_repeatable_jobs": [
+    {
+      "name": "posting:check-scheduled",
+      "worker": "posting.worker.ts",
+      "interval": "every 60 seconds",
+      "description": "Check for posts that need to be published"
+    },
+    {
+      "name": "maintenance:cleanup",
+      "worker": "maintenance.worker.ts",
+      "interval": "every 24 hours",
+      "description": "Clean up old data"
+    },
+    {
+      "name": "maintenance:backup",
+      "worker": "maintenance.worker.ts",
+      "interval": "every 7 days",
+      "description": "Backup database/storage"
+    },
+    {
+      "name": "maintenance:metrics",
+      "worker": "maintenance.worker.ts",
+      "interval": "every 5 minutes",
+      "description": "Collect system metrics"
+    },
+    {
+      "name": "research:trends",
+      "worker": "research.worker.ts",
+      "interval": "every 12 hours",
+      "description": "Discover trending topics across platforms"
+    },
+    {
+      "name": "seasoning:check-due",
+      "worker": "account.worker.ts",
+      "interval": "every 15 minutes",
+      "description": "Scan enrollments for due seasoning activities"
+    }
+  ],
+
+  "flow_pipelines": {
+    "content_pipeline": {
+      "function": "startContentPipeline",
+      "file": "packages/queue/src/flows.ts",
+      "steps": [
+        "1. research:populate-knowledge (leaf)",
+        "2. content:generate (depends on research)",
+        "3. production:generate-storyboard (root)"
+      ]
+    },
+    "cinema_pipeline": {
+      "function": "startCinemaPipeline",
+      "file": "packages/queue/src/flows.ts",
+      "steps": [
+        "1. research:populate-knowledge (leaf — runs first)",
+        "2. content:generate (depends on research)",
+        "3. production:generate-storyboard (depends on script)",
+        "4. production:generate-shots (depends on storyboard)",
+        "5. production:qc-gate (depends on shots)",
+        "6. production:mix-audio (depends on QC pass)",
+        "7. production:render-video (depends on audio + approved shots)",
+        "8. content:final-review (depends on rendered video — ROOT)"
+      ]
+    },
+    "seasoning_pipeline": {
+      "function": "startSeasoningPipeline",
+      "file": "packages/queue/src/flows.ts",
+      "steps": [
+        "Queues seasoning:enroll jobs per account+platform with staggered delays"
+      ]
+    }
+  },
+
+  "comfyui_workflows": {
+    "total": 8,
+    "general": [
+      "comfyui-workflows/thumbnail-generation.json",
+      "comfyui-workflows/scenery-generation.json",
+      "comfyui-workflows/avatar-generation.json",
+      "comfyui-workflows/storyboard-frame.json"
+    ],
+    "shot_class": [
+      "comfyui-workflows/character/dialogue-closeup.json",
+      "comfyui-workflows/environment/establishing-wide.json",
+      "comfyui-workflows/character/insert-hands.json",
+      "comfyui-workflows/style/action-tracking.json"
+    ]
+  },
+
+  "testing": {
+    "unit_tests": {
+      "framework": "Vitest 2.x",
+      "shared_package_tests": [
+        "packages/shared/src/__tests__/errors.test.ts",
+        "packages/shared/src/__tests__/utils.test.ts",
+        "packages/shared/src/__tests__/comfyui-composer.test.ts",
+        "packages/shared/src/__tests__/constants.test.ts",
+        "packages/shared/src/__tests__/qc-scoring.test.ts",
+        "packages/shared/src/__tests__/constraint-validator.test.ts",
+        "packages/shared/src/__tests__/pre-generation-qc.test.ts",
+        "packages/shared/src/__tests__/workflow-registry.test.ts",
+        "packages/shared/src/__tests__/presets-extended.test.ts",
+        "packages/shared/src/__tests__/cost-estimator-extended.test.ts",
+        "packages/shared/src/__tests__/provenance-extended.test.ts",
+        "packages/shared/src/__tests__/lip-sync-extended.test.ts",
+        "packages/shared/src/__tests__/comfyui-composer-slots.test.ts",
+        "packages/shared/src/__tests__/seasoning-orchestrator.test.ts",
+        "packages/shared/src/__tests__/seasoning-config.test.ts"
+      ]
+    },
+    "audit_tests": {
+      "framework": "Vitest",
+      "location": "apps/web/src/__tests__/audit/",
+      "helper": "apps/web/src/__tests__/audit/audit-helpers.ts",
+      "tests": [
+        "data-shape.audit.test.ts",
+        "decimal-wrapping.audit.test.ts",
+        "error-allowlist.audit.test.ts",
+        "error-leak.audit.test.ts",
+        "getdb-in-routes.audit.test.ts",
+        "rate-limiting.audit.test.ts",
+        "role-checks.audit.test.ts",
+        "silent-catch.audit.test.ts",
+        "tenant-scoping.audit.test.ts"
+      ],
+      "run_command": "npm run audit (in apps/web) or turbo audit"
+    },
+    "e2e_tests": {
+      "framework": "Playwright",
+      "config": "e2e/playwright.config.ts",
+      "total_spec_files": 29,
+      "test_groups": [
+        "auth (login, register, forgot-password, logout)",
+        "dashboard (dashboard, navigation)",
+        "content (create, approve)",
+        "library (list, detail)",
+        "accounts (list, crud, bulk)",
+        "calendar",
+        "analytics (tabs, export)",
+        "workflows (list)",
+        "approvals (list, actions)",
+        "affiliate (products, storefronts)",
+        "settings (general, appearance, security, ai)",
+        "system (health)",
+        "shared (404, auth-guard, keyboard-shortcuts, notifications)"
+      ]
+    }
+  },
+
+  "components": {
+    "layout": [
+      "apps/web/src/components/layout/app-layout.tsx",
+      "apps/web/src/components/layout/sidebar.tsx",
+      "apps/web/src/components/layout/header.tsx",
+      "apps/web/src/components/layout/status-bar.tsx",
+      "apps/web/src/components/layout/ai-panel.tsx"
+    ],
+    "ui": [
+      "apps/web/src/components/ui/breadcrumbs.tsx",
+      "apps/web/src/components/ui/command-palette.tsx",
+      "apps/web/src/components/ui/complexity-toggle.tsx",
+      "apps/web/src/components/ui/confirm-dialog.tsx",
+      "apps/web/src/components/ui/copy-button.tsx",
+      "apps/web/src/components/ui/empty-state.tsx",
+      "apps/web/src/components/ui/keyboard-shortcuts.tsx",
+      "apps/web/src/components/ui/media-preview.tsx",
+      "apps/web/src/components/ui/pagination.tsx"
+    ],
+    "content": [
+      "apps/web/src/components/content/quality-breakdown.tsx",
+      "apps/web/src/components/content/shot-gallery.tsx"
+    ],
+    "cinema": [
+      "apps/web/src/components/cinema/ai-guidance-panel.tsx",
+      "apps/web/src/components/cinema/bible-editor.tsx",
+      "apps/web/src/components/cinema/cost-preview-panel.tsx",
+      "apps/web/src/components/cinema/export-variants.tsx",
+      "apps/web/src/components/cinema/pipeline-progress.tsx",
+      "apps/web/src/components/cinema/preset-picker.tsx",
+      "apps/web/src/components/cinema/project-type-picker.tsx",
+      "apps/web/src/components/cinema/provenance-viewer.tsx",
+      "apps/web/src/components/cinema/shot-editor-panel.tsx",
+      "apps/web/src/components/cinema/shot-list.tsx",
+      "apps/web/src/components/cinema/shot-preview.tsx",
+      "apps/web/src/components/cinema/shot-properties.tsx",
+      "apps/web/src/components/cinema/shot-table.tsx",
+      "apps/web/src/components/cinema/style-card-picker.tsx",
+      "apps/web/src/components/cinema/timeline.tsx",
+      "apps/web/src/components/cinema/viral-score-panel.tsx"
+    ],
+    "seasoning": [
+      "apps/web/src/components/seasoning/phase-pipeline.tsx",
+      "apps/web/src/components/seasoning/enrollment-table.tsx",
+      "apps/web/src/components/seasoning/create-cohort-modal.tsx"
+    ],
+    "notifications": [
+      "apps/web/src/components/notifications/notification-center.tsx",
+      "apps/web/src/components/notifications/notification-item.tsx"
+    ]
+  },
+
+  "lib_utilities": [
+    { "file": "apps/web/src/lib/api-server.ts", "purpose": "Server-side auth, response helpers, query parsing" },
+    { "file": "apps/web/src/lib/api.ts", "purpose": "Client-side API base configuration" },
+    { "file": "apps/web/src/lib/auth.ts", "purpose": "Client-side token management (get/set/remove/isAuthenticated)" },
+    { "file": "apps/web/src/lib/password.ts", "purpose": "Password hashing and verification" },
+    { "file": "apps/web/src/lib/rate-limit.ts", "purpose": "In-memory sliding window rate limiter" },
+    { "file": "apps/web/src/lib/sse.ts", "purpose": "SSE client hooks (useSSE, useSystemEvents)" },
+    { "file": "apps/web/src/lib/event-types.ts", "purpose": "SSE event type definitions and type guards" },
+    { "file": "apps/web/src/lib/toast.ts", "purpose": "Sonner toast wrapper (success/error/info/warning)" },
+    { "file": "apps/web/src/lib/export.ts", "purpose": "CSV export utility" },
+    { "file": "apps/web/src/lib/utils.ts", "purpose": "General utilities (cn, formatDate, etc.)" },
+    { "file": "apps/web/src/lib/complexity-fields.ts", "purpose": "FIELD_VISIBILITY config + isVisible helper for complexity modes" }
+  ],
+
+  "dependency_chain": {
+    "packages": "shared <- db <- crypto <- storage <- queue <- ai-client, audio-engine, browser-automation",
+    "services_depend_on": "All packages",
+    "workers_depend_on": "All packages",
+    "web_depends_on": "shared, db, queue, crypto, ai-client"
+  },
+
+  "infrastructure": {
+    "database": "PostgreSQL 16 (Docker Compose)",
+    "cache_queue": "Redis 7 (Docker Compose)",
+    "object_storage": "MinIO (Docker Compose, S3-compatible)",
+    "ai_inference": "Ollama (local LLM)",
+    "image_generation": "ComfyUI (local)",
+    "video_rendering": "Remotion",
+    "process_manager": "PM2 (ecosystem.config.js)",
+    "containerization": "Docker Compose (infra only)"
+  }
+}

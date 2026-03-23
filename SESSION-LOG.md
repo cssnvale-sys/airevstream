@@ -4,6 +4,48 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 30 — Tenant Isolation Migration + Fallback Chain DnD Editor
+
+**Date:** 2026-03-23
+**Focus:** Close KI-020 and KI-065 by adding tenantId to 5 Prisma models and scoping ~20 API routes. Replace read-only fallback chain section with an interactive drag-and-drop editor.
+
+### What Was Done
+
+#### Tenant Isolation (KI-065 + KI-020 — both closed)
+- Added `tenantId` to 5 Prisma models in migration `0004_add_tenant_scoping`:
+  - `Alert` — nullable (workers create system-wide alerts)
+  - `Conversation`, `KnowledgeBaseEntry`, `PromptTemplate`, `CostBudget` — required
+- Updated ~20 API routes to scope queries by `tenantId`:
+  - Alert routes (list, acknowledge, acknowledge-all, dismiss, SSE stream)
+  - Conversation routes (list, detail, message)
+  - Knowledge base routes (list, detail, create, update, delete)
+  - Prompt template routes (list, detail, create, update, delete)
+  - Cost budget routes (list, detail, create, update, delete)
+- Fixed 2 additional routes caught by updated audit: `system/errors`, `trending`
+- Updated workers (account, posting, research) to resolve and pass `tenantId` from job data
+- Updated ai-assistant chat and workflow-engine to resolve `tenantId` from authenticated user
+- Added `tenantId` to queue job interfaces and FlowProducer pipeline params
+- Used `ctx.tenantId!` (non-null assertion) in API routes where model requires `string` but `ctx.tenantId` is typed as `string | null`; unconditional `if (!ctx.tenantId) return 403` guard precedes every use
+
+#### Fallback Chain DnD Editor
+- Replaced read-only fallback chains section in Settings → AI Services tab
+- Interactive HTML5 native drag-and-drop editor (D074 pattern — no new dependency)
+- Supports within-group reordering of providers
+- Shows priority number badge, status dot (healthy/degraded/offline), health %, provider type badge
+- Saves ordering via existing PUT /api/v1/ai-services/fallback-chain endpoint
+
+#### Audit Fixes
+- `system/errors` route: added `tenantId: ctx.tenantId!` to alert query
+- `trending` route: added `tenantId: ctx.tenantId!` to content query
+
+### Build Status
+- 14/14 packages build, all tests pass (329 unit + 24 audit), 0 audit violations
+
+### Decisions
+- D076: Alert tenantId nullable, others required — see DECISIONS.md
+
+---
+
 ## Session 29 — Gap Closure: 8 Batches of Spec-vs-Implementation Features
 
 **Date:** 2026-03-23

@@ -8,9 +8,8 @@ Tracked bugs, limitations, and technical debt.
 
 ### KI-065: Alert Model Lacks tenantId — Cross-Tenant Data Leak
 **Severity**: Medium
-**Status**: Open (Session 27 Audit — ISSUE_002)
-The Alert model has no tenantId column. All 6 system alert routes return all tenants' alerts. acknowledge-all affects every tenant. SSE pushes all alerts to all clients.
-**Action**: Add tenantId to Alert model in next Prisma migration batch, then scope all alert queries.
+**Status**: Fixed (Session 30)
+Added nullable `tenantId` to Alert model via migration `0004_add_tenant_scoping`. All 6 alert routes and SSE stream now scope by tenantId. Workers creating system-wide alerts pass null tenantId (intentional global visibility for ops alerts).
 
 ### KI-066: Unused Dependencies (3 packages)
 **Severity**: Low
@@ -58,16 +57,11 @@ The `@airevstream/browser-automation` package (stealth Playwright, human behavio
 
 ### KI-020: Models Without tenantId — Need Schema Migration
 **Severity**: Medium
-**Status**: Open (Requires Schema Change)
-Several models lack `tenantId` and cannot be tenant-scoped without a Prisma schema migration:
-- **Conversation** — AI chat conversations are globally visible. Needs `userId` and/or `tenantId` field.
-- **KnowledgeBaseEntry** — Knowledge base entries are shared globally. Needs `tenantId` for isolation.
-- **PromptTemplate** — Prompt templates are shared globally. Needs `tenantId` for isolation.
-- **CostBudget** — Cost budgets are not tenant-scoped. Needs `tenantId` field.
-- **Alert** — System alerts are global. Needs `tenantId` or category-based scoping.
-- **AiService** — AI service registry is global (may be intentional for self-hosted).
-- **AffiliateProduct** — Products are global (may need `tenantId` or shared product catalog design).
-**Action**: Add `tenantId` fields to these models in a future schema migration and update all related API routes.
+**Status**: Fixed (Session 30) — Partially (2 models remain by design)
+Migration `0004_add_tenant_scoping` added tenantId to 5 models: Alert (nullable), Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget (required). All related API routes updated.
+Remaining global models (intentional):
+- **AiService** — global AI service registry is intentional for self-hosted deployments
+- **AffiliateProduct** — shared product catalog; tenant scoping deferred pending product design decision
 
 ### KI-042: Zero Worker Processor Tests
 **Severity**: High

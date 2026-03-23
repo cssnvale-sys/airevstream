@@ -374,4 +374,9 @@
 ## D075: Multi-Language Modes in platformMetadata
 **Date**: 2026-03-23
 **Decision**: Store language configuration (languages[], languageMode) in ContentItem.platformMetadata rather than adding new DB columns.
+
+## D076: Tenant Isolation for Remaining Models — Nullable vs Required tenantId
+**Date**: 2026-03-23
+**Decision**: Alert gets `tenantId String?` (nullable); Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget get `tenantId String` (required). API routes use `ctx.tenantId!` (non-null assertion) for required-tenantId models, always preceded by an unconditional `if (!ctx.tenantId) return error('FORBIDDEN', ..., 403)` guard.
+**Rationale**: Workers create system-wide operational alerts (disk full, service down) that all tenants and admins should see — nullable allows null to mean "global". Application-level data (conversations, knowledge, prompts, budgets) is always owned by a tenant, so required enforces the invariant at the DB layer. The non-null assertion is safe because the 403 guard fires first; TypeScript cannot infer this from the control flow without the assertion.
 **Rationale**: The language config is only needed during pipeline processing. Adding schema columns would require a migration and only serve a subset of content items. JSON storage in platformMetadata is flexible and doesn't require schema changes.

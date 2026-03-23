@@ -7,6 +7,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Tenant isolation for Alert model** (Session 30): nullable `tenantId` column — system-wide worker alerts remain visible globally; per-tenant alert routes now scope by tenantId
+- **Tenant isolation for Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget** (Session 30): required `tenantId` columns added via migration `0004_add_tenant_scoping`; all related API routes updated
+- **Fallback chain drag-and-drop editor** (Session 30): interactive DnD reordering of AI provider chains in Settings → AI Services tab; shows priority, status dot, health %, provider badge; no new dependency (native HTML5 DnD)
+- **tenantId in queue job interfaces and FlowProducer pipeline params** (Session 30): workers now receive and propagate tenantId from job data
+
+### Fixed
+- **system/errors route tenant scoping** (Session 30): alert query was missing tenantId filter — now scoped
+- **trending route tenant scoping** (Session 30): content query was missing tenantId filter — now scoped
+
+### Chore
+- **Migration 0004_add_tenant_scoping** (Session 30): Prisma migration adding tenantId to Alert (nullable), Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget (required)
+
+### Added
 - **Calendar Day view** (Session 29): 24-hour single column with positioned scheduled posts
 - **Calendar Month view** (Session 29): 7-column grid with colored platform dots per date
 - **Calendar drag-and-drop** (Session 29): Native HTML5 DnD rescheduling with toast feedback

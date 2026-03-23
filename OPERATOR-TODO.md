@@ -24,12 +24,11 @@ cd packages/browser-automation && npm uninstall playwright-extra puppeteer-extra
 cd apps/web && npm install @types/bcrypt@^6.0.0 && cd ../..
 ```
 
-### Database Migration (Alert tenant isolation — KI-065)
-Add `tenantId` to Alert model in Prisma schema, then:
+### Database Migration (Tenant isolation — DONE in Session 30, migration pending apply)
+Migration `0004_add_tenant_scoping` adds tenantId to Alert (nullable), Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget (required). Apply when database is available:
 ```bash
-npx prisma migrate dev --name add_alert_tenant_id
+npx prisma migrate deploy
 ```
-Then update all 6 alert routes to scope by tenantId.
 
 ---
 

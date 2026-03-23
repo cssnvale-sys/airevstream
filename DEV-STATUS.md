@@ -178,6 +178,18 @@
 | UI-7 | Calendar language filter wiring | Done | UI → API query params |
 | UI-8 | Calendar content navigation | Done | Fallback to scheduledPost ID removed |
 
+### Phase 15: Tenant Isolation + Fallback Chain DnD (Session 30) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| TI-1 | Prisma migration 0004 | Done | tenantId on Alert (nullable), Conversation/KB/Prompt/Budget (required) |
+| TI-2 | Alert routes tenant scoping | Done | All 6 alert routes + SSE stream scoped by tenantId |
+| TI-3 | Conversation/KB/Prompt/Budget scoping | Done | All CRUD routes for 4 models scoped by ctx.tenantId! |
+| TI-4 | Worker tenantId propagation | Done | account, posting, research workers resolve + pass tenantId via job data |
+| TI-5 | Service tenantId resolution | Done | ai-assistant and workflow-engine resolve tenantId from authenticated user |
+| TI-6 | Queue job interface updates | Done | tenantId added to job interfaces + FlowProducer pipeline params |
+| TI-7 | Audit fix: system/errors + trending | Done | 2 additional routes scoped by audit catch |
+| TI-8 | Fallback chain DnD editor | Done | Interactive drag-and-drop provider reordering in Settings tab, native HTML5 DnD |
+
 ### Phase 14: Spec Gap Closure (Session 29) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
@@ -219,7 +231,7 @@
 - **Audit tests**: 24 (9 files scanning 130+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
 - **Total**: 534 tests
-- Audit: 24 tests across 9 files — **0 known violations** for viewer checks and rate limiting (all fixed Session 17)
+- Audit: 24 tests across 9 files — **0 known violations** (all viewer checks, rate limiting, and tenant scoping clean)
 - E2E: 181 tests across 30 files (all 17 pages covered, 100% pass rate)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 - Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
@@ -227,9 +239,10 @@
 - Full codebase audit (Session 19): 302 files scanned, 16 fixes applied (2 bugs, 4 silent catches, 9 type safety, 1 config), 0 silent catches remaining
 - **Full-stack audit (Session 27)**: 26 issues found (3 CRITICAL, 7 HIGH, 9 MEDIUM, 7 LOW), 20 fixed, 1 accepted risk, 5 deferred. Two consecutive clean test runs achieved.
 - **UI response shape audit (Session 28)**: 8 apiPost/navigation bugs found and fixed across 6 components. Root cause: apiPost returns full envelope but components read top-level props.
+- **Tenant isolation (Session 30)**: 5 models migrated (Alert nullable, 4 required), ~20 API routes scoped, workers updated, 0 audit violations.
 
 ## Architecture Highlights
-- **Prisma Schema**: 36 models with full-text search GIN indexes on key tables
+- **Prisma Schema**: 38 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment added Session 25)
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
 - **Next.js API Routes**: 124 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs

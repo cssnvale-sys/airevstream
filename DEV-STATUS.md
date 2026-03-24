@@ -213,6 +213,22 @@
 | AIP-7 | PresetPicker update | Done | My Presets tab, + Create button, Custom badge, delete on user presets |
 | AIP-8 | Tests | Done | 17 new unit tests, audit allowlist updated, 42 Prisma models |
 
+### Phase 18: Full Codebase Audit — 100% Coverage (Session 34) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| FA-1 | D071 conditional tenant scoping | Done | 60+ routes: conditional `ctx.tenantId ? {...} : {}` → unconditional guard + filter |
+| FA-2 | Missing tenant guards | Done | 17 routes: `ctx.tenantId!` without null check → explicit 403 guard |
+| FA-3 | Silent catch blocks | Done | 15+ instances: added console.error logging |
+| FA-4 | Data shape mismatches | Done | 8 fixes: fallback chain, calendar, budget, quality breakdown, preset picker |
+| FA-5 | Error handling | Done | 10+ fixes: error boundaries, notification-center, auth plugin |
+| FA-6 | Prisma improvements | Done | Missing relations, Decimal wrapping, qualityScore null check |
+| FA-7 | Backend packages | Done | 17 fixes: ComfyUI regex, VAE, crypto, seasoning, queue, prompts |
+| FA-8 | Services | Done | 12 fixes: register, chat/asset scoping, auth hooks, error leaks |
+| FA-9 | Workers | Done | 5 fixes: trends tenantId, stale types, double download, dead code |
+| FA-10 | Remotion | Done | 6 fixes: transitions, off-by-one, dead code |
+| FA-11 | UI/Layout | Done | 40+ fixes: error boundaries, companion files, headers, pagination, AI panel |
+| FA-12 | Debug cleanup | Done | console.log removal from distribute/repurpose routes |
+
 ### Phase 14: Spec Gap Closure (Session 29) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
@@ -250,12 +266,10 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: ~430+ (all passing via Vitest — 216 shared + 134 web + others)
+- **Unit tests**: 134 (all passing via Vitest)
 - **Audit tests**: 24 (9 files scanning 133+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
-- **Total**: ~635+ tests
-- Audit: 24 tests across 9 files — **0 known violations** (all viewer checks, rate limiting, and tenant scoping clean)
-- E2E: 181 tests across 30 files (all 17 pages covered, 100% pass rate)
+- **Test tasks**: 27 (all passing via Turbo)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 - Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
 - Codebase audit (Session 12→17): 9 bug classes automated, known violation sets for viewer checks and rate limiting emptied to 0
@@ -266,6 +280,7 @@
 - **Cinema pipeline improvements (Session 31)**: 6 gaps implemented (G1-G6): frame anchoring, AV sync detection, asset graph, QC decision agent, VMAF regression, C2PA embedding. 3 new Prisma models, 9th cinema agent, 6-phase execution order. 76 new tests added.
 - **Simplified Cinema Wizard (Session 32)**: 5-screen simple mode wizard, character preset family (10th, 41 total built-in presets), 6 revision presets, 3 new frontend components, simple mode guardrails + constraint validation.
 - **AI-Generated Presets (Session 33)**: UserPreset model (42nd Prisma model), 3 API routes (CRUD + generate), AI generation with validation, CreatePresetModal + PresetPicker "My Presets" tab, localStorage sync. 17 new unit tests.
+- **Full codebase audit — 100% coverage (Session 34)**: 8-wave audit with 31 parallel agents across ~400 source files. ~210 issues found and fixed. D071 conditional tenant scoping fully resolved (60+ routes). 0 regressions — 134 unit tests + 24 audit tests pass (27 test tasks).
 
 ## Architecture Highlights
 - **Prisma Schema**: 41 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31)

@@ -431,6 +431,11 @@
 **Decision**: The `/presets/generate` endpoint returns a preview without saving; the user explicitly saves via `POST /presets` after reviewing.
 **Rationale**: AI output quality is unpredictable — auto-saving would pollute the user's preset library with garbage. Separating generate from save lets users review, edit name/description, and regenerate before committing. The modal UX flows: generate → preview → edit → save.
 
+## D088: Unconditional Tenant Guard Standard (100% Coverage)
+**Date**: 2026-03-24
+**Decision**: All tenant-scoped API routes must use the unconditional guard pattern: `if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403)` followed by `tenantId: ctx.tenantId` in all queries. The conditional pattern `ctx.tenantId ? { tenantId: ctx.tenantId } : {}` is permanently banned.
+**Rationale**: Session 34's 100% coverage audit found 60+ routes still using the conditional pattern (D071 was identified in Session 27 but not fully enforced). When `ctx.tenantId` is null, the conditional pattern silently returns data from all tenants. The unconditional guard makes tenant scoping fail-safe: requests without tenant context are rejected with 403 before any data query executes. This is now enforced across every API route in the codebase, not just the subset found in Session 27. The automated audit tests (`tenant-scoping.audit.test.ts`) catch regressions.
+
 ## D087: localStorage-First Optimistic Write for User Presets
 **Date**: 2026-03-23
 **Decision**: When saving a user preset, write to localStorage immediately (optimistic), then POST to the API in the background. On page load, merge localStorage with API response (API is source of truth by presetId).

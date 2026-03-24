@@ -6,11 +6,6 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
-### KI-065: Alert Model Lacks tenantId — Cross-Tenant Data Leak
-**Severity**: Medium
-**Status**: Fixed (Session 30)
-Added nullable `tenantId` to Alert model via migration `0004_add_tenant_scoping`. All 6 alert routes and SSE stream now scope by tenantId. Workers creating system-wide alerts pass null tenantId (intentional global visibility for ops alerts).
-
 ### KI-070: Simple Wizard Plan Generation Uses Fallback Only
 **Severity**: Low
 **Status**: Open (Session 32)
@@ -149,7 +144,13 @@ A separate project (`delegayt-dashboard`, Next.js + uvicorn) was occupying port 
 
 ---
 
-## Recently Fixed (Sessions 10-18)
+## Recently Fixed (Sessions 10-34)
+
+### KI-071: D071 Conditional Tenant Scoping — Fully Resolved (Session 34)
+All 60+ API routes using the `ctx.tenantId ? {...} : {}` conditional scoping pattern replaced with unconditional guard + filter. 17 additional routes using `ctx.tenantId!` without null guard also fixed. ~210 total issues fixed across 12 categories in 8-wave audit.
+
+### KI-065: Alert Model Lacks tenantId — Fixed (Session 30)
+Added nullable `tenantId` to Alert model via migration `0004_add_tenant_scoping`. All 6 alert routes and SSE stream now scope by tenantId.
 
 ### KI-056: Port 3000 Conflict with External Project — Fixed (Session 18)
 A separate project (`delegayt-dashboard`) was running on port 3000 instead of AiRevStream. Killed the process and started the correct Next.js app.

@@ -4,6 +4,59 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 34 — Full Codebase Audit (100% Coverage, 8-Wave)
+
+**Date:** 2026-03-24
+**Focus:** Comprehensive 8-wave audit across ~400 source files with 31 parallel agents, finding and fixing ~210 issues. Zero regressions.
+
+### What Was Done
+
+#### D071 Conditional Tenant Scoping — Fully Resolved (60+ routes)
+- Replaced every `ctx.tenantId ? {...} : {}` conditional scoping pattern with unconditional `if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403)` guard followed by `tenantId: ctx.tenantId` in all API routes
+- This was the single largest vulnerability class in the codebase
+
+#### Missing Tenant Guards (17 routes)
+- Routes using `ctx.tenantId!` without a preceding null guard now have explicit 403 check
+
+#### Silent Catch Blocks (15+ instances)
+- Added `console.error` logging to all remaining silent catches across the codebase
+
+#### Data Shape Mismatches (8 fixes)
+- Fallback chain field names, calendar filters, budget PUT→PATCH, quality breakdown GET shape, preset picker delete
+
+#### Error Handling (10+ fixes)
+- Error.message leaks in error boundaries, notification-center fetch errors, auth plugin return bugs
+
+#### Prisma Improvements
+- Missing Storefront↔Channel and StorefrontProduct↔AffiliateProduct relations
+- totalDurationSec Decimal wrapping, qualityScore truthiness→null check
+
+#### Backend Packages (17 fixes)
+- ComfyUI regex injection prevention, VAE tracking, crypto UTF-8 split fix, seasoning graduation bypass, queue job types, prompt sanitization
+
+#### Services (12 fixes)
+- Register without tenant, chat/asset tenant scoping, auth hook returns, error message leaks
+
+#### Workers (5 fixes)
+- Trends job tenantId propagation, stale types, double download prevention, dead code removal
+
+#### Remotion (6 fixes)
+- Transition bugs, off-by-one errors, dead code removal
+
+#### UI/Layout (40+ fixes)
+- Error boundary names/messages, missing companion files (9 `error.tsx`/`loading.tsx` created), header titles, search button, pagination, AI panel error feedback
+
+#### console.log Removal
+- distribute and repurpose route debug logging cleaned
+
+### Decisions
+- D088: Unconditional tenant guard as mandatory standard for ALL API routes (codifies D071 enforcement across 100% of routes)
+
+### Build Status
+- 14 packages building, 134 unit tests + 24 audit tests (27 test tasks pass), 0 regressions
+
+---
+
 ## Session 33 — AI-Generated Presets from Natural Language
 
 **Date:** 2026-03-23

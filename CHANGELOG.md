@@ -6,6 +6,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **D071 conditional tenant scoping fully resolved** (Session 34): replaced `ctx.tenantId ? {...} : {}` pattern with unconditional guard + filter in 60+ API routes — eliminates the single largest security vulnerability class
+- **Missing tenant guards** (Session 34): 17 routes using `ctx.tenantId!` without null check now have explicit 403 guard
+- **Silent catch blocks** (Session 34): 15+ remaining silent catches now log via `console.error`
+- **Data shape mismatches** (Session 34): fallback chain field names, calendar filters, budget PUT→PATCH, quality breakdown GET shape, preset picker delete — 8 fixes total
+- **Error.message leaks** (Session 34): error boundaries, notification-center fetch, auth plugin returns — 10+ fixes
+- **Prisma relations** (Session 34): added missing Storefront↔Channel and StorefrontProduct↔AffiliateProduct relations; totalDurationSec Decimal wrapping; qualityScore truthiness→null check
+- **Backend packages** (Session 34): ComfyUI regex injection, VAE tracking, crypto UTF-8 split, seasoning graduation bypass, queue job types, prompt sanitization — 17 fixes
+- **Services** (Session 34): register without tenant, chat/asset tenant scoping, auth hook returns, error message leaks — 12 fixes
+- **Workers** (Session 34): trends job tenantId, stale types, double download, dead code — 5 fixes
+- **Remotion** (Session 34): transition bugs, off-by-one errors, dead code — 6 fixes
+- **UI/Layout** (Session 34): error boundary names/messages, header titles, search button, pagination, AI panel error feedback — 40+ fixes
+- **console.log cleanup** (Session 34): removed debug logging from distribute and repurpose routes
+
+### Added
+- **Missing companion files** (Session 34): 9 `error.tsx`/`loading.tsx` files created for page segments lacking them
+
 ### Added
 - **AI-generated presets from natural language** (Session 33): POST `/api/v1/presets/generate` uses AI service registry to create typed presets from descriptions like "warm sunset look with soft focus"; preview → review → save flow
 - **User preset CRUD** (Session 33): `UserPreset` Prisma model with tenant-scoped CRUD (GET/POST/PATCH/DELETE at `/api/v1/presets`); `useUserPresets` SWR hook with localStorage sync for instant access

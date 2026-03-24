@@ -21,6 +21,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: airevstream-redis
+    command: redis-server --maxmemory-policy noeviction --appendonly yes
     ports:
       - "6379:6379"
     volumes:

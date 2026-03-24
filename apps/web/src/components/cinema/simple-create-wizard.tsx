@@ -294,6 +294,12 @@ export function SimpleCreateWizard() {
         </div>
       )}
 
+      {!channelsLoading && channels.length === 0 && (
+        <div className="rounded-lg border border-border bg-bg-secondary p-4 text-sm text-text-secondary">
+          No channels found. <a href="/channels" className="text-accent-blue hover:underline">Create a channel</a> first.
+        </div>
+      )}
+
       <IntakeScreen onComplete={handleIntakeComplete} />
     </div>
   );

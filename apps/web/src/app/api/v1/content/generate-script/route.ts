@@ -12,6 +12,11 @@ const GenerateScriptSchema = z.object({
   duration: z.number().int().min(5).max(3600).optional().nullable(),
   affiliateProductId: z.string().uuid().optional().nullable(),
   affiliateMode: z.string().max(50).optional().nullable(),
+  // SimpleCreateWizard intake fields (used for richer prompt generation)
+  setting: z.string().max(200).optional().nullable(),
+  emotion: z.string().max(50).optional().nullable(),
+  hasSpeaking: z.boolean().optional().nullable(),
+  characterDescription: z.string().max(200).optional().nullable(),
 }).strict();
 
 export async function POST(req: NextRequest) {
@@ -34,7 +39,7 @@ export async function POST(req: NextRequest) {
       return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
 
-    const { channelId, topic, contentType, platforms, duration, affiliateProductId } = parsed.data;
+    const { channelId, topic, contentType, platforms, duration, affiliateProductId, setting, emotion, hasSpeaking, characterDescription } = parsed.data;
 
     // Verify channel belongs to tenant
     const channel = await ctx.db.channel.findFirst({
@@ -60,6 +65,10 @@ Requirements:
 - Keep the CTA specific and actionable
 ${affiliateProductId ? `- Include an [AFFILIATE] section at the end mentioning the product naturally` : ''}
 ${platforms ? `- Optimize tone for: ${Array.isArray(platforms) ? platforms.join(', ') : platforms}` : ''}
+${setting ? `- Set the scene in: ${setting}` : ''}
+${emotion ? `- Overall mood/tone: ${emotion}` : ''}
+${characterDescription ? `- Main character/presenter: ${characterDescription}` : ''}
+${hasSpeaking === false ? `- No spoken dialogue — music/visuals only (describe scenes visually)` : ''}
 
 Return ONLY the script text, no extra commentary.`;
 

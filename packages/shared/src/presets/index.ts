@@ -8,6 +8,7 @@ export {
   AUDIO_PRESETS,
   OUTPUT_PRESETS,
   PROJECT_PRESETS,
+  CHARACTER_PRESETS,
   STORY_PRESETS,
   DIALOGUE_PRESETS,
   CONTINUITY_PRESETS,
@@ -15,5 +16,15 @@ export {
   BUILT_IN_RECIPES,
 } from './built-in.js';
 
+export { REVISION_PRESETS } from './revisions.js';
+export type { RevisionPreset } from './revisions.js';
+
 export { resolvePresets, getActiveRanges } from './resolver.js';
 export type { ResolveOptions } from './resolver.js';
+
+export {
+  FAMILY_OVERRIDE_KEYS,
+  PRESET_GENERATION_SYSTEM_PROMPT,
+  generatePresetId,
+  validateAndNormalizeAiPreset,
+} from './ai-generation.js';

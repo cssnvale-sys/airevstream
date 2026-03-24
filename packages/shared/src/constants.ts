@@ -136,3 +136,26 @@ export const QUALITY_THRESHOLDS = {
   REVIEW_REQUIRED: 60,
   AUTO_REJECT: 30,
 } as const;
+
+// ─── Simple Mode Guardrails ───
+export const SIMPLE_MODE_GUARDRAILS = {
+  MAX_SHOTS: 9,
+  MAX_DIALOGUE_LINES_PER_SHOT: 2,
+  MAX_SHOT_DURATION_SEC: 8,
+  DEFAULT_CHARACTER_COUNT: 1,
+  MAX_CHARACTER_COUNT: 2,
+  ALLOWED_DURATIONS: [15, 30, 60],
+  DEFAULT_QUALITY_TIER: 'cinema',
+} as const;
+
+// ─── Pipeline Progress — Friendly Labels for Simple Mode ───
+export const PIPELINE_SIMPLE_LABELS: Record<string, string> = {
+  'Research':         'Writing your story',
+  'Script':           'Writing your story',
+  'Storyboard':       'Building visual bible',
+  'Shot Generation':  'Creating shots',
+  'QC Gate':          'Quality checking',
+  'Audio Mix':        'Adding sound & music',
+  'Video Render':     'Rendering clips',
+  'Final Review':     'Final edit',
+};

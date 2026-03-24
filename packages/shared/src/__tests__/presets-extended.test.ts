@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   ALL_BUILT_IN_PRESETS,
   PROJECT_PRESETS,
+  CHARACTER_PRESETS,
   STORY_PRESETS,
   DIALOGUE_PRESETS,
   CONTINUITY_PRESETS,
@@ -9,10 +10,17 @@ import {
 } from '../presets/index.js';
 
 describe('extended presets', () => {
-  it('should have 3 project presets', () => {
-    expect(PROJECT_PRESETS).toHaveLength(3);
+  it('should have 5 project presets', () => {
+    expect(PROJECT_PRESETS).toHaveLength(5);
     for (const p of PROJECT_PRESETS) {
       expect(p.family).toBe('project');
+    }
+  });
+
+  it('should have 5 character presets', () => {
+    expect(CHARACTER_PRESETS).toHaveLength(5);
+    for (const p of CHARACTER_PRESETS) {
+      expect(p.family).toBe('character');
     }
   });
 
@@ -51,6 +59,7 @@ describe('extended presets', () => {
     expect(families.has('dialogue')).toBe(true);
     expect(families.has('continuity')).toBe(true);
     expect(families.has('edit')).toBe(true);
+    expect(families.has('character')).toBe(true);
   });
 
   it('should have ranges on film-noir preset', () => {
@@ -77,5 +86,9 @@ describe('extended presets', () => {
       // IDs follow the pattern: family.name.version e.g. "visual.film-noir.v1"
       expect(p.id).toMatch(/^[a-z]+\.[a-z0-9-]+\.v\d+$/);
     }
+  });
+
+  it('should have 41 total built-in presets', () => {
+    expect(ALL_BUILT_IN_PRESETS).toHaveLength(41);
   });
 });

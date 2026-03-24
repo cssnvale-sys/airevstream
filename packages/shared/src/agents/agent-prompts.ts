@@ -185,7 +185,16 @@ const MODE_INSTRUCTIONS: Record<ComplexityMode, string> = {
   simple: `\n\nCOMPLEXITY MODE: Simple
 Output essential fields only. Use preset defaults for LoRA, camera, audio.
 Do not include raw workflow parameters, ControlNet specs, or advanced generation settings.
-Focus on: concept, shots, timing, and basic camera. Skip technical implementation details.`,
+Focus on: concept, shots, timing, and basic camera. Skip technical implementation details.
+
+SIMPLE MODE GUARDRAILS — enforce these strictly:
+- Maximum 9 shots per project
+- Maximum 2 dialogue lines per shot (each shot is max 8 seconds)
+- Default to 1 character unless the user specifies otherwise (max 2)
+- Use a single consistent visual style per project (no mid-video style changes)
+- Allowed durations: 15s, 30s, or 60s only
+- Quality tier is always "cinema" (auto-set, hidden from user)
+- Keep language friendly and non-technical`,
   advanced: `\n\nCOMPLEXITY MODE: Advanced
 Include camera, color grade, audio layers, and bounded generation parameters.
 Provide LoRA recommendations and basic ControlNet guidance where appropriate.

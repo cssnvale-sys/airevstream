@@ -323,6 +323,123 @@ export const PROJECT_PRESETS: Preset[] = [
       postProcess: { sharpen: 30 },
     },
   },
+  {
+    id: 'project.cinematic-short.v1',
+    name: 'Cinematic Short',
+    family: 'project',
+    description: 'Film-quality short with full audio mix',
+    tags: ['cinematic', 'film', 'premium'],
+    builtIn: true,
+    tier: 'simple',
+    overrides: {
+      fps: 24,
+      aspect: '16:9',
+      audioPlan: {
+        bg: { source: 'generate', volume: 0.3, loop: true, fadeInMs: 2000, fadeOutMs: 2000 },
+        mg: { source: 'generate', volume: 0.5 },
+        fg: { source: 'tts', volume: 0.9 },
+      },
+      postProcess: { filmGrain: 20, vignette: 10 },
+      colorGrade: { contrast: 20 },
+    },
+  },
+  {
+    id: 'project.dramatic-reel.v1',
+    name: 'Dramatic Reel',
+    family: 'project',
+    description: 'Punchy vertical format for social',
+    tags: ['reel', 'vertical', 'social', 'dramatic'],
+    builtIn: true,
+    tier: 'simple',
+    overrides: {
+      fps: 30,
+      aspect: '9:16',
+      audioPlan: {
+        bg: { source: 'generate', volume: 0.3, loop: true },
+        fg: { source: 'tts', volume: 0.9 },
+      },
+      colorGrade: { contrast: 25, saturation: 5 },
+    },
+  },
+];
+
+// ─── Character Presets ───
+
+export const CHARACTER_PRESETS: Preset[] = [
+  {
+    id: 'character.solo-speaker.v1',
+    name: 'Solo Speaker',
+    family: 'character',
+    description: 'Single narrator or presenter',
+    tags: ['solo', 'narrator', 'single'],
+    builtIn: true,
+    tier: 'simple',
+    overrides: {
+      characterCount: 1,
+      dialogueMode: 'narrator',
+      audioPlan: { fg: { source: 'tts', volume: 0.9 } },
+    },
+  },
+  {
+    id: 'character.two-characters.v1',
+    name: 'Two Characters',
+    family: 'character',
+    description: 'Conversational format with two speakers',
+    tags: ['duo', 'conversational', 'dialogue'],
+    builtIn: true,
+    tier: 'simple',
+    overrides: {
+      characterCount: 2,
+      dialogueMode: 'conversational',
+      audioPlan: { fg: { source: 'tts', volume: 0.85 }, mg: { source: 'generate', volume: 0.3 } },
+    },
+  },
+  {
+    id: 'character.narrator-broll.v1',
+    name: 'Narrator + B-Roll',
+    family: 'character',
+    description: 'Voiceover narration with visual B-roll footage',
+    tags: ['narrator', 'b-roll', 'documentary'],
+    builtIn: true,
+    tier: 'simple',
+    overrides: {
+      characterCount: 0,
+      dialogueMode: 'narrator',
+      audioPlan: { fg: { source: 'tts', volume: 0.9 }, bg: { source: 'generate', volume: 0.2, loop: true } },
+    },
+  },
+  {
+    id: 'character.no-dialogue.v1',
+    name: 'No Dialogue',
+    family: 'character',
+    description: 'Music-driven visuals with no speaking',
+    tags: ['silent', 'music', 'visual'],
+    builtIn: true,
+    tier: 'simple',
+    overrides: {
+      characterCount: 0,
+      dialogueMode: 'none',
+      audioPlan: { bg: { source: 'generate', volume: 0.4, loop: true } },
+    },
+  },
+  {
+    id: 'character.faceless-cinema.v1',
+    name: 'Faceless Cinema',
+    family: 'character',
+    description: 'Narrated content without on-screen people',
+    tags: ['faceless', 'narrator', 'anonymous'],
+    builtIn: true,
+    tier: 'simple',
+    overrides: {
+      characterCount: 0,
+      dialogueMode: 'narrator',
+      personGeneration: 'disallow',
+      audioPlan: {
+        bg: { source: 'generate', volume: 0.3, loop: true },
+        fg: { source: 'tts', volume: 0.9 },
+      },
+    },
+  },
 ];
 
 // ─── Story Presets ───
@@ -514,6 +631,7 @@ export const ALL_BUILT_IN_PRESETS: Preset[] = [
   ...AUDIO_PRESETS,
   ...OUTPUT_PRESETS,
   ...PROJECT_PRESETS,
+  ...CHARACTER_PRESETS,
   ...STORY_PRESETS,
   ...DIALOGUE_PRESETS,
   ...CONTINUITY_PRESETS,

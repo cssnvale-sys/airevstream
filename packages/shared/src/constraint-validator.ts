@@ -7,6 +7,7 @@
  */
 
 import type { ShotSpec } from './types.js';
+import { SIMPLE_MODE_GUARDRAILS } from './constants.js';
 
 // ─── Types ───
 
@@ -178,6 +179,48 @@ export function validateShotSpec(spec: ShotSpec, provider: ProviderName): Constr
       severity: 'warning',
     });
   }
+
+  return violations;
+}
+
+/**
+ * Validate simple-mode constraints on a set of shots.
+ * Returns violations if shots exceed guardrail limits.
+ */
+export function validateSimpleModeConstraints(
+  shots: Array<{ duration?: number; dialogue?: Array<unknown> }>,
+  mode: 'simple' | 'advanced' | 'complex',
+): ConstraintViolation[] {
+  if (mode !== 'simple') return [];
+
+  const violations: ConstraintViolation[] = [];
+  const g = SIMPLE_MODE_GUARDRAILS;
+
+  if (shots.length > g.MAX_SHOTS) {
+    violations.push({
+      field: 'shots',
+      message: `Simple mode allows max ${g.MAX_SHOTS} shots, got ${shots.length}`,
+      severity: 'error',
+    });
+  }
+
+  shots.forEach((shot, i) => {
+    if (shot.duration && shot.duration > g.MAX_SHOT_DURATION_SEC) {
+      violations.push({
+        field: `shots[${i}].duration`,
+        message: `Shot ${i + 1} duration ${shot.duration}s exceeds max ${g.MAX_SHOT_DURATION_SEC}s`,
+        severity: 'warning',
+      });
+    }
+
+    if (shot.dialogue && shot.dialogue.length > g.MAX_DIALOGUE_LINES_PER_SHOT) {
+      violations.push({
+        field: `shots[${i}].dialogue`,
+        message: `Shot ${i + 1} has ${shot.dialogue.length} dialogue lines, max ${g.MAX_DIALOGUE_LINES_PER_SHOT}`,
+        severity: 'warning',
+      });
+    }
+  });
 
   return violations;
 }

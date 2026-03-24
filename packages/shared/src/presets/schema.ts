@@ -17,6 +17,7 @@ export const PresetFamilySchema = z.enum([
   'story',
   'dialogue',
   'continuity',
+  'character',
 ]);
 export type PresetFamily = z.infer<typeof PresetFamilySchema>;
 

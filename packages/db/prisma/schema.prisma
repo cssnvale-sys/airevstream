@@ -33,6 +33,7 @@ model Tenant {
   knowledgeBaseEntries KnowledgeBaseEntry[]
   promptTemplates    PromptTemplate[]
   costBudgets        CostBudget[]
+  userPresets        UserPreset[]
 
   @@map("tenants")
 }
@@ -51,6 +52,7 @@ model User {
 
   tenant        Tenant?        @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   refreshTokens RefreshToken[]
+  userPresets   UserPreset[]
 
   @@index([tenantId])
   @@map("users")
@@ -870,6 +872,33 @@ model CostBudget {
   @@index([tenantId])
   @@index([status])
   @@map("cost_budgets")
+}
+
+model UserPreset {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  presetId    String   @map("preset_id") @db.VarChar(100)
+  name        String   @db.VarChar(255)
+  family      String   @db.VarChar(20)
+  description String?
+  tags        String[] @default([])
+  overrides   Json     @default("{}") @db.JsonB
+  tier        String?  @db.VarChar(20)
+  ranges      Json?    @db.JsonB
+  source      String   @default("ai") @db.VarChar(20)
+  aiPrompt    String?  @map("ai_prompt")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, presetId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([family])
+  @@map("user_presets")
 }
 
 // ============================================================

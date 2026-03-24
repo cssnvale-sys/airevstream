@@ -52,7 +52,7 @@ PRESET FAMILIES AND THEIR VALID OVERRIDE KEYS:
 - output: generation (object with: width, height), fps (number), aspect (string), codec (string: "h264", "h265", "prores")
 - project: fps, aspect, audioPlan, colorGrade, postProcess, camera (combines multiple families)
 - character: characterCount (number), dialogueMode ("narrator"|"conversational"|"none"), personGeneration ("allow"|"disallow"), audioPlan
-- story: (no overrides — structure metadata only)
+- story: _directives (object with optional: narrativeStructure, pacing — used to embed production directives)
 - dialogue: audioPlan
 - continuity: seedPolicy ("free"|"shot-offset"|"scene-lock"|"series-lock")
 

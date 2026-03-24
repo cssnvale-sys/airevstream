@@ -804,7 +804,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     presetIds: [
       'visual.golden-hour.v1',
       'camera.orbit-reveal.v1',
-      'audio.ambient-narration.v1',
+      // No audio preset — character.no-dialogue provides bg-only audioPlan
+      // Adding audio.ambient-narration would leak TTS via deep merge
       'story.montage.v1',
       'character.no-dialogue.v1',
       'output.reels-portrait.v1',

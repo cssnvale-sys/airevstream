@@ -74,6 +74,12 @@ export interface CinemaPipelineParams {
   qualityPreset?: 'draft' | 'standard' | 'cinema';
   shotIds?: string[];       // If storyboard already exists
   storyboardId?: string;    // If storyboard already exists
+  /** Production directives from master bundle recipe (shot count, pacing, etc.) */
+  directives?: Record<string, unknown>;
+  /** Resolved preset overrides (visual, camera, audio settings) */
+  overrides?: Record<string, unknown>;
+  /** Duration in seconds */
+  duration?: number;
 }
 
 /**
@@ -146,6 +152,7 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
                       qualityPreset,
                       contentId: params.contentId,
                       channelId: params.channelId,
+                      ...(params.overrides ? { overrides: params.overrides } : {}),
                     },
                     children: [
                       {
@@ -156,6 +163,8 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
                           contentId: params.contentId,
                           channelId: params.channelId,
                           scriptJson: {},
+                          ...(params.directives ? { directives: params.directives } : {}),
+                          ...(params.overrides ? { overrides: params.overrides } : {}),
                         },
                         children: [
                           {
@@ -167,6 +176,8 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
                               channelId: params.channelId,
                               contentType: params.contentType,
                               prompt: `Create cinematic ${params.contentType} content about: ${params.topic}`,
+                              ...(params.directives ? { directives: params.directives } : {}),
+                              ...(params.duration ? { duration: params.duration } : {}),
                             },
                             children: [
                               {

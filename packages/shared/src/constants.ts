@@ -20,6 +20,7 @@ export const QUEUES = {
   RESEARCH: 'research',
   MAINTENANCE: 'maintenance',
   PRODUCTION: 'production',
+  SEASONING: 'seasoning',
 } as const;
 
 // ─── JWT ───

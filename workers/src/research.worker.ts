@@ -43,6 +43,19 @@ async function processResearchJob(job: Job<ResearchTrendsJob | ResearchTopicsJob
 async function handleTrends(data: ResearchTrendsJob, job: Job) {
   const db = getDb();
 
+  // For repeatable system jobs that don't have a tenantId, run for all tenants
+  let tenantIds: string[];
+  if (data.tenantId) {
+    tenantIds = [data.tenantId];
+  } else {
+    const tenants = await db.tenant.findMany({ select: { id: true } });
+    tenantIds = tenants.map(t => t.id);
+    if (tenantIds.length === 0) {
+      logger.info('No tenants found — skipping trend research');
+      return { count: 0 };
+    }
+  }
+
   try {
     const prompt = `Suggest 10 trending content topics${data.platform ? ` for ${data.platform}` : ''}${data.keywords?.length ? ` related to: ${data.keywords.join(', ')}` : ''}.
 Return a JSON array of objects with: topic, relevanceScore (0-10), platform, reason, suggestedContentTypes (array).`;
@@ -78,21 +91,25 @@ Return a JSON array of objects with: topic, relevanceScore (0-10), platform, rea
 
     await job.updateProgress(50);
 
-    // Save to knowledge base in bulk
-    await db.knowledgeBaseEntry.createMany({
-      data: trends.map((trend) => ({
-        tenantId: data.tenantId,
-        domain: 'platform_ops',
-        category: 'trends',
-        title: trend.topic,
-        content: `${trend.reason}\n\nSuggested content types: ${trend.suggestedContentTypes.join(', ')}`,
-        relevanceScore: trend.relevanceScore,
-      })),
-    });
+    // Save to knowledge base in bulk — one copy per tenant
+    let totalCreated = 0;
+    for (const tenantId of tenantIds) {
+      await db.knowledgeBaseEntry.createMany({
+        data: trends.map((trend) => ({
+          tenantId,
+          domain: 'platform_ops',
+          category: 'trends',
+          title: trend.topic,
+          content: `${trend.reason}\n\nSuggested content types: ${trend.suggestedContentTypes.join(', ')}`,
+          relevanceScore: trend.relevanceScore,
+        })),
+      });
+      totalCreated += trends.length;
+    }
 
     await job.updateProgress(100);
-    logger.info({ count: trends.length }, 'Trends researched');
-    return { count: trends.length };
+    logger.info({ count: totalCreated, tenantCount: tenantIds.length }, 'Trends researched');
+    return { count: totalCreated };
   } catch (error) {
     logger.error({ err: error }, 'Failed to research trends');
     throw error;

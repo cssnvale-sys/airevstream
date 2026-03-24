@@ -17,7 +17,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({ subtitles, wid
   return (
     <>
       {subtitles.map((subtitle, index) => {
-        if (frame < subtitle.startFrame || frame > subtitle.endFrame) {
+        if (frame < subtitle.startFrame || frame >= subtitle.endFrame) {
           return null;
         }
 

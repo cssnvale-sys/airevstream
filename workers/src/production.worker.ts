@@ -11,6 +11,9 @@ import type {
   ProductionGenerateAudioJob,
   ProductionStoryboardJob,
   ProductionRepairShotJob,
+  ProductionGenerateShotsJob,
+  ProductionQCGateJob,
+  ProductionMixAudioJob,
   ExportVariant,
 } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
@@ -63,27 +66,6 @@ const comfyClient = new ComfyUIClient(
   process.env.COMFYUI_URL ?? 'http://localhost:8188',
   parseInt(process.env.COMFYUI_TIMEOUT_MS ?? '120000', 10),
 );
-
-// ─── Temporary Types (until Phase 3 adds them to @airevstream/queue) ───
-
-interface ProductionGenerateShotsJob {
-  storyboardId: string;
-  shotIds: string[];
-  cinemaBibleId: string;
-  qualityPreset: string;
-  contentId: string;
-  channelId: string;
-}
-
-interface ProductionQCGateJob {
-  storyboardId: string;
-  contentId: string;
-}
-
-interface ProductionMixAudioJob {
-  storyboardId: string;
-  contentId: string;
-}
 
 // ─── Template Renderer ───
 
@@ -764,9 +746,13 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
       // Download and upload to storage
       await ensureBucket(BUCKET);
       const uploadedUrls: string[] = [];
+      let firstImageSizeBytes = 0;
 
       for (const img of images) {
         const imageData = await comfyClient.downloadImage(img.filename, img.subfolder, img.type);
+        if (uploadedUrls.length === 0) {
+          firstImageSizeBytes = imageData.length;
+        }
         const timestamp = Date.now();
         const key = `shots/${data.storyboardId}/${shotId}/${timestamp}-${img.filename}`;
         await uploadBuffer(BUCKET, key, imageData, 'image/png');
@@ -797,7 +783,7 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         const qcResult = runPostGenQC(
           {
             fileUrl: uploadedUrls[0] ?? '',
-            fileSizeBytes: (await comfyClient.downloadImage(firstImage.filename, firstImage.subfolder, firstImage.type)).length,
+            fileSizeBytes: firstImageSizeBytes,
             width: expectedWidth,
             height: expectedHeight,
             format: firstImage.filename.split('.').pop() ?? 'png',

@@ -107,7 +107,7 @@ export async function workflowRoutes(app: FastifyInstance) {
     if (job.status === 'completed' || job.status === 'cancelled') {
       return reply.status(400).send({
         success: false,
-        error: { code: 'INVALID_STATE', message: `Cannot cancel job in ${job.status} state` },
+        error: { code: 'INVALID_STATE', message: 'Cannot cancel a completed or cancelled job' },
       });
     }
 

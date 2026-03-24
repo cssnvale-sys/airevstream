@@ -194,8 +194,10 @@ function getTransitionTransform(
     case 'cut':
       return '';
     case 'zoom': {
+      // Entry: zoom from 1.3x down to 1x (settle in)
+      // Exit: zoom from 1x down to 0.8x (shrink away)
       const scale = isExit
-        ? interpolate(progress, [0, 1], [1.3, 1])
+        ? interpolate(progress, [0, 1], [0.8, 1])
         : interpolate(progress, [0, 1], [1.3, 1]);
       return `scale(${scale})`;
     }

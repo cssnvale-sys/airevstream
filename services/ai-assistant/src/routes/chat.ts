@@ -28,11 +28,30 @@ const SYSTEM_PROMPT = `You are an AI assistant for AiRevStream, a multi-platform
 - Provide strategic content and business advice
 You have full awareness of the system state. Be concise, actionable, and proactive in suggestions.`;
 
+/** Resolve the tenantId for the authenticated user, or send 403. Returns null if 403 was sent. */
+async function resolveTenantId(request: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply): Promise<string | null> {
+  const userId = request.user?.sub;
+  if (!userId) {
+    reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
+    return null;
+  }
+  const db = getDb();
+  const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
+  if (!user?.tenantId) {
+    reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
+    return null;
+  }
+  return user.tenantId;
+}
+
 export async function chatRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
   // List conversations
   app.get('/conversations', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const { page = '1', limit = '50' } = request.query as Record<string, string>;
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
@@ -41,6 +60,7 @@ export async function chatRoutes(app: FastifyInstance) {
 
     const [items, total] = await Promise.all([
       db.conversation.findMany({
+        where: { tenantId },
         orderBy: { updatedAt: 'desc' },
         skip,
         take: limitNum,
@@ -54,7 +74,7 @@ export async function chatRoutes(app: FastifyInstance) {
           updatedAt: true,
         },
       }),
-      db.conversation.count(),
+      db.conversation.count({ where: { tenantId } }),
     ]);
 
     return reply.send({
@@ -66,11 +86,14 @@ export async function chatRoutes(app: FastifyInstance) {
 
   // Get conversation with messages
   app.get('/conversations/:id', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const conversation = await db.conversation.findUnique({
-      where: { id },
+    const conversation = await db.conversation.findFirst({
+      where: { id, tenantId },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
 
@@ -86,19 +109,15 @@ export async function chatRoutes(app: FastifyInstance) {
 
   // Create new conversation
   app.post('/conversations', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const body = request.body as { contextPage?: string } | undefined;
     const db = getDb();
 
-    // Resolve tenantId from the authenticated user
-    const userId = request.user?.sub;
-    const user = userId ? await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } }) : null;
-    if (!user?.tenantId) {
-      return reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
-    }
-
     const conversation = await db.conversation.create({
       data: {
-        tenantId: user.tenantId,
+        tenantId,
         title: 'New conversation',
         contextPage: body?.contextPage,
       },
@@ -109,6 +128,9 @@ export async function chatRoutes(app: FastifyInstance) {
 
   // Send message to conversation
   app.post('/conversations/:id/messages', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const { id } = request.params as { id: string };
     const parsed = sendMessageSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -119,8 +141,8 @@ export async function chatRoutes(app: FastifyInstance) {
     }
 
     const db = getDb();
-    const conversation = await db.conversation.findUnique({
-      where: { id },
+    const conversation = await db.conversation.findFirst({
+      where: { id, tenantId },
       include: { messages: { orderBy: { createdAt: 'asc' }, take: 50 } },
     });
 
@@ -212,10 +234,13 @@ export async function chatRoutes(app: FastifyInstance) {
 
   // Delete conversation
   app.delete('/conversations/:id', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const { id } = request.params as { id: string };
     const db = getDb();
 
-    const existing = await db.conversation.findUnique({ where: { id } });
+    const existing = await db.conversation.findFirst({ where: { id, tenantId } });
     if (!existing) {
       return reply.status(404).send({
         success: false,

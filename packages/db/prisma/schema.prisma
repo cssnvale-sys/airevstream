@@ -156,6 +156,7 @@ model Channel {
   cinemaBibles       CinemaBible[]
   contentItems       ContentItem[]
   scheduledPosts     ScheduledPost[]
+  storefronts        Storefront[]
   affiliatePool      ChannelAffiliatePool[]
   affiliateClicks    AffiliateClick[]
   aiServiceUsage     AiServiceUsage[]
@@ -544,9 +545,10 @@ model AffiliateProduct {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  channelPools    ChannelAffiliatePool[]
-  clicks          AffiliateClick[]
-  contentItems    ContentItem[]
+  channelPools       ChannelAffiliatePool[]
+  clicks             AffiliateClick[]
+  contentItems       ContentItem[]
+  storefrontProducts StorefrontProduct[]
 
   @@index([status])
   @@map("affiliate_products")
@@ -802,6 +804,7 @@ model Storefront {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  channel  Channel              @relation(fields: [channelId], references: [id], onDelete: Cascade)
   products StorefrontProduct[]
 
   @@index([channelId])
@@ -819,6 +822,7 @@ model StorefrontProduct {
   status          String   @default("active") @db.VarChar(20) // active, hidden
 
   storefront       Storefront       @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  affiliateProduct AffiliateProduct @relation(fields: [affiliateProductId], references: [id], onDelete: Cascade)
 
   @@index([storefrontId, displayOrder])
   @@map("storefront_products")

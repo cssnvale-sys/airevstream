@@ -21,7 +21,7 @@ export const MultiTrackAudio: React.FC<MultiTrackAudioProps> = ({ tracks }) => {
           : durationInFrames;
 
         // Only render if we're within the track's time range
-        if (frame < track.startFrame || frame > trackEnd) {
+        if (frame < track.startFrame || frame >= trackEnd) {
           return null;
         }
 

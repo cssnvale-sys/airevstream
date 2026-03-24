@@ -45,9 +45,15 @@ export interface WorkflowContext {
   negativeCondNodeId: string;
   latentNodeId: string;
   samplerNodeId: string;
+  vaeNodeId: string;
   vaeDecodeNodeId: string;
   imageOutputNodeId: string;
   resolvedSeed?: number;
+}
+
+/** Escape special regex characters in a string for safe use in `new RegExp()`. */
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // ─── Prompt Composition ───
@@ -89,19 +95,19 @@ export function composePrompt(
     // Replace {slotName} patterns with values from spec.promptSlots
     if (spec.promptSlots) {
       for (const [slot, value] of Object.entries(spec.promptSlots)) {
-        processed = processed.replace(new RegExp(`\\{${slot}\\}`, 'g'), value);
+        processed = processed.replace(new RegExp(`\\{${escapeRegExp(slot)}\\}`, 'g'), value);
       }
     }
     // Per-character blocks from bible
     if (bible?.perCharacterBlocks) {
       for (const [charKey, blocks] of Object.entries(bible.perCharacterBlocks)) {
-        processed = processed.replace(new RegExp(`\\{char:${charKey}\\}`, 'g'), blocks.join(', '));
+        processed = processed.replace(new RegExp(`\\{char:${escapeRegExp(charKey)}\\}`, 'g'), blocks.join(', '));
       }
     }
     // Per-environment blocks from bible
     if (bible?.perEnvironmentBlocks) {
       for (const [envKey, blocks] of Object.entries(bible.perEnvironmentBlocks)) {
-        processed = processed.replace(new RegExp(`\\{env:${envKey}\\}`, 'g'), blocks.join(', '));
+        processed = processed.replace(new RegExp(`\\{env:${escapeRegExp(envKey)}\\}`, 'g'), blocks.join(', '));
       }
     }
     return processed;
@@ -307,6 +313,7 @@ export function buildBaseWorkflow(
     negativeCondNodeId: '3',
     latentNodeId: '4',
     samplerNodeId: '5',
+    vaeNodeId: '1',
     vaeDecodeNodeId: '6',
     imageOutputNodeId: '7',
     resolvedSeed: seed,
@@ -485,7 +492,7 @@ export function addFirstFrameNodes(
     class_type: 'VAEEncode',
     inputs: {
       pixels: [loadImageId, 0],
-      vae: ['1', 2], // VAE from checkpoint
+      vae: [ctx.vaeNodeId, 2], // VAE from checkpoint
     },
     _meta: { title: 'Encode First Frame' },
   };
@@ -538,8 +545,8 @@ export function addUpscaleNodes(
 
   // Optional: Second pass with low denoise for detail refinement
   if (upscale.denoiseAfter && upscale.denoiseAfter > 0) {
-    // VAE source: always from checkpoint node "1" for VAE (output index 2)
-    const vaeSource = '1';
+    // VAE source: use the current VAE node (may be refiner checkpoint if refiner was added)
+    const vaeSource = ctx.vaeNodeId;
 
     // Encode upscaled image back to latent
     const encodeId = String(updatedCtx.nextId++);
@@ -669,6 +676,7 @@ export function addRefinerNodes(
   workflow[ctx.vaeDecodeNodeId].inputs.vae = [refinerCheckpointId, 2];
 
   updatedCtx.samplerNodeId = refinerSamplerId;
+  updatedCtx.vaeNodeId = refinerCheckpointId;
   return updatedCtx;
 }
 

@@ -125,7 +125,9 @@ const CinemaShot: React.FC<{
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
   );
 
-  const opacity = shot.transitionIn === 'cut' ? 1 : fadeIn * fadeOut;
+  const effectiveFadeIn = shot.transitionIn === 'cut' ? 1 : fadeIn;
+  const effectiveFadeOut = shot.transitionOut === 'cut' ? 1 : fadeOut;
+  const opacity = effectiveFadeIn * effectiveFadeOut;
 
   return (
     <div style={{ width, height, opacity, position: 'relative' }}>

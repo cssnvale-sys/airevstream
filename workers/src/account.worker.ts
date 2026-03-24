@@ -776,13 +776,6 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
   let phaseStartedAt = enrollment.phaseStartedAt;
 
   if (success) {
-    const enrollForCheck = {
-      ...enrollment,
-      activityLog: updatedLog,
-      activitiesCompleted: enrollment.activitiesCompleted + selectedActivities.length,
-      status: enrollment.status as any,
-    };
-
     const shouldAdvance = enrollment.phaseStartedAt &&
       (new Date().getTime() - new Date(enrollment.phaseStartedAt).getTime()) / (1000 * 60 * 60 * 24) >= phaseConfig.durationDays;
 

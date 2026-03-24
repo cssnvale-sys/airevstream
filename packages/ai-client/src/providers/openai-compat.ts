@@ -24,7 +24,9 @@ export class OpenAICompatProvider implements AiProvider {
     }
     messages.push({ role: 'user', content: request.prompt });
 
-    return this.generateChat({ ...request, messages });
+    // Omit systemPrompt to prevent generateChat from prepending it again
+    const { systemPrompt: _omit, ...rest } = request;
+    return this.generateChat({ ...rest, messages });
   }
 
   async generateChat(request: ChatRequest & { endpoint?: string; apiKey?: string }): Promise<TextResponse> {

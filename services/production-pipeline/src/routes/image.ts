@@ -1,9 +1,11 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { addJob } from '@airevstream/queue';
+import { createLogger } from '@airevstream/shared';
 import { ComfyUIClient } from '../comfyui-client.js';
 import { getTemplatePlaceholders, type WorkflowTemplate } from '../template-renderer.js';
 
+const imageLogger = createLogger('production-pipeline:image');
 const comfyClient = new ComfyUIClient();
 
 const generateImageSchema = z.object({
@@ -66,9 +68,10 @@ export async function imageRoutes(app: FastifyInstance) {
       const placeholders = await getTemplatePlaceholders(template as WorkflowTemplate);
       return reply.send({ success: true, data: { template, placeholders } });
     } catch (error) {
+      imageLogger.error({ err: error }, 'Failed to read template placeholders');
       return reply.status(500).send({
         success: false,
-        error: { code: 'TEMPLATE_ERROR', message: error instanceof Error ? error.message : 'Unknown error' },
+        error: { code: 'TEMPLATE_ERROR', message: 'Failed to read template placeholders' },
       });
     }
   });

@@ -147,8 +147,9 @@ function getAnimationTransform(
   progress: number,
   isExit = false,
 ): string {
-  // For exit, offset goes from 0→1 (moving away); for enter, from 1→0 (moving in)
-  const offset = isExit ? progress : 1 - progress;
+  // For entry, progress goes 0→1 so offset = 1-progress gives 1→0 (moving in)
+  // For exit, progress goes 1→0 so offset = 1-progress gives 0→1 (moving away)
+  const offset = 1 - progress;
 
   switch (animation) {
     case 'fade-in':

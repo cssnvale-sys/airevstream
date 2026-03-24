@@ -38,9 +38,23 @@ export async function authRoutes(app: FastifyInstance) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await db.user.create({
-      data: { email, passwordHash, name },
-      select: { id: true, email: true, name: true, createdAt: true },
+
+    // Create tenant + user atomically so neither is orphaned
+    const slug = email.split('@')[0].toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 100)
+      + '-' + Date.now().toString(36);
+    const displayName = name ?? email.split('@')[0];
+
+    const user = await db.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: `${displayName}'s Workspace`,
+          slug,
+        },
+      });
+      return tx.user.create({
+        data: { email, passwordHash, name, tenantId: tenant.id },
+        select: { id: true, email: true, name: true, tenantId: true, createdAt: true },
+      });
     });
 
     const token = app.jwt.sign(

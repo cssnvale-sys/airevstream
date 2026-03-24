@@ -182,6 +182,7 @@ export class AgentOrchestrator {
 
       state.status = 'completed';
     } catch (err) {
+      console.error('Agent pipeline execution failed:', err);
       state.status = 'failed';
     }
 

@@ -215,7 +215,11 @@ export function lintPrompt(prompt: string): SafetyLintResult {
     sanitized = prompt;
     for (const rule of SAFETY_PATTERNS) {
       for (const pattern of rule.patterns) {
-        sanitized = sanitized.replace(pattern, '[removed]');
+        // Ensure global flag is set so all occurrences are replaced, not just the first
+        const globalPattern = pattern.global
+          ? pattern
+          : new RegExp(pattern.source, pattern.flags + 'g');
+        sanitized = sanitized.replace(globalPattern, '[removed]');
       }
     }
   }

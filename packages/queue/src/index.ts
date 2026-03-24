@@ -7,6 +7,10 @@ export interface ContentGenerateJob {
   channelId: string;
   contentType: string;
   prompt?: string;
+  /** Production directives from cinema pipeline (shot count, pacing, etc.) */
+  directives?: Record<string, unknown>;
+  /** Target duration in seconds (cinema pipeline) */
+  duration?: number;
 }
 
 export interface ContentPublishJob {
@@ -117,6 +121,10 @@ export interface ProductionStoryboardJob {
   contentId: string;
   channelId: string;
   scriptJson: Record<string, unknown>;
+  /** Production directives from cinema pipeline (shot count, pacing, etc.) */
+  directives?: Record<string, unknown>;
+  /** Resolved preset overrides (visual, camera, audio settings) */
+  overrides?: Record<string, unknown>;
 }
 
 export interface PostingScheduleJob {
@@ -140,6 +148,8 @@ export interface ProductionGenerateShotsJob {
   qualityPreset: string;
   contentId: string;
   channelId: string;
+  /** Resolved preset overrides (visual, camera, audio settings) */
+  overrides?: Record<string, unknown>;
 }
 
 export interface ProductionQCGateJob {

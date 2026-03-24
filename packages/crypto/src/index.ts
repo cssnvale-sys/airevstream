@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
@@ -47,7 +47,8 @@ export function decrypt(ciphertextHex: string, keyHex: string): string {
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(authTag);
 
-  return decipher.update(encrypted) + decipher.final('utf8');
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+  return decrypted.toString('utf8');
 }
 
 /**
@@ -61,6 +62,5 @@ export function generateKey(): string {
  * Hash a value using SHA-256.
  */
 export function sha256(input: string): string {
-  const { createHash } = require('node:crypto');
   return createHash('sha256').update(input).digest('hex');
 }

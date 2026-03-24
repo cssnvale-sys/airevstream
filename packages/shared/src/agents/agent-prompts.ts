@@ -4,7 +4,7 @@
  * Each agent has a focused prompt that constrains its expertise and output format.
  */
 
-import type { AgentConfig, AgentRole, ComplexityMode, QCDecisionInput } from './agent-types.js';
+import type { AgentConfig, AgentRole, ComplexityMode } from './agent-types.js';
 import type { ProductionDirectives } from '../presets/schema.js';
 
 // ─── System Prompts ───

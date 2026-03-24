@@ -31,8 +31,8 @@ export const CameraMotion: React.FC<CameraMotionProps> = ({ camera, durationInFr
 
   const transforms = getMovementTransform(camera.movement, springProgress);
 
-  // DOF effect via blur on edges
-  const dofFilter = camera.dof === 'shallow' ? 'none' : 'none'; // CSS blur would need layered approach
+  // DOF effect: no CSS-only implementation yet (would need layered blur approach)
+  // See: https://developer.mozilla.org/en-US/docs/Web/CSS/filter for future options
 
   // Stabilization jitter
   const jitter = camera.stabilization === 'handheld'
@@ -56,7 +56,6 @@ export const CameraMotion: React.FC<CameraMotionProps> = ({ camera, durationInFr
           height: '100%',
           transform: `translate(${transforms.translateX + jitter.x}px, ${transforms.translateY + jitter.y}px) scale(${transforms.scale})`,
           transformOrigin: 'center center',
-          filter: dofFilter,
           willChange: 'transform',
         }}
       >

@@ -1,16 +1,41 @@
-import { type FastifyInstance } from 'fastify';
+import { type FastifyInstance, type FastifyRequest, type FastifyReply } from 'fastify';
 import { getDb } from '@airevstream/db';
 import { getPresignedUrl } from '@airevstream/storage';
+
+/** Resolve the tenantId for the authenticated user, or send 403. Returns null if 403 was sent. */
+async function resolveTenantId(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
+  const userId = request.user?.sub;
+  if (!userId) {
+    reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
+    return null;
+  }
+  const db = getDb();
+  const user = await db.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
+  if (!user?.tenantId) {
+    reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
+    return null;
+  }
+  return user.tenantId;
+}
 
 export async function assetRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
   // List storyboard shots (assets) for a content item
   app.get('/content/:contentId', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const { contentId } = request.params as { contentId: string };
     const db = getDb();
 
-    const content = await db.contentItem.findUnique({ where: { id: contentId } });
+    // Verify the content belongs to this tenant via channel chain
+    const content = await db.contentItem.findFirst({
+      where: {
+        id: contentId,
+        channel: { socialAccount: { emailAccount: { tenantId } } },
+      },
+    });
     if (!content) {
       return reply.status(404).send({
         success: false,

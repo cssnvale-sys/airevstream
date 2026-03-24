@@ -132,7 +132,7 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
       },
     });
 
-    await job.updateProgress(80);
+    await job.updateProgress(90);
 
     // ─── Multi-language translation step ───
     const metadata = (content.platformMetadata as Record<string, unknown>) ?? {};

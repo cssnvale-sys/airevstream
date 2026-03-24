@@ -17,6 +17,8 @@ export interface EnrollmentRecord {
   activityLog: ActivityLogEntry[];
   socialAccountId: string | null;
   createdAt: Date | string;
+  /** Health score from the linked SocialAccount (0-100). Used for graduation criteria. */
+  healthScore?: number;
 }
 
 // ─── State Machine ───
@@ -54,10 +56,12 @@ export function determineNextAction(
       if (shouldAdvancePhase(enrollment, phaseConfig)) {
         const next = getNextPhase(status as SeasoningPhase);
         if (next === 'seasoned') {
-          // Check graduation
+          // Check graduation — only advance to seasoned if criteria are met
           if (shouldGraduate(enrollment, schedule.graduationCriteria)) {
             return { type: 'graduate', enrollmentId: id };
           }
+          // Graduation criteria not yet met — keep warming in current phase
+          return { type: 'warm', enrollmentId: id, params: { phase: status } };
         }
         // Advance to next warming phase
         return { type: 'warm', enrollmentId: id, params: { advanceTo: next } };
@@ -134,6 +138,11 @@ export function shouldGraduate(
 
   if (totalDays < criteria.minDaysTotal) return false;
   if (enrollment.activitiesCompleted < criteria.minActivitiesCompleted) return false;
+
+  // Check health score if available (from linked SocialAccount)
+  if (enrollment.healthScore != null && enrollment.healthScore < criteria.minHealthScore) {
+    return false;
+  }
 
   if (criteria.requireAllPhases) {
     // Enrollment must be in 'seasoned' or 'phase_4' status to graduate
@@ -273,7 +282,8 @@ export function assessRisk(enrollment: EnrollmentRecord): RiskAssessment {
 
 /** Box-Muller transform for Gaussian random numbers */
 function gaussianRandom(mean: number, stddev: number): number {
-  const u1 = Math.random();
+  // Clamp u1 to (0, 1] to prevent Math.log(0) = -Infinity
+  const u1 = Math.random() || Number.MIN_VALUE;
   const u2 = Math.random();
   const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
   return mean + z0 * stddev;

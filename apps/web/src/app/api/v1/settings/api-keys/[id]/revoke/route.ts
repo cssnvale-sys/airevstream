@@ -20,10 +20,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
+    if (!ctx.tenantId) {
+      return error('FORBIDDEN', 'No tenant context', 403);
+    }
+
     const existing = await ctx.db.apiKey.findUnique({ where: { id } });
     if (!existing) return notFound('API key not found');
 
-    if (ctx.tenantId && existing.tenantId !== ctx.tenantId) {
+    if (existing.tenantId !== ctx.tenantId) {
       return forbidden('Cannot revoke API keys from another tenant');
     }
 

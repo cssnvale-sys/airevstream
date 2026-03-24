@@ -58,7 +58,6 @@ interface Channel {
 interface Filters {
   channelId: string;
   platform: string;
-  language: string;
   status: string;
   colorBy: 'status' | 'platform' | 'channel';
 }
@@ -67,9 +66,8 @@ interface Filters {
 // Constants
 // ---------------------------------------------------------------------------
 
-const STATUS_OPTIONS = ['all', 'posted', 'scheduled', 'pending_approval', 'failed'] as const;
+const STATUS_OPTIONS = ['all', 'scheduled', 'posting', 'posted', 'failed', 'cancelled'] as const;
 const PLATFORM_OPTIONS = ['all', 'youtube', 'tiktok', 'instagram', 'facebook'] as const;
-const LANGUAGE_OPTIONS = ['all', 'en', 'es', 'fr', 'de', 'pt'] as const;
 
 const STATUS_DOT_COLOR: Record<string, string> = {
   posted: 'bg-accent-green',
@@ -147,7 +145,6 @@ export default function CalendarPage() {
   const [filters, setFilters] = useState<Filters>({
     channelId: 'all',
     platform: 'all',
-    language: 'all',
     status: 'all',
     colorBy: 'status',
   });
@@ -189,9 +186,8 @@ export default function CalendarPage() {
     if (filters.channelId !== 'all') p.set('channelId', filters.channelId);
     if (filters.platform !== 'all') p.set('platform', filters.platform);
     if (filters.status !== 'all') p.set('status', filters.status);
-    if (filters.language !== 'all') p.set('language', filters.language);
     return p.toString();
-  }, [rangeStart, rangeEnd, filters.channelId, filters.platform, filters.status, filters.language]);
+  }, [rangeStart, rangeEnd, filters.channelId, filters.platform, filters.status]);
 
   // API hooks
   const { data: calendarData, isLoading, error: calendarError } = useCalendar<CalendarItem[]>(rangeParams);
@@ -542,18 +538,6 @@ export default function CalendarPage() {
           {PLATFORM_OPTIONS.map((p) => (
             <option key={p} value={p}>
               {p === 'all' ? 'All Platforms' : p.charAt(0).toUpperCase() + p.slice(1)}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.language}
-          onChange={(e) => updateFilter('language', e.target.value)}
-          className="input text-caption"
-        >
-          {LANGUAGE_OPTIONS.map((l) => (
-            <option key={l} value={l}>
-              {l === 'all' ? 'All Languages' : l.toUpperCase()}
             </option>
           ))}
         </select>

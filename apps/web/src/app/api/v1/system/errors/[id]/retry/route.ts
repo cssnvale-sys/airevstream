@@ -27,32 +27,29 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   try {
     // Verify tenant ownership through content or account chain
+    const tenantAccountIds = await ctx.db.emailAccount.findMany({
+      where: { tenantId: ctx.tenantId },
+      select: { id: true },
+    });
+    const accountIds = tenantAccountIds.map((a) => a.id);
+
     const job = await ctx.db.workflowJob.findFirst({
       where: {
         id,
         OR: [
           { content: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } },
-          { emailAccountId: { not: null } },
+          { emailAccountId: { in: accountIds } },
         ],
       },
     });
     if (!job) return notFound('Workflow job not found');
 
-    // Extra check for emailAccountId-based jobs
-    if (!job.contentId && job.emailAccountId) {
-      const ownsAccount = await ctx.db.emailAccount.findFirst({
-        where: { id: job.emailAccountId, tenantId: ctx.tenantId },
-        select: { id: true },
-      });
-      if (!ownsAccount) return notFound('Workflow job not found');
-    }
-
     if (job.status !== 'failed') {
-      return error('BAD_REQUEST', `Job is in "${job.status}" state, only failed jobs can be retried`, 400);
+      return error('BAD_REQUEST', 'Only failed jobs can be retried', 400);
     }
 
     if (job.retryCount >= job.maxRetries) {
-      return error('BAD_REQUEST', `Job has exceeded max retries (${job.maxRetries})`, 400);
+      return error('BAD_REQUEST', 'Job has exceeded maximum retries', 400);
     }
 
     // Map jobType to queue name

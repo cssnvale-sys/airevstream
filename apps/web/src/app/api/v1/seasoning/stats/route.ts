@@ -9,8 +9,10 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
-    const tenantWhere = ctx.tenantId ? { tenantId: ctx.tenantId } : {};
+    const tenantWhere = { tenantId: ctx.tenantId };
 
     const [totalCohorts, activeCohorts, enrollmentsByStatus, enrollmentsByPlatform, graduatedRecent, failedRecent] = await Promise.all([
       ctx.db.seasoningCohort.count({ where: tenantWhere }),

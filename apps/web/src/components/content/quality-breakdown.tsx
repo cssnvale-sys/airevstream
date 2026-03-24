@@ -6,10 +6,12 @@ import { RefreshCw, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
 
-interface QualityBreakdown {
+interface QualityBreakdownData {
   contentId: string;
-  overallScore: number;
-  breakdown: {
+  // GET returns qualityScore; POST returns overallScore + breakdown
+  qualityScore?: number | null;
+  overallScore?: number;
+  breakdown?: {
     hookStrength: number;
     lengthScore: number;
     ctaScore: number;
@@ -39,7 +41,7 @@ const LABELS: Record<string, string> = {
 };
 
 export function QualityBreakdown({ contentId }: { contentId: string }) {
-  const { data, isLoading, mutate } = useApi<QualityBreakdown>(`/content/${contentId}/quality-score`);
+  const { data, isLoading, mutate } = useApi<QualityBreakdownData>(`/content/${contentId}/quality-score`);
   const [recalculating, setRecalculating] = useState(false);
 
   const handleRecalculate = async () => {
@@ -67,7 +69,9 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
   }
 
   const quality = data?.data;
-  if (!quality) {
+  // GET returns qualityScore (number|null); POST returns overallScore + breakdown
+  const rawScore = quality?.overallScore ?? (quality?.qualityScore != null ? Number(quality.qualityScore) : null);
+  if (!quality || rawScore == null) {
     return (
       <div className="text-center py-6">
         <p className="text-text-secondary text-sm mb-2">No quality score available</p>
@@ -79,7 +83,7 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
     );
   }
 
-  const overall = Math.round(quality.overallScore);
+  const overall = Math.round(rawScore);
 
   return (
     <div className="space-y-4">
@@ -97,7 +101,12 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
         </button>
       </div>
 
-      {/* Breakdown bars */}
+      {/* Breakdown bars — only available after POST (recalculate) */}
+      {!quality.breakdown && (
+        <p className="text-xs text-text-secondary">
+          Click recalculate to see the full breakdown.
+        </p>
+      )}
       <div className="space-y-2.5">
         {quality.breakdown && Object.entries(quality.breakdown).map(([key, value]) => {
           const score = Math.round(Number(value));

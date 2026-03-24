@@ -335,7 +335,7 @@ export default function CreatePage() {
 
       try {
         const res = await apiPost<{ data: { status?: string; jobId?: string; imageUrl?: string } }>('/content/generate-shot', {
-          shotId: shot.id,
+          shotId: String(shot.id),
           description: shot.description,
         });
         const resStatus = res.data?.status;

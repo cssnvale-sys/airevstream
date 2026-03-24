@@ -41,11 +41,15 @@ export async function POST(req: NextRequest) {
 
     const { channelId, topic, contentType, platforms, duration, affiliateProductId, setting, emotion, hasSpeaking, characterDescription } = parsed.data;
 
+    if (!ctx.tenantId) {
+      return forbidden('No tenant context');
+    }
+
     // Verify channel belongs to tenant
     const channel = await ctx.db.channel.findFirst({
       where: {
         id: channelId,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
       select: { id: true },
     });
@@ -85,7 +89,8 @@ Return ONLY the script text, no extra commentary.`;
       });
       script = result.content;
       model = result.model;
-    } catch {
+    } catch (registryErr) {
+      console.error('Service registry script generation failed, falling back to direct:', registryErr);
       try {
         const result = await generateText(prompt, {
           systemPrompt: 'You are an expert social media scriptwriter. Write engaging scripts using the H.I.C.C. framework.',

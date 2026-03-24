@@ -11,6 +11,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
@@ -61,6 +62,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }

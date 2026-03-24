@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
     if (ctx.role === 'viewer') {
       return forbidden('Viewers cannot trigger research');
     }

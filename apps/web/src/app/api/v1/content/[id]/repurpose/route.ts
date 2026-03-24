@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         parentId: source.id,
         version: nextVersion + 2,
         title: `${source.title} (${targetFormat})`,
-        contentType: targetFormat === 'short' ? 'video_short' : 'video_short',
+        contentType: 'video_short',
         status: 'draft',
         prompt: source.prompt,
         platformMetadata: {
@@ -74,8 +74,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    logger_info('Content repurposed', { sourceId: id, newId: newContent.id, targetFormat });
-
     return success({
       id: newContent.id,
       title: newContent.title,
@@ -87,8 +85,4 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     console.error('POST /api/v1/content/[id]/repurpose failed:', err);
     return error('INTERNAL_ERROR', 'Failed to repurpose content', 500);
   }
-}
-
-function logger_info(message: string, data: Record<string, unknown>) {
-  console.log(`[repurpose] ${message}`, JSON.stringify(data));
 }

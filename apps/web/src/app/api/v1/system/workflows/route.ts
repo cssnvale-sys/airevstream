@@ -28,14 +28,15 @@ export async function GET(req: NextRequest) {
     const tenantChannelIds = tenantChannels.map((c) => c.id);
     const tenantAccountIds = tenantAccounts.map((a) => a.id);
 
-    const where: Record<string, unknown> = {
-      OR: [
-        { channelId: { in: tenantChannelIds } },
-        { emailAccountId: { in: tenantAccountIds } },
-        // Include jobs without channel/account context (system jobs)
-        { channelId: null, emailAccountId: null },
-      ],
-    };
+    const orConditions: Record<string, unknown>[] = [
+      { channelId: { in: tenantChannelIds } },
+      { emailAccountId: { in: tenantAccountIds } },
+    ];
+    // Only show unscoped system jobs to admins (prevent cross-tenant data leak)
+    if (ctx.role === 'admin') {
+      orConditions.push({ channelId: null, emailAccountId: null });
+    }
+    const where: Record<string, unknown> = { OR: orConditions };
     if (status) where.status = status;
     if (jobType) where.jobType = jobType;
 

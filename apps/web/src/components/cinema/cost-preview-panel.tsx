@@ -55,8 +55,8 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
         setEstimate(res.data.estimate);
         setBudgetStatus(res.data.budget);
       }
-    } catch {
-      // Silently fail — panel is informational
+    } catch (err) {
+      console.error('Cost preview estimate failed:', err);
     } finally {
       setLoading(false);
     }

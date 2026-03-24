@@ -65,7 +65,8 @@ export default function CinemaBiblePage() {
         setShowCreate(false);
         setNewChannelId('');
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to create cinema bible:', err);
       toast.error('Failed to create cinema bible');
     } finally {
       setCreating(false);
@@ -79,7 +80,8 @@ export default function CinemaBiblePage() {
         toast.success('Cinema bible saved');
         await mutate();
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to save cinema bible:', err);
       toast.error('Failed to save cinema bible');
     }
   }

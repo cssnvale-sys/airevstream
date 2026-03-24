@@ -16,25 +16,20 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (!ctx.tenantId) {
+    return error('BAD_REQUEST', 'User is not assigned to a tenant', 400);
+  }
+
   try {
-    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!user) {
-      return error('UNAUTHORIZED', 'User not found', 401);
-    }
-
-    if (!user.tenantId) {
-      return error('BAD_REQUEST', 'User is not assigned to a tenant', 400);
-    }
-
     const { page, limit, skip } = parseQuery(req);
 
     const url = new URL(req.url);
     const statusFilter = url.searchParams.get('status') ?? undefined;
 
-    const validStatuses = ['active', 'trialing', 'past_due', 'canceled', 'expired'];
+    const validStatuses = ['active', 'trialing', 'past_due', 'cancelled', 'expired'];
 
     const where: Record<string, unknown> = {
-      tenantId: user.tenantId,
+      tenantId: ctx.tenantId,
     };
     if (statusFilter && validStatuses.includes(statusFilter)) where.status = statusFilter;
 
@@ -119,35 +114,35 @@ export async function POST(req: NextRequest) {
     const currentPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const currentPeriodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    // Create subscription
-    const subscription = await ctx.db.subscription.create({
-      data: {
-        tenantId,
-        plan,
-        status: 'active',
-        currentPeriodStart,
-        currentPeriodEnd,
-        metadata: {
-          createdBy: ctx.userId,
-          note: 'Placeholder subscription - Stripe integration pending',
-        },
-      },
-      include: {
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+    // Create subscription and update tenant plan atomically
+    const [subscription] = await ctx.db.$transaction([
+      ctx.db.subscription.create({
+        data: {
+          tenantId,
+          plan,
+          status: 'active',
+          currentPeriodStart,
+          currentPeriodEnd,
+          metadata: {
+            createdBy: ctx.userId,
+            note: 'Placeholder subscription - Stripe integration pending',
           },
         },
-      },
-    });
-
-    // Update the tenant's plan to match
-    await ctx.db.tenant.update({
-      where: { id: tenantId },
-      data: { plan },
-    });
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      }),
+      ctx.db.tenant.update({
+        where: { id: tenantId },
+        data: { plan },
+      }),
+    ]);
 
     return success(subscription);
   } catch (err) {

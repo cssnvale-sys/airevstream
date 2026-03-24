@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
     if (ctx.role === 'viewer') {
       return forbidden('Viewers cannot perform this action');
     }
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const ip = getClientIp(req);
     const rl = checkRateLimit(`pipeline-cinema:POST:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);

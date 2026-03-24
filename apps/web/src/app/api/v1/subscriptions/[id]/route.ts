@@ -43,13 +43,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!subscription) return notFound('Subscription not found');
 
     // Verify the requesting user has access to this subscription's tenant
-    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!user) {
-      return error('UNAUTHORIZED', 'User not found', 401);
-    }
-
-    const isAdmin = user.role === 'admin';
-    const isTenantMember = user.tenantId === subscription.tenantId;
+    const isAdmin = ctx.role === 'admin';
+    const isTenantMember = ctx.tenantId === subscription.tenantId;
 
     if (!isAdmin && !isTenantMember) {
       return notFound('Subscription not found');
@@ -87,14 +82,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const existing = await ctx.db.subscription.findUnique({ where: { id } });
     if (!existing) return notFound('Subscription not found');
 
-    // Verify access
-    const user = await ctx.db.user.findUnique({ where: { id: ctx.userId } });
-    if (!user) {
-      return error('UNAUTHORIZED', 'User not found', 401);
-    }
-
-    const isAdmin = user.role === 'admin';
-    const isTenantMember = user.tenantId === existing.tenantId;
+    // Verify access — ctx already has role and tenantId from authenticate()
+    const isAdmin = ctx.role === 'admin';
+    const isTenantMember = ctx.tenantId === existing.tenantId;
 
     if (!isAdmin && !isTenantMember) {
       return notFound('Subscription not found');

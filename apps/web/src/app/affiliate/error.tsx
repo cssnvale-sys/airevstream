@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
 
-export default function DashboardError({
+export default function AffiliateError({
   error,
   reset,
 }: {
@@ -12,7 +12,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Dashboard error:', error);
+    console.error('Affiliate error:', error);
   }, [error]);
 
   return (

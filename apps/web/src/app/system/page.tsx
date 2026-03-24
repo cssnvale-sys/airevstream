@@ -213,15 +213,20 @@ export default function SystemPage() {
   const { data: healthRes, isLoading: healthLoading, error: healthError, mutate: mutateHealth } = useSystemHealth<HealthData>();
   const { data: metricsRes, isLoading: metricsLoading, error: metricsError, mutate: mutateMetrics } = useSystemMetrics<MetricsData>();
   const { data: alertsRes, isLoading: alertsLoading, error: alertsError, mutate: mutateAlerts } = useAlerts<AlertItem[]>();
-  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError, mutate: mutateWorkflows } = useWorkflows<WorkflowRun[]>();
+  const { data: activeWorkflowsRes, isLoading: activeWfLoading, error: activeWfError, mutate: mutateActiveWf } = useWorkflows<WorkflowRun[]>('status=running&limit=50');
+  const { data: queuedWorkflowsRes, isLoading: queuedWfLoading, error: queuedWfError, mutate: mutateQueuedWf } = useWorkflows<WorkflowRun[]>('status=queued&limit=50');
+  const { data: failedWorkflowsRes, isLoading: failedWfLoading, error: failedWfError, mutate: mutateFailedWf } = useWorkflows<WorkflowRun[]>('status=failed&limit=20');
 
-  const fetchError = healthError || metricsError || alertsError || workflowsError;
+  const workflowsLoading = activeWfLoading || queuedWfLoading || failedWfLoading;
+  const fetchError = healthError || metricsError || alertsError || activeWfError || queuedWfError || failedWfError;
 
   const refreshAll = () => {
     mutateHealth();
     mutateMetrics();
     mutateAlerts();
-    mutateWorkflows();
+    mutateActiveWf();
+    mutateQueuedWf();
+    mutateFailedWf();
     toast.success('Refreshing health data...');
   };
 
@@ -232,10 +237,8 @@ export default function SystemPage() {
   const health = healthRes?.data;
   const metrics = metricsRes?.data;
   const alerts = alertsRes?.data ?? [];
-  const allWorkflows = workflowsRes?.data ?? [];
-  const workflows = allWorkflows.filter((w) => w.status === 'running' || w.status === 'queued');
-  // Failed jobs serve as recent errors
-  const errors = allWorkflows.filter((w) => w.status === 'failed' && w.error);
+  const workflows = [...(activeWorkflowsRes?.data ?? []), ...(queuedWorkflowsRes?.data ?? [])];
+  const errors = (failedWorkflowsRes?.data ?? []).filter((w) => w.error);
 
   // Build service display from health counts + defaults
   const services: ServiceDisplay[] = DEFAULT_SERVICES.map((svc) => ({
@@ -286,7 +289,9 @@ export default function SystemPage() {
     try {
       await apiPost(`/system/errors/${id}/retry`);
       toast.success('Retry queued');
-      mutateWorkflows();
+      mutateActiveWf();
+      mutateQueuedWf();
+      mutateFailedWf();
     } catch (err) {
       console.error('Failed to retry job:', err);
       toast.error('Failed to retry job');

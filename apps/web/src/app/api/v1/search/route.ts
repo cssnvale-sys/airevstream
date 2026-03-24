@@ -11,15 +11,15 @@ export async function GET(req: NextRequest) {
     const rl = checkRateLimit(`search:${ip}:${ctx.userId}`, { maxAttempts: 60, windowMs: 60000 });
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q')?.trim();
     if (!q || q.length < 2) {
       return success({ content: [], channels: [], accounts: [] });
     }
 
-    const tenantWhere = ctx.tenantId
-      ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
-      : {};
+    const tenantWhere = { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } };
 
     const [content, channels, accounts] = await Promise.all([
       ctx.db.contentItem.findMany({
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       }),
       ctx.db.channel.findMany({
         where: {
-          ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+          socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
           name: { contains: q, mode: 'insensitive' },
         },
         select: { id: true, name: true, socialAccount: { select: { platform: true } } },
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       }),
       ctx.db.socialAccount.findMany({
         where: {
-          ...(ctx.tenantId ? { emailAccount: { tenantId: ctx.tenantId } } : {}),
+          emailAccount: { tenantId: ctx.tenantId },
           username: { contains: q, mode: 'insensitive' },
         },
         select: { id: true, username: true, platform: true },

@@ -38,13 +38,15 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
+    if (!ctx.tenantId) {
+      return forbidden('No tenant context');
+    }
+
     // Verify shot exists and belongs to tenant (content → channel → socialAccount → emailAccount → tenant)
     const shot = await ctx.db.storyboardShot.findFirst({
       where: {
         id: data.shotId,
-        storyboard: ctx.tenantId
-          ? { content: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } }
-          : undefined,
+        storyboard: { content: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } },
       },
       select: { id: true, keyframeUrls: true },
     });

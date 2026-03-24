@@ -111,10 +111,11 @@ export function NotificationCenter() {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        await fetch(`/api/v1/system/alerts/${id}/acknowledge`, {
+        const res = await fetch(`/api/v1/system/alerts/${id}/acknowledge`, {
           method: 'POST',
           headers,
         });
+        if (!res.ok) throw new Error('Failed to acknowledge');
 
         // Optimistic update: remove from list
         mutate(
@@ -142,10 +143,11 @@ export function NotificationCenter() {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      await fetch('/api/v1/system/alerts/acknowledge-all', {
+      const res = await fetch('/api/v1/system/alerts/acknowledge-all', {
         method: 'POST',
         headers,
       });
+      if (!res.ok) throw new Error('Failed to acknowledge all');
 
       // Optimistic update: clear all
       mutate(

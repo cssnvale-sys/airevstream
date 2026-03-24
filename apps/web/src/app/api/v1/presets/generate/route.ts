@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
       });
       content = result.content;
       model = result.model;
-    } catch {
+    } catch (registryErr) {
+      console.error('Service registry generation failed, falling back to direct generateText:', registryErr);
       try {
         const result = await generateText(prompt, {
           systemPrompt: PRESET_GENERATION_SYSTEM_PROMPT,

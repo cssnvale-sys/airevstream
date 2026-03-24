@@ -73,6 +73,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       approvalGateWindowHrs: item.approvalGateWindowHrs != null ? Number(item.approvalGateWindowHrs) : null,
       storyboards: item.storyboards.map((sb) => ({
         ...sb,
+        totalDurationSec: sb.totalDurationSec != null ? Number(sb.totalDurationSec) : null,
         shots: sb.shots.map((shot) => ({
           ...shot,
           startSec: Number(shot.startSec),

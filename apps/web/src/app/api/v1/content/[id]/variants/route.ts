@@ -64,7 +64,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         title: v.title,
         version: v.version,
         status: v.status,
-        qualityScore: v.qualityScore ? Number(v.qualityScore) : null,
+        qualityScore: v.qualityScore != null ? Number(v.qualityScore) : null,
         contentType: v.contentType,
         isRoot: v.parentId === null,
         createdAt: v.createdAt.toISOString(),

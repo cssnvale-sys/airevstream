@@ -7,7 +7,7 @@ import { useCohort, useEnrollments } from '@/hooks/use-seasoning';
 import { apiPost, apiPut } from '@/hooks/use-api';
 import { PhasePipeline } from '@/components/seasoning/phase-pipeline';
 import { EnrollmentTable } from '@/components/seasoning/enrollment-table';
-import { ArrowLeft, Play, Pause, RotateCw, UserPlus } from 'lucide-react';
+import { ArrowLeft, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
 

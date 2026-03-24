@@ -26,7 +26,7 @@ export function Pagination({
 }: PaginationProps) {
   if (totalPages <= 1 && !onLimitChange) return null;
 
-  const startItem = Math.min((page - 1) * limit + 1, total);
+  const startItem = total === 0 ? 0 : Math.min((page - 1) * limit + 1, total);
   const endItem = Math.min(page * limit, total);
 
   // Generate visible page numbers (max 5)

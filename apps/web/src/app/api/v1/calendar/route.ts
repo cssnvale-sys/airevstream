@@ -49,18 +49,17 @@ export async function GET(req: NextRequest) {
       return validationError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
     }
 
+    // Unconditional tenant guard (D071)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const where: Record<string, unknown> = {
       scheduledAt: { gte: startDate, lte: endDate },
       // Scope to tenant via the Channel -> SocialAccount -> EmailAccount chain
-      ...(ctx.tenantId
-        ? {
-            channel: {
-              socialAccount: {
-                emailAccount: { tenantId: ctx.tenantId },
-              },
-            },
-          }
-        : {}),
+      channel: {
+        socialAccount: {
+          emailAccount: { tenantId: ctx.tenantId },
+        },
+      },
     };
 
     if (channelId) where.channelId = channelId;

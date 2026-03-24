@@ -9,7 +9,7 @@ export type Notification = {
   id: string;
   severity: NotificationSeverity;
   title: string;
-  message: string;
+  message: string | null;
   createdAt: string;
   status: 'open' | 'acknowledged' | 'resolved';
   link?: string;

@@ -16,10 +16,7 @@ import {
   Eye,
   EyeOff,
   Copy,
-  RefreshCw,
   Check,
-  X,
-  ChevronRight,
   Monitor,
   Moon,
   Sun,
@@ -353,9 +350,8 @@ function AiServicesTab() {
     try {
       const ordering = reorderableChains.flatMap(chain =>
         chain.services.map((svc, idx) => ({
-          id: svc.id,
-          fallbackOrder: idx,
-          fallbackGroup: chain.type === 'text' ? 'text_gen' : chain.type === 'image' ? 'image_gen' : chain.type === 'video' ? 'video_gen' : `${chain.type}_gen`,
+          serviceId: svc.id,
+          priority: idx,
         }))
       );
       await apiPut('/settings/fallback-chain', { ordering });

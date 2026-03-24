@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useApi, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
+import { useApi, apiPost, apiPatch, apiDelete } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -80,7 +80,7 @@ export default function BudgetsPage() {
 
     try {
       if (editingId) {
-        await apiPut(`/budgets/${editingId}`, payload);
+        await apiPatch(`/budgets/${editingId}`, payload);
         toast.success('Budget updated');
       } else {
         await apiPost('/budgets', payload);
@@ -90,7 +90,8 @@ export default function BudgetsPage() {
       setEditingId(null);
       setForm(INITIAL_FORM);
       await mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to save budget:', err);
       toast.error('Failed to save budget');
     }
   }, [form, editingId, mutate]);
@@ -114,7 +115,8 @@ export default function BudgetsPage() {
       toast.success('Budget deleted');
       setDeleteTarget(null);
       await mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to delete budget:', err);
       toast.error('Failed to delete budget');
     }
   }, [deleteTarget, mutate]);
@@ -122,10 +124,11 @@ export default function BudgetsPage() {
   const handleToggleStatus = useCallback(async (budget: Budget) => {
     const newStatus = budget.status === 'active' ? 'paused' : 'active';
     try {
-      await apiPut(`/budgets/${budget.id}`, { status: newStatus });
+      await apiPatch(`/budgets/${budget.id}`, { status: newStatus });
       toast.success(`Budget ${newStatus}`);
       await mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to update budget status:', err);
       toast.error('Failed to update status');
     }
   }, [mutate]);

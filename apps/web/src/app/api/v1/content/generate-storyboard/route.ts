@@ -32,12 +32,16 @@ export async function POST(req: NextRequest) {
 
     const { script, channelId, contentType } = parsed.data;
 
+    if (!ctx.tenantId) {
+      return forbidden('No tenant context');
+    }
+
     // Verify channel belongs to tenant (if channelId provided)
     if (channelId) {
       const channel = await ctx.db.channel.findFirst({
         where: {
           id: channelId,
-          ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+          socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
         },
         select: { id: true },
       });

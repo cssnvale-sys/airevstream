@@ -48,6 +48,12 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
           content: data.data.response,
         };
         setMessages((prev) => [...prev, aiMsg]);
+      } else {
+        setMessages((prev) => [...prev, {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: 'Sorry, something went wrong. Please try again.',
+        }]);
       }
     } catch (err) {
       console.error('AI chat failed:', err);

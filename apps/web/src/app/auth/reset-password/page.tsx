@@ -54,6 +54,7 @@ function ResetPasswordForm() {
       }
       setSuccess(true);
     } catch (err: unknown) {
+      console.error('Password reset failed:', err);
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);

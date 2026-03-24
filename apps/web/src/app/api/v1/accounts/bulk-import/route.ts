@@ -10,11 +10,11 @@ const AccountEntrySchema = z.object({
   password: z.string().min(1).max(256),
   tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
   notes: z.string().max(1000).optional(),
-}).strict();
+}).passthrough();
 
 const BulkImportSchema = z.object({
   accounts: z.array(AccountEntrySchema).min(1).max(500),
-}).strict().or(z.array(AccountEntrySchema).min(1).max(500));
+}).or(z.array(AccountEntrySchema).min(1).max(500));
 
 /**
  * POST /api/v1/accounts/bulk-import
@@ -23,6 +23,7 @@ const BulkImportSchema = z.object({
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }

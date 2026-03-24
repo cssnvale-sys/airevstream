@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateSSE } from '@/lib/api-server';
+import { authenticateSSE, error } from '@/lib/api-server';
 import type { ApiContext } from '@/lib/api-server';
 import type { SystemEvent, AlertSeverity, WorkflowStatus, ContentStatus } from '@/lib/event-types';
 
@@ -161,6 +161,7 @@ const pollers: Array<{ type: string; fn: PollFn }> = [
 export async function GET(req: NextRequest) {
   const ctx = await authenticateSSE(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   // Pre-fetch tenant channel IDs for scoping pollers
   const tenantChannels = await ctx.db.channel.findMany({

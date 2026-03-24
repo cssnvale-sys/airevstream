@@ -157,7 +157,8 @@ export async function POST(req: NextRequest) {
         assistantContent = result.content;
         tokensUsed = result.tokensUsed ?? null;
         modelUsed = result.model;
-      } catch {
+      } catch (registryErr) {
+        console.error('Service registry chat failed, falling back to Ollama:', registryErr);
         // Fall back to direct Ollama chat
         try {
           const result = await chat(chatMessages);
@@ -353,6 +354,7 @@ async function getAlertsContext(ctx: ApiContext) {
  * Get content queue statistics by status.
  */
 async function getContentQueueStats(ctx: ApiContext) {
+  // tenantId is guaranteed non-null by the route handler guard
   const tenantChannelFilter = ctx.tenantId
     ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
     : {};

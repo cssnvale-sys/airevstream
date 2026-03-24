@@ -1,6 +1,7 @@
 'use client';
 
 const PHASES = [
+  { key: 'pending', label: 'Pending', color: 'bg-gray-500' },
   { key: 'signing_up', label: 'Signup', color: 'bg-yellow-500' },
   { key: 'phase_1', label: 'Phase 1', color: 'bg-blue-400' },
   { key: 'phase_2', label: 'Phase 2', color: 'bg-blue-500' },

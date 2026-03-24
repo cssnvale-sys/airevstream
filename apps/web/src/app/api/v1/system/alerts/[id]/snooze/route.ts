@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const SnoozeSchema = z.object({
   duration: z.number().positive().max(86400).optional(),
-}).strict();
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 

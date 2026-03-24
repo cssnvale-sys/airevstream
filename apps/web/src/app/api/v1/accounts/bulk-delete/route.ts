@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
     return error('RATE_LIMITED', 'Too many bulk operations. Please try again later.', 429);
   }
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const body = await req.json();
     const parsed = BulkDeleteSchema.safeParse(body);
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
     // Verify all accounts belong to this tenant
     const where = {
       id: { in: ids },
-      ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}),
+      tenantId: ctx.tenantId,
     };
 
     const count = await ctx.db.emailAccount.count({ where });

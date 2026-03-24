@@ -7,12 +7,17 @@ import { NotificationCenter } from '@/components/notifications/notification-cent
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Home',
   '/accounts': 'Accounts',
+  '/seasoning': 'Seasoning',
   '/calendar': 'Content Calendar',
   '/create': 'Create Content',
+  '/studio': 'Studio',
   '/library': 'Content Library',
+  '/approvals': 'Approvals',
   '/analytics': 'Analytics',
   '/system': 'System Health',
+  '/workflows': 'Workflows',
   '/affiliate': 'Affiliate Manager',
+  '/budgets': 'Budgets',
   '/settings': 'Settings',
 };
 
@@ -25,15 +30,17 @@ export function Header({ onToggleAssistant }: { onToggleAssistant: () => void })
       <h2 className="text-section-heading text-text-primary">{title}</h2>
 
       <div className="flex-1 max-w-md mx-auto">
-        <div className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }));
+          }}
+          aria-label="Search"
+          className="input w-full pl-9 py-1.5 text-body text-left text-text-secondary relative cursor-pointer"
+        >
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-          <input
-            type="text"
-            placeholder="Search... (Cmd+K)"
-            aria-label="Search"
-            className="input w-full pl-9 py-1.5 text-body"
-          />
-        </div>
+          Search... (Cmd+K)
+        </button>
       </div>
 
       <div className="flex items-center gap-2">

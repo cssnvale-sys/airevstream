@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useApi, apiPost, apiDelete } from '@/hooks/use-api';
 import type { Preset, PresetFamily } from '@airevstream/shared';
 
@@ -80,14 +80,17 @@ export function useUserPresets(family?: string) {
     `/presets${queryParams}`,
   );
 
-  const presets: Preset[] = (data?.data ?? []).map(recordToPreset);
+  const records: UserPresetRecord[] = data?.data ?? [];
+  const presets: Preset[] = records.map(recordToPreset);
 
-  // Sync to localStorage when API data loads
-  if (data?.data) {
-    writeLocalPresets(data.data.map(recordToPreset));
-  }
+  // Sync to localStorage when API data loads (in useEffect to avoid side effects during render)
+  useEffect(() => {
+    if (data?.data) {
+      writeLocalPresets(data.data.map(recordToPreset));
+    }
+  }, [data?.data]);
 
-  return { presets, error, isLoading, mutate };
+  return { presets, records, error, isLoading, mutate };
 }
 
 // ─── useGeneratePreset ───

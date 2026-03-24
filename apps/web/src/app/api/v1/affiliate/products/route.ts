@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const { page, limit, skip, sort, order, search, params } = parseQuery(req);
     const category = params.get('category') ?? undefined;
@@ -31,14 +33,13 @@ export async function GET(req: NextRequest) {
 
     // AffiliateProduct has no tenantId field. Scope via channelPools chain:
     // channelPools → channel → socialAccount → emailAccount → tenantId
-    const where: Record<string, unknown> = {};
-    if (ctx.tenantId) {
-      where.channelPools = {
+    const where: Record<string, unknown> = {
+      channelPools: {
         some: {
           channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
         },
-      };
-    }
+      },
+    };
     if (category) where.category = category;
     if (status && validStatuses.includes(status)) where.status = status;
     if (search) {

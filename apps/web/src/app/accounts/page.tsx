@@ -328,7 +328,8 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
     try {
       await apiPost(`/accounts/${accountId}/socials/${socialId}/${action}`, {});
       toast.success(`${action === 'sync' ? 'Sync' : 'Health check'} started`);
-    } catch {
+    } catch (err) {
+      console.error(`Failed to start ${action}:`, err);
       toast.error(`Failed to start ${action}`);
     } finally {
       setActing(null);
@@ -341,7 +342,8 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
       await apiPost(`/accounts/${accountId}/socials/${socialId}/warm`, { durationMinutes: warmDuration });
       toast.success(`Warm-up started (${warmDuration} min)`);
       setWarmPopoverOpen(false);
-    } catch {
+    } catch (err) {
+      console.error('Failed to start warm-up:', err);
       toast.error('Failed to start warm-up');
     } finally {
       setActing(null);
@@ -813,6 +815,7 @@ export default function AccountsPage() {
       mutate();
       toast.success(`Deleted ${selectedIds.size} accounts`);
     } catch (err) {
+      console.error('Failed to delete accounts:', err);
       toast.error('Failed to delete accounts');
     } finally {
       setBulkDeleting(false);

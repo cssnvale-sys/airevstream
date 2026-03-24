@@ -5,6 +5,7 @@ import { matchTrends } from '@airevstream/shared';
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const { searchParams } = new URL(req.url);

@@ -19,6 +19,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const { id } = params;
   if (!isUUID(id)) return notFound('Enrollment not found');
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const enrollment = await ctx.db.seasoningEnrollment.findUnique({
       where: { id },
@@ -35,8 +37,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     if (!enrollment) return notFound('Enrollment not found');
 
-    // Tenant scoping
-    if (ctx.tenantId && enrollment.cohort.tenantId !== ctx.tenantId) {
+    // Tenant scoping — unconditional guard (D071)
+    if (enrollment.cohort.tenantId !== ctx.tenantId) {
       return notFound('Enrollment not found');
     }
 
@@ -62,20 +64,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const ip = getClientIp(req);
   const rl = checkRateLimit(`seasoning-enrollment-update:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const body = await req.json();
     const parsed = UpdateEnrollmentSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error.issues[0].message);
 
-    // Verify enrollment belongs to tenant
+    // Verify enrollment belongs to tenant (unconditional guard — D071)
     const existing = await ctx.db.seasoningEnrollment.findUnique({
       where: { id },
       include: { cohort: { select: { tenantId: true } } },
     });
 
     if (!existing) return notFound('Enrollment not found');
-    if (ctx.tenantId && existing.cohort.tenantId !== ctx.tenantId) {
+    if (existing.cohort.tenantId !== ctx.tenantId) {
       return notFound('Enrollment not found');
     }
 

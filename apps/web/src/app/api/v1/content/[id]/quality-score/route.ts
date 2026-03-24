@@ -100,7 +100,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success({
       contentId: contentItem.id,
-      qualityScore: contentItem.qualityScore
+      qualityScore: contentItem.qualityScore != null
         ? Number(contentItem.qualityScore)
         : null,
     });

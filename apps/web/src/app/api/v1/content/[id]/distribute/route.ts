@@ -75,8 +75,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       ),
     );
 
-    console.log(`[distribute] Content ${id} distributed to ${channels.length} channels`);
-
     return success({
       distributedTo: channels.map(ch => ({ id: ch.id, name: ch.name, platform: ch.socialAccount.platform })),
       scheduledPostIds: posts.map(p => p.id),

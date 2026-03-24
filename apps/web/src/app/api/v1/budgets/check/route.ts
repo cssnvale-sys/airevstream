@@ -22,12 +22,20 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Tenant scoping: get this tenant's channel IDs for cost aggregation
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
     // Run all aggregate queries in parallel instead of serial N+1
     const aggregates = await Promise.all(
       budgets.map((budget) =>
         ctx.db.aiServiceUsage.aggregate({
           _sum: { cost: true },
           where: {
+            channelId: { in: tenantChannelIds },
             createdAt: { gte: budget.periodStart, lte: budget.periodEnd },
             cost: { not: null },
           },

@@ -22,6 +22,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const channel = await ctx.db.channel.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
     });
     if (!channel) return notFound('Channel not found');
@@ -69,12 +70,14 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     // Verify channel exists
     const channel = await ctx.db.channel.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
     });
     if (!channel) return notFound('Channel not found');

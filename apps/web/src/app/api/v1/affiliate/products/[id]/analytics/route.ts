@@ -15,6 +15,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const rawProduct = await ctx.db.affiliateProduct.findUnique({
       where: { id },

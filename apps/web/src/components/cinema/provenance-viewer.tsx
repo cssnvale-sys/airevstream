@@ -86,7 +86,7 @@ export function ProvenanceViewer({ contentId }: ProvenanceViewerProps) {
                 <div key={r.id} className="flex items-center gap-2 text-text-secondary">
                   <span className="text-text-tertiary w-4">{i + 1}</span>
                   <span className="text-text-primary">{r.stage}</span>
-                  {r.parameters.seed && (
+                  {r.parameters.seed != null && (
                     <span className="text-text-tertiary">seed:{r.parameters.seed}</span>
                   )}
                   {r.qualityScore != null && (

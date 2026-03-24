@@ -18,7 +18,6 @@ interface StudioItem {
   createdAt: string;
   updatedAt: string;
   channel: { id: string; name: string } | null;
-  _count?: { storyboards: number };
 }
 
 export default function StudioIndexPage() {

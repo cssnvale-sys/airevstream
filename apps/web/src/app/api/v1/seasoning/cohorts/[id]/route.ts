@@ -20,12 +20,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const { id } = params;
   if (!isUUID(id)) return notFound('Cohort not found');
 
-  try {
-    const where: Record<string, unknown> = { id };
-    if (ctx.tenantId) where.tenantId = ctx.tenantId;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
+  try {
     const cohort = await ctx.db.seasoningCohort.findFirst({
-      where,
+      where: { id, tenantId: ctx.tenantId },
       include: {
         _count: { select: { enrollments: true } },
         enrollments: {
@@ -65,15 +64,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const rl = checkRateLimit(`seasoning-cohort-update:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const body = await req.json();
     const parsed = UpdateCohortSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error.issues[0].message);
 
-    const where: Record<string, unknown> = { id };
-    if (ctx.tenantId) where.tenantId = ctx.tenantId;
-
-    const existing = await ctx.db.seasoningCohort.findFirst({ where });
+    const existing = await ctx.db.seasoningCohort.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) return notFound('Cohort not found');
 
     const cohort = await ctx.db.seasoningCohort.update({
@@ -104,11 +102,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const { id } = params;
   if (!isUUID(id)) return notFound('Cohort not found');
 
-  try {
-    const where: Record<string, unknown> = { id };
-    if (ctx.tenantId) where.tenantId = ctx.tenantId;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const existing = await ctx.db.seasoningCohort.findFirst({ where });
+  try {
+    const existing = await ctx.db.seasoningCohort.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) return notFound('Cohort not found');
 
     await ctx.db.seasoningCohort.delete({ where: { id } });

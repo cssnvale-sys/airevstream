@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, paginated, parseQuery, isUUID } from '@/lib/api-server';
+import { authenticate, error, notFound, paginated, parseQuery, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -17,10 +17,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const platform = searchParams.get('platform') ?? undefined;
   const phase = searchParams.get('phase') ?? undefined;
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     // Verify cohort belongs to tenant
     const cohort = await ctx.db.seasoningCohort.findFirst({
-      where: { id, ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}) },
+      where: { id, tenantId: ctx.tenantId },
       select: { id: true },
     });
     if (!cohort) return notFound('Cohort not found');

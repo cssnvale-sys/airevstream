@@ -19,6 +19,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    if (!ctx.tenantId) return forbidden('No tenant context');
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
@@ -26,7 +28,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true },
     });
@@ -77,6 +79,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       return forbidden('Viewers cannot perform this action');
     }
 
+    if (!ctx.tenantId) return forbidden('No tenant context');
+
     const ip = getClientIp(req);
     const rl = checkRateLimit(`content/storyboard:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
@@ -88,7 +92,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true },
     });

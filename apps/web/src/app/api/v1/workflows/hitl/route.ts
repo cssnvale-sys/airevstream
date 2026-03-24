@@ -12,7 +12,28 @@ export async function GET(req: NextRequest) {
   const { page, limit, skip } = parseQuery(req);
 
   try {
-    const where = { needsHuman: true, humanCompletedAt: null };
+    // Tenant scoping: get tenant's channel and account IDs (parallel)
+    const [tenantChannels, tenantAccounts] = await Promise.all([
+      ctx.db.channel.findMany({
+        where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        select: { id: true },
+      }),
+      ctx.db.emailAccount.findMany({
+        where: { tenantId: ctx.tenantId },
+        select: { id: true },
+      }),
+    ]);
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+    const tenantAccountIds = tenantAccounts.map((a) => a.id);
+
+    const where = {
+      needsHuman: true,
+      humanCompletedAt: null,
+      OR: [
+        { channelId: { in: tenantChannelIds } },
+        { emailAccountId: { in: tenantAccountIds } },
+      ],
+    };
 
     const [jobs, total] = await Promise.all([
       ctx.db.workflowJob.findMany({

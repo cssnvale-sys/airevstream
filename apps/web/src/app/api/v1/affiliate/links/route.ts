@@ -17,18 +17,20 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const { page, limit, skip } = parseQuery(req);
 
     // Scope by tenant via channelPools chain + require shortUrl set
-    const where: Record<string, unknown> = { shortUrl: { not: null } };
-    if (ctx.tenantId) {
-      where.channelPools = {
+    const where: Record<string, unknown> = {
+      shortUrl: { not: null },
+      channelPools: {
         some: {
           channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
         },
-      };
-    }
+      },
+    };
 
     const [items, total] = await Promise.all([
       ctx.db.affiliateProduct.findMany({
@@ -81,22 +83,22 @@ export async function POST(req: NextRequest) {
 
     const { productId, shortUrl } = parsed.data;
 
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const product = await ctx.db.affiliateProduct.findUnique({ where: { id: productId } });
     if (!product) {
       return notFound('Affiliate product not found');
     }
 
     // Verify tenant ownership via channelPools chain
-    if (ctx.tenantId) {
-      const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
-        where: {
-          affiliateProductId: productId,
-          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-        },
-        select: { channelId: true },
-      });
-      if (!tenantPool) return notFound('Affiliate product not found');
-    }
+    const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
+      where: {
+        affiliateProductId: productId,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      },
+      select: { channelId: true },
+    });
+    if (!tenantPool) return notFound('Affiliate product not found');
 
     // Generate a short URL if not provided
     const generatedShortUrl = shortUrl ?? `https://link.airevstream.local/${randomBytes(4).toString('hex')}`;

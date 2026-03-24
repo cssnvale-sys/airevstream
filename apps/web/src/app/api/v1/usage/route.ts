@@ -66,9 +66,7 @@ export async function GET(req: NextRequest) {
     const limits = (user.tenant.limits as Record<string, number>) ?? {};
 
     // Count content items created in the period, scoped to tenant
-    const tenantFilter = user.tenantId
-      ? { channel: { socialAccount: { emailAccount: { tenantId: user.tenantId } } } }
-      : {};
+    const tenantFilter = { channel: { socialAccount: { emailAccount: { tenantId: user.tenantId } } } };
 
     const contentCount = await ctx.db.contentItem.count({
       where: {
@@ -79,14 +77,12 @@ export async function GET(req: NextRequest) {
 
     // Count email accounts belonging to this tenant
     const accountCount = await ctx.db.emailAccount.count({
-      where: user.tenantId ? { tenantId: user.tenantId } : {},
+      where: { tenantId: user.tenantId },
     });
 
     // Count channels belonging to this tenant
     const channelCount = await ctx.db.channel.count({
-      where: user.tenantId
-        ? { socialAccount: { emailAccount: { tenantId: user.tenantId } } }
-        : {},
+      where: { socialAccount: { emailAccount: { tenantId: user.tenantId } } },
     });
 
     // Count AI service usage (API calls) in the period

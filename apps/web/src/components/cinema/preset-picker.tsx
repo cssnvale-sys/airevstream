@@ -48,11 +48,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { presets: userPresets, mutate } = useUserPresets();
-
-  // DB records for deletion (need the UUID id, not the presetId)
-  const { data: rawData } = useUserPresets() as any;
-  const userRecords = rawData?.data ?? [];
+  const { presets: userPresets, records: userRecords, mutate } = useUserPresets();
 
   const tabs: { value: TabValue; label: string }[] = [
     { value: 'recipes', label: 'Recipes' },
@@ -111,7 +107,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
 
   const handleDelete = useCallback(async (preset: Preset) => {
     // Find the DB record to get the UUID
-    const record = userRecords.find((r: any) => r.presetId === preset.id);
+    const record = userRecords.find((r) => r.presetId === preset.id);
     if (!record) return;
     await deleteUserPreset(record.id, preset.id, mutate);
   }, [userRecords, mutate]);

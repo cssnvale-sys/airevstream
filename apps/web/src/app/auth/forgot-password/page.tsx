@@ -30,6 +30,7 @@ export default function ForgotPasswordPage() {
       }
       setSent(true);
     } catch (err: unknown) {
+      console.error('Forgot password request failed:', err);
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);

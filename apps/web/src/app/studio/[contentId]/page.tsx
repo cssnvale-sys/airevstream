@@ -96,7 +96,7 @@ export default function StudioPage() {
     } catch {
       toast.error('Failed to start repair');
     }
-  }, [storyboard, contentId, mutate]);
+  }, [storyboard, contentId, content, mutate]);
 
   const handleGenerateAll = useCallback(async () => {
     if (!storyboard) return;
@@ -140,8 +140,8 @@ export default function StudioPage() {
           shotSpec: selectedShot.shotspec,
         });
         setSuggestions(res?.data?.suggestions ?? []);
-      } catch {
-        // Silently fail — guidance is non-critical
+      } catch (err) {
+        console.error('AI guidance fetch failed:', err);
         setSuggestions([]);
       }
     }, 500);

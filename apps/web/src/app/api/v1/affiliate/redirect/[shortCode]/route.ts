@@ -62,8 +62,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     // Hash the client IP for privacy-safe analytics
     const forwarded = req.headers.get('x-forwarded-for');
-    const ip = forwarded?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
-    const ipHash = createHash('sha256').update(ip).digest('hex');
+    const clientIp = forwarded?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+    const ipHash = createHash('sha256').update(clientIp).digest('hex');
 
     const userAgent = req.headers.get('user-agent') ?? null;
 

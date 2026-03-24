@@ -29,6 +29,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const product = await ctx.db.affiliateProduct.findUnique({
       where: { id },
@@ -45,16 +47,14 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!product) return notFound('Affiliate product not found');
 
     // Verify tenant ownership via channel pool → channel → socialAccount → emailAccount chain
-    if (ctx.tenantId) {
-      const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
-        where: {
-          affiliateProductId: id,
-          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-        },
-        select: { channelId: true },
-      });
-      if (!tenantPool) return notFound('Affiliate product not found');
-    }
+    const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
+      where: {
+        affiliateProductId: id,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      },
+      select: { channelId: true },
+    });
+    if (!tenantPool) return notFound('Affiliate product not found');
 
     const converted = {
       ...product,
@@ -91,21 +91,21 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const existing = await ctx.db.affiliateProduct.findUnique({ where: { id } });
     if (!existing) return notFound('Affiliate product not found');
 
     // Verify product is in a channel pool owned by this tenant
-    if (ctx.tenantId && existing.id) {
-      const ownsProduct = await ctx.db.channelAffiliatePool.findFirst({
-        where: {
-          affiliateProductId: id,
-          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-        },
-        select: { channelId: true },
-      });
-      if (!ownsProduct) return notFound('Affiliate product not found');
-    }
+    const ownsProduct = await ctx.db.channelAffiliatePool.findFirst({
+      where: {
+        affiliateProductId: id,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      },
+      select: { channelId: true },
+    });
+    if (!ownsProduct) return notFound('Affiliate product not found');
 
     const body = await req.json();
     const parsed = UpdateProductSchema.safeParse(body);

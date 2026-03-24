@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, useAffiliateProducts, useChannels, apiPost, apiPut, apiPatch, apiDelete } from '@/hooks/use-api';
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
@@ -15,7 +15,6 @@ import {
   Package,
   BarChart3,
   Layers,
-  MousePointerClick,
   Store,
   Globe,
   Edit2,
@@ -1330,7 +1329,7 @@ function ProductDetailModal({
   }, []);
 
   // Reset editing state on product change
-  useMemo(() => {
+  useEffect(() => {
     if (product) {
       populateForm(product);
       setEditing(false);
@@ -1731,7 +1730,8 @@ function StorefrontsTab({
       setEditingId(null);
       toast.success('Storefront updated');
       onUpdated();
-    } catch {
+    } catch (err) {
+      console.error('Failed to update storefront:', err);
       toast.error('Failed to update storefront');
     } finally {
       setSaving(false);
@@ -1746,7 +1746,8 @@ function StorefrontsTab({
       setDeleteTarget(null);
       toast.success('Storefront deleted');
       onDeleted();
-    } catch {
+    } catch (err) {
+      console.error('Failed to delete storefront:', err);
       toast.error('Failed to delete storefront');
     } finally {
       setDeleting(false);
@@ -1961,7 +1962,8 @@ function CreateStorefrontModal({
       });
       resetForm();
       onCreated();
-    } catch {
+    } catch (err) {
+      console.error('Failed to create storefront:', err);
       setErrorMsg('Failed to create storefront. Slug may already be taken.');
     } finally {
       setSubmitting(false);

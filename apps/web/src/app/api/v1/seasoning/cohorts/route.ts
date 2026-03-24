@@ -21,9 +21,10 @@ export async function GET(req: NextRequest) {
   const { page, limit, skip, sort, order, search, params } = parseQuery(req);
   const status = params.get('status') ?? undefined;
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
-    const where: Record<string, unknown> = {};
-    if (ctx.tenantId) where.tenantId = ctx.tenantId;
+    const where: Record<string, unknown> = { tenantId: ctx.tenantId };
     if (status) where.status = status;
     if (search) {
       where.name = { contains: search, mode: 'insensitive' };

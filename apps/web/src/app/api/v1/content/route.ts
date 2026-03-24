@@ -20,16 +20,17 @@ export async function GET(req: NextRequest) {
     const validStatuses = ['draft', 'generating', 'generated', 'pending_approval', 'approved', 'scheduled', 'posted', 'archived', 'failed'];
     const validContentTypes = ['video_short', 'video_long', 'image', 'text', 'voice', 'thumbnail'];
 
-    const where: Prisma.ContentItemWhereInput = {};
+    // Unconditional tenant guard (D071)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    // Tenant scoping through channel → socialAccount → emailAccount
-    if (ctx.tenantId) {
-      where.channel = {
+    const where: Prisma.ContentItemWhereInput = {
+      // Tenant scoping through channel → socialAccount → emailAccount
+      channel: {
         socialAccount: {
           emailAccount: { tenantId: ctx.tenantId },
         },
-      };
-    }
+      },
+    };
 
     if (status && validStatuses.includes(status)) {
       where.status = status;
@@ -138,13 +139,14 @@ export async function POST(req: NextRequest) {
 
     const { channelId, title, contentType, script, shots, status, affiliateProductId, affiliateMode } = parsed.data;
 
+    // Unconditional tenant guard (D071)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     // Verify channel exists and belongs to tenant
     const channel = await ctx.db.channel.findFirst({
       where: {
         id: channelId,
-        ...(ctx.tenantId ? {
-          socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
-        } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
     });
 

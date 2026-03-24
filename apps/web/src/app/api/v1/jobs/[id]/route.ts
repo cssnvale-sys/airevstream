@@ -35,7 +35,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!job) return notFound('Job not found');
 
     // Tenant scoping: verify the job belongs to the requesting tenant
-    if (ctx.tenantId && (job.channelId || job.emailAccountId)) {
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
+    if (job.channelId || job.emailAccountId) {
       let belongsToTenant = false;
 
       if (job.channelId) {

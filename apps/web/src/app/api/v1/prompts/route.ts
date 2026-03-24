@@ -31,6 +31,7 @@ const createPromptSchema = z.object({
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const { page, limit, skip, sort, order, search, params } = parseQuery(req);
@@ -112,6 +113,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }

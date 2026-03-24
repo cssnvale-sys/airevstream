@@ -14,6 +14,20 @@ export async function GET(req: NextRequest) {
     // Parallel: fetch all metrics, service statuses, alerts, jobs, and posts at once
     const metricTypes = ['cpu', 'ram', 'disk', 'queue_depth'];
 
+    // Pre-fetch tenant channel + account IDs for scoping WorkflowJob and ScheduledPost
+    const [tenantChannels, tenantAccounts] = await Promise.all([
+      ctx.db.channel.findMany({
+        where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        select: { id: true },
+      }),
+      ctx.db.emailAccount.findMany({
+        where: { tenantId: ctx.tenantId },
+        select: { id: true },
+      }),
+    ]);
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+    const tenantAccountIds = tenantAccounts.map((a) => a.id);
+
     const [allMetrics, serviceStatuses, alertCounts, activeJobs, pendingPosts] = await Promise.all([
       ctx.db.systemMetric.findMany({
         where: { metricType: { in: metricTypes } },
@@ -25,14 +39,23 @@ export async function GET(req: NextRequest) {
       }),
       ctx.db.alert.groupBy({
         by: ['severity'],
-        where: { status: 'open' },
+        where: { status: 'open', OR: [{ tenantId: ctx.tenantId }, { tenantId: null }] },
         _count: { id: true },
       }),
       ctx.db.workflowJob.count({
-        where: { status: { in: ['queued', 'running'] } },
+        where: {
+          status: { in: ['queued', 'running'] },
+          OR: [
+            { channelId: { in: tenantChannelIds } },
+            { emailAccountId: { in: tenantAccountIds } },
+          ],
+        },
       }),
       ctx.db.scheduledPost.count({
-        where: { status: 'scheduled' },
+        where: {
+          status: 'scheduled',
+          channelId: { in: tenantChannelIds },
+        },
       }),
     ]);
 

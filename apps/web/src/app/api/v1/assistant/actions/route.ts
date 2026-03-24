@@ -59,9 +59,7 @@ const executors: Record<string, ActionExecutor> = {
     since.setDate(since.getDate() - days);
 
     // Tenant-scoped filter for channel-linked models
-    const tenantChannelFilter = ctx.tenantId
-      ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
-      : {};
+    const tenantChannelFilter = { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } };
 
     if (reportType === 'content') {
       const statusCounts = await ctx.db.contentItem.groupBy({
@@ -197,7 +195,7 @@ const executors: Record<string, ActionExecutor> = {
     const channel = await ctx.db.channel.findFirst({
       where: {
         id: channelId,
-        ...(ctx.tenantId ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } : {}),
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
       select: { id: true, name: true },
     });
@@ -241,12 +239,8 @@ const executors: Record<string, ActionExecutor> = {
     if (isNaN(scheduledDate.getTime())) throw new Error('scheduledAt must be a valid date');
 
     // Verify content and channel exist and belong to tenant
-    const contentTenantFilter = ctx.tenantId
-      ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
-      : {};
-    const channelTenantFilter = ctx.tenantId
-      ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } }
-      : {};
+    const contentTenantFilter = { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } };
+    const channelTenantFilter = { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } };
 
     const [content, channel] = await Promise.all([
       ctx.db.contentItem.findFirst({ where: { id: contentId, ...contentTenantFilter }, select: { id: true, title: true } }),
@@ -285,7 +279,7 @@ const executors: Record<string, ActionExecutor> = {
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id: contentId,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true, status: true, title: true },
     });
@@ -324,7 +318,7 @@ const executors: Record<string, ActionExecutor> = {
 
     // Check for duplicate email within tenant
     const existing = await ctx.db.emailAccount.findFirst({
-      where: { email, ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}) },
+      where: { email, tenantId: ctx.tenantId },
       select: { id: true },
     });
     if (existing) throw new Error('Email account already exists');
@@ -422,7 +416,7 @@ const executors: Record<string, ActionExecutor> = {
     const account = await ctx.db.emailAccount.findFirst({
       where: {
         id: accountId,
-        ...(ctx.tenantId ? { tenantId: ctx.tenantId } : {}),
+        tenantId: ctx.tenantId,
       },
       select: { id: true, email: true, tier: true, status: true },
     });
@@ -486,6 +480,7 @@ const executors: Record<string, ActionExecutor> = {
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`actions:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

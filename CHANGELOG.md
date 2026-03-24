@@ -7,6 +7,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **AI-generated presets from natural language** (Session 33): POST `/api/v1/presets/generate` uses AI service registry to create typed presets from descriptions like "warm sunset look with soft focus"; preview → review → save flow
+- **User preset CRUD** (Session 33): `UserPreset` Prisma model with tenant-scoped CRUD (GET/POST/PATCH/DELETE at `/api/v1/presets`); `useUserPresets` SWR hook with localStorage sync for instant access
+- **CreatePresetModal** (Session 33): AI generation → preview → edit → save modal with regenerate, expandable overrides, family badge
+- **PresetPicker "My Presets" tab** (Session 33): user presets merged into family tabs with `Custom` badge; `+ Create` button in header; delete button on user presets; empty state CTA
+- **AI generation validation** (Session 33): `validateAndNormalizeAiPreset()` strips invalid override keys per family, forces `builtIn: false`, generates deterministic IDs; `FAMILY_OVERRIDE_KEYS` maps all 10 families
+- **17 new unit tests** (Session 33): `ai-generation.test.ts` covering ID generation, validation, normalization, key stripping, family coverage
+
+### Changed
+- **Audit allowlist** (Session 33): added `presets` to `paginated()` array-variable allowlist in `data-shape.audit.test.ts`
+
+### Added
+- **Simplified Cinema Wizard** (Session 32): 5-screen simple mode flow (Project → Style → Describe → Review → Making it) via `SimpleCreateWizard` component; conditional rendering in create page — simple mode uses wizard, advanced/complex keep existing 6-step UI
+- **Character preset family** (Session 32): 10th preset family (`character`) with 5 built-in presets (Solo Speaker, Two Characters, Narrator + B-Roll, No Dialogue, Faceless Cinema); `CharacterPresetPicker` grid component
+- **Project type expansion** (Session 32): 2 new project presets (Cinematic Short, Dramatic Reel) — total now 5 project types with responsive grid in `ProjectTypePicker`
+- **Revision presets** (Session 32): 6 `RevisionPreset` one-click plan adjustments in `revisions.ts`; deterministic preset swaps (no LLM round-trips); `PlanReviewCard` component with revision buttons
+- **Simple mode guardrails** (Session 32): `SIMPLE_MODE_GUARDRAILS` constant (max 9 shots, max 2 dialogue lines, etc.), `PIPELINE_SIMPLE_LABELS` for friendly step names, `validateSimpleModeConstraints()` in constraint validator, enhanced agent prompts with guardrail rules
+
+### Changed
+- **PresetPicker** (Session 32): added character tab + family label/color badge
+- **PipelineProgress** (Session 32): added `simplifiedLabels` prop for friendly step names in simple mode
+- **complexity-fields.ts** (Session 32): added `create.qualityTier: 'advanced'` to hide tier picker in simple mode
+
+### Added
 - **Veo first/last frame controls** (Session 31, G1): `FrameAnchor` interface, `firstFrameRef`/`lastFrameRef` on ShotSpec, img2img + controlnet modes in ComfyUI composer, per-provider support flags in constraint validator
 - **AV sync detection** (Session 31, G5): `validateAVSync()`, `detectGlobalDrift()`, `validateDurationEnvelope()` — frame-snapped drift detection with per-word classification and drift accumulation monitoring
 - **Asset graph enrichment** (Session 31, G2): `AssetRegistryEntry`, `Sequence`, `SequenceItem` Prisma models with self-referential versioning; `registerAsset()` helper at 4 upload points in production worker

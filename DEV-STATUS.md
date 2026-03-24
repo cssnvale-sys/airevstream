@@ -190,6 +190,29 @@
 | TI-7 | Audit fix: system/errors + trending | Done | 2 additional routes scoped by audit catch |
 | TI-8 | Fallback chain DnD editor | Done | Interactive drag-and-drop provider reordering in Settings tab, native HTML5 DnD |
 
+### Phase 16: Simplified Cinema Wizard (Session 32) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| SW-1 | Character preset family | Done | 10th family (`character`), 5 built-in presets, CharacterPresetPicker grid |
+| SW-2 | Project type expansion | Done | 2 new project presets (total 5), responsive ProjectTypePicker grid |
+| SW-3 | Simple mode guardrails | Done | SIMPLE_MODE_GUARDRAILS, PIPELINE_SIMPLE_LABELS, validateSimpleModeConstraints(), agent prompt rules |
+| SW-4 | Revision presets | Done | 6 RevisionPreset one-click swaps, deterministic (no LLM), PlanReviewCard component |
+| SW-5 | SimpleCreateWizard | Done | 5-screen flow (Project → Style → Describe → Review → Making it), conditional in create page |
+| SW-6 | Existing component updates | Done | PresetPicker character tab, PipelineProgress simplified labels, complexity-fields quality tier gating |
+| SW-7 | Tests | Done | Updated preset counts, all 14 packages build, all tests pass, 24 audit tests pass |
+
+### Phase 17: AI-Generated Presets (Session 33) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| AIP-1 | UserPreset Prisma model | Done | Migration 0005, tenant/user relations, unique (tenantId, presetId) |
+| AIP-2 | AI generation shared module | Done | FAMILY_OVERRIDE_KEYS, system prompt, validateAndNormalizeAiPreset(), generatePresetId() |
+| AIP-3 | CRUD API routes | Done | GET (paginated, filterable) + POST + PATCH + DELETE at /presets, /presets/[id] |
+| AIP-4 | AI generate endpoint | Done | POST /presets/generate — registry-first with JSON parse + validation |
+| AIP-5 | useUserPresets hook | Done | SWR + localStorage sync + optimistic save + generate helper |
+| AIP-6 | CreatePresetModal | Done | AI generate → preview → edit → save flow |
+| AIP-7 | PresetPicker update | Done | My Presets tab, + Create button, Custom badge, delete on user presets |
+| AIP-8 | Tests | Done | 17 new unit tests, audit allowlist updated, 42 Prisma models |
+
 ### Phase 14: Spec Gap Closure (Session 29) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
@@ -227,10 +250,10 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 405 (all passing via Vitest — 266 shared + 134 web + 5 workers)
-- **Audit tests**: 24 (9 files scanning 130+ API routes for 9 bug classes, <1s)
+- **Unit tests**: ~430+ (all passing via Vitest — 216 shared + 134 web + others)
+- **Audit tests**: 24 (9 files scanning 133+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
-- **Total**: 610 tests
+- **Total**: ~635+ tests
 - Audit: 24 tests across 9 files — **0 known violations** (all viewer checks, rate limiting, and tenant scoping clean)
 - E2E: 181 tests across 30 files (all 17 pages covered, 100% pass rate)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
@@ -241,6 +264,8 @@
 - **UI response shape audit (Session 28)**: 8 apiPost/navigation bugs found and fixed across 6 components. Root cause: apiPost returns full envelope but components read top-level props.
 - **Tenant isolation (Session 30)**: 5 models migrated (Alert nullable, 4 required), ~20 API routes scoped, workers updated, 0 audit violations.
 - **Cinema pipeline improvements (Session 31)**: 6 gaps implemented (G1-G6): frame anchoring, AV sync detection, asset graph, QC decision agent, VMAF regression, C2PA embedding. 3 new Prisma models, 9th cinema agent, 6-phase execution order. 76 new tests added.
+- **Simplified Cinema Wizard (Session 32)**: 5-screen simple mode wizard, character preset family (10th, 41 total built-in presets), 6 revision presets, 3 new frontend components, simple mode guardrails + constraint validation.
+- **AI-Generated Presets (Session 33)**: UserPreset model (42nd Prisma model), 3 API routes (CRUD + generate), AI generation with validation, CreatePresetModal + PresetPicker "My Presets" tab, localStorage sync. 17 new unit tests.
 
 ## Architecture Highlights
 - **Prisma Schema**: 41 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31)

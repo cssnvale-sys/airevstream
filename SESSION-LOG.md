@@ -4,6 +4,121 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 33 — AI-Generated Presets from Natural Language
+
+**Date:** 2026-03-23
+**Focus:** Let users type a description and get a fully typed Preset via AI generation, with CRUD persistence and localStorage sync.
+
+### What Was Done
+
+#### Prisma Model + Migration
+- Added `UserPreset` model to schema.prisma with tenant/user relations
+- Created migration `0005_add_user_presets` with indexes on tenantId, userId, family
+- Unique constraint on `(tenantId, presetId)` prevents duplicate preset IDs per tenant
+
+#### Shared AI Generation Module
+- Created `packages/shared/src/presets/ai-generation.ts`:
+  - `FAMILY_OVERRIDE_KEYS` — all 10 families mapped to valid override keys
+  - `PRESET_GENERATION_SYSTEM_PROMPT` — comprehensive system prompt with examples
+  - `generatePresetId()` — deterministic slug-based ID generation
+  - `validateAndNormalizeAiPreset()` — Zod parse + strip invalid keys + force builtIn: false
+- Updated barrel exports in presets/index.ts
+
+#### API Routes (3 files)
+- `presets/route.ts` — GET (paginated, filterable by family/search) + POST (save with override key validation)
+- `presets/[id]/route.ts` — GET, PATCH, DELETE with tenant scoping
+- `presets/generate/route.ts` — AI generation with registry-first/legacy-fallback pattern, JSON parse with code fence stripping
+
+#### Frontend
+- `use-user-presets.ts` — SWR hook + useGeneratePreset + localStorage sync + savePreset/deleteUserPreset helpers
+- `create-preset-modal.tsx` — 5-state modal (idle → generating → preview → saving → done) with editable name/description, family badge, expandable overrides
+- Updated `preset-picker.tsx` — "My Presets" tab, "+ Create" button, Custom badge, delete button on user presets
+
+#### Tests
+- 17 new tests in `ai-generation.test.ts` (ID generation, validation, key stripping, families)
+- Added total count assertion (41 built-in presets) to `presets-extended.test.ts`
+- Fixed audit allowlist for `presets` variable name
+
+### Decisions
+- D086: Generate and save as separate API calls (preview before persist)
+- D087: localStorage-first optimistic write for instant UX
+
+### Build Status
+- 14 packages building, 233+ Vitest tests passing, 24 audit tests passing, 0 violations
+
+---
+
+## Session 32 — Simplified Cinema Wizard (Simple Mode UX)
+
+**Date:** 2026-03-23
+**Focus:** Build a middle-schooler-proof simple mode UX for the create page — a 5-screen wizard with character presets, plan review with one-click revisions, and friendly pipeline labels.
+
+### What Was Done
+
+#### Character Preset Family (10th family)
+- Added `character` to `PresetFamilySchema` in `schema.ts`
+- Added 5 CHARACTER_PRESETS in `built-in.ts`: Solo Speaker, Two Characters, Narrator + B-Roll, No Dialogue, Faceless Cinema
+- Added 2 new PROJECT_PRESETS (Cinematic Short, Dramatic Reel) — total now 5 project presets
+- Total presets: 41 across 10 families (was 29 across 9)
+
+#### Simple Mode Guardrails + Constants
+- Added `SIMPLE_MODE_GUARDRAILS` constant (max 9 shots, max 2 dialogue lines, etc.)
+- Added `PIPELINE_SIMPLE_LABELS` constant for friendly step names
+- Enhanced simple mode agent prompts with guardrail rules
+- Added `validateSimpleModeConstraints()` to `constraint-validator.ts`
+
+#### Revision Presets
+- Created `packages/shared/src/presets/revisions.ts` — 6 `RevisionPreset` one-click plan adjustments
+- Deterministic preset swaps (no LLM round-trips) — instant and predictable
+
+#### Frontend Components (3 new)
+- `CharacterPresetPicker` — grid picker for character presets
+- `PlanReviewCard` — review screen with revision buttons (uses RevisionPresets)
+- `SimpleCreateWizard` — 5-screen flow: Project → Style → Describe → Review → Making it
+
+#### Existing Component Updates
+- `ProjectTypePicker`: expanded from 3 to 5 types with responsive grid
+- `PresetPicker`: added character tab + family label/color
+- `PipelineProgress`: added `simplifiedLabels` prop for friendly step names
+- `complexity-fields.ts`: added `create.qualityTier: 'advanced'` to hide tier picker in simple mode
+- `create/page.tsx`: conditional rendering — simple mode uses SimpleCreateWizard, advanced/complex keep existing 6-step wizard
+
+#### Tests
+- Updated `presets-extended.test.ts`: counts for 5 project presets + 5 character presets + character family check
+- All 14 packages build, all tests pass, 24 audit tests pass, 0 violations
+
+### New Files (4)
+- `packages/shared/src/presets/revisions.ts`
+- `apps/web/src/components/cinema/character-preset-picker.tsx`
+- `apps/web/src/components/cinema/plan-review-card.tsx`
+- `apps/web/src/components/cinema/simple-create-wizard.tsx`
+
+### Modified Files (14)
+- `packages/shared/src/presets/schema.ts` — character family in PresetFamilySchema
+- `packages/shared/src/presets/built-in.ts` — 5 CHARACTER_PRESETS + 2 PROJECT_PRESETS
+- `packages/shared/src/presets/index.ts` — revisions barrel export
+- `packages/shared/src/constants.ts` — SIMPLE_MODE_GUARDRAILS + PIPELINE_SIMPLE_LABELS
+- `packages/shared/src/agents/agent-prompts.ts` — simple mode guardrail rules
+- `packages/shared/src/constraint-validator.ts` — validateSimpleModeConstraints()
+- `packages/shared/src/__tests__/presets-extended.test.ts` — updated counts
+- `apps/web/src/components/cinema/project-type-picker.tsx` — 5 types, responsive grid
+- `apps/web/src/components/cinema/preset-picker.tsx` — character tab + family label/color
+- `apps/web/src/components/cinema/pipeline-progress.tsx` — simplifiedLabels prop
+- `apps/web/src/lib/complexity-fields.ts` — create.qualityTier visibility
+- `apps/web/src/app/(dashboard)/create/page.tsx` — conditional SimpleCreateWizard rendering
+
+### Key Decisions
+- D083: Simple mode wizard extracted into SimpleCreateWizard to avoid bloating the 1290-line create page
+- D084: Revision presets are deterministic preset swaps (no LLM round-trips) — instant and predictable
+- D085: Character presets as a new preset family (not dialogue subfamily) for clean separation and UI tab
+
+### Verification
+- `turbo build`: 14 packages ✓
+- `turbo test`: all passing (197 shared + 134 web + others)
+- `turbo audit`: 24 audit tests ✓ (0 violations)
+
+---
+
 ## Session 31 — Cinema Pipeline Improvements (G1-G6)
 
 **Date:** 2026-03-23

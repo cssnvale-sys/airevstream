@@ -410,3 +410,28 @@
 **Date**: 2026-03-23
 **Decision**: C2PA CLI runtime functions live in `provenance-c2pa-cli.ts` (NOT barrel-exported from index.ts). Workers import directly via `@airevstream/shared/dist/provenance-c2pa-cli.js`. Types remain in `provenance.ts` and are barrel-exported.
 **Rationale**: Even dynamic `import('node:...')` expressions are analyzed by webpack in Next.js client bundles. Keeping node-only runtime code in a file that's never imported by the barrel prevents build errors while maintaining clean type access for all consumers. This applies to both C2PA CLI and VMAF regression modules.
+
+## D083: SimpleCreateWizard as Extracted Component
+**Date**: 2026-03-23
+**Decision**: The simple mode 5-screen wizard is extracted into a standalone `SimpleCreateWizard` component rather than adding conditional logic to the existing create page.
+**Rationale**: The existing create page is already 1290 lines with a 6-step wizard. Adding a completely different 5-screen flow with character presets, plan review, and revision buttons would make the file unmaintainable. The extracted component owns its own state machine and screen transitions, while the parent page just renders it conditionally based on complexity mode.
+
+## D084: Revision Presets as Deterministic Preset Swaps
+**Date**: 2026-03-23
+**Decision**: The 6 revision presets (e.g., "Make it shorter", "More cinematic") are deterministic preset parameter swaps, not LLM-generated re-plans.
+**Rationale**: LLM round-trips introduce latency (3-10s), non-determinism (different results each click), and cost. Preset swaps are instant (<1ms), predictable (same button always produces the same change), and free. The one-click revision pattern is designed for simple mode users who want fast, obvious adjustments — not AI-powered re-imagination.
+
+## D085: Character Presets as Separate Family
+**Date**: 2026-03-23
+**Decision**: Character presets are a new top-level preset family (`character`) rather than a sub-category of the `dialogue` family or a property on project presets.
+**Rationale**: Character setup (number of speakers, dialogue style, face presence) crosscuts multiple other concerns — it affects dialogue, shot composition, audio, and rendering. Making it a first-class family enables a dedicated `CharacterPresetPicker` UI tab, clean `resolvePresets()` merge behavior, and independent evolution. A dialogue subfamily would conflate "how characters talk" with "who the characters are".
+
+## D086: Separate Generate and Save API Calls for AI Presets
+**Date**: 2026-03-23
+**Decision**: The `/presets/generate` endpoint returns a preview without saving; the user explicitly saves via `POST /presets` after reviewing.
+**Rationale**: AI output quality is unpredictable — auto-saving would pollute the user's preset library with garbage. Separating generate from save lets users review, edit name/description, and regenerate before committing. The modal UX flows: generate → preview → edit → save.
+
+## D087: localStorage-First Optimistic Write for User Presets
+**Date**: 2026-03-23
+**Decision**: When saving a user preset, write to localStorage immediately (optimistic), then POST to the API in the background. On page load, merge localStorage with API response (API is source of truth by presetId).
+**Rationale**: Instant UX — the preset appears in the picker immediately without waiting for a round-trip. If the API call fails (network issue), the preset is still available locally and will sync on next successful load. The tradeoff (possible temporary inconsistency across devices) is acceptable for a non-critical feature.

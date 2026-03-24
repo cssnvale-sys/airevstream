@@ -11,6 +11,12 @@ Tracked bugs, limitations, and technical debt.
 **Status**: Fixed (Session 30)
 Added nullable `tenantId` to Alert model via migration `0004_add_tenant_scoping`. All 6 alert routes and SSE stream now scope by tenantId. Workers creating system-wide alerts pass null tenantId (intentional global visibility for ops alerts).
 
+### KI-070: Simple Wizard Plan Generation Uses Fallback Only
+**Severity**: Low
+**Status**: Open (Session 32)
+The SimpleCreateWizard generates plans using the existing content generation pipeline with preset-based configuration. There is no dedicated "simple plan" API endpoint — the wizard relies on the standard pipeline with simple mode guardrails applied client-side and via agent prompts. A dedicated endpoint could optimize plan generation for the constrained simple mode parameters.
+**Action**: Consider adding a POST `/api/v1/pipeline/simple-plan` endpoint that runs a trimmed agent pipeline (director + storyboard only) with hard-coded simple mode constraints server-side.
+
 ### KI-066: Unused Dependencies (3 packages)
 **Severity**: Low
 **Status**: Open (Session 27 Audit — ISSUE_012/013/014)

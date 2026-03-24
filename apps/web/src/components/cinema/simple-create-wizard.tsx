@@ -10,17 +10,13 @@ import {
   Sparkles,
   Clapperboard,
 } from 'lucide-react';
-import { cn, platformIcon } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useChannels, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
-import {
-  SIMPLE_MODE_GUARDRAILS,
-  VISUAL_PRESETS,
-  CHARACTER_PRESETS,
-} from '@airevstream/shared';
-import { ProjectTypePicker } from './project-type-picker';
-import { StyleCardPicker } from './style-card-picker';
-import { CharacterPresetPicker } from './character-preset-picker';
+import { SIMPLE_MODE_GUARDRAILS, VISUAL_PRESETS, ALL_BUILT_IN_PRESETS } from '@airevstream/shared';
+import type { ProductionDirectives, Recipe } from '@airevstream/shared';
+import { IntakeScreen } from './intake-screen';
+import type { IntakeResult } from './intake-screen';
 import { PlanReviewCard } from './plan-review-card';
 import { PipelineProgress } from './pipeline-progress';
 
@@ -36,9 +32,8 @@ interface Channel {
 
 interface SimpleFormData {
   channelId: string;
-  projectType: string;
-  visualPresetId: string;
-  characterPresetId: string;
+  recipeId: string;
+  category: string;
   topic: string;
   characterDescription: string;
   setting: string;
@@ -46,14 +41,14 @@ interface SimpleFormData {
   hasSpeaking: boolean;
   duration: string;
   overrides: Record<string, unknown>;
+  directives: ProductionDirectives;
 }
 
 const STEPS_SIMPLE = [
-  { num: 1, label: 'Project' },
-  { num: 2, label: 'Style' },
-  { num: 3, label: 'Describe' },
-  { num: 4, label: 'Review' },
-  { num: 5, label: 'Making it' },
+  { num: 1, label: 'Intake' },
+  { num: 2, label: 'Describe' },
+  { num: 3, label: 'Review' },
+  { num: 4, label: 'Making it' },
 ] as const;
 
 const SIMPLE_DURATIONS = SIMPLE_MODE_GUARDRAILS.ALLOWED_DURATIONS.map((d) => ({
@@ -72,9 +67,8 @@ const EMOTION_OPTIONS = [
 
 const INITIAL_SIMPLE_FORM: SimpleFormData = {
   channelId: '',
-  projectType: '',
-  visualPresetId: '',
-  characterPresetId: '',
+  recipeId: '',
+  category: '',
   topic: '',
   characterDescription: '',
   setting: '',
@@ -82,6 +76,7 @@ const INITIAL_SIMPLE_FORM: SimpleFormData = {
   hasSpeaking: true,
   duration: '30',
   overrides: {},
+  directives: {},
 };
 
 // ---------------------------------------------------------------------------
@@ -92,6 +87,7 @@ export function SimpleCreateWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<SimpleFormData>(INITIAL_SIMPLE_FORM);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [generating, setGenerating] = useState(false);
   const [contentId, setContentId] = useState<string | null>(null);
   const [planSummary, setPlanSummary] = useState<{
@@ -121,17 +117,29 @@ export function SimpleCreateWizard() {
     }));
   }, []);
 
+  // ---- Intake completion ----
+
+  const handleIntakeComplete = useCallback((result: IntakeResult) => {
+    setSelectedRecipe(result.recipe);
+    setForm((prev) => ({
+      ...prev,
+      recipeId: result.recipe.id,
+      category: result.category,
+      overrides: { ...prev.overrides, ...result.resolvedOverrides },
+      directives: result.directives,
+    }));
+    setStep(2);
+  }, []);
+
   // ---- Navigation ----
 
   const canGoNext = (): boolean => {
     switch (step) {
       case 1:
-        return !!effectiveChannelId && !!form.projectType;
+        return !!form.recipeId; // IntakeScreen handles its own validation
       case 2:
-        return !!form.visualPresetId && !!form.characterPresetId;
-      case 3:
         return form.topic.trim().length >= 3;
-      case 4:
+      case 3:
         return true;
       default:
         return false;
@@ -139,11 +147,11 @@ export function SimpleCreateWizard() {
   };
 
   const goNext = () => {
-    if (canGoNext() && step < 5) {
+    if (canGoNext() && step < 4) {
       const next = step + 1;
       setStep(next);
-      if (next === 4 && !planSummary) generatePlan();
-      if (next === 5 && !contentId) startPipeline();
+      if (next === 3 && !planSummary) generatePlan();
+      if (next === 4 && !contentId) startPipeline();
     }
   };
 
@@ -174,15 +182,14 @@ export function SimpleCreateWizard() {
         concept: res.data?.concept ?? `A ${form.emotion} video about ${form.topic}`,
         sceneCount: res.data?.sceneCount ?? 3,
         shotCount: res.data?.shotCount ?? Math.min(
-          Math.ceil(parseInt(form.duration, 10) / 5),
+          form.directives.targetShotCount ?? Math.ceil(parseInt(form.duration, 10) / 5),
           SIMPLE_MODE_GUARDRAILS.MAX_SHOTS,
         ),
       });
     } catch (err) {
       console.error('Failed to generate plan:', err);
-      // Build a fallback plan summary from form data
       const shotCount = Math.min(
-        Math.ceil(parseInt(form.duration, 10) / 5),
+        form.directives.targetShotCount ?? Math.ceil(parseInt(form.duration, 10) / 5),
         SIMPLE_MODE_GUARDRAILS.MAX_SHOTS,
       );
       setPlanSummary({
@@ -194,12 +201,11 @@ export function SimpleCreateWizard() {
     } finally {
       setGenerating(false);
     }
-  }, [effectiveChannelId, form.topic, form.duration, form.setting, form.emotion, form.hasSpeaking, form.characterDescription]);
+  }, [effectiveChannelId, form.topic, form.duration, form.setting, form.emotion, form.hasSpeaking, form.characterDescription, form.directives.targetShotCount]);
 
   const startPipeline = useCallback(async () => {
     setGenerating(true);
     try {
-      // Create content item
       const contentRes = await apiPost<{ data: { id: string } }>('/content', {
         channelId: effectiveChannelId,
         title: form.topic,
@@ -212,7 +218,6 @@ export function SimpleCreateWizard() {
       const id = contentRes.data?.id;
       if (id) {
         setContentId(id);
-        // Trigger cinema pipeline
         await apiPost('/pipeline/cinema', {
           contentId: id,
           channelId: effectiveChannelId,
@@ -221,6 +226,7 @@ export function SimpleCreateWizard() {
           qualityPreset: 'cinema',
           duration: parseInt(form.duration, 10),
           overrides: form.overrides,
+          directives: form.directives,
           setting: form.setting,
           emotion: form.emotion,
           characterDescription: form.characterDescription,
@@ -240,11 +246,6 @@ export function SimpleCreateWizard() {
 
   const renderScreen1 = () => (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-section-heading text-text-primary mb-1">Pick your project</h2>
-        <p className="text-text-secondary text-caption">What kind of video do you want to make?</p>
-      </div>
-
       {/* Channel selector — only show if multiple channels */}
       {channels.length > 1 && (
         <div>
@@ -257,7 +258,7 @@ export function SimpleCreateWizard() {
             <option value="">Select a channel...</option>
             {channels.map((ch) => (
               <option key={ch.id} value={ch.id}>
-                {platformIcon(ch.socialAccount?.platform ?? '')} {ch.name}
+                {ch.name}
               </option>
             ))}
           </select>
@@ -275,52 +276,22 @@ export function SimpleCreateWizard() {
         </div>
       )}
 
-      <ProjectTypePicker
-        selectedType={form.projectType}
-        onSelect={(type, overrides) => {
-          update('projectType', type);
-          mergeOverrides(overrides);
-        }}
-      />
+      <IntakeScreen onComplete={handleIntakeComplete} />
     </div>
   );
 
   const renderScreen2 = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-section-heading text-text-primary mb-1">Choose your style</h2>
-        <p className="text-text-secondary text-caption">Pick a look and character type.</p>
-      </div>
-
-      <StyleCardPicker
-        selectedId={form.visualPresetId}
-        onApply={(overrides) => {
-          const matched = VISUAL_PRESETS.find(
-            (p) => JSON.stringify(p.overrides) === JSON.stringify(overrides),
-          );
-          if (matched) update('visualPresetId', matched.id);
-          mergeOverrides(overrides);
-        }}
-      />
-
-      <CharacterPresetPicker
-        selectedId={form.characterPresetId}
-        onApply={(overrides) => {
-          const matched = CHARACTER_PRESETS.find(
-            (p) => JSON.stringify(p.overrides) === JSON.stringify(overrides),
-          );
-          if (matched) update('characterPresetId', matched.id);
-          mergeOverrides(overrides);
-        }}
-      />
-    </div>
-  );
-
-  const renderScreen3 = () => (
-    <div className="space-y-6">
-      <div>
         <h2 className="text-section-heading text-text-primary mb-1">Describe it</h2>
-        <p className="text-text-secondary text-caption">Tell us about your video in plain words.</p>
+        <p className="text-text-secondary text-caption">
+          Tell us about your video in plain words.
+          {selectedRecipe && (
+            <span className="ml-1 text-accent-blue">
+              Using: {selectedRecipe.name}
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
@@ -431,18 +402,20 @@ export function SimpleCreateWizard() {
     </div>
   );
 
-  const renderScreen4 = () => {
+  const renderScreen3 = () => {
     const durationSec = parseInt(form.duration, 10) || 30;
     const summary = planSummary ?? {
       title: form.topic,
       concept: `A ${form.emotion} video about ${form.topic}`,
       sceneCount: 3,
-      shotCount: Math.min(Math.ceil(durationSec / 5), SIMPLE_MODE_GUARDRAILS.MAX_SHOTS),
+      shotCount: Math.min(
+        form.directives.targetShotCount ?? Math.ceil(durationSec / 5),
+        SIMPLE_MODE_GUARDRAILS.MAX_SHOTS,
+      ),
     };
 
-    // Find display names for selected presets
-    const visualName = VISUAL_PRESETS.find((p) => p.id === form.visualPresetId)?.name ?? 'Default';
-    const charName = CHARACTER_PRESETS.find((p) => p.id === form.characterPresetId)?.name ?? 'Default';
+    const visualName = selectedRecipe?.name ?? 'Default';
+    const outputFormat = (form.overrides.aspect as string) ?? '16:9';
 
     if (generating && !planSummary) {
       return (
@@ -471,8 +444,8 @@ export function SimpleCreateWizard() {
             durationSec,
             visualStyle: visualName,
             audioMood: form.emotion,
-            characterType: charName,
-            outputFormat: (form.overrides.aspect as string) ?? '16:9',
+            characterType: form.category,
+            outputFormat,
           }}
           onRevise={mergeOverrides}
           onRegenerate={() => generatePlan()}
@@ -482,7 +455,7 @@ export function SimpleCreateWizard() {
     );
   };
 
-  const renderScreen5 = () => (
+  const renderScreen4 = () => (
     <div className="space-y-6">
       <div>
         <h2 className="text-section-heading text-text-primary mb-1">Making your video</h2>
@@ -524,7 +497,6 @@ export function SimpleCreateWizard() {
       case 2: return renderScreen2();
       case 3: return renderScreen3();
       case 4: return renderScreen4();
-      case 5: return renderScreen5();
       default: return null;
     }
   };
@@ -592,12 +564,11 @@ export function SimpleCreateWizard() {
       {renderStepIndicator()}
       {renderCurrentStep()}
 
-      {/* Navigation buttons (hide on final screen) */}
-      {step < 5 && (
+      {/* Navigation buttons (hide on intake screen since it has its own Next, and on final screen) */}
+      {step > 1 && step < 4 && (
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
           <button
             onClick={goBack}
-            disabled={step === 1}
             className="btn-secondary flex items-center gap-2"
           >
             <ChevronLeft size={16} />
@@ -608,7 +579,7 @@ export function SimpleCreateWizard() {
             disabled={!canGoNext() || generating}
             className="btn-primary flex items-center gap-2"
           >
-            {step === 4 ? 'Start Making' : 'Next'}
+            {step === 3 ? 'Start Making' : 'Next'}
             <ChevronRight size={16} />
           </button>
         </div>

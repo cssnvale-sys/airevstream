@@ -42,6 +42,8 @@ This pattern was validated across 4 audit rounds (60+ fixes):
 - Each agent takes its audit list and applies fixes
 - Verify with `turbo build` after all agents complete
 
+For the full audit methodology including bug pattern catalog and wave structure, see `08-audit-process.md`.
+
 ## After Parallel Work
 
 Use the 4-commit structure (D017):

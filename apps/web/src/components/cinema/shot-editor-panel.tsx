@@ -11,6 +11,7 @@ import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible } from '@/lib/complexity-fields';
 import {
   resolvePresets,
+  resolvePresetsWithDirectives,
   ALL_BUILT_IN_PRESETS,
 } from '@airevstream/shared';
 import type { Recipe, ShotSpec } from '@airevstream/shared';
@@ -58,11 +59,14 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
 
   const handleApplyRecipe = useCallback(async (recipe: Recipe) => {
     if (!selectedShotId || !selectedShot) return;
-    const resolved = resolvePresets(selectedShot.shotspec as unknown as ShotSpec, {
+    // Use directives-aware resolver to strip _directives from the shot spec
+    // (directives are project-level, not shot-level — we discard them here)
+    const { shotSpec } = resolvePresetsWithDirectives(selectedShot.shotspec as unknown as ShotSpec, {
       recipe,
       allPresets: ALL_BUILT_IN_PRESETS,
+      recipeDirectives: recipe.directives,
     });
-    await onUpdateShot(selectedShotId, resolved as unknown as Record<string, unknown>);
+    await onUpdateShot(selectedShotId, shotSpec as unknown as Record<string, unknown>);
   }, [selectedShotId, selectedShot, onUpdateShot]);
 
   return (

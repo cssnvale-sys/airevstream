@@ -125,9 +125,12 @@ export function SimpleCreateWizard() {
       ...prev,
       recipeId: result.recipe.id,
       category: result.category,
-      overrides: { ...prev.overrides, ...result.resolvedOverrides },
+      overrides: result.resolvedOverrides,
       directives: result.directives,
     }));
+    // Always proceed to step 2 within SimpleCreateWizard.
+    // Switching modes here would unmount this component and lose all state.
+    // Users can switch to advanced/complex via the ComplexityToggle in the header.
     setStep(2);
   }, []);
 
@@ -138,7 +141,7 @@ export function SimpleCreateWizard() {
       case 1:
         return !!form.recipeId; // IntakeScreen handles its own validation
       case 2:
-        return form.topic.trim().length >= 3;
+        return form.topic.trim().length >= 3 && !!effectiveChannelId;
       case 3:
         return true;
       default:
@@ -147,7 +150,7 @@ export function SimpleCreateWizard() {
   };
 
   const goNext = () => {
-    if (canGoNext() && step < 4) {
+    if (canGoNext() && step < 4 && !generating) {
       const next = step + 1;
       setStep(next);
       if (next === 3 && !planSummary) generatePlan();
@@ -155,14 +158,23 @@ export function SimpleCreateWizard() {
     }
   };
 
+  const resetToIntake = useCallback(() => {
+    setForm(INITIAL_SIMPLE_FORM);
+    setSelectedRecipe(null);
+    setPlanSummary(null);
+  }, []);
+
   const goBack = () => {
     if (step === 2) {
-      // Reset recipe selection so IntakeScreen controls the flow again
-      setForm((prev) => ({ ...prev, recipeId: '', category: '', directives: {} }));
-      setSelectedRecipe(null);
-      setPlanSummary(null);
+      resetToIntake();
     }
     if (step > 1) setStep((s) => s - 1);
+  };
+
+  const goToStep = (target: number) => {
+    if (target >= step) return; // can only go backward
+    if (target === 1) resetToIntake();
+    setStep(target);
   };
 
   // ---- API Actions ----
@@ -533,7 +545,7 @@ export function SimpleCreateWizard() {
             <div key={s.num} className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  if (s.num < step) setStep(s.num);
+                  if (s.num < step) goToStep(s.num);
                 }}
                 disabled={s.num > step}
                 className={cn(

@@ -28,6 +28,8 @@ export interface IntakeResult {
   directives: ProductionDirectives;
   category: RecipeCategory;
   mood: string;
+  /** The complexity mode the user chose on intake (may differ from current global mode) */
+  selectedComplexity: ComplexityMode;
 }
 
 interface IntakeScreenProps {
@@ -58,7 +60,10 @@ const COMPLEXITY_OPTIONS: { value: ComplexityMode; label: string; description: s
 export function IntakeScreen({ onComplete }: IntakeScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const { mode, setMode } = useComplexityMode();
+  const { mode } = useComplexityMode();
+  // Track complexity choice locally — don't mutate global mode during intake
+  // (changing global mode would swap the wizard component mid-flow)
+  const [localComplexity, setLocalComplexity] = useState<ComplexityMode>(mode);
 
   // Filter bundles by selected category
   const moodOptions = useMemo(() => {
@@ -96,6 +101,7 @@ export function IntakeScreen({ onComplete }: IntakeScreenProps) {
       directives,
       category: selectedCategory,
       mood: selectedMood,
+      selectedComplexity: localComplexity,
     });
   };
 
@@ -174,12 +180,12 @@ export function IntakeScreen({ onComplete }: IntakeScreenProps) {
           </p>
           <div className="grid grid-cols-3 gap-3 max-w-lg">
             {COMPLEXITY_OPTIONS.map((opt) => {
-              const isSelected = mode === opt.value;
+              const isSelected = localComplexity === opt.value;
               return (
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setMode(opt.value)}
+                  onClick={() => setLocalComplexity(opt.value)}
                   className={cn(
                     'flex flex-col items-center gap-1 p-3 rounded-lg border text-center transition-colors',
                     isSelected

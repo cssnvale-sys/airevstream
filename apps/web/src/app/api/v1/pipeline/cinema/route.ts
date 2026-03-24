@@ -81,6 +81,9 @@ export async function POST(req: NextRequest) {
       qualityPreset: body.qualityPreset ?? 'standard',
       shotIds: body.shotIds,
       storyboardId: body.storyboardId,
+      directives: body.directives,
+      overrides: body.overrides,
+      duration: body.duration,
     });
 
     return success({

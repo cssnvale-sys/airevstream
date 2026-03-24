@@ -11,7 +11,7 @@
  */
 
 import type { ShotSpec } from '../types.js';
-import type { Preset, Recipe } from './schema.js';
+import type { Preset, Recipe, ProductionDirectives } from './schema.js';
 
 /**
  * Deep merge two objects. Arrays are replaced, not concatenated.
@@ -126,4 +126,45 @@ export function getActiveRanges(
   }
 
   return ranges;
+}
+
+// ─── Directives-Aware Resolver ───
+
+export interface ResolveWithDirectivesResult {
+  shotSpec: ShotSpec;
+  directives: ProductionDirectives;
+  ranges: Record<string, { min: number; max: number }>;
+}
+
+/**
+ * Resolve a ShotSpec and extract production directives from the preset stack.
+ *
+ * Directives come from two sources:
+ *   1. `_directives` keys inside preset overrides (e.g. story presets)
+ *   2. Recipe-level `directives` field (from master bundles)
+ *
+ * Recipe-level directives take precedence over preset-embedded ones.
+ * The `_directives` key is stripped from the resolved ShotSpec.
+ */
+export function resolvePresetsWithDirectives(
+  base: ShotSpec,
+  options: ResolveOptions & { recipeDirectives?: ProductionDirectives },
+): ResolveWithDirectivesResult {
+  const resolved = resolvePresets(base, options);
+
+  // Extract _directives from resolved spec
+  const resolvedRec = resolved as unknown as Record<string, unknown>;
+  const specDirectives = (resolvedRec._directives ?? {}) as ProductionDirectives;
+  delete resolvedRec._directives;
+
+  // Recipe-level directives override preset-embedded ones
+  const directives: ProductionDirectives = { ...specDirectives, ...(options.recipeDirectives ?? {}) };
+
+  const ranges = getActiveRanges(
+    options.presets ?? [],
+    options.recipe,
+    options.allPresets,
+  );
+
+  return { shotSpec: resolvedRec as unknown as ShotSpec, directives, ranges };
 }

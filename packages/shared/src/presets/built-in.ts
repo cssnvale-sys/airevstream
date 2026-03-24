@@ -4,7 +4,7 @@
  * These are non-deletable presets covering the major families.
  */
 
-import type { Preset, Recipe } from './schema.js';
+import type { Preset, Recipe, ProductionDirectives } from './schema.js';
 
 // ─── Visual Presets (Color Grades) ───
 
@@ -452,7 +452,9 @@ export const STORY_PRESETS: Preset[] = [
     description: 'Hook-Interest-Content-CTA standard structure',
     tags: ['hicc', 'standard', 'youtube'],
     builtIn: true,
-    overrides: {},
+    overrides: {
+      _directives: { narrativeStructure: 'hicc', pacing: 'moderate' } satisfies ProductionDirectives,
+    },
   },
   {
     id: 'story.three-act.v1',
@@ -461,7 +463,9 @@ export const STORY_PRESETS: Preset[] = [
     description: 'Classic three-act narrative structure',
     tags: ['narrative', 'three-act', 'story'],
     builtIn: true,
-    overrides: {},
+    overrides: {
+      _directives: { narrativeStructure: 'three-act', pacing: 'slow' } satisfies ProductionDirectives,
+    },
   },
   {
     id: 'story.hook-loop.v1',
@@ -470,7 +474,9 @@ export const STORY_PRESETS: Preset[] = [
     description: 'Repeated hook pattern for short-form retention',
     tags: ['hook', 'loop', 'tiktok', 'reels'],
     builtIn: true,
-    overrides: {},
+    overrides: {
+      _directives: { narrativeStructure: 'hook-loop', pacing: 'frenetic' } satisfies ProductionDirectives,
+    },
   },
 ];
 
@@ -580,15 +586,18 @@ export const EDIT_PRESETS: Preset[] = [
   },
 ];
 
-// ─── Recipes ───
+// ─── Legacy Recipes (updated with category/mood/directives) ───
 
-export const BUILT_IN_RECIPES: Recipe[] = [
+export const LEGACY_RECIPES: Recipe[] = [
   {
     id: 'recipe.explainer.v1',
     name: 'Explainer Video',
     description: 'Clean corporate look with narration',
     tags: ['corporate', 'explainer', 'educational'],
     builtIn: true,
+    category: 'one-off',
+    mood: 'Explainer',
+    directives: { targetShotCount: 6, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'moderate', lensPackage: 'standard-mix', narrativeStructure: 'hicc' },
     presetIds: [
       'visual.cool-modern.v1',
       'camera.wide-establishing.v1',
@@ -602,6 +611,9 @@ export const BUILT_IN_RECIPES: Recipe[] = [
     description: 'Film-quality short with full audio mix',
     tags: ['cinematic', 'premium', 'short'],
     builtIn: true,
+    category: 'cinematic',
+    mood: 'Drama',
+    directives: { targetShotCount: 9, avgShotLengthSec: 5, pacing: 'slow', dialogueDensity: 'dense', lensPackage: 'anamorphic', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
     presetIds: [
       'visual.warm-vintage.v1',
       'camera.anamorphic-wide.v1',
@@ -615,6 +627,9 @@ export const BUILT_IN_RECIPES: Recipe[] = [
     description: 'Fast-paced portrait video with energetic beat',
     tags: ['tiktok', 'hook', 'fast'],
     builtIn: true,
+    category: 'shorts',
+    mood: 'TikTok Hook',
+    directives: { targetShotCount: 5, avgShotLengthSec: 3, pacing: 'frenetic', dialogueDensity: 'sparse', lensPackage: 'standard-mix', narrativeStructure: 'hook-loop', seedPolicy: 'free' },
     presetIds: [
       'visual.cyberpunk.v1',
       'camera.dolly-in.v1',
@@ -622,6 +637,252 @@ export const BUILT_IN_RECIPES: Recipe[] = [
       'output.reels-portrait.v1',
     ],
   },
+];
+
+// ─── Master Bundle Recipes ───
+
+export const MASTER_BUNDLES: Recipe[] = [
+  // ── One-off ──
+  {
+    id: 'recipe.one-off.explainer.v1',
+    name: 'Explainer',
+    description: 'Clean educational content with narration and modern look',
+    tags: ['educational', 'explainer', 'howto'],
+    builtIn: true,
+    category: 'one-off',
+    mood: 'Explainer',
+    tier: 'simple',
+    directives: { targetShotCount: 6, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'moderate', lensPackage: 'standard-mix', narrativeStructure: 'hicc' },
+    presetIds: [
+      'visual.cool-modern.v1',
+      'camera.wide-establishing.v1',
+      'audio.ambient-narration.v1',
+      'story.hicc-standard.v1',
+      'character.solo-speaker.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.one-off.product-review.v1',
+    name: 'Product Review',
+    description: 'Warm, detailed product showcase with close-up reveals',
+    tags: ['product', 'review', 'showcase'],
+    builtIn: true,
+    category: 'one-off',
+    mood: 'Product Review',
+    tier: 'simple',
+    directives: { targetShotCount: 8, avgShotLengthSec: 4, pacing: 'moderate', dialogueDensity: 'dense', lensPackage: 'portrait-heavy', narrativeStructure: 'hicc' },
+    presetIds: [
+      'visual.warm-vintage.v1',
+      'camera.orbit-reveal.v1',
+      'audio.ambient-narration.v1',
+      'story.hicc-standard.v1',
+      'character.solo-speaker.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.one-off.social-clip.v1',
+    name: 'Social Clip',
+    description: 'Eye-catching vertical clip for social feeds',
+    tags: ['social', 'clip', 'vertical'],
+    builtIn: true,
+    category: 'one-off',
+    mood: 'Social Clip',
+    tier: 'simple',
+    directives: { targetShotCount: 5, avgShotLengthSec: 3, pacing: 'fast', dialogueDensity: 'sparse', lensPackage: 'standard-mix', narrativeStructure: 'hook-loop' },
+    presetIds: [
+      'visual.cyberpunk.v1',
+      'camera.dolly-in.v1',
+      'audio.energetic-beat.v1',
+      'story.hook-loop.v1',
+      'character.faceless-cinema.v1',
+      'output.reels-portrait.v1',
+    ],
+  },
+
+  // ── Series ──
+  {
+    id: 'recipe.series.educational.v1',
+    name: 'Educational Series',
+    description: 'Consistent educational format for recurring episodes',
+    tags: ['educational', 'series', 'recurring'],
+    builtIn: true,
+    category: 'series',
+    mood: 'Educational',
+    tier: 'simple',
+    directives: { targetShotCount: 8, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'moderate', lensPackage: 'wide-only', narrativeStructure: 'hicc', seedPolicy: 'scene-lock' },
+    presetIds: [
+      'visual.cool-modern.v1',
+      'camera.wide-establishing.v1',
+      'audio.ambient-narration.v1',
+      'story.hicc-standard.v1',
+      'character.narrator-broll.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.series.vlog.v1',
+    name: 'Personal Vlog',
+    description: 'Personality-driven series with warm, intimate feel',
+    tags: ['vlog', 'personal', 'warm'],
+    builtIn: true,
+    category: 'series',
+    mood: 'Personal Vlog',
+    tier: 'simple',
+    directives: { targetShotCount: 6, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'dense', lensPackage: 'portrait-heavy', narrativeStructure: 'three-act', seedPolicy: 'scene-lock' },
+    presetIds: [
+      'visual.wes-anderson.v1',
+      'camera.portrait-closeup.v1',
+      'audio.narration-only.v1',
+      'story.three-act.v1',
+      'character.solo-speaker.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.series.podcast-visual.v1',
+    name: 'Podcast Visual',
+    description: 'Visual podcast format with two-speaker dialogue',
+    tags: ['podcast', 'dialogue', 'conversational'],
+    builtIn: true,
+    category: 'series',
+    mood: 'Podcast Visual',
+    tier: 'simple',
+    directives: { targetShotCount: 6, avgShotLengthSec: 6, pacing: 'slow', dialogueDensity: 'dense', lensPackage: 'portrait-heavy', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    presetIds: [
+      'visual.film-noir.v1',
+      'camera.portrait-closeup.v1',
+      'audio.cinematic-full.v1',
+      'story.three-act.v1',
+      'character.two-characters.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+
+  // ── Shorts ──
+  {
+    id: 'recipe.shorts.tiktok-hook.v1',
+    name: 'TikTok Hook',
+    description: 'Fast-paced hook for maximum short-form retention',
+    tags: ['tiktok', 'hook', 'fast', 'reels'],
+    builtIn: true,
+    category: 'shorts',
+    mood: 'TikTok Hook',
+    tier: 'simple',
+    directives: { targetShotCount: 5, avgShotLengthSec: 3, pacing: 'frenetic', dialogueDensity: 'sparse', lensPackage: 'standard-mix', narrativeStructure: 'hook-loop', seedPolicy: 'free' },
+    presetIds: [
+      'visual.cyberpunk.v1',
+      'camera.dolly-in.v1',
+      'audio.energetic-beat.v1',
+      'story.hook-loop.v1',
+      'character.faceless-cinema.v1',
+      'output.reels-portrait.v1',
+    ],
+  },
+  {
+    id: 'recipe.shorts.aesthetic-reel.v1',
+    name: 'Aesthetic Reel',
+    description: 'Beautiful golden-hour montage with no dialogue',
+    tags: ['aesthetic', 'montage', 'golden-hour'],
+    builtIn: true,
+    category: 'shorts',
+    mood: 'Aesthetic Reel',
+    tier: 'simple',
+    directives: { targetShotCount: 6, avgShotLengthSec: 3, pacing: 'moderate', dialogueDensity: 'none', lensPackage: 'standard-mix', narrativeStructure: 'montage', seedPolicy: 'free' },
+    presetIds: [
+      'visual.golden-hour.v1',
+      'camera.orbit-reveal.v1',
+      'audio.ambient-narration.v1',
+      'story.hook-loop.v1',
+      'character.no-dialogue.v1',
+      'output.reels-portrait.v1',
+    ],
+  },
+  {
+    id: 'recipe.shorts.tutorial-quick.v1',
+    name: 'Quick Tutorial',
+    description: 'Snappy how-to in square format',
+    tags: ['tutorial', 'quick', 'square'],
+    builtIn: true,
+    category: 'shorts',
+    mood: 'Quick Tutorial',
+    tier: 'simple',
+    directives: { targetShotCount: 4, avgShotLengthSec: 4, pacing: 'fast', dialogueDensity: 'moderate', lensPackage: 'wide-only', narrativeStructure: 'hicc', seedPolicy: 'free' },
+    presetIds: [
+      'visual.cool-modern.v1',
+      'camera.wide-establishing.v1',
+      'audio.narration-only.v1',
+      'story.hicc-standard.v1',
+      'character.solo-speaker.v1',
+      'output.square-social.v1',
+    ],
+  },
+
+  // ── Cinematic ──
+  {
+    id: 'recipe.cinematic.drama.v1',
+    name: 'Drama',
+    description: 'Warm vintage film quality with full cinematic audio',
+    tags: ['drama', 'cinematic', 'warm'],
+    builtIn: true,
+    category: 'cinematic',
+    mood: 'Drama',
+    tier: 'simple',
+    directives: { targetShotCount: 9, avgShotLengthSec: 5, pacing: 'slow', dialogueDensity: 'dense', lensPackage: 'anamorphic', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    presetIds: [
+      'visual.warm-vintage.v1',
+      'camera.anamorphic-wide.v1',
+      'audio.cinematic-full.v1',
+      'story.three-act.v1',
+      'character.two-characters.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.cinematic.noir.v1',
+    name: 'Noir',
+    description: 'High-contrast noir with moody close-ups',
+    tags: ['noir', 'dark', 'moody'],
+    builtIn: true,
+    category: 'cinematic',
+    mood: 'Noir',
+    tier: 'simple',
+    directives: { targetShotCount: 8, avgShotLengthSec: 5, pacing: 'slow', dialogueDensity: 'moderate', lensPackage: 'portrait-heavy', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    presetIds: [
+      'visual.film-noir.v1',
+      'camera.portrait-closeup.v1',
+      'audio.cinematic-full.v1',
+      'story.three-act.v1',
+      'character.solo-speaker.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.cinematic.epic.v1',
+    name: 'Epic',
+    description: 'Grand golden-hour landscapes with anamorphic sweep',
+    tags: ['epic', 'grand', 'landscape'],
+    builtIn: true,
+    category: 'cinematic',
+    mood: 'Epic',
+    tier: 'simple',
+    directives: { targetShotCount: 9, avgShotLengthSec: 5, pacing: 'slow', dialogueDensity: 'sparse', lensPackage: 'anamorphic', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    presetIds: [
+      'visual.golden-hour.v1',
+      'camera.anamorphic-wide.v1',
+      'audio.cinematic-full.v1',
+      'story.three-act.v1',
+      'character.narrator-broll.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+];
+
+/** All built-in recipes (legacy + master bundles) */
+export const BUILT_IN_RECIPES: Recipe[] = [
+  ...LEGACY_RECIPES,
+  ...MASTER_BUNDLES,
 ];
 
 /** All built-in presets combined */

@@ -41,6 +41,30 @@ export const PresetSchema = z.object({
 
 export type Preset = z.infer<typeof PresetSchema>;
 
+// ─── Production Directives ───
+
+export const PacingSchema = z.enum(['slow', 'moderate', 'fast', 'frenetic']);
+export const DialogueDensitySchema = z.enum(['none', 'sparse', 'moderate', 'dense']);
+export const LensPackageSchema = z.enum(['wide-only', 'standard-mix', 'portrait-heavy', 'anamorphic']);
+export const NarrativeStructureSchema = z.enum(['hicc', 'three-act', 'hook-loop', 'montage']);
+
+export const ProductionDirectivesSchema = z.object({
+  targetShotCount: z.number().int().min(1).max(30).optional(),
+  avgShotLengthSec: z.number().min(1).max(30).optional(),
+  pacing: PacingSchema.optional(),
+  dialogueDensity: DialogueDensitySchema.optional(),
+  lensPackage: LensPackageSchema.optional(),
+  narrativeStructure: NarrativeStructureSchema.optional(),
+  seedPolicy: z.enum(['free', 'shot-offset', 'scene-lock', 'series-lock']).optional(),
+}).strict();
+
+export type ProductionDirectives = z.infer<typeof ProductionDirectivesSchema>;
+
+// ─── Recipe Categories ───
+
+export const RecipeCategorySchema = z.enum(['one-off', 'series', 'shorts', 'cinematic']);
+export type RecipeCategory = z.infer<typeof RecipeCategorySchema>;
+
 /**
  * A Recipe is a collection of presets from different families
  * that together define a complete look/feel.
@@ -53,6 +77,14 @@ export const RecipeSchema = z.object({
   builtIn: z.boolean().default(false),
   /** Preset IDs from each family */
   presetIds: z.array(z.string()),
+  /** Category for master bundle grouping */
+  category: RecipeCategorySchema.optional(),
+  /** Mood label displayed in intake UI */
+  mood: z.string().optional(),
+  /** Complexity tier visibility */
+  tier: z.enum(['simple', 'advanced', 'complex']).optional(),
+  /** Production directives for agent pipeline */
+  directives: ProductionDirectivesSchema.optional(),
 });
 
 export type Recipe = z.infer<typeof RecipeSchema>;

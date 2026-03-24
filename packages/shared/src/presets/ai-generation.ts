@@ -19,7 +19,7 @@ export const FAMILY_OVERRIDE_KEYS: Record<PresetFamily, string[]> = {
   output: ['generation', 'fps', 'aspect', 'codec'],
   project: ['fps', 'aspect', 'audioPlan', 'colorGrade', 'postProcess', 'camera'],
   character: ['characterCount', 'dialogueMode', 'personGeneration', 'audioPlan'],
-  story: [],
+  story: ['_directives'],
   dialogue: ['audioPlan'],
   continuity: ['seedPolicy'],
 };

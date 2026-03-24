@@ -5,6 +5,7 @@
  */
 
 import type { AgentConfig, AgentRole, ComplexityMode, QCDecisionInput } from './agent-types.js';
+import type { ProductionDirectives } from '../presets/schema.js';
 
 // ─── System Prompts ───
 
@@ -213,16 +214,41 @@ const MODE_FIELD_SKIP: Record<ComplexityMode, string[]> = {
 };
 
 /**
- * Get an agent's system prompt with mode-specific instructions appended.
+ * Build a text block from production directives for injection into agent prompts.
+ * Returns an empty string if no directives are set.
  */
-export function getAgentPromptForMode(role: AgentRole, mode: ComplexityMode): string {
+export function buildDirectivesContext(directives: ProductionDirectives): string {
+  const lines: string[] = [];
+
+  if (directives.targetShotCount != null) lines.push(`- Target shot count: ${directives.targetShotCount}`);
+  if (directives.avgShotLengthSec != null) lines.push(`- Average shot length: ${directives.avgShotLengthSec}s`);
+  if (directives.pacing) lines.push(`- Pacing: ${directives.pacing}`);
+  if (directives.dialogueDensity) lines.push(`- Dialogue density: ${directives.dialogueDensity}`);
+  if (directives.lensPackage) lines.push(`- Lens package: ${directives.lensPackage}`);
+  if (directives.narrativeStructure) lines.push(`- Narrative structure: ${directives.narrativeStructure}`);
+  if (directives.seedPolicy) lines.push(`- Seed policy: ${directives.seedPolicy}`);
+
+  if (lines.length === 0) return '';
+  return `\n\nPRODUCTION DIRECTIVES — follow these constraints:\n${lines.join('\n')}`;
+}
+
+/**
+ * Get an agent's system prompt with mode-specific instructions appended.
+ * Optionally appends production directives context.
+ */
+export function getAgentPromptForMode(
+  role: AgentRole,
+  mode: ComplexityMode,
+  directives?: ProductionDirectives,
+): string {
   const config = AGENT_CONFIGS[role];
   const modeInstructions = MODE_INSTRUCTIONS[mode];
   const skipFields = MODE_FIELD_SKIP[mode];
   const skipNote = skipFields.length > 0
     ? `\nOmit these fields from output: ${skipFields.join(', ')}`
     : '';
-  return config.systemPrompt + modeInstructions + skipNote;
+  const directivesCtx = directives ? buildDirectivesContext(directives) : '';
+  return config.systemPrompt + modeInstructions + skipNote + directivesCtx;
 }
 
 // ─── Agent Configurations ───

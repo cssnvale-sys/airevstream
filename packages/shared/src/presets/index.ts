@@ -1,5 +1,15 @@
-export { PresetSchema, RecipeSchema, PresetFamilySchema } from './schema.js';
-export type { Preset, Recipe, PresetFamily } from './schema.js';
+export {
+  PresetSchema,
+  RecipeSchema,
+  PresetFamilySchema,
+  ProductionDirectivesSchema,
+  RecipeCategorySchema,
+  PacingSchema,
+  DialogueDensitySchema,
+  LensPackageSchema,
+  NarrativeStructureSchema,
+} from './schema.js';
+export type { Preset, Recipe, PresetFamily, ProductionDirectives, RecipeCategory } from './schema.js';
 
 export {
   ALL_BUILT_IN_PRESETS,
@@ -14,13 +24,15 @@ export {
   CONTINUITY_PRESETS,
   EDIT_PRESETS,
   BUILT_IN_RECIPES,
+  LEGACY_RECIPES,
+  MASTER_BUNDLES,
 } from './built-in.js';
 
 export { REVISION_PRESETS } from './revisions.js';
 export type { RevisionPreset } from './revisions.js';
 
-export { resolvePresets, getActiveRanges } from './resolver.js';
-export type { ResolveOptions } from './resolver.js';
+export { resolvePresets, getActiveRanges, resolvePresetsWithDirectives } from './resolver.js';
+export type { ResolveOptions, ResolveWithDirectivesResult } from './resolver.js';
 
 export {
   FAMILY_OVERRIDE_KEYS,

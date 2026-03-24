@@ -7,6 +7,8 @@ import {
   DIALOGUE_PRESETS,
   CONTINUITY_PRESETS,
   EDIT_PRESETS,
+  BUILT_IN_RECIPES,
+  MASTER_BUNDLES,
 } from '../presets/index.js';
 
 describe('extended presets', () => {
@@ -90,5 +92,13 @@ describe('extended presets', () => {
 
   it('should have 41 total built-in presets', () => {
     expect(ALL_BUILT_IN_PRESETS).toHaveLength(41);
+  });
+
+  it('should have 15 total built-in recipes', () => {
+    expect(BUILT_IN_RECIPES).toHaveLength(15);
+  });
+
+  it('should have 12 master bundles', () => {
+    expect(MASTER_BUNDLES).toHaveLength(12);
   });
 });

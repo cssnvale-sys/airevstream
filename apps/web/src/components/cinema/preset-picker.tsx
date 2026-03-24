@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import {
   ALL_BUILT_IN_PRESETS,
   BUILT_IN_RECIPES,
 } from '@airevstream/shared';
 import type { Preset, Recipe, PresetFamily } from '@airevstream/shared';
+import { useUserPresets, deleteUserPreset } from '@/hooks/use-user-presets';
+import { CreatePresetModal } from './create-preset-modal';
 
 interface PresetPickerProps {
   onApplyPreset: (overrides: Record<string, unknown>) => void;
@@ -20,6 +22,7 @@ const FAMILY_LABELS: Record<PresetFamily, string> = {
   edit: 'Edit',
   output: 'Output',
   project: 'Project',
+  character: 'Character',
   story: 'Story',
   dialogue: 'Dialogue',
   continuity: 'Continuity',
@@ -32,28 +35,49 @@ const FAMILY_COLORS: Record<PresetFamily, string> = {
   edit: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400',
   output: 'bg-orange-500/15 border-orange-500/30 text-orange-400',
   project: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400',
+  character: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
   story: 'bg-pink-500/15 border-pink-500/30 text-pink-400',
   dialogue: 'bg-teal-500/15 border-teal-500/30 text-teal-400',
   continuity: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400',
 };
 
-type TabValue = 'recipes' | PresetFamily;
+type TabValue = 'recipes' | 'my-presets' | PresetFamily;
 
 export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps) {
   const [activeTab, setActiveTab] = useState<TabValue>('recipes');
   const [search, setSearch] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const { presets: userPresets, mutate } = useUserPresets();
+
+  // DB records for deletion (need the UUID id, not the presetId)
+  const { data: rawData } = useUserPresets() as any;
+  const userRecords = rawData?.data ?? [];
 
   const tabs: { value: TabValue; label: string }[] = [
     { value: 'recipes', label: 'Recipes' },
-    ...(['visual', 'camera', 'audio', 'output'] as PresetFamily[]).map((f) => ({
+    { value: 'my-presets', label: 'My Presets' },
+    ...(['visual', 'camera', 'audio', 'character', 'output'] as PresetFamily[]).map((f) => ({
       value: f as TabValue,
       label: FAMILY_LABELS[f],
     })),
   ];
 
+  // Merge built-in + user presets for family tabs
+  const allPresets = useMemo(
+    () => [...ALL_BUILT_IN_PRESETS, ...userPresets],
+    [userPresets],
+  );
+
+  // User preset IDs for marking custom badge
+  const userPresetIds = useMemo(
+    () => new Set(userPresets.map((p) => p.id)),
+    [userPresets],
+  );
+
   const filteredPresets = useMemo(() => {
-    if (activeTab === 'recipes') return [];
-    return ALL_BUILT_IN_PRESETS.filter((p) => {
+    if (activeTab === 'recipes' || activeTab === 'my-presets') return [];
+    return allPresets.filter((p) => {
       if (p.family !== activeTab) return false;
       if (!search) return true;
       const q = search.toLowerCase();
@@ -61,7 +85,18 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
         p.description?.toLowerCase().includes(q) ||
         p.tags.some((t) => t.includes(q));
     });
-  }, [activeTab, search]);
+  }, [activeTab, search, allPresets]);
+
+  const filteredUserPresets = useMemo(() => {
+    if (activeTab !== 'my-presets') return [];
+    if (!search) return userPresets;
+    const q = search.toLowerCase();
+    return userPresets.filter((p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q) ||
+      p.tags.some((t) => t.includes(q)),
+    );
+  }, [activeTab, search, userPresets]);
 
   const filteredRecipes = useMemo(() => {
     if (activeTab !== 'recipes') return [];
@@ -74,79 +109,160 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
     );
   }, [activeTab, search]);
 
+  const handleDelete = useCallback(async (preset: Preset) => {
+    // Find the DB record to get the UUID
+    const record = userRecords.find((r: any) => r.presetId === preset.id);
+    if (!record) return;
+    await deleteUserPreset(record.id, preset.id, mutate);
+  }, [userRecords, mutate]);
+
   return (
-    <div className="border border-border rounded-md overflow-hidden">
-      <div className="px-3 py-2 bg-bg-tertiary border-b border-border">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-text-primary">Presets</span>
+    <>
+      <div className="border border-border rounded-md overflow-hidden">
+        <div className="px-3 py-2 bg-bg-tertiary border-b border-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-text-primary">Presets</span>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="text-[10px] px-2 py-0.5 rounded border border-accent-blue/30 text-accent-blue hover:bg-accent-blue/10 transition-colors"
+            >
+              + Create
+            </button>
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search presets..."
+            className="w-full bg-bg-primary text-text-primary border border-border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-accent-blue outline-none"
+          />
         </div>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search presets..."
-          className="w-full bg-bg-primary text-text-primary border border-border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-accent-blue outline-none"
-        />
+
+        {/* Tabs */}
+        <div className="flex border-b border-border overflow-x-auto">
+          {tabs.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setActiveTab(value)}
+              className={cn(
+                'px-3 py-1.5 text-xs whitespace-nowrap transition-colors',
+                activeTab === value
+                  ? 'text-accent-blue border-b-2 border-accent-blue'
+                  : 'text-text-tertiary hover:text-text-secondary',
+              )}
+            >
+              {label}
+              {value === 'my-presets' && userPresets.length > 0 && (
+                <span className="ml-1 text-[10px] text-text-tertiary">({userPresets.length})</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="p-2 max-h-64 overflow-y-auto space-y-1.5">
+          {activeTab === 'recipes' ? (
+            filteredRecipes.length === 0 ? (
+              <p className="text-xs text-text-tertiary text-center py-4">No recipes found</p>
+            ) : (
+              filteredRecipes.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} onApply={onApplyRecipe} />
+              ))
+            )
+          ) : activeTab === 'my-presets' ? (
+            filteredUserPresets.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-xs text-text-tertiary mb-2">No custom presets yet</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="text-xs text-accent-blue hover:text-accent-blue/80 transition-colors"
+                >
+                  Create your first preset
+                </button>
+              </div>
+            ) : (
+              filteredUserPresets.map((preset) => (
+                <PresetCard
+                  key={preset.id}
+                  preset={preset}
+                  onApply={onApplyPreset}
+                  isCustom
+                  onDelete={() => handleDelete(preset)}
+                />
+              ))
+            )
+          ) : (
+            filteredPresets.length === 0 ? (
+              <p className="text-xs text-text-tertiary text-center py-4">No presets found</p>
+            ) : (
+              filteredPresets.map((preset) => (
+                <PresetCard
+                  key={preset.id}
+                  preset={preset}
+                  onApply={onApplyPreset}
+                  isCustom={userPresetIds.has(preset.id)}
+                  onDelete={userPresetIds.has(preset.id) ? () => handleDelete(preset) : undefined}
+                />
+              ))
+            )
+          )}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border overflow-x-auto">
-        {tabs.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setActiveTab(value)}
-            className={cn(
-              'px-3 py-1.5 text-xs whitespace-nowrap transition-colors',
-              activeTab === value
-                ? 'text-accent-blue border-b-2 border-accent-blue'
-                : 'text-text-tertiary hover:text-text-secondary',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
-      <div className="p-2 max-h-64 overflow-y-auto space-y-1.5">
-        {activeTab === 'recipes' ? (
-          filteredRecipes.length === 0 ? (
-            <p className="text-xs text-text-tertiary text-center py-4">No recipes found</p>
-          ) : (
-            filteredRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} onApply={onApplyRecipe} />
-            ))
-          )
-        ) : (
-          filteredPresets.length === 0 ? (
-            <p className="text-xs text-text-tertiary text-center py-4">No presets found</p>
-          ) : (
-            filteredPresets.map((preset) => (
-              <PresetCard key={preset.id} preset={preset} onApply={onApplyPreset} />
-            ))
-          )
-        )}
-      </div>
-    </div>
+      <CreatePresetModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSaved={() => mutate()}
+      />
+    </>
   );
 }
 
-function PresetCard({ preset, onApply }: { preset: Preset; onApply: (overrides: Record<string, unknown>) => void }) {
+function PresetCard({
+  preset,
+  onApply,
+  isCustom,
+  onDelete,
+}: {
+  preset: Preset;
+  onApply: (overrides: Record<string, unknown>) => void;
+  isCustom?: boolean;
+  onDelete?: () => void;
+}) {
   return (
-    <button
-      onClick={() => onApply(preset.overrides)}
-      className="w-full text-left p-2 rounded border border-border hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-colors"
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-medium text-text-primary">{preset.name}</span>
-        <span className={cn('text-[10px] px-1.5 py-0.5 rounded border', FAMILY_COLORS[preset.family])}>
-          {FAMILY_LABELS[preset.family]}
-        </span>
-      </div>
-      {preset.description && (
-        <p className="text-[11px] text-text-tertiary">{preset.description}</p>
+    <div className="relative group">
+      <button
+        onClick={() => onApply(preset.overrides)}
+        className="w-full text-left p-2 rounded border border-border hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-colors"
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xs font-medium text-text-primary">{preset.name}</span>
+          <span className={cn('text-[10px] px-1.5 py-0.5 rounded border', FAMILY_COLORS[preset.family])}>
+            {FAMILY_LABELS[preset.family]}
+          </span>
+          {isCustom && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-accent-blue/15 border-accent-blue/30 text-accent-blue">
+              Custom
+            </span>
+          )}
+        </div>
+        {preset.description && (
+          <p className="text-[11px] text-text-tertiary">{preset.description}</p>
+        )}
+      </button>
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-red-400 transition-all text-xs leading-none p-0.5"
+          title="Delete preset"
+        >
+          &times;
+        </button>
       )}
-    </button>
+    </div>
   );
 }
 

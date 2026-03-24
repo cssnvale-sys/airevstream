@@ -24,6 +24,7 @@ import { ComplexityToggle } from '@/components/ui/complexity-toggle';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 import { estimatePipelineCost, formatCost } from '@airevstream/shared';
+import { SimpleCreateWizard } from '@/components/cinema/simple-create-wizard';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1259,30 +1260,36 @@ export default function CreatePage() {
         <ComplexityToggle />
       </div>
 
-      {renderStepIndicator()}
+      {mode === 'simple' ? (
+        <SimpleCreateWizard />
+      ) : (
+        <>
+          {renderStepIndicator()}
 
-      {renderCurrentStep()}
+          {renderCurrentStep()}
 
-      {/* Navigation buttons */}
-      {currentStep < 6 && (
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-          <button
-            onClick={goBack}
-            disabled={currentStep === 1}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <ChevronLeft size={16} />
-            Back
-          </button>
-          <button
-            onClick={handleNext}
-            disabled={!canGoNext() || generating}
-            className="btn-primary flex items-center gap-2"
-          >
-            Next
-            <ChevronRight size={16} />
-          </button>
-        </div>
+          {/* Navigation buttons */}
+          {currentStep < 6 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
+              <button
+                onClick={goBack}
+                disabled={currentStep === 1}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft size={16} />
+                Back
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={!canGoNext() || generating}
+                className="btn-primary flex items-center gap-2"
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </AppLayout>
   );

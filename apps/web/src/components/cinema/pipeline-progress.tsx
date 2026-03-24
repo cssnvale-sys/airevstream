@@ -1,6 +1,7 @@
 'use client';
 
 import { useApi } from '@/hooks/use-api';
+import { PIPELINE_SIMPLE_LABELS } from '@airevstream/shared';
 
 interface PipelineStep {
   name: string;
@@ -12,6 +13,7 @@ interface PipelineStep {
 
 interface PipelineProgressProps {
   contentId: string;
+  simplifiedLabels?: boolean;
 }
 
 const PIPELINE_STEPS = [
@@ -26,7 +28,7 @@ const STATUS_ICONS: Record<string, string> = {
   pending: '\u23F3',
 };
 
-export function PipelineProgress({ contentId }: PipelineProgressProps) {
+export function PipelineProgress({ contentId, simplifiedLabels }: PipelineProgressProps) {
   // Poll for pipeline status
   const { data } = useApi<{ steps: PipelineStep[] }>(`/content/${contentId}/pipeline-status`, {
     refreshInterval: 3000,
@@ -61,7 +63,7 @@ export function PipelineProgress({ contentId }: PipelineProgressProps) {
               {STATUS_ICONS[step.status] ?? STATUS_ICONS.pending}
             </span>
             <span className={`flex-1 ${step.status === 'running' ? 'text-text-primary' : 'text-text-secondary'}`}>
-              {step.name}
+              {simplifiedLabels ? (PIPELINE_SIMPLE_LABELS[step.name] ?? step.name) : step.name}
             </span>
             {step.status === 'complete' && step.durationMs !== undefined && (
               <span className="text-xs text-text-tertiary">

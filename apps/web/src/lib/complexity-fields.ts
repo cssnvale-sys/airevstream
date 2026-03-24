@@ -78,6 +78,7 @@ export const FIELD_VISIBILITY = {
   // Create wizard
   create: {
     affiliate: 'advanced' as ComplexityMode,
+    qualityTier: 'advanced' as ComplexityMode,
   },
 
   // Cost preview panel

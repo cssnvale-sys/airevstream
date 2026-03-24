@@ -478,6 +478,17 @@ export const STORY_PRESETS: Preset[] = [
       _directives: { narrativeStructure: 'hook-loop', pacing: 'frenetic' } satisfies ProductionDirectives,
     },
   },
+  {
+    id: 'story.montage.v1',
+    name: 'Montage',
+    family: 'story',
+    description: 'Rapid visual montage with no linear narrative',
+    tags: ['montage', 'visual', 'aesthetic'],
+    builtIn: true,
+    overrides: {
+      _directives: { narrativeStructure: 'montage', pacing: 'moderate' } satisfies ProductionDirectives,
+    },
+  },
 ];
 
 // ─── Dialogue Presets ───
@@ -794,7 +805,7 @@ export const MASTER_BUNDLES: Recipe[] = [
       'visual.golden-hour.v1',
       'camera.orbit-reveal.v1',
       'audio.ambient-narration.v1',
-      'story.hook-loop.v1',
+      'story.montage.v1',
       'character.no-dialogue.v1',
       'output.reels-portrait.v1',
     ],

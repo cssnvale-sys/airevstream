@@ -26,8 +26,8 @@ describe('extended presets', () => {
     }
   });
 
-  it('should have 3 story presets', () => {
-    expect(STORY_PRESETS).toHaveLength(3);
+  it('should have 4 story presets', () => {
+    expect(STORY_PRESETS).toHaveLength(4);
     for (const p of STORY_PRESETS) {
       expect(p.family).toBe('story');
     }
@@ -90,8 +90,8 @@ describe('extended presets', () => {
     }
   });
 
-  it('should have 41 total built-in presets', () => {
-    expect(ALL_BUILT_IN_PRESETS).toHaveLength(41);
+  it('should have 42 total built-in presets', () => {
+    expect(ALL_BUILT_IN_PRESETS).toHaveLength(42);
   });
 
   it('should have 15 total built-in recipes', () => {

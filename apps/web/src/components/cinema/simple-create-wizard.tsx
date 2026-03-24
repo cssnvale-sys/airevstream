@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useChannels, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
-import { SIMPLE_MODE_GUARDRAILS, VISUAL_PRESETS, ALL_BUILT_IN_PRESETS } from '@airevstream/shared';
+import { SIMPLE_MODE_GUARDRAILS } from '@airevstream/shared';
 import type { ProductionDirectives, Recipe } from '@airevstream/shared';
 import { IntakeScreen } from './intake-screen';
 import type { IntakeResult } from './intake-screen';
@@ -156,6 +156,12 @@ export function SimpleCreateWizard() {
   };
 
   const goBack = () => {
+    if (step === 2) {
+      // Reset recipe selection so IntakeScreen controls the flow again
+      setForm((prev) => ({ ...prev, recipeId: '', category: '', directives: {} }));
+      setSelectedRecipe(null);
+      setPlanSummary(null);
+    }
     if (step > 1) setStep((s) => s - 1);
   };
 

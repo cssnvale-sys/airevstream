@@ -10,7 +10,7 @@ const CreateAccountSchema = z.object({
   password: z.string().min(1).max(256),
   tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
   notes: z.string().max(1000).optional().nullable(),
-}).strict();
+});
 
 /**
  * GET /api/v1/accounts

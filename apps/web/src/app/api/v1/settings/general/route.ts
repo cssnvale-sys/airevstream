@@ -7,7 +7,7 @@ const GeneralSettingsSchema = z.object({
   systemName: z.string().min(1).max(100).optional(),
   timezone: z.string().min(1).max(100).optional(),
   defaultLanguage: z.string().min(2).max(10).optional(),
-}).strict();
+});
 
 const SETTING_KEY = 'general';
 const DEFAULTS = {

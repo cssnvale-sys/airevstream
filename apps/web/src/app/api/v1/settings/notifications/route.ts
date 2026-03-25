@@ -7,11 +7,11 @@ const NotificationChannelSchema = z.object({
   type: z.enum(['dashboard', 'email', 'slack']),
   enabled: z.boolean(),
   config: z.record(z.unknown()).optional(),
-}).strict();
+});
 
 const NotificationSettingsSchema = z.union([
   z.array(NotificationChannelSchema),
-  z.object({ channels: z.array(NotificationChannelSchema) }).strict(),
+  z.object({ channels: z.array(NotificationChannelSchema) }),
 ]);
 
 const SETTING_KEY = 'notifications';

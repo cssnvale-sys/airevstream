@@ -8,7 +8,7 @@ const FallbackChainSchema = z.object({
     serviceId: z.string().uuid(),
     priority: z.number().int().min(0),
   })).min(1).max(50),
-}).strict();
+});
 
 export async function GET(req: NextRequest) {
   try {

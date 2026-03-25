@@ -13,7 +13,7 @@ const updateEntrySchema = z.object({
   sourceUrl: z.string().url().optional().nullable(),
   relevanceScore: z.number().min(0).max(10).optional().nullable(),
   isCurrent: z.boolean().optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/knowledge-base/[id]

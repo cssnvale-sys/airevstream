@@ -19,7 +19,7 @@ const updatePresetSchema = z.object({
   overrides: z.record(z.unknown()).optional(),
   tier: z.enum(['simple', 'advanced', 'complex']).optional().nullable(),
   ranges: z.record(z.object({ min: z.number(), max: z.number() })).optional().nullable(),
-}).strict();
+});
 
 /**
  * GET /api/v1/presets/[id]

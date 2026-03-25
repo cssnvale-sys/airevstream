@@ -18,7 +18,7 @@ const CreateAiServiceSchema = z.object({
   fallbackOrder: z.number().int().min(0).optional(),
   isLocal: z.boolean().optional(),
   isFree: z.boolean().optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/ai-services
@@ -38,9 +38,9 @@ export async function GET(req: NextRequest) {
     const serviceType = params.get('serviceType') ?? undefined;
     const status = params.get('status') ?? undefined;
 
-    const validProviders = ['ollama', 'openai', 'comfyui', 'piper', 'elevenlabs', 'http'];
+    const validProviders = ['ollama', 'openai', 'anthropic', 'google', 'comfyui', 'piper', 'elevenlabs', 'http'];
     const validServiceTypes = ['text', 'image', 'video', 'voice'];
-    const validStatuses = ['active', 'inactive', 'disabled', 'error'];
+    const validStatuses = ['active', 'degraded', 'down', 'disabled'];
 
     const where: Record<string, unknown> = {};
     if (provider && validProviders.includes(provider)) where.provider = provider;

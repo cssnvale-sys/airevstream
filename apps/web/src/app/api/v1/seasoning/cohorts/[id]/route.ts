@@ -8,7 +8,7 @@ const UpdateCohortSchema = z.object({
   status: z.enum(['pending', 'enrolling', 'active', 'paused', 'completed']).optional(),
   scheduleConfig: z.record(z.unknown()).optional(),
   proxyConfig: z.record(z.unknown()).optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/seasoning/cohorts/[id]

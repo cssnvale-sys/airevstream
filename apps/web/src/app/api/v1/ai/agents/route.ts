@@ -45,7 +45,7 @@ const RunAgentSchema = z.object({
   role: z.enum(['director', 'lookdev', 'shotspec', 'render', 'dialogue', 'sound', 'finishing'] as [AgentRole, ...AgentRole[]]).optional(),
   input: z.record(z.unknown()),
   contentId: z.string().max(100).optional(),
-}).strict();
+});
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

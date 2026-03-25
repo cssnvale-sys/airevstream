@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const BulkDeleteSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(100),
-}).strict();
+});
 
 /**
  * POST /api/v1/accounts/bulk-delete

@@ -16,7 +16,7 @@ const createStorefrontSchema = z.object({
   bannerUrl: z.string().url().nullish(),
   theme: z.record(z.unknown()).optional().default({}),
   customDomain: z.string().max(255).nullish(),
-}).strict();
+});
 
 /**
  * GET /api/v1/affiliate/storefronts

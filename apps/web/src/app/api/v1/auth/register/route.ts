@@ -10,7 +10,7 @@ const RegisterSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters').max(256),
   name: z.string().max(200).optional().nullable(),
-}).strict();
+});
 
 export async function POST(req: NextRequest) {
   try {

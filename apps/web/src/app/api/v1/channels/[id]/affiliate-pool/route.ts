@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 const AddToPoolSchema = z.object({
   affiliateProductId: z.string().uuid('affiliateProductId must be a valid UUID'),
-}).strict();
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 

@@ -11,7 +11,7 @@ const EnrollSchema = z.object({
     min: z.number().min(0).max(60),
     max: z.number().min(0).max(120),
   }).optional(),
-}).strict();
+});
 
 /**
  * POST /api/v1/seasoning/cohorts/[id]/enroll

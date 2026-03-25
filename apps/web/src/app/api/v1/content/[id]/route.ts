@@ -13,7 +13,7 @@ const UpdateContentSchema = z.object({
   ]).optional(),
   prompt: z.string().max(10000).optional(),
   platformMetadata: z.record(z.unknown()).optional(),
-}).strict();
+});
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {

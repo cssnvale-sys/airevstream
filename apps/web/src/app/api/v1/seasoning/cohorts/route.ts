@@ -8,7 +8,7 @@ const CreateCohortSchema = z.object({
   platforms: z.array(z.enum(['youtube', 'tiktok', 'instagram', 'facebook'])).min(1),
   scheduleConfig: z.record(z.unknown()).optional(),
   proxyConfig: z.record(z.unknown()).optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/seasoning/cohorts

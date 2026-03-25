@@ -13,10 +13,11 @@ import path from 'path';
 // Constants
 // ──────────────────────────────────────────────────────────
 
-const WEB_ROOT = path.resolve(__dirname, '../../..');
+export const WEB_ROOT = path.resolve(__dirname, '../../..');
 const API_ROOT = path.join(WEB_ROOT, 'src/app/api/v1');
 const AUTH_PAGES_ROOT = path.join(WEB_ROOT, 'src/app/auth');
 const SCHEMA_PATH = path.resolve(WEB_ROOT, '../../packages/db/prisma/schema.prisma');
+const MONOREPO_ROOT = path.resolve(WEB_ROOT, '../..');
 
 // ──────────────────────────────────────────────────────────
 // Allowlists — routes that legitimately deviate from the rule
@@ -122,6 +123,15 @@ export type HandlerInfo = {
   startLine: number;        // Line number where the handler starts
 };
 
+export type SourceFile = {
+  /** Absolute path */
+  path: string;
+  /** Relative path from WEB_ROOT/src or monorepo root */
+  relativePath: string;
+  /** File content as string */
+  content: string;
+};
+
 // ──────────────────────────────────────────────────────────
 // File Discovery
 // ──────────────────────────────────────────────────────────
@@ -148,6 +158,51 @@ export function findApiRouteFiles(): RouteFile[] {
     relativePath: path.relative(API_ROOT, filePath),
     content: fs.readFileSync(filePath, 'utf-8'),
   }));
+}
+
+/** Find frontend source files that use API mutation helpers (pages, components, hooks) */
+export function findFrontendSourceFiles(): SourceFile[] {
+  const dirs = [
+    path.join(WEB_ROOT, 'src/app'),
+    path.join(WEB_ROOT, 'src/components'),
+    path.join(WEB_ROOT, 'src/hooks'),
+  ];
+  const files: SourceFile[] = [];
+  for (const dir of dirs) {
+    for (const f of walkDir(dir, /\.(ts|tsx)$/)) {
+      // Skip test files and API routes (they don't use apiPost)
+      if (f.includes('__tests__') || f.includes('/api/')) continue;
+      files.push({
+        path: f,
+        relativePath: path.relative(WEB_ROOT, f),
+        content: fs.readFileSync(f, 'utf-8'),
+      });
+    }
+  }
+  return files;
+}
+
+/** Find all production source files across the monorepo */
+export function findProductionSourceFiles(): SourceFile[] {
+  const dirs = [
+    path.join(MONOREPO_ROOT, 'apps/web/src'),
+    path.join(MONOREPO_ROOT, 'packages'),
+    path.join(MONOREPO_ROOT, 'services'),
+    path.join(MONOREPO_ROOT, 'workers'),
+    path.join(MONOREPO_ROOT, 'remotion/src'),
+  ];
+  const files: SourceFile[] = [];
+  for (const dir of dirs) {
+    for (const f of walkDir(dir, /\.(ts|tsx)$/)) {
+      if (f.includes('__tests__') || f.includes('.test.') || f.includes('seed.ts') || f.includes('node_modules')) continue;
+      files.push({
+        path: f,
+        relativePath: path.relative(MONOREPO_ROOT, f),
+        content: fs.readFileSync(f, 'utf-8'),
+      });
+    }
+  }
+  return files;
 }
 
 /** Check if a route file's relative path matches an allowlist entry */
@@ -469,4 +524,77 @@ export function usesGetDb(content: string): boolean {
 export function modelToAccessor(modelName: string): string {
   // Prisma client uses camelCase: ContentItem → contentItem
   return modelName[0].toLowerCase() + modelName.slice(1);
+}
+
+// ──────────────────────────────────────────────────────────
+// Status Enum Extraction
+// ──────────────────────────────────────────────────────────
+
+export type StatusEnum = {
+  model: string;
+  field: string;
+  values: string[];
+};
+
+/**
+ * Extract status enum definitions from Prisma schema comments.
+ * Looks for fields with inline comments like: `status String @default("draft") // draft|running|completed`
+ * or `status String @default("active") // active, suspended, cancelled`
+ */
+export function extractStatusEnums(schemaContent: string): StatusEnum[] {
+  const enums: StatusEnum[] = [];
+  const modelRe = /^model\s+(\w+)\s*\{/gm;
+  let modelMatch: RegExpExecArray | null;
+
+  while ((modelMatch = modelRe.exec(schemaContent)) !== null) {
+    const modelName = modelMatch[1];
+    const modelStart = schemaContent.indexOf('{', modelMatch.index);
+    const modelBody = extractBraceBlock(schemaContent, modelStart);
+    if (!modelBody) continue;
+
+    // Match fields with status-like comments: fieldName String ... // value1|value2 or value1, value2
+    const fieldRe = /^\s+(\w+)\s+String\b[^/\n]*\/\/\s*(.+)$/gm;
+    let fieldMatch: RegExpExecArray | null;
+
+    while ((fieldMatch = fieldRe.exec(modelBody)) !== null) {
+      const fieldName = fieldMatch[1];
+      const comment = fieldMatch[2].trim();
+
+      // Parse pipe-separated or comma-separated values
+      let values: string[];
+      if (comment.includes('|')) {
+        values = comment.split('|').map((v) => v.trim()).filter(Boolean);
+      } else if (comment.includes(',')) {
+        values = comment.split(',').map((v) => v.trim()).filter(Boolean);
+      } else {
+        continue; // Not a multi-value enum comment
+      }
+
+      // Filter out values that contain spaces (not valid status identifiers)
+      values = values.filter((v) => /^[\w.-]+$/.test(v));
+
+      // Only include if we got 3+ values (real enum, not a description)
+      if (values.length < 3) continue;
+
+      // Expand range notation like phase_1..4
+      const expanded: string[] = [];
+      for (const v of values) {
+        const rangeMatch = v.match(/^(\w+?)(\d+)\.\.(\d+)$/);
+        if (rangeMatch) {
+          const prefix = rangeMatch[1];
+          const start = Number(rangeMatch[2]);
+          const end = Number(rangeMatch[3]);
+          for (let i = start; i <= end; i++) {
+            expanded.push(`${prefix}${i}`);
+          }
+        } else {
+          expanded.push(v);
+        }
+      }
+
+      enums.push({ model: modelName, field: fieldName, values: expanded });
+    }
+  }
+
+  return enums;
 }

@@ -14,7 +14,7 @@ const RepairShotSchema = z.object({
   lightingRefKey: z.string().max(500).optional(),
   repairPrompt: z.string().max(2000).optional(),
   denoise: z.number().min(0).max(1).optional(),
-}).strict();
+});
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

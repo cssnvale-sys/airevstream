@@ -10,7 +10,7 @@ const CreateCinemaBibleSchema = z.object({
   environmentBible: z.record(z.unknown()).optional().default({}),
   promptBible: z.record(z.unknown()).optional().default({}),
   shotspecTemplate: z.record(z.unknown()).optional().default({}),
-}).strict();
+});
 
 /**
  * GET /api/v1/cinema-bible
@@ -19,6 +19,9 @@ const CreateCinemaBibleSchema = z.object({
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  // Unconditional tenant guard (D076)
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const bibles = await ctx.db.cinemaBible.findMany({

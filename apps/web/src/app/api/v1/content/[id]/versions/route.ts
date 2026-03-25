@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -8,13 +8,15 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    if (!ctx.tenantId) return forbidden('No tenant context');
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true, parentId: true },
     });
@@ -45,7 +47,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           { id: rootId },
           { parentId: rootId },
         ],
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: {
         id: true,

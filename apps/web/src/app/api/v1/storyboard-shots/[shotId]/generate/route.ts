@@ -23,6 +23,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return error('RATE_LIMITED', 'Too many generation requests. Please try again later.', 429);
   }
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const { shotId } = await params;
     if (!isUUID(shotId)) return validationError('Invalid shot ID format');
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         id: shotId,
         storyboard: {
           content: {
-            ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+            channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
           },
         },
       },

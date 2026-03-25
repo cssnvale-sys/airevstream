@@ -12,12 +12,15 @@ const EngagementSchema = z.object({
   shares: z.number().int().min(0).optional(),
   watchTimeMinutes: z.number().min(0).optional(),
   clickThroughRate: z.number().min(0).max(100).optional(),
-}).strict();
+});
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await authenticateAny(req, 'read');
     if (ctx instanceof NextResponse) return ctx;
+
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid content ID format');
@@ -67,6 +70,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (ctx.role === 'viewer') {
       return forbidden('Viewers cannot update engagement data');
     }
+
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const ip = getClientIp(req);
     const rl = checkRateLimit(`engagement:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

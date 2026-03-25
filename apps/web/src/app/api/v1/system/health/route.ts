@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Parallel: fetch all metrics, service statuses, alerts, jobs, and posts at once
-    const metricTypes = ['cpu', 'ram', 'disk', 'queue_depth'];
+    const metricTypes = ['cpu', 'ram', 'disk', 'network', 'queue_depth', 'sessions'];
 
     // Pre-fetch tenant channel + account IDs for scoping WorkflowJob and ScheduledPost
     const [tenantChannels, tenantAccounts] = await Promise.all([

@@ -6,7 +6,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const RescheduleSchema = z.object({
   scheduledAt: z.string().datetime({ message: 'scheduledAt must be a valid ISO date' }).optional(),
   publishConfig: z.record(z.unknown()).optional(),
-}).strict().refine(d => d.scheduledAt !== undefined || d.publishConfig !== undefined, {
+}).refine(d => d.scheduledAt !== undefined || d.publishConfig !== undefined, {
   message: 'At least one of scheduledAt or publishConfig must be provided',
 });
 
@@ -47,6 +47,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     if (existing.status === 'posted') {
       return validationError('Cannot reschedule an already posted item');
+    }
+    if (existing.status === 'posting') {
+      return validationError('Cannot reschedule a post that is currently being published');
     }
 
     const body = await req.json();
@@ -126,6 +129,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     if (existing.status === 'posted') {
       return validationError('Cannot delete an already posted item');
+    }
+    if (existing.status === 'posting') {
+      return validationError('Cannot delete a post that is currently being published');
     }
 
     await ctx.db.scheduledPost.delete({ where: { id } });

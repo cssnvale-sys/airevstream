@@ -6,7 +6,7 @@ import { z } from 'zod';
 const UpdateEnrollmentSchema = z.object({
   status: z.enum(['paused', 'phase_1', 'phase_2', 'phase_3', 'phase_4', 'failed']).optional(),
   failureReason: z.string().max(500).optional().nullable(),
-}).strict();
+});
 
 /**
  * GET /api/v1/seasoning/enrollments/[id]

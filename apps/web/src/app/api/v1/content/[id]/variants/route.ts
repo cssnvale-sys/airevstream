@@ -7,7 +7,7 @@ const CreateVariantSchema = z.object({
   title: z.string().max(500).optional(),
   prompt: z.string().max(50000).optional(),
   modifications: z.record(z.unknown()).optional(),
-}).strict();
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -17,6 +17,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    if (!ctx.tenantId) return forbidden('No tenant context');
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
@@ -24,7 +26,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const contentItem = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true, parentId: true, version: true },
     });
@@ -39,7 +41,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const variants = await ctx.db.contentItem.findMany({
       where: {
         OR: [{ id: rootId }, { parentId: rootId }],
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: {
         id: true,
@@ -86,6 +88,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return forbidden('Viewers cannot perform this action');
     }
 
+    if (!ctx.tenantId) return forbidden('No tenant context');
+
     const ip = getClientIp(req);
     const rl = checkRateLimit(`content/variants:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
@@ -104,7 +108,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const source = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
     });
 
@@ -118,7 +122,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const maxVersion = await ctx.db.contentItem.aggregate({
       where: {
         OR: [{ id: rootId }, { parentId: rootId }],
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       _max: { version: true },
     });

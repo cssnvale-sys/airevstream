@@ -7,7 +7,7 @@ const RetentionSchema = z.object({
   retentionDays: z.number().int().refine((v) => [30, 60, 90, 180].includes(v), {
     message: 'Retention days must be 30, 60, 90, or 180',
   }),
-}).strict();
+});
 
 const SETTING_KEY = 'data_retention_days';
 const DEFAULT_RETENTION = { retentionDays: 90 };

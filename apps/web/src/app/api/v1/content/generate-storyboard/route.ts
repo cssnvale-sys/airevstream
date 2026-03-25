@@ -8,7 +8,7 @@ const GenerateStoryboardSchema = z.object({
   channelId: z.string().uuid().optional().nullable(),
   contentType: z.string().max(50).optional().nullable(),
   duration: z.number().int().positive().optional().nullable(),
-}).strict();
+});
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

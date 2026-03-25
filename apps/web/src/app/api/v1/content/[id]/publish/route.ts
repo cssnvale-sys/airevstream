@@ -21,10 +21,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
 
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true, status: true, channelId: true },
     });

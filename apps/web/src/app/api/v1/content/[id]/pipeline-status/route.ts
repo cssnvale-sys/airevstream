@@ -26,13 +26,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid content ID format');
 
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: {
         id: true,
@@ -129,8 +132,14 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         case 'Audio Mix': {
           const hasAudio = (metadata?.audioUrl as string) != null ||
             (metadata?.audioMixed as boolean) === true;
+          const audioDoneByStatus = contentStatus === 'generated' ||
+            contentStatus === 'pending_approval' ||
+            contentStatus === 'approved' ||
+            contentStatus === 'scheduled' ||
+            contentStatus === 'posted' ||
+            contentStatus === 'archived';
           const qcDone = shots.length > 0 && shots.every((s) => s.qualityScore != null);
-          if (hasAudio) {
+          if (hasAudio || audioDoneByStatus) {
             step.status = 'complete';
           } else if (qcDone) {
             step.status = contentStatus === 'generating' ? 'running' : 'pending';
@@ -141,7 +150,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           const hasVideo = shots.some((s) => s.plateVideoUrl != null);
           const renderDone = contentStatus === 'generated' ||
             contentStatus === 'pending_approval' ||
-            contentStatus === 'approved';
+            contentStatus === 'approved' ||
+            contentStatus === 'scheduled' ||
+            contentStatus === 'posted' ||
+            contentStatus === 'archived';
           if (renderDone) {
             step.status = 'complete';
           } else if (hasVideo || contentStatus === 'generating') {
@@ -150,7 +162,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           break;
         }
         case 'Final Review': {
-          if (contentStatus === 'approved') {
+          if (contentStatus === 'approved' ||
+            contentStatus === 'scheduled' ||
+            contentStatus === 'posted' ||
+            contentStatus === 'archived') {
             step.status = 'complete';
           } else if (contentStatus === 'pending_approval' || contentStatus === 'generated') {
             step.status = 'complete';

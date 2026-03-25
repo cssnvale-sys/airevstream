@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const { page, limit, skip, params } = parseQuery(req);
     const status = params.get('status') ?? undefined;
 
-    const validStatuses = ['open', 'acknowledged', 'resolved'];
+    const validStatuses = ['open', 'acknowledged', 'resolved', 'suppressed'];
 
     const where: Record<string, unknown> = {
       OR: [{ tenantId: ctx.tenantId }, { tenantId: null }],

@@ -7,7 +7,7 @@ import { PRESET_GENERATION_SYSTEM_PROMPT, validateAndNormalizeAiPreset } from '@
 
 const GeneratePresetSchema = z.object({
   description: z.string().min(3).max(500),
-}).strict();
+});
 
 /**
  * POST /api/v1/presets/generate

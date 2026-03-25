@@ -25,6 +25,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  if (!ctx.tenantId) {
+    return error('FORBIDDEN', 'No tenant context', 403);
+  }
+
   try {
     // Verify tenant ownership through content or account chain
     const tenantAccountIds = await ctx.db.emailAccount.findMany({

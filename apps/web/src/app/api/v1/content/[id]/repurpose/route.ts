@@ -9,7 +9,7 @@ const RepurposeSchema = z.object({
   targetFormat: z.enum(['short', 'reel', 'story']),
   targetPlatforms: z.array(z.string().min(1)).min(1).max(10),
   targetDuration: z.number().min(5).max(300).optional(),
-}).strict();
+});
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
@@ -19,6 +19,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (ctx.role === 'viewer') {
       return forbidden('Viewers cannot repurpose content');
     }
+
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const ip = getClientIp(req);
     const rl = checkRateLimit(`repurpose:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

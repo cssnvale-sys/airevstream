@@ -13,7 +13,7 @@ const createPromptSchema = z.object({
   negativePrompt: z.string().max(10000).optional().nullable(),
   tags: z.array(z.string()).optional().default([]),
   metadata: z.record(z.unknown()).optional().default({}),
-}).strict();
+});
 
 /**
  * GET /api/v1/prompts

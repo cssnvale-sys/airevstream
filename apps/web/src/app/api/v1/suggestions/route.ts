@@ -79,29 +79,27 @@ export async function POST(req: NextRequest) {
 
     const { contentId, channelId, suggestions, viralScoreBefore } = parsed.data;
 
-    const created = await ctx.db.suggestionLog.createMany({
-      data: suggestions.map((s) => ({
-        tenantId: ctx.tenantId!,
-        contentId: contentId ?? null,
-        channelId: channelId ?? null,
-        presetId: s.presetId,
-        dimension: s.dimension,
-        reason: s.reason,
-        expectedImprovement: s.expectedImprovement,
-        outcome: 'shown',
-        viralScoreBefore: viralScoreBefore ?? null,
-      })),
-    });
+    // Use individual creates inside a transaction to get back IDs reliably
+    const logs = await ctx.db.$transaction(
+      suggestions.map((s) =>
+        ctx.db.suggestionLog.create({
+          data: {
+            tenantId: ctx.tenantId!,
+            contentId: contentId ?? null,
+            channelId: channelId ?? null,
+            presetId: s.presetId,
+            dimension: s.dimension,
+            reason: s.reason,
+            expectedImprovement: s.expectedImprovement,
+            outcome: 'shown',
+            viralScoreBefore: viralScoreBefore ?? null,
+          },
+          select: { id: true, presetId: true },
+        }),
+      ),
+    );
 
-    // Also return the created IDs for tracking
-    const logs = await ctx.db.suggestionLog.findMany({
-      where: { tenantId: ctx.tenantId!, contentId: contentId ?? undefined },
-      orderBy: { createdAt: 'desc' },
-      take: suggestions.length,
-      select: { id: true, presetId: true },
-    });
-
-    return success({ count: created.count, logs });
+    return success({ count: logs.length, logs });
   } catch (err) {
     console.error('POST /api/v1/suggestions failed:', err);
     return error('INTERNAL_ERROR', 'Failed to log suggestions', 500);

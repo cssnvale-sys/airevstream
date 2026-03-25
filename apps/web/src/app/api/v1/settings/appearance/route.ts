@@ -6,7 +6,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const AppearanceSettingsSchema = z.object({
   theme: z.enum(['dark', 'light', 'system']).optional(),
   sidebarPosition: z.enum(['left', 'right']).optional(),
-}).strict();
+});
 
 const SETTING_KEY = 'appearance';
 const DEFAULTS = {

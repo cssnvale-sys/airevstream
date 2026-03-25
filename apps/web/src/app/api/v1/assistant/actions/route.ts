@@ -39,7 +39,7 @@ const actionRequestSchema = z.object({
   parameters: z.record(z.unknown()).default({}),
   conversationId: z.string().uuid().optional().nullable(),
   confirmed: z.boolean().default(false),
-}).strict();
+});
 
 // ---------------------------------------------------------------------------
 // Action executor map

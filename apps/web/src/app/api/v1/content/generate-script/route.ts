@@ -17,7 +17,7 @@ const GenerateScriptSchema = z.object({
   emotion: z.string().max(50).optional().nullable(),
   hasSpeaking: z.boolean().optional().nullable(),
   characterDescription: z.string().max(200).optional().nullable(),
-}).strict();
+});
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

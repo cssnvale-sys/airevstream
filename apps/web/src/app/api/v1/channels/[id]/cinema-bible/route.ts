@@ -9,7 +9,7 @@ const UpdateCinemaBibleSchema = z.object({
   environmentBible: z.record(z.unknown()).optional(),
   promptBible: z.record(z.unknown()).optional(),
   shotspecTemplate: z.record(z.unknown()).optional(),
-}).strict().refine(data => Object.values(data).some(v => v !== undefined), {
+}).refine(data => Object.values(data).some(v => v !== undefined), {
   message: 'At least one bible section must be provided',
 });
 
@@ -59,6 +59,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
@@ -69,8 +70,6 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
-
-  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     // Verify channel exists

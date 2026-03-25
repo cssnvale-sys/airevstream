@@ -20,7 +20,7 @@ const createPresetSchema = z.object({
   ranges: z.record(z.object({ min: z.number(), max: z.number() })).optional().nullable(),
   source: z.enum(['ai', 'manual']).default('ai'),
   aiPrompt: z.string().max(500).optional().nullable(),
-}).strict();
+});
 
 /**
  * GET /api/v1/presets

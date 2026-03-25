@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const category = params.get('category') ?? undefined;
 
     const validSeverities = ['info', 'warning', 'error', 'critical'];
-    const validStatuses = ['open', 'acknowledged', 'resolved'];
+    const validStatuses = ['open', 'acknowledged', 'resolved', 'suppressed'];
 
     const where: Record<string, unknown> = {};
     // Tenant scoping: show tenant-specific + system alerts (tenantId=null)

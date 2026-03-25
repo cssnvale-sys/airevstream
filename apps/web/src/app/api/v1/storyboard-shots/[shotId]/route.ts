@@ -8,17 +8,18 @@ type RouteParams = { params: Promise<{ shotId: string }> };
 const UpdateShotSchema = z.object({
   shotspec: z.record(z.unknown()).optional(),
   status: z.enum(['pending', 'generating', 'generated', 'approved', 'failed']).optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/storyboard-shots/[shotId]
  * Get a single storyboard shot by ID.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
-  try {
-    const ctx = await authenticate(req);
-    if (ctx instanceof NextResponse) return ctx;
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
+  try {
     const { shotId } = await params;
     if (!isUUID(shotId)) return validationError('Invalid shot ID format');
 
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         id: shotId,
         storyboard: {
           content: {
-            ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+            channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
           },
         },
       },
@@ -58,18 +59,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
  * Update a storyboard shot's properties (shotspec, status).
  */
 export async function PUT(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`storyboard-shots:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   try {
-    const ctx = await authenticate(req);
-    if (ctx instanceof NextResponse) return ctx;
-
-    if (ctx.role === 'viewer') {
-      return forbidden('Viewers cannot perform this action');
-    }
-
-    const ip = getClientIp(req);
-    const rl = checkRateLimit(`storyboard-shots:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
-    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
-
     const { shotId } = await params;
     if (!isUUID(shotId)) return validationError('Invalid shot ID format');
 
@@ -79,7 +81,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         id: shotId,
         storyboard: {
           content: {
-            ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+            channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
           },
         },
       },

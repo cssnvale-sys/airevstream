@@ -67,7 +67,7 @@ const SchedulePostSchema = z.object({
   platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']),
   socialAccountId: z.string().uuid().optional().nullable(),
   publishConfig: z.record(z.unknown()).optional().default({}),
-}).strict();
+});
 
 /**
  * POST /api/v1/schedule

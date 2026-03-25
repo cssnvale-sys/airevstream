@@ -13,7 +13,7 @@ const createTenantSchema = z.object({
     maxContentPerMonth: z.number().int().min(0).optional(),
     storageGb: z.number().min(0).optional(),
   }).optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/tenants

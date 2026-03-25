@@ -15,7 +15,7 @@ const UpdateChannelSchema = z.object({
   postingCadence: z.record(z.unknown()).optional(),
   status: z.enum(['active', 'paused', 'disabled', 'archived']).optional(),
   familyId: z.string().uuid().optional().nullable(),
-}).strict();
+});
 
 /**
  * GET /api/v1/channels/[id]
@@ -169,24 +169,15 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const channel = await ctx.db.channel.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        socialAccount: {
-          select: {
-            emailAccount: { select: { tenantId: true } },
-          },
-        },
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
       },
+      select: { id: true },
     });
 
     if (!channel) return notFound('Channel not found');
-
-    // Verify tenant ownership
-    if (channel.socialAccount.emailAccount.tenantId !== ctx.tenantId) {
-      return notFound('Channel not found');
-    }
 
     // Cascade delete: scheduled posts, affiliate pool entries, channel avatars,
     // branding packages, cinema bibles, then the channel itself

@@ -10,7 +10,7 @@ const CreateApiKeySchema = z.object({
   scopes: z.array(z.enum(['read', 'write', 'admin'])).optional(),
   rateLimitRpm: z.number().int().min(1).max(10000).optional(),
   expiresAt: z.string().datetime().optional().nullable(),
-}).strict();
+});
 
 export async function GET(req: NextRequest) {
   try {

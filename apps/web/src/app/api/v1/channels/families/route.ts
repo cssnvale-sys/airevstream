@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateFamilySchema = z.object({
   channelIds: z.array(z.string().uuid()).min(2, 'At least 2 channel IDs required').max(50),
-}).strict();
+});
 
 /**
  * GET /api/v1/channels/families

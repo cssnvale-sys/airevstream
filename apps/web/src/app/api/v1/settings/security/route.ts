@@ -9,7 +9,7 @@ const SecuritySettingsSchema = z.object({
   requireMfa: z.boolean().optional(),
   passwordMinLength: z.number().int().min(6).max(128).optional(),
   ipWhitelist: z.array(z.string()).optional(),
-}).strict();
+});
 
 const SETTING_KEY = 'security';
 const DEFAULTS = {

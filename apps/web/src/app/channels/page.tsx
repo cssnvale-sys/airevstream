@@ -14,13 +14,13 @@ interface ChannelRow {
   tone: string | null;
   status: string;
   primaryLanguage: string;
-  healthScore: number;
   createdAt: string;
   socialAccount: {
     id: string;
     platform: string;
     username: string;
     status: string;
+    healthScore: number | null;
   } | null;
   contentItemsCount: number;
   avatarsCount: number;

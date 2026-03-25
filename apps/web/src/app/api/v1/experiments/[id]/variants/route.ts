@@ -71,8 +71,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
     if (!experiment) return notFound('Experiment not found');
 
-    if (experiment.status === 'running') {
-      return error('VALIDATION_ERROR', 'Cannot add variants to a running experiment', 400);
+    if (experiment.status !== 'draft') {
+      return error('VALIDATION_ERROR', 'Can only add variants to draft experiments', 400);
     }
 
     const body = await req.json();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, notFound } from '@/lib/api-server';
+import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
 import { generateC2PAManifest } from '@airevstream/shared';
 import type { ProvenanceRecord } from '@airevstream/shared';
 
@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
     return validationError('contentId is required');
   }
 
+  if (!ctx.tenantId) return forbidden('No tenant context');
+
   try {
     const { contentId } = parsed.data;
 
@@ -25,9 +27,7 @@ export async function GET(req: NextRequest) {
     const content = await ctx.db.contentItem.findFirst({
       where: {
         id: contentId,
-        channel: ctx.tenantId
-          ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } }
-          : undefined,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: {
         id: true,

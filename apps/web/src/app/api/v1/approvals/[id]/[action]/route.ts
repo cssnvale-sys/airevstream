@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const RejectBodySchema = z.object({
   feedback: z.string().max(2000).optional(),
-}).strict();
+});
 
 type RouteParams = { params: Promise<{ id: string; action: string }> };
 
@@ -37,8 +37,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         if (parsed.success) {
           feedback = parsed.data.feedback;
         }
-      } catch {
-        // no body
+      } catch (parseErr) {
+        console.error('Failed to parse reject body:', parseErr);
       }
     }
 

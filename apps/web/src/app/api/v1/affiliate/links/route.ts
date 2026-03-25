@@ -7,7 +7,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const CreateLinkSchema = z.object({
   productId: z.string().uuid(),
   shortUrl: z.string().url().max(500).optional().nullable(),
-}).strict();
+});
 
 /**
  * GET /api/v1/affiliate/links

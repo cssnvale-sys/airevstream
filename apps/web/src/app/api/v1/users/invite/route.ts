@@ -10,7 +10,7 @@ const inviteUserSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   role: z.enum(['admin', 'operator', 'viewer']).default('viewer'),
   tenantId: z.string().uuid().optional(),
-}).strict();
+});
 
 /**
  * POST /api/v1/users/invite

@@ -9,7 +9,7 @@ const GenerateShotSchema = z.object({
   description: z.string().min(1).max(5000),
   channelId: z.string().uuid().optional().nullable(),
   workflowType: z.string().max(50).optional().default('storyboard-frame'),
-}).strict();
+});
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);

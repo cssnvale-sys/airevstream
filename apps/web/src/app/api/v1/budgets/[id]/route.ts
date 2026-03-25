@@ -13,7 +13,7 @@ const updateBudgetSchema = z.object({
   category: z.string().max(50).optional().nullable(),
   status: z.enum(['active', 'paused', 'exceeded']).optional(),
   currentSpend: z.number().min(0).optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/budgets/[id]

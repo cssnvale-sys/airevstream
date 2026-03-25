@@ -6,7 +6,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 const createSubscriptionSchema = z.object({
   tenantId: z.string().uuid(),
   plan: z.enum(['free', 'starter', 'pro', 'enterprise']),
-}).strict();
+});
 
 /**
  * GET /api/v1/subscriptions

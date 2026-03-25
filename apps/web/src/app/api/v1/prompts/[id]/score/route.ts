@@ -7,7 +7,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 
 const scoreSchema = z.object({
   score: z.number().min(0).max(10),
-}).strict();
+});
 
 /**
  * POST /api/v1/prompts/[id]/score

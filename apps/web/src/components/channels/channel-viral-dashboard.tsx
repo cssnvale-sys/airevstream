@@ -16,6 +16,7 @@ interface ViralStatsData {
     id: string;
     title: string | null;
     contentType: string;
+    status: string;
     viralScore: number | null;
     viralTier: string | null;
     createdAt: string;
@@ -47,6 +48,7 @@ interface SuggestionStatsData {
   avgImprovement: number;
   topPreset: { presetId: string; shown: number; accepted: number; acceptanceRate: number } | null;
   presetRates: Array<{ presetId: string; shown: number; accepted: number; acceptanceRate: number }>;
+  recent: Array<{ id: string; presetId: string; dimension: string; outcome: string; createdAt: string }>;
 }
 
 interface ChannelViralDashboardProps {

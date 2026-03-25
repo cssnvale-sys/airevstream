@@ -9,7 +9,7 @@ const UpdateAccountSchema = z.object({
   status: z.enum(['active', 'disabled', 'flagged', 'pending']).optional(),
   tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
   notes: z.string().max(2000).optional().nullable(),
-}).strict();
+});
 
 /**
  * GET /api/v1/accounts/[id]

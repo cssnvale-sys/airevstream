@@ -11,7 +11,7 @@ const UpdateCinemaBibleSchema = z.object({
   environmentBible: z.record(z.unknown()).optional(),
   promptBible: z.record(z.unknown()).optional(),
   shotspecTemplate: z.record(z.unknown()).optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/cinema-bible/[id]
@@ -20,6 +20,9 @@ const UpdateCinemaBibleSchema = z.object({
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+
+  // Unconditional tenant guard (D076)
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
@@ -61,6 +64,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');
   }
+
+  // Unconditional tenant guard (D076)
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const ip = getClientIp(req);
   const rl = checkRateLimit(`cinema-bible/[id]:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

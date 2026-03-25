@@ -16,7 +16,7 @@ const updateTenantSchema = z.object({
     maxContentPerMonth: z.number().int().optional(),
     storageGb: z.number().optional(),
   }).optional(),
-}).strict();
+});
 
 /**
  * GET /api/v1/tenants/[id]
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           },
         },
         subscriptions: {
-          where: { status: { in: ['active', 'trialing'] } },
+          where: { status: { in: ['active', 'trialing', 'past_due'] } },
           orderBy: { createdAt: 'desc' },
           take: 1,
         },

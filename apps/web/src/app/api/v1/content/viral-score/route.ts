@@ -72,9 +72,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Fetch trending topics for alignment
+    // Fetch trending topics for alignment (tenant-scoped)
     const trendEntries = await ctx.db.knowledgeBaseEntry.findMany({
-      where: { category: 'trends' },
+      where: { category: 'trends', tenantId: ctx.tenantId },
       orderBy: { createdAt: 'desc' },
       take: 20,
       select: { title: true, relevanceScore: true },

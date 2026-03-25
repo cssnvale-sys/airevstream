@@ -12,12 +12,13 @@ import { authenticate, success, error } from '@/lib/api-server';
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     // Get all active budgets (tenant-scoped)
     const budgets = await ctx.db.costBudget.findMany({
       where: {
-        tenantId: ctx.tenantId!,
+        tenantId: ctx.tenantId,
         status: 'active',
       },
     });

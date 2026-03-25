@@ -8,7 +8,7 @@ const CreateChannelSchema = z.object({
   name: z.string().min(1).max(200),
   niches: z.array(z.string()).optional(),
   primaryLanguage: z.string().min(2).max(10).optional(),
-  tone: z.string().max(500).optional().nullable(),
+  tone: z.string().max(50).optional().nullable(),
   personality: z.string().max(500).optional().nullable(),
   targetAudience: z.string().max(500).optional().nullable(),
   postingCadence: z.record(z.unknown()).optional(),

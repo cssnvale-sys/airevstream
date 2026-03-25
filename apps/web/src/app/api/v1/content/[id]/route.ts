@@ -20,13 +20,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const ctx = await authenticateAny(req, 'read');
     if (ctx instanceof NextResponse) return ctx;
 
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       include: {
         channel: {
@@ -107,10 +110,13 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const existing = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true },
     });
@@ -176,6 +182,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     // Use interactive transaction to prevent TOCTOU race on status check
     const deletableStatuses = ['draft', 'archived', 'failed'];
 
@@ -183,7 +192,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       const item = await tx.contentItem.findFirst({
         where: {
           id,
-          ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
         },
         select: { id: true, status: true },
       });

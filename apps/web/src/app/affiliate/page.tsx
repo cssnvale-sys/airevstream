@@ -1185,6 +1185,7 @@ function AddProductModal({
       resetForm();
       onCreated();
     } catch (err: unknown) {
+      console.error('Failed to create product:', err);
       setErrorMsg('Failed to create product');
     } finally {
       setSubmitting(false);
@@ -1352,6 +1353,7 @@ function ProductDetailModal({
       setEditing(false);
       onUpdated();
     } catch (err: unknown) {
+      console.error('Failed to update product:', err);
       setErrorMsg('Failed to update product');
     } finally {
       setSubmitting(false);
@@ -1598,6 +1600,7 @@ function CreateLinkModal({
       resetForm();
       onCreated();
     } catch (err: unknown) {
+      console.error('Failed to create link:', err);
       setErrorMsg('Failed to create link');
     } finally {
       setSubmitting(false);

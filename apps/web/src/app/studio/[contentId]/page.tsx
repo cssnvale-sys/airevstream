@@ -66,7 +66,8 @@ export default function StudioPage() {
     try {
       await apiPut(`/storyboard-shots/${shotId}`, { shotspec: spec });
       await mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to update shot:', err);
       toast.error('Failed to update shot');
     }
   }, [mutate]);
@@ -76,7 +77,8 @@ export default function StudioPage() {
       await apiPost(`/storyboard-shots/${shotId}/generate`, {});
       toast.success('Shot generation started');
       await mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to start shot generation:', err);
       toast.error('Failed to start generation');
     }
   }, [mutate]);
@@ -93,7 +95,8 @@ export default function StudioPage() {
       });
       toast.success(`Shot ${repairType} repair started`);
       await mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to start shot repair:', err);
       toast.error('Failed to start repair');
     }
   }, [storyboard, contentId, content, mutate]);
@@ -112,7 +115,8 @@ export default function StudioPage() {
       if (res?.data?.flowJobId) setActiveJobId(res.data.flowJobId);
       toast.success('Cinema pipeline started');
       await mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to start cinema pipeline:', err);
       toast.error('Failed to start pipeline');
     }
   }, [storyboard, contentId, content, shots, mutate]);

@@ -22,13 +22,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`content-reject:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const item = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true, status: true },
     });

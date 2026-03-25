@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   try {
     const template = await ctx.db.promptTemplate.findFirst({
-      where: { id, tenantId: ctx.tenantId! },
+      where: { id, tenantId: ctx.tenantId },
     });
 
     if (!template) {
@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.promptTemplate.findFirst({ where: { id, tenantId: ctx.tenantId! } });
+    const existing = await ctx.db.promptTemplate.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) {
       return notFound('Prompt template not found');
     }
@@ -136,7 +136,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.promptTemplate.findFirst({ where: { id, tenantId: ctx.tenantId! } });
+    const existing = await ctx.db.promptTemplate.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) {
       return notFound('Prompt template not found');
     }

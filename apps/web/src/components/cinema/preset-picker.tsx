@@ -9,7 +9,6 @@ import {
 import type { Preset, Recipe, PresetFamily } from '@airevstream/shared';
 import { useUserPresets, deleteUserPreset } from '@/hooks/use-user-presets';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
-import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 import { CreatePresetModal } from './create-preset-modal';
 
 interface PresetPickerProps {

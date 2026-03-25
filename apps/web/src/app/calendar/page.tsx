@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useCalendar, useChannels, apiPut } from '@/hooks/use-api';
 import { cn, platformIcon } from '@/lib/utils';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useSWRConfig } from 'swr';
 import {
   ChevronLeft,

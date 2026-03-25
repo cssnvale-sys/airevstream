@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useChannel } from '@/hooks/use-channels';
@@ -79,16 +79,16 @@ export default function ChannelDetailPage() {
   const [tone, setTone] = useState('');
   const [personality, setPersonality] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
-  const [initialized, setInitialized] = useState(false);
 
-  // Initialize form state from fetched data
-  if (channel && !initialized) {
-    setNiches(channel.niches ?? []);
-    setTone(channel.tone ?? '');
-    setPersonality(channel.personality ?? '');
-    setTargetAudience(channel.targetAudience ?? '');
-    setInitialized(true);
-  }
+  // Sync form state from fetched data (re-syncs after save + mutate)
+  useEffect(() => {
+    if (channel) {
+      setNiches(channel.niches ?? []);
+      setTone(channel.tone ?? '');
+      setPersonality(channel.personality ?? '');
+      setTargetAudience(channel.targetAudience ?? '');
+    }
+  }, [channel]);
 
   const viralStats = viralRaw?.data;
 
@@ -96,7 +96,7 @@ export default function ChannelDetailPage() {
     if (!channel) return;
     setSaving(true);
     try {
-      await apiPut(`/api/v1/channels/${channel.id}`, {
+      await apiPut(`/channels/${channel.id}`, {
         niches,
         tone: tone || null,
         personality: personality || null,

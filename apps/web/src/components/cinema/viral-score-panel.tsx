@@ -121,7 +121,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
   const handleGetSuggestions = async () => {
     setLoadingSuggestions(true);
     try {
-      const res = await apiPost<{ success: boolean; data: SuggestionsResponse }>('/api/v1/content/viral-suggestions', {
+      const res = await apiPost<{ success: boolean; data: SuggestionsResponse }>('/content/viral-suggestions', {
         contentId,
       });
       setSuggestions(res.data.suggestions);
@@ -129,7 +129,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
       // Log shown suggestions for tracking
       if (res.data.suggestions.length > 0) {
         try {
-          const logRes = await apiPost<{ success: boolean; data: { count: number; logs: SuggestionLogEntry[] } }>('/api/v1/suggestions', {
+          const logRes = await apiPost<{ success: boolean; data: { count: number; logs: SuggestionLogEntry[] } }>('/suggestions', {
             contentId,
             channelId: res.data.channelId ?? undefined,
             suggestions: res.data.suggestions.map(s => ({
@@ -141,8 +141,8 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
             viralScoreBefore: res.data.viralScore,
           });
           setSuggestionLogs(logRes.data.logs);
-        } catch {
-          // Non-blocking — suggestion tracking is best-effort
+        } catch (logErr) {
+          console.error('Failed to log suggestions:', logErr);
         }
       }
     } catch (err) {
@@ -157,9 +157,10 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
     const log = suggestionLogs.find(l => l.presetId === presetId);
     if (!log) return;
     try {
-      await apiPatch(`/api/v1/suggestions/${log.id}`, { outcome });
+      await apiPatch(`/suggestions/${log.id}`, { outcome });
       setOutcomes(prev => ({ ...prev, [presetId]: outcome }));
-    } catch {
+    } catch (err) {
+      console.error('Failed to update suggestion outcome:', err);
       toast.error('Failed to update suggestion');
     }
   };

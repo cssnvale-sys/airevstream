@@ -42,6 +42,7 @@ interface ExperimentData {
 const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
   draft: { bg: 'bg-bg-tertiary', text: 'text-text-secondary' },
   running: { bg: 'bg-accent-green/10', text: 'text-accent-green' },
+  evaluating: { bg: 'bg-accent-purple/10', text: 'text-accent-purple' },
   completed: { bg: 'bg-accent-blue/10', text: 'text-accent-blue' },
   stopped: { bg: 'bg-accent-orange/10', text: 'text-accent-orange' },
 };
@@ -50,11 +51,11 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
   const { experimentId } = use(params);
   const { data: experimentData, isLoading, mutate } = useExperiment<ExperimentData>(experimentId);
 
-  const exp = (experimentData as { data: ExperimentData } | undefined)?.data;
+  const exp = experimentData?.data;
 
   const handleStart = async () => {
     try {
-      await apiPost(`/api/v1/experiments/${experimentId}/start`, {});
+      await apiPost(`/experiments/${experimentId}/start`, {});
       toast.success('Experiment started');
       mutate();
     } catch (err) {
@@ -65,7 +66,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
 
   const handleStop = async () => {
     try {
-      await apiPost(`/api/v1/experiments/${experimentId}/stop`, {});
+      await apiPost(`/experiments/${experimentId}/stop`, {});
       toast.success('Experiment stopped');
       mutate();
     } catch (err) {
@@ -76,7 +77,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
 
   const handleEvaluate = async () => {
     try {
-      await apiPost(`/api/v1/experiments/${experimentId}/evaluate`, {});
+      await apiPost(`/experiments/${experimentId}/evaluate`, {});
       toast.success('Evaluation queued');
       mutate();
     } catch (err) {
@@ -150,16 +151,16 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
             </button>
           )}
           {exp.status === 'running' && (
-            <>
-              <button onClick={handleEvaluate} className="btn-secondary flex items-center gap-2">
-                <BarChart3 size={16} />
-                Evaluate Now
-              </button>
-              <button onClick={handleStop} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
-                <Square size={16} />
-                Stop
-              </button>
-            </>
+            <button onClick={handleEvaluate} className="btn-secondary flex items-center gap-2">
+              <BarChart3 size={16} />
+              Evaluate Now
+            </button>
+          )}
+          {(exp.status === 'running' || exp.status === 'evaluating') && (
+            <button onClick={handleStop} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
+              <Square size={16} />
+              Stop
+            </button>
           )}
         </div>
       </div>

@@ -50,6 +50,7 @@ function calculatePeriodEnd(budgetType: string, periodStart: Date): Date {
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const { page, limit, skip, sort, order, params } = parseQuery(req);
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
     const validStatuses = ['active', 'paused', 'exceeded'];
     const validBudgetTypes = ['daily', 'weekly', 'monthly'];
 
-    const where: Prisma.CostBudgetWhereInput = { tenantId: ctx.tenantId! };
+    const where: Prisma.CostBudgetWhereInput = { tenantId: ctx.tenantId };
 
     if (status && validStatuses.includes(status)) {
       where.status = status;
@@ -119,6 +120,8 @@ export async function POST(req: NextRequest) {
   const rl = checkRateLimit(`budgets:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
     const body = await req.json();
     const parsed = createBudgetSchema.safeParse(body);
@@ -135,7 +138,7 @@ export async function POST(req: NextRequest) {
 
     const budget = await ctx.db.costBudget.create({
       data: {
-        tenantId: ctx.tenantId!,
+        tenantId: ctx.tenantId,
         name,
         budgetType,
         limitAmount,

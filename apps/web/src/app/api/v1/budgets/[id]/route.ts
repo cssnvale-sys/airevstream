@@ -22,13 +22,14 @@ const updateBudgetSchema = z.object({
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
     const budget = await ctx.db.costBudget.findFirst({
-      where: { id, tenantId: ctx.tenantId! },
+      where: { id, tenantId: ctx.tenantId },
     });
 
     if (!budget) {
@@ -78,8 +79,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
-    const existing = await ctx.db.costBudget.findFirst({ where: { id, tenantId: ctx.tenantId! } });
+    const existing = await ctx.db.costBudget.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) {
       return notFound('Budget not found');
     }
@@ -158,8 +161,10 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   try {
-    const existing = await ctx.db.costBudget.findFirst({ where: { id, tenantId: ctx.tenantId! } });
+    const existing = await ctx.db.costBudget.findFirst({ where: { id, tenantId: ctx.tenantId } });
     if (!existing) {
       return notFound('Budget not found');
     }

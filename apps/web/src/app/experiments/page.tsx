@@ -23,28 +23,23 @@ interface ExperimentRow {
   _count: { variants: number };
 }
 
-interface ExperimentsResponse {
-  data: ExperimentRow[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+// Note: useApi<T>() wraps response as { success: boolean; data: T; meta?: { total, page, limit, pages } }
+// For paginated endpoints, T is the array of items; meta holds pagination info.
 
 const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
   draft: { bg: 'bg-bg-tertiary', text: 'text-text-secondary' },
   running: { bg: 'bg-accent-green/10', text: 'text-accent-green' },
+  evaluating: { bg: 'bg-accent-purple/10', text: 'text-accent-purple' },
   completed: { bg: 'bg-accent-blue/10', text: 'text-accent-blue' },
   stopped: { bg: 'bg-accent-orange/10', text: 'text-accent-orange' },
 };
 
 export default function ExperimentsPage() {
   const [showCreate, setShowCreate] = useState(false);
-  const { data: rawData, isLoading, mutate } = useExperiments<ExperimentsResponse>();
+  const { data: rawData, isLoading, mutate } = useExperiments<ExperimentRow[]>();
 
-  const experimentsResponse = (rawData as { data: ExperimentRow[]; total: number } | undefined);
-  const experiments = experimentsResponse?.data ?? [];
-  const total = experimentsResponse?.total ?? 0;
+  const experiments = rawData?.data ?? [];
+  const total = rawData?.meta?.total ?? 0;
 
   const activeCount = experiments.filter(e => e.status === 'running').length;
   const completedCount = experiments.filter(e => e.status === 'completed').length;

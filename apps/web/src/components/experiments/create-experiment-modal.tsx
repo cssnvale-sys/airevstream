@@ -72,7 +72,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
     setSubmitting(true);
     try {
-      await apiPost('/api/v1/experiments', {
+      await apiPost('/experiments', {
         name: name.trim(),
         hypothesis: hypothesis.trim() || undefined,
         primaryMetric,

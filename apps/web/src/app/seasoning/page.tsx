@@ -48,7 +48,8 @@ export default function SeasoningPage() {
       await apiPost('/seasoning/cohorts', data);
       toast.success('Cohort created');
       mutateCohorts();
-    } catch {
+    } catch (err) {
+      console.error('Failed to create cohort:', err);
       toast.error('Failed to create cohort');
       throw new Error('Failed to create cohort');
     }

@@ -120,6 +120,12 @@ export async function POST(req: NextRequest) {
       ...experiment,
       confidenceLevel: Number(experiment.confidenceLevel),
       significance: experiment.significance != null ? Number(experiment.significance) : null,
+      variants: experiment.variants.map(v => ({
+        ...v,
+        engagementRate: Number(v.engagementRate),
+        completionRate: Number(v.completionRate),
+        shareRate: Number(v.shareRate),
+      })),
     });
   } catch (err) {
     console.error('POST /api/v1/experiments failed:', err);

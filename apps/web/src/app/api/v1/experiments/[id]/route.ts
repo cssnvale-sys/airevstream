@@ -78,8 +78,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     });
     if (!existing) return notFound('Experiment not found');
 
-    if (existing.status === 'running') {
-      return error('VALIDATION_ERROR', 'Cannot modify a running experiment', 400);
+    if (existing.status === 'running' || existing.status === 'evaluating') {
+      return error('VALIDATION_ERROR', 'Cannot modify a running or evaluating experiment', 400);
     }
 
     const body = await req.json();
@@ -99,6 +99,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ...experiment,
       confidenceLevel: Number(experiment.confidenceLevel),
       significance: experiment.significance != null ? Number(experiment.significance) : null,
+      variants: experiment.variants.map(v => ({
+        ...v,
+        engagementRate: Number(v.engagementRate),
+        completionRate: Number(v.completionRate),
+        shareRate: Number(v.shareRate),
+      })),
     });
   } catch (err) {
     console.error(`PUT /api/v1/experiments/${id} failed:`, err);
@@ -128,6 +134,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       where: { id, tenantId: ctx.tenantId },
     });
     if (!existing) return notFound('Experiment not found');
+
+    if (existing.status === 'running' || existing.status === 'evaluating') {
+      return error('VALIDATION_ERROR', 'Cannot delete a running or evaluating experiment', 400);
+    }
 
     await ctx.db.experiment.delete({ where: { id } });
 

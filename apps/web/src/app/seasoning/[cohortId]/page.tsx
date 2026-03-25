@@ -68,7 +68,8 @@ export default function CohortDetailPage() {
       toast.success(`Enrollment ${action}d`);
       mutateEnrollments();
       mutateCohort();
-    } catch {
+    } catch (err) {
+      console.error(`Failed to ${action} enrollment:`, err);
       toast.error(`Failed to ${action} enrollment`);
     }
   };
@@ -86,7 +87,8 @@ export default function CohortDetailPage() {
       setShowEnroll(false);
       mutateCohort();
       mutateEnrollments();
-    } catch {
+    } catch (err) {
+      console.error('Failed to enroll accounts:', err);
       toast.error('Failed to enroll accounts');
     } finally {
       setEnrolling(false);

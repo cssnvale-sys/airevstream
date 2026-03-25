@@ -808,7 +808,7 @@ export default function CreatePage() {
                   <option value="">Select product...</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.commissionRate ?? 0}% commission)
+                      {p.name} ({Number(p.commissionRate ?? 0)}% commission)
                     </option>
                   ))}
                 </select>

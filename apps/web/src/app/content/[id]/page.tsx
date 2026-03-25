@@ -154,7 +154,8 @@ export default function ContentDetailPage() {
         toast.success('Rescore started');
       }
       mutate();
-    } catch {
+    } catch (err) {
+      console.error(`Failed to ${action} content:`, err);
       toast.error(`Failed to ${action} content`);
     } finally {
       setActing(false);
@@ -589,7 +590,8 @@ export default function ContentDetailPage() {
                       toast.success('Content repurposed');
                       setRepurposeOpen(false);
                       router.push(`/content/${res.data.id}`);
-                    } catch {
+                    } catch (err) {
+                      console.error('Failed to repurpose content:', err);
                       toast.error('Failed to repurpose content');
                     } finally {
                       setActing(false);
@@ -670,7 +672,8 @@ export default function ContentDetailPage() {
                       setSelectedChannels([]);
                       setDistributeSchedule('');
                       mutate();
-                    } catch {
+                    } catch (err) {
+                      console.error('Failed to distribute content:', err);
                       toast.error('Failed to distribute content');
                     } finally {
                       setActing(false);

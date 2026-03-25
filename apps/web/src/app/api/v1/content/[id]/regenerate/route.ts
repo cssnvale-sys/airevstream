@@ -19,13 +19,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return error('RATE_LIMITED', 'Too many regeneration requests', 429);
     }
 
+    // Unconditional tenant guard (D076)
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const existing = await ctx.db.contentItem.findFirst({
       where: {
         id,
-        ...(ctx.tenantId ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } : {}),
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: {
         id: true,

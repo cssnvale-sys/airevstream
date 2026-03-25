@@ -53,6 +53,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       ...updated,
       confidenceLevel: Number(updated.confidenceLevel),
       significance: updated.significance != null ? Number(updated.significance) : null,
+      variants: updated.variants.map(v => ({
+        ...v,
+        engagementRate: Number(v.engagementRate),
+        completionRate: Number(v.completionRate),
+        shareRate: Number(v.shareRate),
+      })),
     });
   } catch (err) {
     console.error(`POST /api/v1/experiments/${id}/start failed:`, err);

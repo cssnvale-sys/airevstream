@@ -350,5 +350,5 @@ export async function closeAllQueues(): Promise<void> {
 export { Queue, Worker, QueueEvents, Job };
 
 export { FlowProducer } from 'bullmq';
-export { getFlowProducer, startContentPipeline, startCinemaPipeline, startSeasoningPipeline, closeFlowProducer } from './flows.js';
-export type { ContentPipelineParams, CinemaPipelineParams, SeasoningPipelineParams } from './flows.js';
+export { getFlowProducer, startContentPipeline, startCinemaPipeline, startPreviewPipeline, startSeasoningPipeline, closeFlowProducer } from './flows.js';
+export type { ContentPipelineParams, CinemaPipelineParams, PreviewPipelineParams, SeasoningPipelineParams } from './flows.js';

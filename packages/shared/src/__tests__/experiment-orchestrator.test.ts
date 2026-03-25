@@ -382,6 +382,19 @@ describe('suggestPresetVariantForChannel', () => {
     expect(excluded.every(s => s.presetId !== all[0].presetId)).toBe(true);
   });
 
+  it('handles case-insensitive channel context matching', () => {
+    const lower: ChannelContext = { niches: ['comedy'], platform: 'tiktok', tone: 'cinematic' };
+    const upper: ChannelContext = { niches: ['Comedy'], platform: 'TikTok', tone: 'Cinematic' };
+    const mixed: ChannelContext = { niches: ['COMEDY'], platform: 'TIKTOK', tone: 'CINEMATIC' };
+
+    const lowerSuggestions = suggestPresetVariantForChannel(weakScore, undefined, lower);
+    const upperSuggestions = suggestPresetVariantForChannel(weakScore, undefined, upper);
+    const mixedSuggestions = suggestPresetVariantForChannel(weakScore, undefined, mixed);
+
+    expect(upperSuggestions).toEqual(lowerSuggestions);
+    expect(mixedSuggestions).toEqual(lowerSuggestions);
+  });
+
   it('returns empty for strong scores regardless of channel', () => {
     const strong: ViralScoreResult = {
       overall: 90,

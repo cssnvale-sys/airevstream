@@ -1085,7 +1085,7 @@ model Experiment {
   tenantId        String    @map("tenant_id") @db.Uuid
   name            String    @db.VarChar(255)
   hypothesis      String?
-  status          String    @default("draft") @db.VarChar(20) // draft|running|completed|stopped
+  status          String    @default("draft") @db.VarChar(20) // draft|running|evaluating|completed|stopped
   primaryMetric   String    @map("primary_metric") @db.VarChar(30) // views|engagement|retention|clickRate|viralScore
   confidenceLevel Decimal   @default(0.95) @map("confidence_level") @db.Decimal(3, 2)
   minSampleSize   Int       @default(100) @map("min_sample_size")

@@ -32,6 +32,9 @@ import type {
   FinishingOutput,
 } from './agent-types.js';
 import { AGENT_CONFIGS, getExecutionOrder, getAgentPromptForMode } from './agent-prompts.js';
+import { createLogger } from '../logger.js';
+
+const logger = createLogger('agent-orchestrator');
 
 // ─── Agent Runner Interface ───
 
@@ -182,7 +185,7 @@ export class AgentOrchestrator {
 
       state.status = 'completed';
     } catch (err) {
-      console.error('Agent pipeline execution failed:', err);
+      logger.error({ err }, 'Agent pipeline execution failed');
       state.status = 'failed';
     }
 

@@ -224,8 +224,8 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
             await uploadBuffer(bucket, key, signedBuf, 'image/png');
             logger.info({ key }, 'C2PA credentials embedded in image');
           }
-          await unlink(tmpInput).catch(() => {});
-          await unlink(tmpOutput).catch(() => {});
+          await unlink(tmpInput).catch((e) => logger.debug({ err: e, path: tmpInput }, 'Temp C2PA input cleanup failed'));
+          await unlink(tmpOutput).catch((e) => logger.debug({ err: e, path: tmpOutput }, 'Temp C2PA output cleanup failed'));
         }
       }
     } catch (err) {
@@ -493,7 +493,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
           await uploadBuffer(BUCKET, key, signedBuf, contentType);
           logger.info({ key }, 'C2PA credentials embedded in video');
         }
-        await unlink(tmpOutput).catch(() => {});
+        await unlink(tmpOutput).catch((e) => logger.debug({ err: e, path: tmpOutput }, 'Temp C2PA video output cleanup failed'));
       }
     } catch (err) {
       logger.debug({ err }, 'C2PA embedding skipped for video');

@@ -36,71 +36,97 @@ async function handleEvaluate(data: ExperimentEvaluateJob) {
   }
 
   if (experiment.status !== 'running') {
-    logger.info({ experimentId: data.experimentId, status: experiment.status }, 'Experiment not running, skipping evaluation');
+    logger.info({ experimentId: data.experimentId, status: experiment.status }, 'Experiment not in running state, skipping evaluation');
     return;
   }
 
-  const variantResults: VariantMetrics[] = experiment.variants.map(v => ({
-    id: v.id,
-    label: v.label,
-    impressions: v.impressions,
-    clicks: v.clicks,
-    engagementRate: Number(v.engagementRate),
-    completionRate: Number(v.completionRate),
-    shareRate: Number(v.shareRate),
-  }));
+  // Optimistic concurrency: re-check status with a conditional update to prevent race conditions
+  const lockResult = await db.experiment.updateMany({
+    where: { id: data.experimentId, status: 'running' },
+    data: { status: 'evaluating' },
+  });
+  if (lockResult.count === 0) {
+    logger.info({ experimentId: data.experimentId }, 'Experiment already being evaluated by another worker');
+    return;
+  }
 
-  const decision = shouldDeclareWinner(
-    variantResults,
-    Number(experiment.confidenceLevel),
-    experiment.minSampleSize,
-  );
+  try {
+    const variantResults: VariantMetrics[] = experiment.variants.map(v => ({
+      id: v.id,
+      label: v.label,
+      impressions: v.impressions,
+      clicks: v.clicks,
+      engagementRate: Number(v.engagementRate),
+      completionRate: Number(v.completionRate),
+      shareRate: Number(v.shareRate),
+    }));
 
-  logger.info({ experimentId: data.experimentId, decision }, 'Evaluation result');
+    const decision = shouldDeclareWinner(
+      variantResults,
+      Number(experiment.confidenceLevel),
+      experiment.minSampleSize,
+    );
 
-  if (decision.winnerId) {
-    await db.experiment.update({
-      where: { id: data.experimentId },
-      data: {
-        status: 'completed',
-        winnerId: decision.winnerId,
-        significance: decision.significance,
-        endedAt: new Date(),
-      },
-    });
-    logger.info({ experimentId: data.experimentId, winnerId: decision.winnerId }, 'Experiment completed with winner');
+    logger.info({ experimentId: data.experimentId, decision }, 'Evaluation result');
 
-    // Feedback loop: update SuggestionLog entries with viralScoreAfter
-    try {
-      const winningVariant = experiment.variants.find(v => v.id === decision.winnerId);
-      if (winningVariant?.viralScore != null) {
-        const presetOverrides = (winningVariant.presetOverrides as Record<string, unknown>) ?? {};
-        const presetIds = Object.keys(presetOverrides);
-        if (presetIds.length > 0) {
-          const updated = await db.suggestionLog.updateMany({
-            where: {
-              tenantId: experiment.tenantId,
-              presetId: { in: presetIds },
-              outcome: 'accepted',
-              viralScoreAfter: null,
-            },
-            data: { viralScoreAfter: winningVariant.viralScore },
-          });
-          if (updated.count > 0) {
-            logger.info({ experimentId: data.experimentId, updatedLogs: updated.count }, 'Updated suggestion logs with viral score after');
+    if (decision.winnerId) {
+      await db.experiment.update({
+        where: { id: data.experimentId },
+        data: {
+          status: 'completed',
+          winnerId: decision.winnerId,
+          significance: decision.significance,
+          endedAt: new Date(),
+        },
+      });
+      logger.info({ experimentId: data.experimentId, winnerId: decision.winnerId }, 'Experiment completed with winner');
+
+      // Feedback loop: update SuggestionLog entries with viralScoreAfter
+      try {
+        const winningVariant = experiment.variants.find(v => v.id === decision.winnerId);
+        if (winningVariant?.viralScore != null) {
+          const presetOverrides = (winningVariant.presetOverrides as Record<string, unknown>) ?? {};
+          // Extract preset IDs from both keys and string values (handles both conventions)
+          const potentialIds = new Set<string>();
+          for (const [key, value] of Object.entries(presetOverrides)) {
+            if (key.includes('.')) potentialIds.add(key);
+            if (typeof value === 'string' && value.includes('.')) potentialIds.add(value);
+          }
+          const presetIds = Array.from(potentialIds);
+          if (presetIds.length > 0) {
+            const updated = await db.suggestionLog.updateMany({
+              where: {
+                tenantId: experiment.tenantId,
+                presetId: { in: presetIds },
+                outcome: 'accepted',
+                viralScoreAfter: null,
+              },
+              data: { viralScoreAfter: winningVariant.viralScore },
+            });
+            if (updated.count > 0) {
+              logger.info({ experimentId: data.experimentId, updatedLogs: updated.count }, 'Updated suggestion logs with viral score after');
+            }
           }
         }
+      } catch (feedbackErr) {
+        // Non-blocking — log and continue
+        logger.warn({ experimentId: data.experimentId, error: feedbackErr }, 'Failed to update suggestion feedback loop');
       }
-    } catch (feedbackErr) {
-      // Non-blocking — log and continue
-      logger.warn({ experimentId: data.experimentId, error: feedbackErr }, 'Failed to update suggestion feedback loop');
+    } else {
+      // No winner yet — update significance and return to running
+      await db.experiment.update({
+        where: { id: data.experimentId },
+        data: { status: 'running', significance: decision.significance },
+      });
     }
-  } else {
-    // Update significance even if no winner yet
+  } catch (evalErr) {
+    // Restore status to running on evaluation failure
+    logger.error({ experimentId: data.experimentId, error: evalErr }, 'Evaluation failed, restoring running status');
     await db.experiment.update({
       where: { id: data.experimentId },
-      data: { significance: decision.significance },
-    });
+      data: { status: 'running' },
+    }).catch((restoreErr) => { logger.error({ experimentId: data.experimentId, error: restoreErr }, 'Failed to restore experiment status after evaluation failure'); });
+    throw evalErr;
   }
 }
 

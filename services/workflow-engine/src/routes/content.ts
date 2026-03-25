@@ -66,9 +66,15 @@ export async function contentRoutes(app: FastifyInstance) {
       db.contentItem.count({ where }),
     ]);
 
+    // Wrap Decimal fields for JSON serialization
+    const serializedItems = items.map((item) => ({
+      ...item,
+      qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+    }));
+
     return reply.send({
       success: true,
-      data: items,
+      data: serializedItems,
       meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
     });
   });
@@ -97,7 +103,23 @@ export async function contentRoutes(app: FastifyInstance) {
       });
     }
 
-    return reply.send({ success: true, data: content });
+    // Wrap Decimal fields for JSON serialization
+    const serializedContent = {
+      ...content,
+      qualityScore: content.qualityScore != null ? Number(content.qualityScore) : null,
+      storyboards: content.storyboards.map((sb) => ({
+        ...sb,
+        totalDurationSec: sb.totalDurationSec != null ? Number(sb.totalDurationSec) : null,
+        shots: sb.shots.map((shot) => ({
+          ...shot,
+          startSec: shot.startSec != null ? Number(shot.startSec) : null,
+          endSec: shot.endSec != null ? Number(shot.endSec) : null,
+          qualityScore: shot.qualityScore != null ? Number(shot.qualityScore) : null,
+        })),
+      })),
+    };
+
+    return reply.send({ success: true, data: serializedContent });
   });
 
   // Start content generation
@@ -245,7 +267,13 @@ export async function contentRoutes(app: FastifyInstance) {
       select: { id: true, version: true, status: true, qualityScore: true, createdAt: true },
     });
 
-    return reply.send({ success: true, data: versions });
+    // Wrap Decimal fields for JSON serialization
+    const serializedVersions = versions.map((v) => ({
+      ...v,
+      qualityScore: v.qualityScore != null ? Number(v.qualityScore) : null,
+    }));
+
+    return reply.send({ success: true, data: serializedVersions });
   });
 
   // Get storyboard for content
@@ -262,7 +290,19 @@ export async function contentRoutes(app: FastifyInstance) {
       return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No storyboard for this content' } });
     }
 
-    return reply.send({ success: true, data: storyboard });
+    // Wrap Decimal fields for JSON serialization
+    const serializedStoryboard = storyboard ? {
+      ...storyboard,
+      totalDurationSec: storyboard.totalDurationSec != null ? Number(storyboard.totalDurationSec) : null,
+      shots: storyboard.shots.map((shot) => ({
+        ...shot,
+        startSec: shot.startSec != null ? Number(shot.startSec) : null,
+        endSec: shot.endSec != null ? Number(shot.endSec) : null,
+        qualityScore: shot.qualityScore != null ? Number(shot.qualityScore) : null,
+      })),
+    } : storyboard;
+
+    return reply.send({ success: true, data: serializedStoryboard });
   });
 
   // List pending approvals
@@ -288,9 +328,15 @@ export async function contentRoutes(app: FastifyInstance) {
       db.contentItem.count({ where }),
     ]);
 
+    // Wrap Decimal fields for JSON serialization
+    const serializedItems = items.map((item) => ({
+      ...item,
+      qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+    }));
+
     return reply.send({
       success: true,
-      data: items,
+      data: serializedItems,
       meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
     });
   });

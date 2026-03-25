@@ -13,6 +13,8 @@ import {
 import { cn } from '@/lib/utils';
 import { useChannels, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
+import { useComplexityMode } from '@/hooks/use-complexity-mode';
+import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 import { SIMPLE_MODE_GUARDRAILS } from '@airevstream/shared';
 import type { ProductionDirectives, Recipe } from '@airevstream/shared';
 import { IntakeScreen } from './intake-screen';
@@ -83,8 +85,16 @@ const INITIAL_SIMPLE_FORM: SimpleFormData = {
 // Component
 // ---------------------------------------------------------------------------
 
+const DIALOGUE_DENSITY_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'sparse', label: 'Sparse' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'dense', label: 'Dense' },
+] as const;
+
 export function SimpleCreateWizard() {
   const router = useRouter();
+  const { mode } = useComplexityMode();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<SimpleFormData>(INITIAL_SIMPLE_FORM);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -422,6 +432,87 @@ export function SimpleCreateWizard() {
             ))}
           </div>
         </div>
+
+        {/* Advanced-gated controls */}
+        {isVisible(FIELD_VISIBILITY.create.shotCount, mode) && (
+          <div>
+            <label className="block text-caption text-text-secondary mb-1.5">
+              Shot Count <span className="text-text-tertiary">({form.directives.targetShotCount ?? 6})</span>
+            </label>
+            <input
+              type="range"
+              min={3}
+              max={9}
+              step={1}
+              value={form.directives.targetShotCount ?? 6}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  directives: { ...prev.directives, targetShotCount: Number(e.target.value) },
+                }))
+              }
+              className="w-full accent-accent-blue"
+            />
+            <div className="flex justify-between text-xs text-text-tertiary mt-0.5">
+              <span>3</span>
+              <span>9</span>
+            </div>
+          </div>
+        )}
+
+        {isVisible(FIELD_VISIBILITY.create.dialogueAmount, mode) && (
+          <div>
+            <label className="block text-caption text-text-secondary mb-1.5">Dialogue Density</label>
+            <div className="flex gap-2">
+              {DIALOGUE_DENSITY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() =>
+                    setForm((prev) => ({
+                      ...prev,
+                      directives: { ...prev.directives, dialogueDensity: opt.value },
+                    }))
+                  }
+                  className={cn(
+                    'flex-1 px-2 py-1.5 rounded-md text-caption border text-center transition-colors',
+                    (form.directives.dialogueDensity ?? 'moderate') === opt.value
+                      ? 'border-accent-blue bg-accent-blue/10 text-accent-blue font-medium'
+                      : 'border-border text-text-secondary hover:bg-bg-tertiary',
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isVisible(FIELD_VISIBILITY.create.shotLength, mode) && (
+          <div>
+            <label className="block text-caption text-text-secondary mb-1.5">
+              Avg Shot Length <span className="text-text-tertiary">({form.directives.avgShotLengthSec ?? 4}s)</span>
+            </label>
+            <input
+              type="range"
+              min={2}
+              max={10}
+              step={0.5}
+              value={form.directives.avgShotLengthSec ?? 4}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  directives: { ...prev.directives, avgShotLengthSec: Number(e.target.value) },
+                }))
+              }
+              className="w-full accent-accent-blue"
+            />
+            <div className="flex justify-between text-xs text-text-tertiary mt-0.5">
+              <span>2s</span>
+              <span>10s</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

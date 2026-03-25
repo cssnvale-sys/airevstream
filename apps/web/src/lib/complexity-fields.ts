@@ -79,7 +79,24 @@ export const FIELD_VISIBILITY = {
   create: {
     affiliate: 'advanced' as ComplexityMode,
     qualityTier: 'advanced' as ComplexityMode,
+    shotCount: 'advanced' as ComplexityMode,
+    dialogueAmount: 'advanced' as ComplexityMode,
+    shotLength: 'advanced' as ComplexityMode,
   },
+
+  // LoRA controls
+  lora: {
+    selection: 'advanced' as ComplexityMode,
+    weights: 'complex' as ComplexityMode,
+  },
+
+  // Voice controls
+  voice: {
+    type: 'advanced' as ComplexityMode,
+  },
+
+  // Pipeline logs
+  pipelineLogs: 'complex' as ComplexityMode,
 
   // Cost preview panel
   costPreview: 'advanced' as ComplexityMode,

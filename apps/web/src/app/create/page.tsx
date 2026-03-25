@@ -24,6 +24,7 @@ import { ComplexityToggle } from '@/components/ui/complexity-toggle';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 import { estimatePipelineCost, formatCost } from '@airevstream/shared';
+import type { ProductionDirectives } from '@airevstream/shared';
 import { SimpleCreateWizard } from '@/components/cinema/simple-create-wizard';
 
 // ---------------------------------------------------------------------------
@@ -130,6 +131,13 @@ const DURATION_OPTIONS = [
   { value: '900', label: '15 minutes' },
 ];
 
+const ADV_DIALOGUE_DENSITY_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'sparse', label: 'Sparse' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'dense', label: 'Dense' },
+] as const;
+
 const QUALITY_TIERS: { value: QualityTier; label: string; icon: typeof Zap; features: string[] }[] = [
   {
     value: 'quick',
@@ -190,6 +198,7 @@ export default function CreatePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [qualityTier, setQualityTier] = useState<QualityTier>('quick');
+  const [directives, setDirectives] = useState<ProductionDirectives>({});
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { mode } = useComplexityMode();
@@ -389,6 +398,7 @@ export default function CreatePage() {
           topic: formData.topic,
           contentType: toCinemaContentType(formData.contentType),
           qualityPreset,
+          directives,
         });
       }
 
@@ -696,6 +706,79 @@ export default function CreatePage() {
           </div>
         </div>
       </div>
+
+      {/* Advanced pipeline controls — shot count, dialogue density, shot length */}
+      {isVisible(FIELD_VISIBILITY.create.shotCount, mode) && (
+        <div className="card">
+          <h3 className="text-card-title text-text-primary mb-4">Pipeline Directives</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-caption text-text-secondary mb-1.5">
+                Shot Count <span className="text-text-tertiary">({directives.targetShotCount ?? 6})</span>
+              </label>
+              <input
+                type="range"
+                min={3}
+                max={9}
+                step={1}
+                value={directives.targetShotCount ?? 6}
+                onChange={(e) =>
+                  setDirectives((prev) => ({ ...prev, targetShotCount: Number(e.target.value) }))
+                }
+                className="w-full accent-accent-blue"
+              />
+              <div className="flex justify-between text-xs text-text-tertiary mt-0.5">
+                <span>3</span>
+                <span>9</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-caption text-text-secondary mb-1.5">Dialogue Density</label>
+              <div className="flex gap-1.5">
+                {ADV_DIALOGUE_DENSITY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() =>
+                      setDirectives((prev) => ({ ...prev, dialogueDensity: opt.value }))
+                    }
+                    className={cn(
+                      'flex-1 px-2 py-1.5 rounded-md text-caption border text-center transition-colors',
+                      (directives.dialogueDensity ?? 'moderate') === opt.value
+                        ? 'border-accent-blue bg-accent-blue/10 text-accent-blue font-medium'
+                        : 'border-border text-text-secondary hover:bg-bg-tertiary',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-caption text-text-secondary mb-1.5">
+                Avg Shot Length <span className="text-text-tertiary">({directives.avgShotLengthSec ?? 4}s)</span>
+              </label>
+              <input
+                type="range"
+                min={2}
+                max={10}
+                step={0.5}
+                value={directives.avgShotLengthSec ?? 4}
+                onChange={(e) =>
+                  setDirectives((prev) => ({ ...prev, avgShotLengthSec: Number(e.target.value) }))
+                }
+                className="w-full accent-accent-blue"
+              />
+              <div className="flex justify-between text-xs text-text-tertiary mt-0.5">
+                <span>2s</span>
+                <span>10s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Affiliate Integration — advanced+ */}
       {isVisible(FIELD_VISIBILITY.create.affiliate, mode) && (

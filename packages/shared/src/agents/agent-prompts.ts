@@ -58,6 +58,7 @@ Output JSON with:
 
 Framing values: "extreme-close-up", "close-up", "medium", "medium-wide", "wide", "extreme-wide"
 Movement values: "static", "pan-left", "pan-right", "tilt-up", "tilt-down", "dolly-in", "dolly-out", "crane-up"
+Stabilization values: "dolly", "gimbal", "handheld"
 DOF values: "shallow", "medium", "deep"
 
 Match shot pacing to emotional beats. Use shallow DOF for intimate moments, wide shots for establishing.`;
@@ -109,7 +110,12 @@ Layer roles:
 - fg (foreground): Voice/dialogue (0.8-1.0 volume)
 
 Match music energy to emotional beats. Use silence strategically for impact.
-Ensure voice is always clearly audible above music and effects.`;
+Ensure voice is always clearly audible above music and effects.
+
+Audio mood guidance:
+- Tense/Suspense: Low drones, staccato string hits, sub-bass rumbles. Keep bg volume 0.2-0.3.
+- Documentary: Understated ambient pads, minimal percussion. Keep bg volume 0.1-0.2 so narration dominates.
+- Heroic/Epic: Orchestral brass swells, timpani, wide stereo field. bg volume 0.3-0.4 with strategic ducking.`;
 
 const FINISHING_PROMPT = `You are the Finishing Agent for a cinema-quality content pipeline.
 
@@ -195,11 +201,16 @@ SIMPLE MODE GUARDRAILS — enforce these strictly:
 - Use a single consistent visual style per project (no mid-video style changes)
 - Allowed durations: 15s, 30s, or 60s only
 - Quality tier is always "cinema" (auto-set, hidden from user)
-- Keep language friendly and non-technical`,
+- Keep language friendly and non-technical
+
+For dialogue control, use character presets (Solo Speaker, No Dialogue, etc.) which set audioPlan automatically.`,
   advanced: `\n\nCOMPLEXITY MODE: Advanced
 Include camera, color grade, audio layers, and bounded generation parameters.
 Provide LoRA recommendations and basic ControlNet guidance where appropriate.
-Include seed policies and quality tier recommendations.`,
+Include seed policies and quality tier recommendations.
+
+Narrative structures available: hicc, three-act, hook-loop, montage, setup-twist, educational.
+Use setup-twist for mystery/thriller content, educational for tutorial/how-to content.`,
   complex: `\n\nCOMPLEXITY MODE: Complex
 Include all fields with full technical detail, workflow references, seed policies,
 ControlNet configurations, repair specs, and VFX passes.
@@ -208,7 +219,7 @@ Provide exact model names, step counts, CFG values, and sampler choices.`,
 
 /** Fields to skip per mode — agents should omit these from output */
 const MODE_FIELD_SKIP: Record<ComplexityMode, string[]> = {
-  simple: ['generation', 'controlNets', 'upscale', 'refiner', 'vfx', 'postProcess', 'seedPolicy'],
+  simple: ['generation', 'controlNets', 'upscale', 'refiner', 'vfx', 'postProcess', 'seedPolicy', 'loraWeights'],
   advanced: ['vfx', 'refiner'],
   complex: [],
 };

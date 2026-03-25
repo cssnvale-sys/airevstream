@@ -41,6 +41,7 @@ export const VISUAL_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       colorGrade: { saturation: 40, tint: -30, contrast: 30, temperature: -20 },
+      postProcess: { filmGrain: 10, sharpen: 20 },
     },
     ranges: { 'colorGrade.tint': { min: -50, max: -10 }, 'colorGrade.saturation': { min: 20, max: 60 } },
   },
@@ -66,6 +67,7 @@ export const VISUAL_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       colorGrade: { temperature: -15, contrast: 15, saturation: 5, highlights: 10 },
+      postProcess: { sharpen: 15 },
     },
   },
   {
@@ -78,6 +80,57 @@ export const VISUAL_PRESETS: Preset[] = [
     overrides: {
       colorGrade: { temperature: 35, saturation: 10, contrast: 5 },
       lighting: 'golden hour, warm backlight',
+    },
+  },
+  {
+    id: 'visual.dark-thriller.v1',
+    name: 'Dark Thriller',
+    family: 'visual',
+    description: 'Low-key lighting with desaturated cold tones for suspense',
+    tags: ['dark', 'thriller', 'suspense', 'cold'],
+    builtIn: true,
+    overrides: {
+      colorGrade: { contrast: 35, saturation: -30, temperature: -25, shadows: -30, highlights: -10 },
+      postProcess: { filmGrain: 15, vignette: 25 },
+    },
+    ranges: { 'colorGrade.contrast': { min: 20, max: 50 }, 'colorGrade.shadows': { min: -50, max: -10 } },
+  },
+  {
+    id: 'visual.bright-cartoon.v1',
+    name: 'Bright Cartoon',
+    family: 'visual',
+    description: 'Vivid saturated colors with flat lighting for animated look',
+    tags: ['bright', 'cartoon', 'vivid', 'fun'],
+    builtIn: true,
+    overrides: {
+      colorGrade: { saturation: 50, contrast: -10, temperature: 5, highlights: 20 },
+    },
+    ranges: { 'colorGrade.saturation': { min: 30, max: 70 } },
+  },
+  {
+    id: 'visual.retro-film.v1',
+    name: 'Retro Film',
+    family: 'visual',
+    description: 'Faded film stock look with heavy grain and warm shift',
+    tags: ['retro', 'film', 'vintage', '70s'],
+    builtIn: true,
+    overrides: {
+      colorGrade: { saturation: -20, temperature: 20, contrast: 10, blacks: 15 },
+      postProcess: { filmGrain: 35, vignette: 20 },
+    },
+    ranges: { 'postProcess.filmGrain': { min: 20, max: 50 } },
+  },
+  {
+    id: 'visual.dreamy-soft.v1',
+    name: 'Dreamy Soft',
+    family: 'visual',
+    description: 'Soft diffused light with gentle pastel tones',
+    tags: ['dreamy', 'soft', 'pastel', 'gentle'],
+    builtIn: true,
+    overrides: {
+      colorGrade: { saturation: -10, contrast: -15, temperature: 10, highlights: 15 },
+      postProcess: { vignette: 10 },
+      lighting: 'soft diffused backlight, overcast feel',
     },
   },
 ];
@@ -115,7 +168,7 @@ export const CAMERA_PRESETS: Preset[] = [
     tags: ['movement', 'dramatic', 'approach'],
     builtIn: true,
     overrides: {
-      camera: { lens: '50mm', framing: 'medium', dof: 'medium', movement: 'dolly-in' },
+      camera: { lens: '50mm', framing: 'medium', dof: 'medium', movement: 'dolly-in', stabilization: 'dolly' },
     },
   },
   {
@@ -138,7 +191,51 @@ export const CAMERA_PRESETS: Preset[] = [
     tags: ['orbit', 'reveal', 'product'],
     builtIn: true,
     overrides: {
-      camera: { lens: '50mm', framing: 'medium', dof: 'shallow', movement: 'orbit-left' },
+      camera: { lens: '50mm', framing: 'medium', dof: 'shallow', movement: 'orbit-left', stabilization: 'gimbal' },
+    },
+  },
+  {
+    id: 'camera.static-fifty.v1',
+    name: 'Static 50mm',
+    family: 'camera',
+    description: 'Locked-off 50mm for clean dialogue coverage',
+    tags: ['static', '50mm', 'clean', 'dialogue'],
+    builtIn: true,
+    overrides: {
+      camera: { lens: '50mm', framing: 'medium', dof: 'medium', movement: 'static' },
+    },
+  },
+  {
+    id: 'camera.slow-pan.v1',
+    name: 'Slow Pan',
+    family: 'camera',
+    description: 'Gentle horizontal pan for environmental reveals',
+    tags: ['pan', 'slow', 'reveal', 'environmental'],
+    builtIn: true,
+    overrides: {
+      camera: { lens: '35mm', framing: 'wide', dof: 'deep', movement: 'pan-right', stabilization: 'gimbal' },
+    },
+  },
+  {
+    id: 'camera.steadicam.v1',
+    name: 'Steadicam',
+    family: 'camera',
+    description: 'Smooth floating follow-cam for immersive tracking',
+    tags: ['steadicam', 'smooth', 'tracking', 'immersive'],
+    builtIn: true,
+    overrides: {
+      camera: { lens: '35mm', framing: 'medium-wide', dof: 'medium', movement: 'dolly-in', stabilization: 'gimbal' },
+    },
+  },
+  {
+    id: 'camera.over-shoulder.v1',
+    name: 'Over the Shoulder',
+    family: 'camera',
+    description: 'OTS framing for dialogue and reaction shots',
+    tags: ['ots', 'dialogue', 'reaction', 'shoulder'],
+    builtIn: true,
+    overrides: {
+      camera: { lens: '85mm', framing: 'medium', dof: 'shallow', movement: 'static' },
     },
   },
 ];
@@ -197,6 +294,50 @@ export const AUDIO_PRESETS: Preset[] = [
         bg: { source: 'generate', volume: 0.3, loop: true, fadeInMs: 2000, fadeOutMs: 2000 },
         mg: { source: 'generate', volume: 0.5 },
         fg: { source: 'tts', volume: 0.9 },
+      },
+    },
+  },
+  {
+    id: 'audio.tense-suspense.v1',
+    name: 'Tense Suspense',
+    family: 'audio',
+    description: 'Low drone with staccato hits for thriller pacing',
+    tags: ['tense', 'suspense', 'thriller', 'drone'],
+    builtIn: true,
+    overrides: {
+      audioPlan: {
+        bg: { source: 'generate', volume: 0.25, loop: true, fadeInMs: 3000, fadeOutMs: 1000 },
+        mg: { source: 'generate', volume: 0.4 },
+        fg: { source: 'tts', volume: 0.9 },
+      },
+    },
+  },
+  {
+    id: 'audio.documentary.v1',
+    name: 'Documentary',
+    family: 'audio',
+    description: 'Understated ambient bed with clear narration priority',
+    tags: ['documentary', 'narration', 'subtle', 'informative'],
+    builtIn: true,
+    overrides: {
+      audioPlan: {
+        bg: { source: 'generate', volume: 0.15, loop: true, fadeInMs: 2000, fadeOutMs: 2000 },
+        fg: { source: 'tts', volume: 0.95 },
+      },
+    },
+  },
+  {
+    id: 'audio.heroic-epic.v1',
+    name: 'Heroic Epic',
+    family: 'audio',
+    description: 'Orchestral swells with powerful brass and percussion',
+    tags: ['heroic', 'epic', 'orchestral', 'powerful'],
+    builtIn: true,
+    overrides: {
+      audioPlan: {
+        bg: { source: 'generate', volume: 0.35, loop: true, fadeInMs: 3000, fadeOutMs: 3000 },
+        mg: { source: 'generate', volume: 0.5 },
+        fg: { source: 'tts', volume: 0.85 },
       },
     },
   },
@@ -453,7 +594,7 @@ export const STORY_PRESETS: Preset[] = [
     tags: ['hicc', 'standard', 'youtube'],
     builtIn: true,
     overrides: {
-      _directives: { narrativeStructure: 'hicc', pacing: 'moderate' } satisfies ProductionDirectives,
+      _directives: { narrativeStructure: 'hicc', pacing: 'moderate', dialogueDensity: 'moderate' } satisfies ProductionDirectives,
     },
   },
   {
@@ -464,7 +605,7 @@ export const STORY_PRESETS: Preset[] = [
     tags: ['narrative', 'three-act', 'story'],
     builtIn: true,
     overrides: {
-      _directives: { narrativeStructure: 'three-act', pacing: 'slow' } satisfies ProductionDirectives,
+      _directives: { narrativeStructure: 'three-act', pacing: 'slow', dialogueDensity: 'dense' } satisfies ProductionDirectives,
     },
   },
   {
@@ -475,7 +616,7 @@ export const STORY_PRESETS: Preset[] = [
     tags: ['hook', 'loop', 'tiktok', 'reels'],
     builtIn: true,
     overrides: {
-      _directives: { narrativeStructure: 'hook-loop', pacing: 'frenetic' } satisfies ProductionDirectives,
+      _directives: { narrativeStructure: 'hook-loop', pacing: 'frenetic', dialogueDensity: 'sparse' } satisfies ProductionDirectives,
     },
   },
   {
@@ -486,7 +627,29 @@ export const STORY_PRESETS: Preset[] = [
     tags: ['montage', 'visual', 'aesthetic'],
     builtIn: true,
     overrides: {
-      _directives: { narrativeStructure: 'montage', pacing: 'moderate' } satisfies ProductionDirectives,
+      _directives: { narrativeStructure: 'montage', pacing: 'moderate', dialogueDensity: 'none' } satisfies ProductionDirectives,
+    },
+  },
+  {
+    id: 'story.setup-twist.v1',
+    name: 'Setup & Twist',
+    family: 'story',
+    description: 'Build expectation then subvert with a reveal or twist',
+    tags: ['twist', 'suspense', 'mystery', 'reveal'],
+    builtIn: true,
+    overrides: {
+      _directives: { narrativeStructure: 'setup-twist', pacing: 'moderate', dialogueDensity: 'moderate' } satisfies ProductionDirectives,
+    },
+  },
+  {
+    id: 'story.educational.v1',
+    name: 'Educational',
+    family: 'story',
+    description: 'Clear concept introduction, demonstration, and summary',
+    tags: ['educational', 'tutorial', 'howto', 'learn'],
+    builtIn: true,
+    overrides: {
+      _directives: { narrativeStructure: 'educational', pacing: 'moderate', dialogueDensity: 'dense' } satisfies ProductionDirectives,
     },
   },
 ];
@@ -514,6 +677,39 @@ export const DIALOGUE_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       audioPlan: { fg: { source: 'tts', volume: 0.85 }, mg: { source: 'generate', volume: 0.3 } },
+    },
+  },
+  {
+    id: 'dialogue.no-dialogue.v1',
+    name: 'No Dialogue',
+    family: 'dialogue',
+    description: 'Music and sound effects only, no spoken words',
+    tags: ['silent', 'music-only', 'no-voice'],
+    builtIn: true,
+    overrides: {
+      audioPlan: { bg: { source: 'generate', volume: 0.4, loop: true } },
+    },
+  },
+  {
+    id: 'dialogue.single-speaker.v1',
+    name: 'Single Speaker',
+    family: 'dialogue',
+    description: 'One authoritative voice with subtle ambient bed',
+    tags: ['single', 'speaker', 'authoritative'],
+    builtIn: true,
+    overrides: {
+      audioPlan: { fg: { source: 'tts', volume: 0.9 }, bg: { source: 'generate', volume: 0.15, loop: true } },
+    },
+  },
+  {
+    id: 'dialogue.whispered.v1',
+    name: 'Whispered',
+    family: 'dialogue',
+    description: 'Intimate whispered narration with ASMR-like presence',
+    tags: ['whisper', 'asmr', 'intimate', 'soft'],
+    builtIn: true,
+    overrides: {
+      audioPlan: { fg: { source: 'tts', volume: 0.95 }, bg: { source: 'generate', volume: 0.1, loop: true, fadeInMs: 3000, fadeOutMs: 3000 } },
     },
   },
 ];
@@ -554,6 +750,28 @@ export const CONTINUITY_PRESETS: Preset[] = [
       seedPolicy: 'free',
     },
   },
+  {
+    id: 'continuity.episode-consistent.v1',
+    name: 'Episode Consistent',
+    family: 'continuity',
+    description: 'Shot-offset seeds for within-episode consistency with minor variation',
+    tags: ['episode', 'consistent', 'variation'],
+    builtIn: true,
+    overrides: {
+      seedPolicy: 'shot-offset',
+    },
+  },
+  {
+    id: 'continuity.series-lock.v1',
+    name: 'Series Lock',
+    family: 'continuity',
+    description: 'Full series-lock for cross-episode character and environment consistency',
+    tags: ['series', 'locked', 'cross-episode'],
+    builtIn: true,
+    overrides: {
+      seedPolicy: 'series-lock',
+    },
+  },
 ];
 
 // ─── Edit Presets ───
@@ -569,6 +787,7 @@ export const EDIT_PRESETS: Preset[] = [
     overrides: {
       transition: 'cut',
       duration: 2,
+      _directives: { avgShotLengthSec: 2, pacing: 'frenetic' } satisfies ProductionDirectives,
     },
   },
   {
@@ -581,6 +800,7 @@ export const EDIT_PRESETS: Preset[] = [
     overrides: {
       transition: 'crossfade',
       duration: 4,
+      _directives: { avgShotLengthSec: 4, pacing: 'slow' } satisfies ProductionDirectives,
     },
   },
   {
@@ -593,6 +813,33 @@ export const EDIT_PRESETS: Preset[] = [
     overrides: {
       transition: 'cut',
       duration: 1.5,
+      _directives: { avgShotLengthSec: 1.5, pacing: 'fast' } satisfies ProductionDirectives,
+    },
+  },
+  {
+    id: 'edit.slow-burn.v1',
+    name: 'Slow Burn',
+    family: 'edit',
+    description: 'Extended shots with minimal cuts for building tension',
+    tags: ['slow', 'tension', 'long-take', 'deliberate'],
+    builtIn: true,
+    overrides: {
+      transition: 'crossfade',
+      duration: 6,
+      _directives: { avgShotLengthSec: 6, pacing: 'slow' } satisfies ProductionDirectives,
+    },
+  },
+  {
+    id: 'edit.dramatic-reveal.v1',
+    name: 'Dramatic Reveal',
+    family: 'edit',
+    description: 'Moderate pacing with strategic hard cuts for reveals',
+    tags: ['dramatic', 'reveal', 'hard-cut', 'strategic'],
+    builtIn: true,
+    overrides: {
+      transition: 'cut',
+      duration: 3.5,
+      _directives: { avgShotLengthSec: 3.5, pacing: 'moderate' } satisfies ProductionDirectives,
     },
   },
 ];
@@ -887,6 +1134,65 @@ export const MASTER_BUNDLES: Recipe[] = [
       'story.three-act.v1',
       'character.narrator-broll.v1',
       'output.youtube-landscape.v1',
+    ],
+  },
+
+  // ── New bundles ──
+  {
+    id: 'recipe.cinematic.thriller.v1',
+    name: 'Thriller',
+    description: 'Dark suspenseful tone with over-shoulder framing and tense audio',
+    tags: ['thriller', 'suspense', 'dark', 'tension'],
+    builtIn: true,
+    category: 'cinematic',
+    mood: 'Thriller',
+    tier: 'simple',
+    directives: { targetShotCount: 8, avgShotLengthSec: 4, pacing: 'moderate', dialogueDensity: 'moderate', lensPackage: 'portrait-heavy', narrativeStructure: 'setup-twist', seedPolicy: 'series-lock' },
+    presetIds: [
+      'visual.dark-thriller.v1',
+      'camera.over-shoulder.v1',
+      'audio.tense-suspense.v1',
+      'story.setup-twist.v1',
+      'character.solo-speaker.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.one-off.educational.v1',
+    name: 'Educational',
+    description: 'Clear structured tutorial with cool modern look and documentary audio',
+    tags: ['educational', 'tutorial', 'documentary', 'howto'],
+    builtIn: true,
+    category: 'one-off',
+    mood: 'Educational',
+    tier: 'simple',
+    directives: { targetShotCount: 7, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'dense', lensPackage: 'wide-only', narrativeStructure: 'educational', seedPolicy: 'scene-lock' },
+    presetIds: [
+      'visual.cool-modern.v1',
+      'camera.wide-establishing.v1',
+      'audio.documentary.v1',
+      'story.educational.v1',
+      'character.narrator-broll.v1',
+      'output.youtube-landscape.v1',
+    ],
+  },
+  {
+    id: 'recipe.shorts.dreamy-asmr.v1',
+    name: 'Dreamy ASMR',
+    description: 'Soft dreamy visuals with whispered narration and gentle steadicam',
+    tags: ['dreamy', 'asmr', 'soft', 'whisper'],
+    builtIn: true,
+    category: 'shorts',
+    mood: 'Dreamy ASMR',
+    tier: 'simple',
+    directives: { targetShotCount: 6, avgShotLengthSec: 4, pacing: 'slow', dialogueDensity: 'sparse', lensPackage: 'standard-mix', narrativeStructure: 'montage', seedPolicy: 'free' },
+    presetIds: [
+      'visual.dreamy-soft.v1',
+      'camera.steadicam.v1',
+      'dialogue.whispered.v1',
+      'story.montage.v1',
+      'character.solo-speaker.v1',
+      'output.reels-portrait.v1',
     ],
   },
 ];

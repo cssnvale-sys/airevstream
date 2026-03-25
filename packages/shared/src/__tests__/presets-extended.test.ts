@@ -26,29 +26,29 @@ describe('extended presets', () => {
     }
   });
 
-  it('should have 4 story presets', () => {
-    expect(STORY_PRESETS).toHaveLength(4);
+  it('should have 6 story presets', () => {
+    expect(STORY_PRESETS).toHaveLength(6);
     for (const p of STORY_PRESETS) {
       expect(p.family).toBe('story');
     }
   });
 
-  it('should have 2 dialogue presets', () => {
-    expect(DIALOGUE_PRESETS).toHaveLength(2);
+  it('should have 5 dialogue presets', () => {
+    expect(DIALOGUE_PRESETS).toHaveLength(5);
     for (const p of DIALOGUE_PRESETS) {
       expect(p.family).toBe('dialogue');
     }
   });
 
-  it('should have 3 continuity presets', () => {
-    expect(CONTINUITY_PRESETS).toHaveLength(3);
+  it('should have 5 continuity presets', () => {
+    expect(CONTINUITY_PRESETS).toHaveLength(5);
     for (const p of CONTINUITY_PRESETS) {
       expect(p.family).toBe('continuity');
     }
   });
 
-  it('should have 3 edit presets', () => {
-    expect(EDIT_PRESETS).toHaveLength(3);
+  it('should have 5 edit presets', () => {
+    expect(EDIT_PRESETS).toHaveLength(5);
     for (const p of EDIT_PRESETS) {
       expect(p.family).toBe('edit');
     }
@@ -90,15 +90,15 @@ describe('extended presets', () => {
     }
   });
 
-  it('should have 42 total built-in presets', () => {
-    expect(ALL_BUILT_IN_PRESETS).toHaveLength(42);
+  it('should have 62 total built-in presets', () => {
+    expect(ALL_BUILT_IN_PRESETS).toHaveLength(62);
   });
 
-  it('should have 15 total built-in recipes', () => {
-    expect(BUILT_IN_RECIPES).toHaveLength(15);
+  it('should have 18 total built-in recipes', () => {
+    expect(BUILT_IN_RECIPES).toHaveLength(18);
   });
 
-  it('should have 12 master bundles', () => {
-    expect(MASTER_BUNDLES).toHaveLength(12);
+  it('should have 15 master bundles', () => {
+    expect(MASTER_BUNDLES).toHaveLength(15);
   });
 });

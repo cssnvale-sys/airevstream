@@ -11,12 +11,12 @@ import {
 import type { ShotSpec, RecipeCategory } from '../index.js';
 
 describe('master bundles', () => {
-  it('should have 12 master bundle recipes', () => {
-    expect(MASTER_BUNDLES).toHaveLength(12);
+  it('should have 15 master bundle recipes', () => {
+    expect(MASTER_BUNDLES).toHaveLength(15);
   });
 
-  it('should have 15 total built-in recipes (3 legacy + 12 bundles)', () => {
-    expect(BUILT_IN_RECIPES).toHaveLength(15);
+  it('should have 18 total built-in recipes (3 legacy + 15 bundles)', () => {
+    expect(BUILT_IN_RECIPES).toHaveLength(18);
     expect(LEGACY_RECIPES).toHaveLength(3);
   });
 

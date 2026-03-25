@@ -46,7 +46,7 @@ export type Preset = z.infer<typeof PresetSchema>;
 export const PacingSchema = z.enum(['slow', 'moderate', 'fast', 'frenetic']);
 export const DialogueDensitySchema = z.enum(['none', 'sparse', 'moderate', 'dense']);
 export const LensPackageSchema = z.enum(['wide-only', 'standard-mix', 'portrait-heavy', 'anamorphic']);
-export const NarrativeStructureSchema = z.enum(['hicc', 'three-act', 'hook-loop', 'montage']);
+export const NarrativeStructureSchema = z.enum(['hicc', 'three-act', 'hook-loop', 'montage', 'setup-twist', 'educational']);
 
 export const ProductionDirectivesSchema = z.object({
   targetShotCount: z.number().int().min(1).max(30).optional(),

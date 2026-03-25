@@ -8,6 +8,8 @@ import {
 } from '@airevstream/shared';
 import type { Preset, Recipe, PresetFamily } from '@airevstream/shared';
 import { useUserPresets, deleteUserPreset } from '@/hooks/use-user-presets';
+import { useComplexityMode } from '@/hooks/use-complexity-mode';
+import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 import { CreatePresetModal } from './create-preset-modal';
 
 interface PresetPickerProps {
@@ -47,6 +49,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
   const [activeTab, setActiveTab] = useState<TabValue>('recipes');
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { mode } = useComplexityMode();
 
   const { presets: userPresets, records: userRecords, mutate } = useUserPresets();
 
@@ -162,7 +165,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
               <p className="text-xs text-text-tertiary text-center py-4">No recipes found</p>
             ) : (
               filteredRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} onApply={onApplyRecipe} />
+                <RecipeCard key={recipe.id} recipe={recipe} onApply={onApplyRecipe} mode={mode} />
               ))
             )
           ) : activeTab === 'my-presets' ? (
@@ -262,7 +265,7 @@ function PresetCard({
   );
 }
 
-function RecipeCard({ recipe, onApply }: { recipe: Recipe; onApply: (recipe: Recipe) => void }) {
+function RecipeCard({ recipe, onApply, mode }: { recipe: Recipe; onApply: (recipe: Recipe) => void; mode?: string }) {
   return (
     <button
       onClick={() => onApply(recipe)}
@@ -284,6 +287,30 @@ function RecipeCard({ recipe, onApply }: { recipe: Recipe; onApply: (recipe: Rec
           </span>
         ))}
       </div>
+      {mode && mode !== 'simple' && (recipe.routing || recipe.constraints) && (
+        <div className="flex gap-1 mt-1.5 flex-wrap">
+          {recipe.routing && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 border-cyan-500/20 text-cyan-400">
+              {[recipe.routing.keyframeEngine, recipe.routing.motionEngine].filter(Boolean).join(' + ')} &rarr; {recipe.routing.assemblyEngine ?? 'remotion'}
+            </span>
+          )}
+          {recipe.constraints?.maxRuntimeSeconds && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-500/10 border-amber-500/20 text-amber-400">
+              max {recipe.constraints.maxRuntimeSeconds}s
+            </span>
+          )}
+          {recipe.constraints?.maxCostUsd && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
+              ${recipe.constraints.maxCostUsd}
+            </span>
+          )}
+          {recipe.constraints?.allowedAspects && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-indigo-500/10 border-indigo-500/20 text-indigo-400">
+              {recipe.constraints.allowedAspects.join(', ')}
+            </span>
+          )}
+        </div>
+      )}
     </button>
   );
 }

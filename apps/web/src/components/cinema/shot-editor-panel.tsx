@@ -5,6 +5,7 @@ import { ShotList } from './shot-list';
 import { ShotPreview } from './shot-preview';
 import { ShotProperties } from './shot-properties';
 import { PresetPicker } from './preset-picker';
+import { PresetDiffView } from './preset-diff-view';
 import { StyleCardPicker } from './style-card-picker';
 import { ProjectTypePicker } from './project-type-picker';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
@@ -12,9 +13,11 @@ import { isVisible } from '@/lib/complexity-fields';
 import {
   resolvePresets,
   resolvePresetsWithDirectives,
+  resolveWithStickyOverrides,
+  generatePresetDiff,
   ALL_BUILT_IN_PRESETS,
 } from '@airevstream/shared';
-import type { Recipe, ShotSpec } from '@airevstream/shared';
+import type { Recipe, ShotSpec, PresetDiffEntry } from '@airevstream/shared';
 
 export interface ShotData {
   id: string;
@@ -42,6 +45,12 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
   const [selectedProjectType, setSelectedProjectType] = useState<string | undefined>();
   const selectedShot = shots.find((s) => s.id === selectedShotId) ?? null;
   const { mode } = useComplexityMode();
+  const [stickyFields, setStickyFields] = useState<Set<string>>(new Set());
+  const [lastDiff, setLastDiff] = useState<PresetDiffEntry[]>([]);
+
+  const handleFieldTouched = useCallback((path: string) => {
+    setStickyFields((prev) => new Set(prev).add(path));
+  }, []);
 
   const handleSpecChange = useCallback(async (spec: Record<string, unknown>) => {
     if (selectedShotId) {
@@ -51,11 +60,21 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
 
   const handleApplyPreset = useCallback(async (overrides: Record<string, unknown>) => {
     if (!selectedShotId || !selectedShot) return;
-    const resolved = resolvePresets(selectedShot.shotspec as unknown as ShotSpec, {
-      userOverrides: overrides as unknown as Partial<ShotSpec>,
-    });
-    await onUpdateShot(selectedShotId, resolved as unknown as Record<string, unknown>);
-  }, [selectedShotId, selectedShot, onUpdateShot]);
+    const before = { ...selectedShot.shotspec };
+    const resolved = stickyFields.size > 0
+      ? resolveWithStickyOverrides(
+          selectedShot.shotspec as unknown as ShotSpec,
+          { userOverrides: overrides as unknown as Partial<ShotSpec> },
+          stickyFields,
+          selectedShot.shotspec,
+        )
+      : resolvePresets(selectedShot.shotspec as unknown as ShotSpec, {
+          userOverrides: overrides as unknown as Partial<ShotSpec>,
+        });
+    const after = resolved as unknown as Record<string, unknown>;
+    setLastDiff(generatePresetDiff(before, after));
+    await onUpdateShot(selectedShotId, after);
+  }, [selectedShotId, selectedShot, onUpdateShot, stickyFields]);
 
   const handleApplyRecipe = useCallback(async (recipe: Recipe) => {
     if (!selectedShotId || !selectedShot) return;
@@ -112,7 +131,9 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
             <ShotProperties
               spec={selectedShot.shotspec}
               onChange={handleSpecChange}
+              onFieldTouched={handleFieldTouched}
             />
+            <PresetDiffView diff={lastDiff} />
             {mode === 'simple' ? (
               <>
                 <ProjectTypePicker

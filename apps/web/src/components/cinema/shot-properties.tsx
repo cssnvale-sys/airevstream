@@ -7,6 +7,7 @@ import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
 interface ShotPropertiesProps {
   spec: Record<string, unknown>;
   onChange: (spec: Record<string, unknown>) => Promise<void>;
+  onFieldTouched?: (path: string) => void;
 }
 
 const CAMERA_MOVEMENTS = [
@@ -21,7 +22,7 @@ const SAMPLER_OPTIONS = ['euler_ancestral', 'dpmpp_2m', 'dpmpp_sde', 'dpm_2', 'u
 const SCHEDULER_OPTIONS = ['normal', 'karras', 'exponential', 'sgm_uniform'];
 const SEED_POLICY_OPTIONS = ['free', 'shot-offset', 'scene-lock', 'series-lock'];
 
-export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
+export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertiesProps) {
   const { mode } = useComplexityMode();
 
   const update = (path: string, value: unknown) => {
@@ -35,6 +36,7 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
       parent[parts[1]] = value;
       updated[parts[0]] = parent;
     }
+    onFieldTouched?.(path);
     onChange(updated);
   };
 
@@ -368,6 +370,31 @@ export function ShotProperties({ spec, onChange }: ShotPropertiesProps) {
                 </div>
               </>
             )}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {/* Continuity Locks — advanced+ */}
+      {isVisible(FIELD_VISIBILITY.continuityLocks, mode) && (
+        <CollapsibleSection title="Continuity Locks">
+          <div className="grid grid-cols-3 gap-3">
+            {(['characterLock', 'wardrobeLock', 'environmentLock'] as const).map((lockKey) => {
+              const locks = (spec.continuityLocks as Record<string, unknown>) ?? {};
+              const labels: Record<string, string> = {
+                characterLock: 'Character',
+                wardrobeLock: 'Wardrobe',
+                environmentLock: 'Environment',
+              };
+              return (
+                <SelectField
+                  key={lockKey}
+                  label={labels[lockKey]}
+                  value={(locks[lockKey] as string) ?? 'off'}
+                  options={['off', 'standard', 'strong']}
+                  onChange={(v) => update(`continuityLocks.${lockKey}`, v)}
+                />
+              );
+            })}
           </div>
         </CollapsibleSection>
       )}

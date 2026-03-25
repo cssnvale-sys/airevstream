@@ -103,6 +103,12 @@ export const FIELD_VISIBILITY = {
 
   // Shot table view
   shotTable: 'advanced' as ComplexityMode,
+
+  // Preset system — advanced+
+  continuityLocks: 'advanced' as ComplexityMode,
+  negativePrompt: 'complex' as ComplexityMode,
+  presetDiff: 'advanced' as ComplexityMode,
+  engineRouting: 'complex' as ComplexityMode,
 } as const;
 
 export const STORAGE_KEY = 'airevstream_complexity_mode';

@@ -30,6 +30,13 @@ Migration `0004_add_tenant_scoping` adds tenantId to Alert (nullable), Conversat
 npx prisma migrate deploy
 ```
 
+### Database Migration — Suggestion Logs (Session 37)
+Migration `0007_add_suggestion_logs` adds the `SuggestionLog` table for tracking suggestion accept/reject outcomes and viral score feedback. Apply when database is available:
+```bash
+cd packages/db
+npx prisma migrate dev --name add_suggestion_logs
+```
+
 ---
 
 ## Seasoning Pipeline Setup (Session 25)

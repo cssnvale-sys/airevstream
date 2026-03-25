@@ -7,6 +7,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Channel-Topic Viral Content Suggestion System** (Session 37): Channel-aware preset suggestions with niche/tone/platform boosting via `suggestPresetVariantForChannel()` and `computeSuggestionBoost()`
+- **SuggestionLog tracking model** (Session 37): `SuggestionLog` (46th Prisma model) with outcome tracking, migration `0007_add_suggestion_logs`
+- **Channel-aware preset suggestions** (Session 37): 3 boost maps (`NICHE_PRESET_BOOST`, `PLATFORM_PRESET_BOOST`, `TONE_PRESET_BOOST`), `ChannelContext` interface
+- **Channels list page and detail page** (Session 37): `/channels` with stat cards + table, `/channels/[id]` with profile/content/viral tabs
+- **Channel viral dashboard** (Session 37): `ChannelViralDashboard` with score trend, tier distribution, topic suggestions
+- **ViralScorePanel accept/reject** (Session 37): Accept/reject buttons with suggestion logging to SuggestionLog
+- **Analytics suggestion performance** (Session 37): Suggestion performance section in analytics experiments tab
+- **Experiment winner feedback loop** (Session 37): `SuggestionLog.viralScoreAfter` updated on experiment winner declaration
+- **Suggestion API routes** (Session 37): 5 new routes (suggestions CRUD + stats, channel viral-stats, channel topic-suggestions), modified viral-suggestions to be channel-aware
+- **NicheTagInput component** (Session 37): Tag input component for channel niche management
+- **Channels sidebar nav** (Session 37): Sidebar entry with `c` keyboard shortcut
 - **Experiment orchestrator** (Session 36): Rewrote from Tier 3 stub to real implementation — `validateExperimentConfig()`, `allocateTraffic()`, `shouldDeclareWinner()`, `suggestPresetVariant()` with `PresetSuggestion`, `VariantMetrics`, `WinnerDecision`, `ValidationResult` types
 - **Experiment Prisma models** (Session 36): `Experiment` + `ExperimentVariant` (44th/45th models), migration `0006_add_experiments`
 - **Experiment queue + worker** (Session 36): `EXPERIMENT` queue, `ExperimentEvaluateJob`/`ExperimentRecordMetricJob` types, `experiment.worker.ts` (8th worker) with evaluate + record-metric handlers

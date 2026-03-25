@@ -264,6 +264,20 @@
 | CP-7 | Preview pipeline DAG | Done | startPreviewPipeline() — simplified 3-step DAG at draft quality |
 | CP-8 | Tests | Done | 63 new tests (22 workflow + 16 composition + 25 resolver), all passing |
 
+### Phase 21: Channel-Topic Viral Content Suggestion System (Session 37) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| CT-1 | SuggestionLog Prisma model | Done | `SuggestionLog` (46th model), migration `0007_add_suggestion_logs` |
+| CT-2 | Channel-aware orchestrator | Done | `ChannelContext` interface, `suggestPresetVariantForChannel()`, `computeSuggestionBoost()`, 3 boost maps |
+| CT-3 | Suggestion API routes | Done | 5 new routes (suggestions CRUD+stats, channel viral-stats, channel topic-suggestions), channel-aware viral-suggestions |
+| CT-4 | Experiment feedback loop | Done | `SuggestionLog.viralScoreAfter` updated on experiment winner declaration |
+| CT-5 | Channels list page | Done | `/channels` with stat cards + table |
+| CT-6 | Channel detail page | Done | 3 tabs (profile/content/viral), `NicheTagInput`, `ChannelViralDashboard` |
+| CT-7 | ViralScorePanel accept/reject | Done | Accept/reject buttons + suggestion logging |
+| CT-8 | Analytics suggestion performance | Done | Suggestion performance section in experiments tab |
+| CT-9 | Channels sidebar nav | Done | Sidebar entry with `c` keyboard shortcut (16 nav items total) |
+| CT-10 | Tests | Done | 16 new experiment-orchestrator tests (38 total) |
+
 ### Phase 20: Viral Video Discovery & Testing Pipeline (Session 36) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
@@ -290,7 +304,7 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 333 shared + 158 other = 491+ (all passing via Vitest)
+- **Unit tests**: 349 shared + 158 other = 507+ (all passing via Vitest)
 - **Audit tests**: 24 (9 files scanning 133+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
 - **Test tasks**: 27 (all passing via Turbo)
@@ -307,12 +321,13 @@
 - **Full codebase audit — 100% coverage (Session 34)**: 8-wave audit with 31 parallel agents across ~400 source files. ~210 issues found and fixed. D071 conditional tenant scoping fully resolved (60+ routes). 0 regressions — 134 unit tests + 24 audit tests pass (27 test tasks).
 - **Cinema pipeline upgrade (Session 35)**: Workflow registry with quality tiers, composition registry, assembly manifest, assembly resolver, agent output persistence, worker integration, preview pipeline DAG. 63 new tests (22 workflow + 16 composition + 25 resolver). 0 regressions.
 - **Viral discovery & testing pipeline (Session 36)**: Experiment orchestrator (from stub to real), Experiment + ExperimentVariant models (44th/45th), experiment worker (8th), 6 API routes + viral-suggestions, experiments page + detail page, ViralScorePanel enhancements, analytics experiments tab. 24 new tests. D071 fix in viral-score. 0 regressions.
+- **Channel-Topic Suggestion System (Session 37)**: SuggestionLog model (46th), channel-aware suggestions with niche/tone/platform boosting, 5 new API routes, channels list + detail pages, ChannelViralDashboard, ViralScorePanel accept/reject, experiment feedback loop. 16 new tests. 0 regressions.
 
 ## Architecture Highlights
-- **Prisma Schema**: 44 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36)
+- **Prisma Schema**: 46 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36 + SuggestionLog Session 37)
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
 - **Next.js API Routes**: 124 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
-- **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
+- **Dashboard**: 19 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 4 compositions (short 9:16, long 16:9, thumbnail still, CinemaVideo 24fps) with H.I.C.C. beat timing — CinemaVideo now wired in render handler (Session 20)
 - **ComfyUI**: 4 SDXL workflow templates with {{placeholder}} syntax + client API wrapper + template renderer

@@ -460,3 +460,13 @@
 **Date**: 2026-03-24
 **Decision**: `suggestPresetVariant()` uses a rule-based mapping from weak viral dimensions to preset IDs. No LLM calls are involved.
 **Rationale**: Follows the same philosophy as D084 (deterministic revision presets). Dimension-to-preset mappings are predictable and testable. For example, a low `hookStrength` score maps to presets with high-impact openings. This keeps suggestions instant, free, and reproducible — important for A/B experiment variant creation where consistency matters.
+
+## D093: Channel-Aware Suggestions Use Deterministic Mapping
+**Date**: 2026-03-25
+**Decision**: `suggestPresetVariantForChannel()` extends the base `suggestPresetVariant()` with channel context (niche, tone, platform) to compute boost scores via 3 static maps (`NICHE_PRESET_BOOST`, `PLATFORM_PRESET_BOOST`, `TONE_PRESET_BOOST`). No LLM calls are involved.
+**Rationale**: Extends D092's deterministic philosophy to channel-specific suggestions. Niche/tone/platform context improves suggestion relevance without adding latency or cost. The boost maps are additive scores applied to the base dimension-to-preset mapping, keeping the system predictable and testable. A channel focused on "tech reviews" with a "professional" tone on YouTube will get different preset rankings than a "comedy" channel with "casual" tone on TikTok.
+
+## D094: SuggestionLog Tenant-Scoped with Direct tenantId
+**Date**: 2026-03-25
+**Decision**: `SuggestionLog` has a direct `tenantId` field (required) for fast queries, with optional `channelId` and `contentId` foreign keys for linking to specific channels and content items.
+**Rationale**: Suggestion logs are queried frequently for analytics (accept/reject rates, outcome tracking, performance by channel). A direct tenantId avoids expensive joins through channel→socialAccount→emailAccount→tenant chains. Optional FKs allow logging suggestions that are not yet tied to specific content (e.g., proactive channel-level suggestions) while still supporting drill-down analytics when content is created.

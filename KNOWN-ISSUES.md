@@ -6,6 +6,12 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
+### KI-073: Suggestion Log Migration Not Yet Applied
+**Severity**: Medium
+**Status**: Open (Session 37)
+`SuggestionLog` model defined in schema.prisma with migration `0007_add_suggestion_logs`, but `prisma migrate dev` not yet run against a live database. `prisma generate` was run so types are available.
+**Action**: Run `npx prisma migrate dev` from packages/db when database is available.
+
 ### KI-070: Simple Wizard Plan Generation Uses Fallback Only
 **Severity**: Low
 **Status**: Open (Session 32)
@@ -138,8 +144,8 @@ SeasoningCohort and SeasoningEnrollment models are defined in schema.prisma but 
 
 ### KI-061: Tier 3 Features Require External Setup
 **Severity**: Low
-**Status**: Partially Resolved (Session 36)
-Three stub modules remain: `viral-discovery` (YouTube/TikTok API keys), `quality-regression` (ffmpeg with libvmaf), `channel-suggestions` (ML model). `experiment-orchestrator` was activated in Session 36 with 4 pure functions and full API/frontend.
+**Status**: Partially Resolved (Session 37)
+Two stub modules remain: `viral-discovery` (YouTube/TikTok API keys), `quality-regression` (ffmpeg with libvmaf). `experiment-orchestrator` was activated in Session 36. `channel-suggestions` was activated in Session 37 with channel-topic suggestion system (deterministic, no ML model needed).
 **Action**: Implement remaining stubs when external dependencies are available. See OPERATOR-TODO.md.
 
 ### KI-056: Port 3000 Conflict with External Project — Fixed (Session 18)

@@ -4,6 +4,45 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 37 — Channel-Topic Viral Content Suggestion System
+
+**Date:** 2026-03-25
+**Focus:** Build channel-aware suggestion system with niche/tone/platform boosting, SuggestionLog tracking, channels UI pages, and feedback loop from experiment winners to suggestion outcomes.
+
+### What Was Done
+
+#### Phase 1: Schema + Shared
+- Added `SuggestionLog` Prisma model (46th model), migration `0007_add_suggestion_logs`
+- Added `ChannelContext` interface to shared types
+- Extended experiment-orchestrator with `suggestPresetVariantForChannel()` and `computeSuggestionBoost()` functions
+- Added 3 boost maps: `NICHE_PRESET_BOOST`, `PLATFORM_PRESET_BOOST`, `TONE_PRESET_BOOST`
+- 16 new tests (total now 38 in experiment-orchestrator)
+
+#### Phase 2: API Routes
+- 5 new routes: suggestions CRUD + stats, channel viral-stats, channel topic-suggestions
+- Modified `viral-suggestions` route to be channel-aware
+- Added feedback loop in experiment worker: `SuggestionLog.viralScoreAfter` updated on experiment winner declaration
+
+#### Phase 3: Frontend
+- Channels list page (`/channels`) with stat cards + table
+- Channel detail page with 3 tabs (profile/content/viral)
+- `NicheTagInput` component for tag management
+- `ChannelViralDashboard` component with score trend, tier distribution, topic suggestions
+- Enhanced `ViralScorePanel` with accept/reject buttons + suggestion logging
+- Analytics experiments tab with suggestion performance section
+- Sidebar `Channels` entry with `c` keyboard shortcut
+
+### Decisions
+- D093: Channel-aware suggestions use deterministic niche/tone/platform-to-preset mapping, no LLM
+- D094: SuggestionLog is tenant-scoped with direct tenantId for fast queries, channelId/contentId are optional FKs
+
+### Build Status
+- 14 packages build (0 errors)
+- 27 test tasks pass (16 new experiment-orchestrator tests, 38 total)
+- 24 audit tests pass (0 regressions)
+
+---
+
 ## Session 36 — Viral Video Discovery & Testing Pipeline
 
 **Date:** 2026-03-24

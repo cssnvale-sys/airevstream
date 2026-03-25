@@ -6,6 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Workflow registry quality tiers** (Session 35): `qualityTiers`, `tierDefaults`, `continuityTier`, `outputFormat`, `estimatedTimeSec`, `requiredFields`, `supportsFrameAnchoring`, `tags` on all 8 workflows
+- **Composition registry** (Session 35): `composition-registry.ts` — 4 Remotion compositions (ShortFormVideo, LongFormVideo, CinemaVideo, ThumbnailRenderer) with `getCompositionForProduction()`, `getCompositionById()`, `validateCompositionProps()`
+- **Assembly manifest** (Session 35): `AssemblyManifest` + `AssembledShot` types bridging ComfyUI and Remotion; stored in `Storyboard.scriptJson`
+- **Assembly resolver** (Session 35): `resolveForRemotion()` converts manifest to Remotion render params, plus `toCinemaShotData()`, `toBeatTimings()`, `toSubtitleEntries()`, `toAudioTracks()`, `deriveBeatsFromDirector()`, `parseKeyframeUrls()`, `toDraftManifest()`
+- **Agent output persistence** (Session 35): `agentOutputs` on `AgentPipelineState` — agent outputs now survive pipeline completion for downstream consumption
+- **Preview pipeline DAG** (Session 35): `startPreviewPipeline()` — simplified 3-step pipeline (storyboard → shots → render) at draft quality
+- **Workflow registry tier defaults** (Session 35): `getWorkflowWithDefaults()`, `validateWorkflowRequirements()`, `getWorkflowsByTags()`
+
+### Changed
+- **Production worker** (Session 35): storyboard handler builds assembly manifest, shot handler applies registry tier defaults, render handler detects manifest and uses resolver (backward-compatible fallback)
+- **Production worker** (Session 35): QC scores now persisted to `StoryboardShot.qualityScore`
+
 ### Fixed
 - **D071 conditional tenant scoping fully resolved** (Session 34): replaced `ctx.tenantId ? {...} : {}` pattern with unconditional guard + filter in 60+ API routes — eliminates the single largest security vulnerability class
 - **Missing tenant guards** (Session 34): 17 routes using `ctx.tenantId!` without null check now have explicit 403 guard

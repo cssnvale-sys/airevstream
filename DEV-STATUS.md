@@ -252,6 +252,18 @@
 | 9.6 | Schedule action handler | Done | Redirects to calendar page |
 | 9.7 | Studio sort param fix | Done | Separate sort/order params matching parseQuery |
 
+### Phase 19: Cinema Pipeline Upgrade — Asset Factory + Film Assembly Engine (Session 35) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| CP-1 | Workflow registry quality tiers | Done | Extended WorkflowMetadata with qualityTiers, tierDefaults, continuityTier, outputFormat, estimatedTimeSec, requiredFields, supportsFrameAnchoring, tags |
+| CP-2 | Composition registry | Done | 4 Remotion compositions (ShortFormVideo, LongFormVideo, CinemaVideo, ThumbnailRenderer) with lookup + validation |
+| CP-3 | Assembly manifest types | Done | AssemblyManifest + AssembledShot types, persisted agent outputs, beat timings, subtitles, output spec |
+| CP-4 | Assembly resolver | Done | resolveForRemotion(), 7 conversion functions, draft manifest, keyframeUrls parser |
+| CP-5 | Agent output persistence | Done | agentOutputs on AgentPipelineState, persisted in orchestrator execute() |
+| CP-6 | Worker integration | Done | Manifest-aware render, registry-based workflow/composition selection, QC score persistence |
+| CP-7 | Preview pipeline DAG | Done | startPreviewPipeline() — simplified 3-step DAG at draft quality |
+| CP-8 | Tests | Done | 63 new tests (22 workflow + 16 composition + 25 resolver), all passing |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -266,7 +278,7 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 134 (all passing via Vitest)
+- **Unit tests**: 333 shared + 134 other = 467+ (all passing via Vitest)
 - **Audit tests**: 24 (9 files scanning 133+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
 - **Test tasks**: 27 (all passing via Turbo)
@@ -281,6 +293,7 @@
 - **Simplified Cinema Wizard (Session 32)**: 5-screen simple mode wizard, character preset family (10th, 41 total built-in presets), 6 revision presets, 3 new frontend components, simple mode guardrails + constraint validation.
 - **AI-Generated Presets (Session 33)**: UserPreset model (42nd Prisma model), 3 API routes (CRUD + generate), AI generation with validation, CreatePresetModal + PresetPicker "My Presets" tab, localStorage sync. 17 new unit tests.
 - **Full codebase audit — 100% coverage (Session 34)**: 8-wave audit with 31 parallel agents across ~400 source files. ~210 issues found and fixed. D071 conditional tenant scoping fully resolved (60+ routes). 0 regressions — 134 unit tests + 24 audit tests pass (27 test tasks).
+- **Cinema pipeline upgrade (Session 35)**: Workflow registry with quality tiers, composition registry, assembly manifest, assembly resolver, agent output persistence, worker integration, preview pipeline DAG. 63 new tests (22 workflow + 16 composition + 25 resolver). 0 regressions.
 
 ## Architecture Highlights
 - **Prisma Schema**: 41 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31)

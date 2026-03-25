@@ -440,3 +440,13 @@
 **Date**: 2026-03-23
 **Decision**: When saving a user preset, write to localStorage immediately (optimistic), then POST to the API in the background. On page load, merge localStorage with API response (API is source of truth by presetId).
 **Rationale**: Instant UX — the preset appears in the picker immediately without waiting for a round-trip. If the API call fails (network issue), the preset is still available locally and will sync on next successful load. The tradeoff (possible temporary inconsistency across devices) is acceptable for a non-critical feature.
+
+## D089: Assembly Manifest as Pipeline Contract
+**Date**: 2026-03-24
+**Decision**: Introduce `AssemblyManifest` as the shared data contract between ComfyUI (asset factory) and Remotion (film assembly engine). The manifest is stored in the existing `Storyboard.scriptJson` JSON column — no migration needed. The worker detects manifests via `schemaVersion === '1.0.0'` and falls back to legacy inline props building for storyboards created before this change.
+**Rationale**: Agent outputs (director sections, dialogue tracks, sound layers, finishing color grades) were previously in-memory only and lost between pipeline stages. The manifest persists all agent outputs, carries per-shot dialogue/audio/continuity data, and provides a single `resolveForRemotion()` function to convert sec-based timeline data to Remotion's frame-based props. Backward compatibility is preserved via the schemaVersion detection pattern.
+
+## D090: Composition and Workflow Registries
+**Date**: 2026-03-24
+**Decision**: Create `composition-registry.ts` for Remotion compositions and extend `workflow-registry.ts` with quality tiers, tier defaults, continuity levels, output formats, and tags. The worker uses `getWorkflowWithDefaults()` to apply tier-appropriate generation parameters and `getCompositionForProduction()` to select the correct Remotion composition.
+**Rationale**: The worker previously hardcoded a `WORKFLOW_TEMPLATE_MAP` for workflow selection and used inline conditionals for composition selection. The registries centralize this metadata, making it accessible to both the worker and the frontend (cost estimation, pipeline preview, constraint validation). All new metadata fields are optional for backward compatibility.

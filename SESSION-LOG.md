@@ -4,6 +4,47 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 35 — Cinema Pipeline Upgrade: Asset Factory + Film Assembly Engine
+
+**Date:** 2026-03-24
+**Focus:** Create proper registry contracts for ComfyUI and Remotion, a shared assembly manifest that bridges them, and persist agent outputs for downstream consumption.
+
+### What Was Done
+
+#### Phase 1: Workflow Registry + Composition Registry
+- Extended `WorkflowMetadata` with quality tiers, tier defaults, continuity tier, output format, estimated time, required fields, frame anchoring support, and tags
+- Updated all 8 workflow registry entries with the new fields
+- Added 3 new functions: `getWorkflowWithDefaults()`, `validateWorkflowRequirements()`, `getWorkflowsByTags()`
+- Created `composition-registry.ts` — 4 compositions (ShortFormVideo, LongFormVideo, CinemaVideo, ThumbnailRenderer)
+- Added 3 composition functions: `getCompositionForProduction()`, `getCompositionById()`, `validateCompositionProps()`
+- 22 workflow + 16 composition tests
+
+#### Phase 2: Assembly Manifest + Resolver + Agent Output Persistence
+- Added `AssemblyManifest` and `AssembledShot` types to `types.ts`
+- Created `assembly-resolver.ts` with 8 functions: `resolveForRemotion()`, `toCinemaShotData()`, `toBeatTimings()`, `toSubtitleEntries()`, `toAudioTracks()`, `deriveBeatsFromDirector()`, `parseKeyframeUrls()`, `toDraftManifest()`
+- Added `agentOutputs` to `AgentPipelineState` and persisted in `AgentOrchestrator.execute()`
+- 25 resolver tests
+
+#### Phase 3: Production Worker Integration
+- Shot generation handler now uses `getWorkflowWithDefaults()` for tier defaults instead of only WORKFLOW_TEMPLATE_MAP
+- Render handler detects assembly manifest via `schemaVersion` field and uses `resolveForRemotion()`, with full backward-compatible fallback
+- Render handler uses `getCompositionForProduction()` for composition selection
+- Storyboard handler builds and stores an `AssemblyManifest` in `Storyboard.scriptJson`
+- Agent outputs (director sections → beats, dialogue tracks → shots, sound layers → audio plans) propagated through manifest
+- QC scores persisted to `StoryboardShot.qualityScore`
+- Added preview pipeline DAG to `flows.ts` (simplified: storyboard → shots → render, draft tier)
+
+### Decisions
+- D089: Assembly Manifest as pipeline contract
+- D090: Composition Registry for Remotion
+
+### Build Status
+- 14 packages build (0 errors)
+- 333 shared tests + 134 unit tests + 24 audit tests (27 test tasks, all pass)
+- 0 audit violations, 0 regressions
+
+---
+
 ## Session 34 — Full Codebase Audit (100% Coverage, 8-Wave)
 
 **Date:** 2026-03-24

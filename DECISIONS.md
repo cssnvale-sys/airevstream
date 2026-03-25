@@ -480,3 +480,13 @@
 **Date**: 2026-03-25
 **Decision**: When extracting preset IDs from `presetOverrides` for channel-aware suggestions, scan both keys and string values of the overrides object. Keys represent the preset family (e.g., `visual`, `camera`), and values may contain preset IDs as strings (e.g., `"cinematic-warm"`).
 **Rationale**: The `presetOverrides` structure uses family names as keys and either preset IDs (strings) or partial override objects as values. To correctly identify which presets a piece of content uses — needed for suggestion outcome tracking and experiment variant comparison — both locations must be checked. This ensures the suggestion engine can correlate applied presets with viral score outcomes regardless of how presets were specified in the content creation flow.
+
+## D097: Grandfathered Allowlist Pattern for Audit Tests
+**Date**: 2026-03-25
+**Decision**: New audit tests use a `KNOWN_*` Set allowlist to grandfather all pre-existing violations. The test catches only NEW violations (regressions). Entries are removed from the allowlist as they're fixed — the test prevents them from returning.
+**Rationale**: Adding a new audit test to a codebase with many existing instances of the pattern would either fail immediately (blocking CI) or require fixing all instances first (blocking adoption). The allowlist pattern lets us ship the test immediately, prevent regressions, and fix existing violations incrementally. This pattern was already proven by `KNOWN_SILENT_CATCHES`, `KNOWN_MISSING_TENANT_SCOPE`, etc. in earlier audit tests. Applied to: `.strict()` Zod schemas (78→0 after targeted audit), incomplete status enum checks (27→22 after evaluation), console.log/debugger (0), double `/api/v1` prefix (0).
+
+## D098: shouldDeclareWinner Respects primaryMetric
+**Date**: 2026-03-25
+**Decision**: The `shouldDeclareWinner()` function in experiment-orchestrator now accepts an optional `primaryMetric` parameter to determine which metric field to use for winner evaluation. Defaults to `'engagement'` for backward compatibility.
+**Rationale**: The Experiment model has `primaryMetric` with 5 valid values (views, engagement, retention, clickRate, viralScore), but the orchestrator always used `engagementRate`. This made the metric selection meaningless. Now `getMetricRate(variant, primaryMetric)` maps each metric to the corresponding VariantMetrics field (e.g., retention→completionRate, clickRate→clicks/impressions). The worker passes `experiment.primaryMetric` to the function.

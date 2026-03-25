@@ -4,6 +4,59 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 39 — New Audit Tests + Targeted 4-Wave Audit
+
+**Date:** 2026-03-25
+**Focus:** Add 4 new automated audit tests, then run targeted audit to fix all grandfathered violations and deep-review newest features.
+
+### What Was Done
+
+#### Part 1: New Audit Tests (4 files, 9 tests)
+1. **api-prefix.audit.test.ts** (Bug Class 10) — Double `/api/v1` prefix detection
+2. **strict-zod.audit.test.ts** (Bug Class 11) — `.strict()` Zod schema detection
+3. **console-log.audit.test.ts** (Bug Class 12) — `console.log`/`debugger` in production
+4. **status-enum.audit.test.ts** (Bug Class 13) — Status enum completeness
+
+#### Part 2: Targeted 4-Wave Audit
+
+**Wave 1: Auth & System Routes** (3 agents, 36 routes)
+- Removed 22 `.strict()` from Zod schemas
+- Fixed 1 tenant scoping gap in system/errors/[id]/retry
+
+**Wave 2: Content/Cinema/Domain Routes** (5 agents, 105 routes)
+- Removed 57 `.strict()` from Zod schemas (all 78 now eliminated)
+- Fixed 18 D088 tenant scoping violations (conditional ternary → unconditional guard)
+- Fixed 1 silent catch in approvals/[id]/[action]
+- Fixed 1 KB tenant leak in content/viral-score
+- Fixed 1 performance issue in workflows (sequential → Promise.all)
+
+**Wave 3: Status Enum Gap Evaluation** (3 agents, 27 entries)
+- Evaluated all 27 flagged entries: 8 real bugs, 19 intentional/mis-attributed
+- Fixed: ai-services validProviders (missing anthropic, google), validStatuses (wrong values)
+- Fixed: pipeline-status missing terminal status recognition (scheduled/posted/archived)
+- Fixed: schedule/[id] missing posting guard on PUT/DELETE
+- Fixed: system/alerts + system/errors missing suppressed status filter
+- Fixed: system/health missing network, sessions metric types
+- Fixed: tenants/[id] missing past_due subscription status
+
+**Wave 4: Deep Feature Review** (4 agents, ~30 files cross-boundary)
+- Experiment backend: 4 fixes — variant creation locked to draft-only, shouldDeclareWinner respects primaryMetric, worker reads fresh variant data after lock, handleRecordMetric validates tenant + status
+- Channel/Suggestion backend: 3 fixes — cinema-bible tenant guard reorder, suggestions POST race condition ($transaction), DELETE tenant chain consistency
+- Frontend: 3 type accuracy fixes (healthScore location, topContent status, recent field)
+
+### Decisions
+- D097: Grandfathered allowlist pattern for new audit tests
+- D098: shouldDeclareWinner uses primaryMetric to pick correct rate field
+
+### Results
+- 141 routes + ~30 feature files audited across 4 waves
+- 78 `.strict()` removed (allowlist now empty)
+- 37 other issues found and fixed (19 tenant scoping, 8 status enum, 4 experiment security/race, 3 channel fixes, 3 type fixes)
+- Audit tests: 9→13 files, 24→33 tests
+- 0 regressions: build 14/14, tests 27/27, audit 33/33
+
+---
+
 ## Session 38 — Full Codebase Audit (8-Wave)
 
 **Date:** 2026-03-25

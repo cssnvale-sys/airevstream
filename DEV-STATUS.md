@@ -318,7 +318,7 @@
 
 ## Test Summary
 - **Unit tests**: 349 shared + 158 other = 507+ (all passing via Vitest)
-- **Audit tests**: 24 (9 files scanning 133+ API routes for 9 bug classes, <1s)
+- **Audit tests**: 33 (13 files scanning 133+ API routes + monorepo-wide for 13 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
 - **Test tasks**: 27 (all passing via Turbo)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
@@ -336,6 +336,7 @@
 - **Viral discovery & testing pipeline (Session 36)**: Experiment orchestrator (from stub to real), Experiment + ExperimentVariant models (44th/45th), experiment worker (8th), 6 API routes + viral-suggestions, experiments page + detail page, ViralScorePanel enhancements, analytics experiments tab. 24 new tests. D071 fix in viral-score. 0 regressions.
 - **Channel-Topic Suggestion System (Session 37)**: SuggestionLog model (46th), channel-aware suggestions with niche/tone/platform boosting, 5 new API routes, channels list + detail pages, ChannelViralDashboard, ViralScorePanel accept/reject, experiment feedback loop. 16 new tests. 0 regressions.
 - **Full codebase audit — 8-wave (Session 38)**: 606 files (~85K LOC) audited, 60 issues found and fixed across 36 files. CRITICAL: 8x double /api/v1 prefix on experiment mutations. 12x tenant scoping violations, 9x missing Decimal wrapping, 19x silent catch blocks. D095 evaluating status, D096 preset ID extraction. 0 regressions.
+- **Targeted 4-wave audit (Session 39)**: 4 new audit tests + targeted fix pass. 78 .strict() removed, 19 tenant scoping fixes, 8 status enum fixes, 4 experiment security/race fixes, 3 channel fixes, 3 type fixes. shouldDeclareWinner now respects primaryMetric (D098). Audit suite: 24→33 tests, 9→13 files. 0 regressions.
 
 ## Architecture Highlights
 - **Prisma Schema**: 46 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36 + SuggestionLog Session 37)

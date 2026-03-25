@@ -6,7 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **4 new automated audit tests** (Session 39): api-prefix (double /api/v1), strict-zod (.strict() detection), console-log (console.log/debugger in production), status-enum (incomplete status handling). Audit suite: 24→33 tests across 9→13 files.
+- **New audit helpers** (Session 39): `findFrontendSourceFiles()`, `findProductionSourceFiles()`, `extractStatusEnums()`, `SourceFile` type for monorepo-wide scanning
+
 ### Fixed
+- **Removed all 78 `.strict()` Zod schemas** (Session 39): All API routes now use default strip behavior — prevents 400 errors from extra frontend fields
+- **19 D088 tenant scoping violations** (Session 39): Conditional ternary patterns replaced with unconditional guards across content, cinema-bible, storyboard-shots, and system routes
+- **8 status enum completeness bugs** (Session 39): ai-services validProviders/validStatuses, pipeline-status terminal states, schedule posting guard, alert suppressed filter, health metric types, subscription past_due
+- **4 experiment pipeline security/race fixes** (Session 39): Variant creation locked to draft, shouldDeclareWinner respects primaryMetric, worker reads fresh data after lock, handleRecordMetric validates tenant + experiment status
+- **3 channel/suggestion fixes** (Session 39): cinema-bible tenant guard reorder, suggestions POST race condition ($transaction), DELETE tenant chain consistency
+- **3 frontend type accuracy fixes** (Session 39): healthScore location in ChannelRow, topContent status field, SuggestionStatsData recent field
 - **CRITICAL: Double /api/v1 prefix on experiment mutations** (Session 38): 8 experiment mutation hooks had double `/api/v1` prefix causing 404s on all start/stop/evaluate actions
 - **SWR data shape mismatch on experiments list** (Session 38): experiments list showed empty due to response shape mismatch
 - **Tenant scoping violations** (Session 38): 12 content CRUD and budget routes missing unconditional tenant guard (D076/D088)

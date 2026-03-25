@@ -130,11 +130,17 @@ CaptchaSolver and SmsVerifier are D064 stubs — they throw without API keys and
 SeasoningCohort and SeasoningEnrollment models are defined in schema.prisma but no migration has been run. The `prisma generate` was run to update the client, but `prisma migrate dev` requires a running PostgreSQL instance.
 **Action**: Run `npx prisma migrate dev --name add_seasoning_models` when database is available.
 
+### KI-072: Experiment Migration Not Yet Applied
+**Severity**: Medium
+**Status**: Open (Session 36)
+`Experiment` and `ExperimentVariant` models defined in schema.prisma with migration `0006_add_experiments`, but `prisma migrate dev` not yet run against a live database. `prisma generate` was run so types are available.
+**Action**: Run `npx prisma migrate dev --name add_experiments` from packages/db when database is available.
+
 ### KI-061: Tier 3 Features Require External Setup
 **Severity**: Low
-**Status**: By Design (Session 24)
-Four stub modules throw on call: `viral-discovery` (YouTube/TikTok API keys), `experiment-orchestrator` (analytics integration), `quality-regression` (ffmpeg with libvmaf), `channel-suggestions` (ML model). Type interfaces are complete.
-**Action**: Implement when external dependencies are available. See OPERATOR-TODO.md.
+**Status**: Partially Resolved (Session 36)
+Three stub modules remain: `viral-discovery` (YouTube/TikTok API keys), `quality-regression` (ffmpeg with libvmaf), `channel-suggestions` (ML model). `experiment-orchestrator` was activated in Session 36 with 4 pure functions and full API/frontend.
+**Action**: Implement remaining stubs when external dependencies are available. See OPERATOR-TODO.md.
 
 ### KI-056: Port 3000 Conflict with External Project — Fixed (Session 18)
 **Severity**: Medium

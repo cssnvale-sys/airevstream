@@ -264,6 +264,18 @@
 | CP-7 | Preview pipeline DAG | Done | startPreviewPipeline() — simplified 3-step DAG at draft quality |
 | CP-8 | Tests | Done | 63 new tests (22 workflow + 16 composition + 25 resolver), all passing |
 
+### Phase 20: Viral Video Discovery & Testing Pipeline (Session 36) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| VD-1 | Experiment Prisma models | Done | `Experiment` + `ExperimentVariant` (44th/45th models), migration `0006_add_experiments` |
+| VD-2 | Experiment orchestrator | Done | Rewrote from stub — 4 pure functions: validateExperimentConfig, allocateTraffic, shouldDeclareWinner, suggestPresetVariant |
+| VD-3 | Experiment queue + worker | Done | `EXPERIMENT` queue, 2 job types, `experiment.worker.ts` (8th worker) with evaluate + record-metric |
+| VD-4 | Experiment API routes | Done | 6 CRUD routes + `viral-suggestions` POST endpoint |
+| VD-5 | Experiments frontend | Done | List page (stat cards + table + CreateExperimentModal), detail page (variant comparison + controls) |
+| VD-6 | ViralScorePanel enhancements | Done | Weak dimension chips, collapsible issues, preset suggestions, "Test a variant" link |
+| VD-7 | Analytics experiments tab | Done | Summary cards (active, completed, win rate, total variants), recent completions table |
+| VD-8 | Bug fixes + tests | Done | D071 fix in viral-score, viewer check on viral-suggestions, 24 new unit tests |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -278,7 +290,7 @@
 | 9 | SaaS Preparation | Done | Multi-tenant (Tenant model + RBAC), user roles (admin/operator/viewer) + invites, API key management, subscription CRUD, usage metering |
 
 ## Test Summary
-- **Unit tests**: 333 shared + 134 other = 467+ (all passing via Vitest)
+- **Unit tests**: 333 shared + 158 other = 491+ (all passing via Vitest)
 - **Audit tests**: 24 (9 files scanning 133+ API routes for 9 bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
 - **Test tasks**: 27 (all passing via Turbo)
@@ -294,9 +306,10 @@
 - **AI-Generated Presets (Session 33)**: UserPreset model (42nd Prisma model), 3 API routes (CRUD + generate), AI generation with validation, CreatePresetModal + PresetPicker "My Presets" tab, localStorage sync. 17 new unit tests.
 - **Full codebase audit — 100% coverage (Session 34)**: 8-wave audit with 31 parallel agents across ~400 source files. ~210 issues found and fixed. D071 conditional tenant scoping fully resolved (60+ routes). 0 regressions — 134 unit tests + 24 audit tests pass (27 test tasks).
 - **Cinema pipeline upgrade (Session 35)**: Workflow registry with quality tiers, composition registry, assembly manifest, assembly resolver, agent output persistence, worker integration, preview pipeline DAG. 63 new tests (22 workflow + 16 composition + 25 resolver). 0 regressions.
+- **Viral discovery & testing pipeline (Session 36)**: Experiment orchestrator (from stub to real), Experiment + ExperimentVariant models (44th/45th), experiment worker (8th), 6 API routes + viral-suggestions, experiments page + detail page, ViralScorePanel enhancements, analytics experiments tab. 24 new tests. D071 fix in viral-score. 0 regressions.
 
 ## Architecture Highlights
-- **Prisma Schema**: 41 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31)
+- **Prisma Schema**: 44 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36)
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
 - **Next.js API Routes**: 124 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 18 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs

@@ -450,3 +450,13 @@
 **Date**: 2026-03-24
 **Decision**: Create `composition-registry.ts` for Remotion compositions and extend `workflow-registry.ts` with quality tiers, tier defaults, continuity levels, output formats, and tags. The worker uses `getWorkflowWithDefaults()` to apply tier-appropriate generation parameters and `getCompositionForProduction()` to select the correct Remotion composition.
 **Rationale**: The worker previously hardcoded a `WORKFLOW_TEMPLATE_MAP` for workflow selection and used inline conditionals for composition selection. The registries centralize this metadata, making it accessible to both the worker and the frontend (cost estimation, pipeline preview, constraint validation). All new metadata fields are optional for backward compatibility.
+
+## D091: Experiment Orchestrator Stays Pure
+**Date**: 2026-03-24
+**Decision**: The experiment orchestrator (`experiment-orchestrator.ts`) contains only pure functions with no database access, no `node:` imports, and is barrel-exported from `@airevstream/shared`. Workers and API routes handle all persistence.
+**Rationale**: Follows D082 (node-only code pattern) — keeping the orchestrator pure means it can be imported by both the Next.js frontend (for validation/preview) and the worker (for evaluation). `shouldDeclareWinner()` reuses `calculateSignificance()` from viral-scoring.ts rather than duplicating the math. The worker handles DB reads/writes and queue orchestration.
+
+## D092: Deterministic Preset Suggestions
+**Date**: 2026-03-24
+**Decision**: `suggestPresetVariant()` uses a rule-based mapping from weak viral dimensions to preset IDs. No LLM calls are involved.
+**Rationale**: Follows the same philosophy as D084 (deterministic revision presets). Dimension-to-preset mappings are predictable and testable. For example, a low `hookStrength` score maps to presets with high-impact openings. This keeps suggestions instant, free, and reproducible — important for A/B experiment variant creation where consistency matters.

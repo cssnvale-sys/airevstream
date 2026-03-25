@@ -7,6 +7,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Experiment orchestrator** (Session 36): Rewrote from Tier 3 stub to real implementation — `validateExperimentConfig()`, `allocateTraffic()`, `shouldDeclareWinner()`, `suggestPresetVariant()` with `PresetSuggestion`, `VariantMetrics`, `WinnerDecision`, `ValidationResult` types
+- **Experiment Prisma models** (Session 36): `Experiment` + `ExperimentVariant` (44th/45th models), migration `0006_add_experiments`
+- **Experiment queue + worker** (Session 36): `EXPERIMENT` queue, `ExperimentEvaluateJob`/`ExperimentRecordMetricJob` types, `experiment.worker.ts` (8th worker) with evaluate + record-metric handlers
+- **Experiment API routes** (Session 36): 6 CRUD routes (`/experiments`, `/experiments/[id]`, `/experiments/[id]/variants`, start, stop, evaluate) + `viral-suggestions` POST endpoint
+- **Experiments frontend** (Session 36): `use-experiments.ts` SWR hooks, list page with stat cards + table + CreateExperimentModal, detail page with variant comparison + significance progress + winner banner + controls
+- **Experiments nav** (Session 36): Sidebar entry (FlaskConical icon) + `e` keyboard shortcut + analytics page Experiments tab
+- **ViralScorePanel enhancements** (Session 36): weak dimension chips, collapsible issues, preset suggestion loading via API, "Test a variant" link to experiments
 - **Workflow registry quality tiers** (Session 35): `qualityTiers`, `tierDefaults`, `continuityTier`, `outputFormat`, `estimatedTimeSec`, `requiredFields`, `supportsFrameAnchoring`, `tags` on all 8 workflows
 - **Composition registry** (Session 35): `composition-registry.ts` — 4 Remotion compositions (ShortFormVideo, LongFormVideo, CinemaVideo, ThumbnailRenderer) with `getCompositionForProduction()`, `getCompositionById()`, `validateCompositionProps()`
 - **Assembly manifest** (Session 35): `AssemblyManifest` + `AssembledShot` types bridging ComfyUI and Remotion; stored in `Storyboard.scriptJson`
@@ -20,6 +27,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Production worker** (Session 35): QC scores now persisted to `StoryboardShot.qualityScore`
 
 ### Fixed
+- **D071/D088 violation in viral-score route** (Session 36): replaced conditional tenant scoping with unconditional guard
+- **Viewer role check on viral-suggestions** (Session 36): added missing viewer check caught by audit test
 - **D071 conditional tenant scoping fully resolved** (Session 34): replaced `ctx.tenantId ? {...} : {}` pattern with unconditional guard + filter in 60+ API routes — eliminates the single largest security vulnerability class
 - **Missing tenant guards** (Session 34): 17 routes using `ctx.tenantId!` without null check now have explicit 403 guard
 - **Silent catch blocks** (Session 34): 15+ remaining silent catches now log via `console.error`

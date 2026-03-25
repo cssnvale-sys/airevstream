@@ -4,6 +4,51 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 36 — Viral Video Discovery & Testing Pipeline
+
+**Date:** 2026-03-24
+**Focus:** Activate experiment orchestrator (from Tier 3 stub), add Experiment/ExperimentVariant Prisma models, build API routes and frontend for A/B experiment management, enhance viral score panel with preset suggestions.
+
+### What Was Done
+
+#### Phase 1: Backend Foundation
+- Added `Experiment` and `ExperimentVariant` Prisma models (44th and 45th models), migration `0006_add_experiments`
+- Rewrote `experiment-orchestrator.ts` from stub to real implementation with 4 pure functions: `validateExperimentConfig()`, `allocateTraffic()`, `shouldDeclareWinner()` (reuses `calculateSignificance`), `suggestPresetVariant()` (deterministic dimension-to-preset mapping)
+- Added `PresetSuggestion`, `VariantMetrics`, `WinnerDecision`, `ValidationResult` types
+- Added `ExperimentEvaluateJob` and `ExperimentRecordMetricJob` queue types, `EXPERIMENT` queue, `experiment` in QueueJobMap
+- Changed barrel export from type-only to full export for experiment-orchestrator
+- Created `experiment.worker.ts` with 2 handlers (evaluate, record-metric) — 8th worker
+- 24 new unit tests for experiment orchestrator
+
+#### Phase 2: API Routes
+- 6 experiment API routes: CRUD (GET/POST `/experiments`, GET/PUT/DELETE `/experiments/[id]`), variants (GET/POST `/experiments/[id]/variants`), start, stop, evaluate
+- `viral-suggestions` POST endpoint (calls `suggestPresetVariant`, returns preset suggestions)
+- Fixed D071/D088 violation in `viral-score/route.ts` — conditional tenant scoping replaced with unconditional guard
+
+#### Phase 3: Frontend
+- `use-experiments.ts` SWR hooks (useExperiments, useExperiment, useExperimentVariants)
+- Experiments list page with stat cards, table, and CreateExperimentModal
+- Experiment detail page with variant comparison, significance progress, winner banner, start/stop/evaluate controls
+- Added `Experiments` (FlaskConical icon) to sidebar nav with `e` keyboard shortcut
+- Enhanced `ViralScorePanel`: weak dimension chips, collapsible issues, preset suggestion loading, "Test a variant" link
+- Added Experiments tab to analytics page with summary cards and recent completions table
+
+#### Bug Fixes
+- Fixed D071 violation in `viral-score/route.ts`
+- Added viewer role check to `viral-suggestions` route
+- Added audit known false positives for nested select regex in `viral-suggestions`
+
+### Decisions
+- D091: Experiment orchestrator stays pure (no DB, no node: imports, barrel-exportable)
+- D092: Preset suggestions are deterministic (rule-based, no LLM)
+
+### Build Status
+- 14 packages build (0 errors)
+- 27 test tasks pass (24 new experiment-orchestrator tests)
+- 24 audit tests pass (0 regressions)
+
+---
+
 ## Session 35 — Cinema Pipeline Upgrade: Asset Factory + Film Assembly Engine
 
 **Date:** 2026-03-24

@@ -2,8 +2,8 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope } from '@airevstream/shared';
-import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector } from '@airevstream/shared';
+import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming, AssemblyManifest, AssembledShot } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -304,28 +304,58 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     throw new Error(`Storyboard ${data.storyboardId} not found`);
   }
 
-  // Determine composition based on quality tier and content type
+  // Check if scriptJson contains an assembly manifest (new pipeline path)
+  const scriptJson = storyboard.scriptJson as Record<string, unknown> | null;
+  const hasManifest = scriptJson?.schemaVersion === '1.0.0';
+
   const isCinema = data.qualityPreset === 'cinema';
   const variant: ExportVariant | undefined = data.exportVariant;
   let compositionId: string;
   let inputProps: string;
 
-  if (isCinema) {
-    compositionId = 'CinemaVideo';
+  if (hasManifest) {
+    // ─── New path: Assembly manifest → Remotion resolver ───
+    const manifest = scriptJson as unknown as AssemblyManifest;
+    const resolved = resolveForRemotion(manifest);
 
-    // Use export variant dimensions/fps if provided, otherwise defaults
-    const renderWidth = variant?.width ?? 1920;
-    const renderHeight = variant?.height ?? 1080;
-    const renderFps = variant?.fps ?? 24;
+    // Override title with actual content title
+    resolved.inputProps.title = storyboard.content.title;
+
+    // Apply export variant overrides if present
+    if (variant) {
+      if (variant.width) resolved.inputProps.width = variant.width;
+      if (variant.height) resolved.inputProps.height = variant.height;
+      if (variant.fps) resolved.inputProps.fps = variant.fps;
+    }
+
+    // Apply FinishingOutput color grade if available (closes G4)
+    const finishingOutput = manifest.agentOutputs?.finishing as Record<string, unknown> | undefined;
+    if (finishingOutput?.colorGrade && !resolved.inputProps.colorGrade) {
+      resolved.inputProps.colorGrade = finishingOutput.colorGrade;
+    }
+
+    compositionId = resolved.compositionId;
+    inputProps = JSON.stringify(resolved.inputProps);
+    logger.info({ compositionId, manifestVersion: manifest.schemaVersion }, 'Using assembly manifest for render');
+  } else if (isCinema) {
+    // ─── Legacy path: inline props building ───
+    // Use composition registry for selection
+    const registryComp = getCompositionForProduction('cinema');
+    compositionId = registryComp?.id ?? 'CinemaVideo';
+
+    // Use export variant dimensions/fps if provided, otherwise registry defaults or hardcoded
+    const renderWidth = variant?.width ?? registryComp?.defaultWidth ?? 1920;
+    const renderHeight = variant?.height ?? registryComp?.defaultHeight ?? 1080;
+    const renderFps = variant?.fps ?? registryComp?.defaultFps ?? 24;
 
     // Build CinemaVideoProps from storyboard/shots data
     const cinemaShots = storyboard.shots.map((s, idx) => {
       const spec = (s.shotspec as Record<string, unknown>) ?? {};
-      const keyframeUrls = s.keyframeUrls as string[] | null;
+      const keyframeUrls = parseKeyframeUrls(s.keyframeUrls);
       const durationSec = Number(s.endSec ?? 0) - Number(s.startSec ?? 0);
       return {
         id: s.id,
-        src: keyframeUrls?.[0] ?? '',
+        src: keyframeUrls[0] ?? '',
         videoSrc: (spec.videoSrc as string) ?? undefined,
         isVideo: !!(spec.videoSrc),
         durationInFrames: Math.max(1, Math.round(durationSec * renderFps)),
@@ -344,7 +374,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
       const audioPlan = spec.audioPlan as Record<string, unknown> | undefined;
       const tracks: Array<Record<string, unknown>> = [];
       const startSec = Number(s.startSec ?? 0);
-      const fps = 24;
+      const fps = renderFps;
 
       for (const layer of ['bg', 'mg', 'fg'] as const) {
         const layerSpec = audioPlan?.[layer] as Record<string, unknown> | undefined;
@@ -379,9 +409,11 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
       colorGrade: lookBible?.colorPipeline ?? undefined,
     });
   } else {
-    compositionId = storyboard.content.contentType === 'video_short'
-      ? 'ShortFormVideo'
-      : 'LongFormVideo';
+    // ─── Legacy path: short/long form ───
+    const contentType = storyboard.content.contentType;
+    const prodType = contentType === 'video_short' ? 'short' : 'long';
+    const registryComp = getCompositionForProduction(prodType);
+    compositionId = registryComp?.id ?? (contentType === 'video_short' ? 'ShortFormVideo' : 'LongFormVideo');
 
     inputProps = JSON.stringify({
       title: storyboard.content.title,
@@ -739,6 +771,33 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         logger.warn({ shotId, riskScore: safetyResult.riskScore, flags: safetyResult.flags.map(f => f.category) }, 'Prompt safety warning');
       }
 
+      // Apply workflow registry tier defaults if available
+      const shotClass = spec.shotClass ?? (spec as unknown as Record<string, unknown>).shotClass as string | undefined;
+      const qualityTier = (data.qualityPreset ?? 'standard') as 'draft' | 'standard' | 'cinema';
+      if (shotClass) {
+        const registryResult = getWorkflowWithDefaults(shotClass, qualityTier);
+        if (registryResult) {
+          const { defaults } = registryResult;
+          // Apply tier defaults as floor values (spec overrides take priority)
+          spec = {
+            ...spec,
+            generation: {
+              ...defaults,
+              ...spec.generation,
+              // Only apply defaults for fields not already set
+              steps: spec.generation?.steps ?? defaults.steps,
+              cfg: spec.generation?.cfg ?? defaults.cfg,
+              sampler: spec.generation?.sampler ?? defaults.sampler,
+              scheduler: spec.generation?.scheduler ?? defaults.scheduler,
+              width: spec.generation?.width ?? defaults.width,
+              height: spec.generation?.height ?? defaults.height,
+              denoise: spec.generation?.denoise ?? defaults.denoise,
+            },
+          };
+          logger.info({ shotId, shotClass, qualityTier, defaults }, 'Applied workflow registry tier defaults');
+        }
+      }
+
       // Compose and run workflow
       const workflow = composeWorkflow(spec, promptBible);
       const images = await comfyClient.queueAndWait(workflow);
@@ -820,12 +879,19 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
         'shot-generation',
       );
 
-      // Update shot with generated keyframes, resolved seed, and provenance
+      // Persist QC score on shot (closes G7)
+      const postGenQCScore = firstImage ? runPostGenQC(
+        { fileUrl: uploadedUrls[0] ?? '', fileSizeBytes: firstImageSizeBytes, width: expectedWidth, height: expectedHeight, format: firstImage.filename.split('.').pop() ?? 'png' },
+        { expectedWidth, expectedHeight },
+      ).score : undefined;
+
+      // Update shot with generated keyframes, resolved seed, provenance, and QC score
       await db.storyboardShot.update({
         where: { id: shotId },
         data: {
           keyframeUrls: uploadedUrls as any,
           status: 'generated',
+          qualityScore: postGenQCScore,
           shotspec: { ...spec, seed: workflow.resolvedSeed, provenance: provenance.id, safetyScore: safetyResult.riskScore } as any,
         },
       });
@@ -1342,15 +1408,115 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
     return { section, beat, durationSec, startSec };
   });
 
+  // Determine production type from content type
+  const productionType = content.contentType === 'video_short' ? 'short'
+    : content.contentType === 'thumbnail' ? 'thumbnail'
+    : content.contentType === 'video_long' ? 'long'
+    : 'cinema';
+  const qualityTier = ((data as unknown as Record<string, unknown>).qualityPreset as string) ?? 'standard';
+
+  // Check if agent pipeline state is available from job data (via directives)
+  const directives = (data as unknown as Record<string, unknown>).directives as Record<string, unknown> | undefined;
+  const agentOutputs = directives?.agentOutputs as Record<string, unknown> | undefined;
+  const directorOutput = agentOutputs?.director as Record<string, unknown> | undefined;
+  const dialogueOutput = agentOutputs?.dialogue as { tracks?: Array<{ shotNumber: number; text: string; voice: string; emotion: string; pacing: string }> } | undefined;
+  const soundOutput = agentOutputs?.sound as { audioLayers?: Array<{ shotNumber: number; bg?: unknown; mg?: unknown; fg?: unknown }> } | undefined;
+
+  const totalDurationSec = estimateDuration(script, content.contentType);
+
   const storyboard = await db.$transaction(async (tx) => {
+    // Build assembled shots for the manifest
+    const assembledShots: AssembledShot[] = shotDataList.map(({ section, beat, durationSec, startSec }, i) => {
+      const shotNumber = i + 1;
+
+      // Map dialogue from agent output if available (closes G12)
+      const dialogueTrack = dialogueOutput?.tracks?.find(t => t.shotNumber === shotNumber);
+      const dialogue = dialogueTrack ? {
+        text: dialogueTrack.text,
+        voice: dialogueTrack.voice,
+        emotion: dialogueTrack.emotion,
+        pacing: dialogueTrack.pacing as 'slow' | 'normal' | 'fast',
+      } : undefined;
+
+      // Map audio plan from sound agent output if available (closes G3)
+      const soundLayer = soundOutput?.audioLayers?.find(l => l.shotNumber === shotNumber);
+      const audioPlan = soundLayer ? {
+        bg: soundLayer.bg as AssembledShot['audioPlan'] extends { bg?: infer B } ? B : never,
+        mg: soundLayer.mg as AssembledShot['audioPlan'] extends { mg?: infer M } ? M : never,
+        fg: soundLayer.fg as AssembledShot['audioPlan'] extends { fg?: infer F } ? F : never,
+      } : undefined;
+
+      return {
+        shotId: `pending-${shotNumber}`, // Will be replaced with real IDs after create
+        shotNumber,
+        startSec,
+        endSec: startSec + durationSec,
+        durationSec,
+        shotClass: section.type === 'hook' ? 'Establishing_Wide' : undefined,
+        transition: i === 0 ? 'fade' : 'cut',
+        beat: beat.preset,
+        dialogue,
+        audioPlan,
+      };
+    });
+
+    // Derive beat timings from director output if available (closes G5)
+    const directorSections = directorOutput?.sections as Array<{ type: 'hook' | 'intro' | 'content' | 'cta'; durationSec: number; beat?: string }> | undefined;
+    const beatTimings = directorSections
+      ? directorSections.map((sec, i) => {
+          const secStartSec = directorSections.slice(0, i).reduce((sum, s) => sum + s.durationSec, 0);
+          return {
+            startSec: secStartSec,
+            endSec: secStartSec + sec.durationSec,
+            section: sec.type,
+            preset: sec.beat,
+            label: `${sec.type}_${i + 1}`,
+          };
+        })
+      : undefined;
+
+    // Build the assembly manifest
+    const registryComp = getCompositionForProduction(productionType);
+    const manifest: AssemblyManifest = {
+      schemaVersion: '1.0.0',
+      contentId: data.contentId,
+      storyboardId: '', // Will be set after storyboard creation
+      compositionId: registryComp?.id ?? 'CinemaVideo',
+      qualityTier: qualityTier as 'draft' | 'standard' | 'cinema',
+      productionType: productionType as 'short' | 'long' | 'cinema' | 'thumbnail',
+      agentOutputs: agentOutputs ? {
+        director: agentOutputs.director as Record<string, unknown> | undefined,
+        lookdev: agentOutputs.lookdev as Record<string, unknown> | undefined,
+        dialogue: agentOutputs.dialogue as Record<string, unknown> | undefined,
+        sound: agentOutputs.sound as Record<string, unknown> | undefined,
+        psychology: agentOutputs.psychology as Record<string, unknown> | undefined,
+        finishing: agentOutputs.finishing as Record<string, unknown> | undefined,
+      } : undefined,
+      shots: assembledShots,
+      beatTimings,
+      outputSpec: {
+        width: registryComp?.defaultWidth ?? 1920,
+        height: registryComp?.defaultHeight ?? 1080,
+        fps: registryComp?.defaultFps ?? 24,
+        aspect: registryComp?.aspectRatio ?? '16:9',
+        codec: qualityTier === 'cinema' ? 'prores' : 'h264',
+        totalDurationSec,
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
     const sb = await tx.storyboard.create({
       data: {
         contentId: data.contentId,
-        scriptJson: data.scriptJson as any,
+        scriptJson: { ...manifest, storyboardId: 'pending' } as any,
         status: 'draft',
-        totalDurationSec: estimateDuration(script, content.contentType),
+        totalDurationSec,
       },
     });
+
+    // Update manifest with real storyboard ID
+    manifest.storyboardId = sb.id;
 
     await tx.storyboardShot.createMany({
       data: shotDataList.map(({ section, beat, durationSec, startSec }, i) => ({
@@ -1369,10 +1535,16 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
       })),
     });
 
+    // Update scriptJson with the final manifest (including real storyboardId)
+    await tx.storyboard.update({
+      where: { id: sb.id },
+      data: { scriptJson: manifest as any },
+    });
+
     return sb;
   });
 
-  logger.info({ storyboardId: storyboard.id, shotCount: sections.length }, 'Storyboard generated');
+  logger.info({ storyboardId: storyboard.id, shotCount: sections.length, hasManifest: true }, 'Storyboard generated with assembly manifest');
 }
 
 // ─── Helpers ───

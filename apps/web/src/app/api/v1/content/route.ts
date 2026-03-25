@@ -115,7 +115,7 @@ const createContentSchema = z.object({
   affiliateProductId: z.string().uuid().optional(),
   affiliateMode: z.string().optional(),
   status: z.enum(['draft', 'generating', 'generated', 'pending_approval', 'approved', 'scheduled', 'posted', 'archived', 'failed']).optional(),
-}).strict();
+});
 
 export async function POST(req: NextRequest) {
   try {

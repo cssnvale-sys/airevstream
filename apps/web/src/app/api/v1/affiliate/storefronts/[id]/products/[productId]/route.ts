@@ -11,7 +11,7 @@ const updateProductSchema = z.object({
   customTitle: z.string().max(255).nullish(),
   customDescription: z.string().nullish(),
   status: z.enum(['active', 'hidden']).optional(),
-}).strict();
+});
 
 /**
  * PATCH /api/v1/affiliate/storefronts/[id]/products/[productId]

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
-import { scoreViralPotential, suggestPresetVariant } from '@airevstream/shared';
-import type { ViralScoringInput } from '@airevstream/shared';
+import { scoreViralPotential, suggestPresetVariantForChannel } from '@airevstream/shared';
+import type { ViralScoringInput, ChannelContext } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const SuggestionsSchema = z.object({
@@ -38,7 +38,16 @@ export async function POST(req: NextRequest) {
         channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       include: {
-        channel: { select: { id: true, name: true, socialAccount: { select: { platform: true } } } },
+        channel: {
+          select: {
+            id: true,
+            name: true,
+            niches: true,
+            tone: true,
+            targetAudience: true,
+            socialAccount: { select: { platform: true } },
+          },
+        },
         storyboards: {
           select: {
             totalDurationSec: true,
@@ -88,9 +97,22 @@ export async function POST(req: NextRequest) {
       viralResult = scoreViralPotential(viralInput);
     }
 
-    const suggestions = suggestPresetVariant(viralResult, currentPresets);
+    // Build channel context for channel-aware suggestions
+    const channelCtx: ChannelContext | undefined = content.channel ? {
+      niches: content.channel.niches,
+      tone: content.channel.tone ?? undefined,
+      targetAudience: content.channel.targetAudience ?? undefined,
+      platform: content.channel.socialAccount?.platform ?? undefined,
+    } : undefined;
 
-    return success({ suggestions, viralScore: viralResult.overall, tier: viralResult.tier });
+    const suggestions = suggestPresetVariantForChannel(viralResult, currentPresets, channelCtx);
+
+    return success({
+      suggestions,
+      viralScore: viralResult.overall,
+      tier: viralResult.tier,
+      channelId: content.channel?.id ?? null,
+    });
   } catch (err) {
     console.error('POST /api/v1/content/viral-suggestions failed:', err);
     return error('INTERNAL_ERROR', 'Failed to generate suggestions', 500);

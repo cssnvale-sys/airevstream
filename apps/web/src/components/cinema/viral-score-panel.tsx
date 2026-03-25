@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useApi, apiPost } from '@/hooks/use-api';
-import { FlaskConical, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { useApi, apiPost, apiPatch } from '@/hooks/use-api';
+import { FlaskConical, Sparkles, ChevronDown, ChevronUp, Check, X as XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
 
@@ -46,6 +46,12 @@ interface SuggestionsResponse {
   suggestions: PresetSuggestion[];
   viralScore: number;
   tier: string;
+  channelId: string | null;
+}
+
+interface SuggestionLogEntry {
+  id: string;
+  presetId: string;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -95,6 +101,8 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
   const { data } = useApi<ViralScoreData>(`/content/viral-score?contentId=${contentId}`);
   const [showAllIssues, setShowAllIssues] = useState(false);
   const [suggestions, setSuggestions] = useState<PresetSuggestion[] | null>(null);
+  const [suggestionLogs, setSuggestionLogs] = useState<SuggestionLogEntry[]>([]);
+  const [outcomes, setOutcomes] = useState<Record<string, string>>({});
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const score = data?.data;
@@ -117,11 +125,42 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
         contentId,
       });
       setSuggestions(res.data.suggestions);
+
+      // Log shown suggestions for tracking
+      if (res.data.suggestions.length > 0) {
+        try {
+          const logRes = await apiPost<{ success: boolean; data: { count: number; logs: SuggestionLogEntry[] } }>('/api/v1/suggestions', {
+            contentId,
+            channelId: res.data.channelId ?? undefined,
+            suggestions: res.data.suggestions.map(s => ({
+              presetId: s.presetId,
+              dimension: s.dimension,
+              reason: s.reason,
+              expectedImprovement: s.expectedImprovement,
+            })),
+            viralScoreBefore: res.data.viralScore,
+          });
+          setSuggestionLogs(logRes.data.logs);
+        } catch {
+          // Non-blocking — suggestion tracking is best-effort
+        }
+      }
     } catch (err) {
       console.error('Failed to get suggestions:', err);
       toast.error('Failed to load suggestions');
     } finally {
       setLoadingSuggestions(false);
+    }
+  };
+
+  const handleOutcome = async (presetId: string, outcome: 'accepted' | 'rejected') => {
+    const log = suggestionLogs.find(l => l.presetId === presetId);
+    if (!log) return;
+    try {
+      await apiPatch(`/api/v1/suggestions/${log.id}`, { outcome });
+      setOutcomes(prev => ({ ...prev, [presetId]: outcome }));
+    } catch {
+      toast.error('Failed to update suggestion');
     }
   };
 
@@ -198,12 +237,40 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
         ) : suggestions.length > 0 ? (
           <div className="space-y-1">
             <span className="text-text-secondary font-medium">Suggested Presets</span>
-            {suggestions.slice(0, 4).map((s) => (
-              <div key={s.presetId} className={`px-2 py-1 rounded border ${IMPROVEMENT_COLORS[s.expectedImprovement] ?? ''}`}>
-                <div className="font-medium text-[11px]">{s.presetId}</div>
-                <div className="text-text-tertiary">{s.reason}</div>
-              </div>
-            ))}
+            {suggestions.slice(0, 4).map((s) => {
+              const outcome = outcomes[s.presetId];
+              return (
+                <div key={s.presetId} className={`px-2 py-1 rounded border ${outcome === 'accepted' ? 'border-accent-green/50 bg-accent-green/5' : outcome === 'rejected' ? 'border-accent-red/50 bg-accent-red/5 opacity-60' : IMPROVEMENT_COLORS[s.expectedImprovement] ?? ''}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-[11px]">{s.presetId}</div>
+                    {!outcome && suggestionLogs.length > 0 && (
+                      <div className="flex gap-0.5">
+                        <button
+                          onClick={() => handleOutcome(s.presetId, 'accepted')}
+                          className="p-0.5 rounded hover:bg-accent-green/20 text-text-tertiary hover:text-accent-green transition-colors"
+                          title="Accept suggestion"
+                        >
+                          <Check size={12} />
+                        </button>
+                        <button
+                          onClick={() => handleOutcome(s.presetId, 'rejected')}
+                          className="p-0.5 rounded hover:bg-accent-red/20 text-text-tertiary hover:text-accent-red transition-colors"
+                          title="Reject suggestion"
+                        >
+                          <XIcon size={12} />
+                        </button>
+                      </div>
+                    )}
+                    {outcome && (
+                      <span className={`text-[10px] capitalize ${outcome === 'accepted' ? 'text-accent-green' : 'text-accent-red'}`}>
+                        {outcome}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-text-tertiary">{s.reason}</div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-text-tertiary text-center py-1">No preset suggestions — all dimensions are strong</div>

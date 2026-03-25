@@ -23,6 +23,7 @@ import {
   Sprout,
   GitBranch,
   FlaskConical,
+  Radio,
   Menu,
   X,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ import { KeyboardShortcutsModal } from '@/components/ui/keyboard-shortcuts';
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/accounts', label: 'Accounts', icon: Users },
+  { href: '/channels', label: 'Channels', icon: Radio },
   { href: '/seasoning', label: 'Seasoning', icon: Sprout },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/create', label: 'Create', icon: Sparkles },
@@ -127,6 +129,10 @@ export function Sidebar() {
       case 'e':
       case 'E':
         if (!e.metaKey && !e.ctrlKey) router.push('/experiments');
+        break;
+      case 'c':
+      case 'C':
+        if (!e.metaKey && !e.ctrlKey) router.push('/channels');
         break;
     }
   }, [router]);

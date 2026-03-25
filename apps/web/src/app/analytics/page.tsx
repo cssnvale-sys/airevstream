@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { exportToCSV } from '@/lib/export';
 import { useExperiments } from '@/hooks/use-experiments';
+import { useSuggestionStats } from '@/hooks/use-suggestion-stats';
 import { toast } from '@/lib/toast';
 import {
   LineChart,
@@ -186,6 +187,15 @@ export default function AnalyticsPage() {
   // API hooks
   const { data: analyticsData, isLoading, error: analyticsError } = useAnalytics('overview', `period=${period}`);
   const { data: experimentsRaw } = useExperiments<{ data: Array<{ id: string; name: string; status: string; primaryMetric: string; significance: number | null; winnerId: string | null; createdAt: string; _count: { variants: number } }>; total: number }>('limit=20');
+  const { data: suggestionStatsRaw } = useSuggestionStats<{
+    totalShown: number;
+    accepted: number;
+    rejected: number;
+    acceptanceRate: number;
+    avgImprovement: number;
+    topPreset: { presetId: string; acceptanceRate: number } | null;
+    recent: Array<{ id: string; presetId: string; dimension: string; outcome: string; createdAt: string; content: { id: string; title: string | null } | null }>;
+  }>();
 
   const analytics: AnalyticsData = (analyticsData?.data as AnalyticsData | undefined) ?? {};
 
@@ -783,6 +793,79 @@ export default function AnalyticsPage() {
             </p>
           </div>
         )}
+
+        {/* Suggestion Performance */}
+        {suggestionStatsRaw?.data && suggestionStatsRaw.data.totalShown > 0 && (() => {
+          const sugStats = suggestionStatsRaw.data;
+          return (
+            <>
+              <h3 className="text-card-title text-text-primary mt-8 mb-4">Suggestion Performance</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="card">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-caption text-text-secondary">Suggestions Shown</span>
+                  </div>
+                  <p className="text-page-title text-text-primary">{sugStats.totalShown}</p>
+                </div>
+                <div className="card">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-caption text-text-secondary">Acceptance Rate</span>
+                  </div>
+                  <p className="text-page-title text-text-primary">{(sugStats.acceptanceRate * 100).toFixed(0)}%</p>
+                </div>
+                <div className="card">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-caption text-text-secondary">Avg Improvement</span>
+                  </div>
+                  <p className="text-page-title text-text-primary">{sugStats.avgImprovement > 0 ? `+${sugStats.avgImprovement.toFixed(0)}` : '-'}</p>
+                </div>
+                <div className="card">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-caption text-text-secondary">Top Preset</span>
+                  </div>
+                  <p className="text-body text-accent-blue font-medium truncate">{sugStats.topPreset?.presetId ?? '-'}</p>
+                </div>
+              </div>
+
+              {sugStats.recent.length > 0 && (
+                <div className="card mt-4">
+                  <h3 className="text-card-title text-text-primary mb-4">Recent Suggestions</h3>
+                  <table className="w-full text-body">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 text-text-secondary font-medium">Preset</th>
+                        <th className="text-left py-2 text-text-secondary font-medium">Dimension</th>
+                        <th className="text-left py-2 text-text-secondary font-medium">Content</th>
+                        <th className="text-left py-2 text-text-secondary font-medium">Outcome</th>
+                        <th className="text-right py-2 text-text-secondary font-medium">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sugStats.recent.map((log) => (
+                        <tr key={log.id} className="border-b border-border last:border-b-0">
+                          <td className="py-2 text-text-primary font-mono text-caption">{log.presetId}</td>
+                          <td className="py-2 text-text-secondary capitalize">{log.dimension}</td>
+                          <td className="py-2 text-text-secondary truncate max-w-[150px]">{log.content?.title ?? '-'}</td>
+                          <td className="py-2">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-full text-caption font-medium capitalize',
+                              log.outcome === 'accepted' ? 'bg-accent-green/10 text-accent-green' :
+                              log.outcome === 'rejected' ? 'bg-accent-red/10 text-accent-red' :
+                              'bg-bg-tertiary text-text-secondary',
+                            )}>
+                              {log.outcome}
+                            </span>
+                          </td>
+                          <td className="py-2 text-right text-text-tertiary">{new Date(log.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
     );
   };

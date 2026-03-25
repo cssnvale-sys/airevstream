@@ -470,3 +470,13 @@
 **Date**: 2026-03-25
 **Decision**: `SuggestionLog` has a direct `tenantId` field (required) for fast queries, with optional `channelId` and `contentId` foreign keys for linking to specific channels and content items.
 **Rationale**: Suggestion logs are queried frequently for analytics (accept/reject rates, outcome tracking, performance by channel). A direct tenantId avoids expensive joins through channel→socialAccount→emailAccount→tenant chains. Optional FKs allow logging suggestions that are not yet tied to specific content (e.g., proactive channel-level suggestions) while still supporting drill-down analytics when content is created.
+
+## D095: Evaluating Status for Experiments
+**Date**: 2026-03-25
+**Decision**: Add an `evaluating` status to experiments as an optimistic concurrency lock. When a worker picks up an evaluate job, it sets `status = 'evaluating'` before performing the evaluation. Other workers skip experiments already in this state.
+**Rationale**: The experiment worker runs with `concurrency: 2`. Without a lock, two evaluate jobs for the same experiment could run simultaneously, causing race conditions when declaring a winner and updating variant stats. The `evaluating` status acts as an application-level mutex — cheap, simple, and sufficient for the expected concurrency level. If the worker crashes mid-evaluation, a periodic cleanup job can reset stale `evaluating` experiments back to `running`.
+
+## D096: Channel-Aware Preset ID Extraction
+**Date**: 2026-03-25
+**Decision**: When extracting preset IDs from `presetOverrides` for channel-aware suggestions, scan both keys and string values of the overrides object. Keys represent the preset family (e.g., `visual`, `camera`), and values may contain preset IDs as strings (e.g., `"cinematic-warm"`).
+**Rationale**: The `presetOverrides` structure uses family names as keys and either preset IDs (strings) or partial override objects as values. To correctly identify which presets a piece of content uses — needed for suggestion outcome tracking and experiment variant comparison — both locations must be checked. This ensures the suggestion engine can correlate applied presets with viral score outcomes regardless of how presets were specified in the content creation flow.

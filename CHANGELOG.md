@@ -6,6 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **CRITICAL: Double /api/v1 prefix on experiment mutations** (Session 38): 8 experiment mutation hooks had double `/api/v1` prefix causing 404s on all start/stop/evaluate actions
+- **SWR data shape mismatch on experiments list** (Session 38): experiments list showed empty due to response shape mismatch
+- **Tenant scoping violations** (Session 38): 12 content CRUD and budget routes missing unconditional tenant guard (D076/D088)
+- **Missing Decimal Number() wrapping** (Session 38): 9 instances in experiment variants and workflow-engine content routes
+- **Silent catch blocks** (Session 38): 19 frontend pages + 3 production worker catches now log errors
+- **Zod tone max length mismatch** (Session 38): 2 schemas had maxLength 500 but VarChar(50) in database
+- **Redundant non-null assertions** (Session 38): 5 prompt routes cleaned up
+- **Missing barrel exports** (Session 38): 2 queue package exports added
+- **Dead import in preset-picker** (Session 38): removed unused import
+- **Wrong toast import in calendar** (Session 38): corrected import path
+- **console.error to logger** (Session 38): agent-orchestrator now uses pino logger
+
 ### Added
 - **Channel-Topic Viral Content Suggestion System** (Session 37): Channel-aware preset suggestions with niche/tone/platform boosting via `suggestPresetVariantForChannel()` and `computeSuggestionBoost()`
 - **SuggestionLog tracking model** (Session 37): `SuggestionLog` (46th Prisma model) with outcome tracking, migration `0007_add_suggestion_logs`

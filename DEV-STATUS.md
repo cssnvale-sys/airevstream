@@ -278,6 +278,19 @@
 | CT-9 | Channels sidebar nav | Done | Sidebar entry with `c` keyboard shortcut (16 nav items total) |
 | CT-10 | Tests | Done | 16 new experiment-orchestrator tests (38 total) |
 
+### Phase 22: Full Codebase Audit — 8-Wave (Session 38) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| FA2-1 | Double /api/v1 prefix | Done | 8 experiment mutation hooks causing 404s on all experiment actions (CRITICAL) |
+| FA2-2 | SWR data shape mismatch | Done | Experiments list showed empty due to response shape mismatch |
+| FA2-3 | Tenant scoping violations | Done | 12 content CRUD + budget routes missing unconditional guard (D076/D088) |
+| FA2-4 | Decimal Number() wrapping | Done | 9 instances in experiment variants + workflow-engine content routes |
+| FA2-5 | Silent catch blocks | Done | 19 frontend pages + 3 production worker catches |
+| FA2-6 | Zod tone max length | Done | 2 schemas: maxLength 500→50 to match VarChar(50) |
+| FA2-7 | Prompt route cleanup | Done | 5 redundant non-null assertions removed |
+| FA2-8 | Queue barrel exports | Done | 2 missing exports added |
+| FA2-9 | Frontend cleanup | Done | 1 dead import, 1 wrong toast import, 1 logger upgrade |
+
 ### Phase 20: Viral Video Discovery & Testing Pipeline (Session 36) — COMPLETE
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
@@ -322,6 +335,7 @@
 - **Cinema pipeline upgrade (Session 35)**: Workflow registry with quality tiers, composition registry, assembly manifest, assembly resolver, agent output persistence, worker integration, preview pipeline DAG. 63 new tests (22 workflow + 16 composition + 25 resolver). 0 regressions.
 - **Viral discovery & testing pipeline (Session 36)**: Experiment orchestrator (from stub to real), Experiment + ExperimentVariant models (44th/45th), experiment worker (8th), 6 API routes + viral-suggestions, experiments page + detail page, ViralScorePanel enhancements, analytics experiments tab. 24 new tests. D071 fix in viral-score. 0 regressions.
 - **Channel-Topic Suggestion System (Session 37)**: SuggestionLog model (46th), channel-aware suggestions with niche/tone/platform boosting, 5 new API routes, channels list + detail pages, ChannelViralDashboard, ViralScorePanel accept/reject, experiment feedback loop. 16 new tests. 0 regressions.
+- **Full codebase audit — 8-wave (Session 38)**: 606 files (~85K LOC) audited, 60 issues found and fixed across 36 files. CRITICAL: 8x double /api/v1 prefix on experiment mutations. 12x tenant scoping violations, 9x missing Decimal wrapping, 19x silent catch blocks. D095 evaluating status, D096 preset ID extraction. 0 regressions.
 
 ## Architecture Highlights
 - **Prisma Schema**: 46 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36 + SuggestionLog Session 37)

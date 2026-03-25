@@ -4,6 +4,60 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 38 — Full Codebase Audit (8-Wave)
+
+**Date:** 2026-03-25
+**Focus:** Full 8-wave codebase audit across 606 files (~85K LOC). 60 issues found and fixed across 36 files.
+
+### What Was Done
+
+#### Wave 1: Auth & System Routes
+- Fixed silent catch blocks in auth-related pages
+
+#### Wave 2: Content & Cinema
+- Fixed 8x double `/api/v1` prefix in experiment mutation hooks causing 404s on all experiment start/stop/evaluate (CRITICAL)
+- Fixed 1x SWR data shape mismatch on experiments list (experiments showed empty)
+- Fixed 9x missing Decimal `Number()` wrapping in experiment variants and workflow-engine content routes
+
+#### Wave 3: Domain Pages (Accounts, Channels, Storefronts)
+- Fixed 12x tenant scoping violations in content CRUD and budget routes (D076/D088 pattern)
+- Fixed 2x Zod tone max length mismatch (500→50 to match VarChar(50))
+
+#### Wave 4: Remaining API Routes + Hooks + Libs
+- Fixed 5x redundant non-null assertions in prompt routes
+- Fixed 2x missing barrel exports in queue package
+
+#### Wave 5: Backend Packages
+- Fixed 1x console.error→logger in agent-orchestrator
+
+#### Wave 6: Services + Workers
+- Fixed 3x silent catches in production worker
+
+#### Wave 7: Remotion + ComfyUI + Integration
+- No issues found
+
+#### Wave 8: Frontend Pages
+- Fixed 19x silent catch blocks across frontend pages
+- Fixed 1x dead import in preset-picker
+- Fixed 1x wrong toast import in calendar page
+
+### Key Findings
+- **CRITICAL**: 8 experiment mutation hooks had double `/api/v1` prefix, causing 404s on all experiment start/stop/evaluate actions
+- **HIGH**: 12 tenant scoping violations in content CRUD and budget routes
+- **MEDIUM**: 9 missing Decimal `Number()` wrapping, 19 silent catch blocks across frontend
+- **LOW**: Dead imports, redundant assertions, barrel export gaps
+
+### Decisions
+- D095: `evaluating` status for experiments — optimistic concurrency lock during evaluation to prevent race conditions with concurrency:2 worker
+- D096: Channel-aware preset ID extraction — extract from both keys and string values of presetOverrides
+
+### Build Status
+- 14 packages build (0 errors)
+- 27 test tasks pass (0 regressions)
+- 24 audit tests pass (0 violations)
+
+---
+
 ## Session 37 — Channel-Topic Viral Content Suggestion System
 
 **Date:** 2026-03-25

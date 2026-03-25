@@ -186,6 +186,21 @@ export interface ProductionRepairShotJob {
   denoise?: number;
 }
 
+// ─── Experiment Job Types ───
+
+export interface ExperimentEvaluateJob {
+  experimentId: string;
+  tenantId: string;
+}
+
+export interface ExperimentRecordMetricJob {
+  experimentId: string;
+  variantId: string;
+  metric: string;
+  value: number;
+  tenantId: string;
+}
+
 // ─── Seasoning Job Types ───
 
 export interface SeasoningEnrollJob {
@@ -229,6 +244,7 @@ export interface QueueJobMap {
   maintenance: MaintenanceCleanupJob | MaintenanceBackupJob | MaintenanceMetricsJob;
   production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob | ProductionGenerateShotsJob | ProductionQCGateJob | ProductionMixAudioJob | ProductionRepairShotJob;
   seasoning: SeasoningEnrollJob | SeasoningSignupJob | SeasoningWarmJob | SeasoningCheckJob | SeasoningGraduateJob;
+  experiment: ExperimentEvaluateJob | ExperimentRecordMetricJob;
 }
 
 export type QueueName = keyof QueueJobMap;

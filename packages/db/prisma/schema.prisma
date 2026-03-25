@@ -34,6 +34,7 @@ model Tenant {
   promptTemplates    PromptTemplate[]
   costBudgets        CostBudget[]
   userPresets        UserPreset[]
+  experiments        Experiment[]
 
   @@map("tenants")
 }
@@ -416,6 +417,7 @@ model ContentItem {
   workflowJobs    WorkflowJob[]
   assetRegistryEntries AssetRegistryEntry[]
   sequenceItems   SequenceItem[]
+  experimentVariants ExperimentVariant[]
 
   @@index([channelId])
   @@index([status])
@@ -1069,4 +1071,56 @@ model SequenceItem {
   @@id([sequenceId, contentId])
   @@index([sequenceId, position])
   @@map("sequence_items")
+}
+
+// ============================================================
+// EXPERIMENTS
+// ============================================================
+
+model Experiment {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  name            String    @db.VarChar(255)
+  hypothesis      String?
+  status          String    @default("draft") @db.VarChar(20) // draft|running|completed|stopped
+  primaryMetric   String    @map("primary_metric") @db.VarChar(30) // views|engagement|retention|clickRate|viralScore
+  confidenceLevel Decimal   @default(0.95) @map("confidence_level") @db.Decimal(3, 2)
+  minSampleSize   Int       @default(100) @map("min_sample_size")
+  winnerId        String?   @map("winner_id") @db.Uuid
+  significance    Decimal?  @db.Decimal(6, 4)
+  config          Json      @default("{}") @db.JsonB
+  startedAt       DateTime? @map("started_at") @db.Timestamptz
+  endedAt         DateTime? @map("ended_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  variants ExperimentVariant[]
+
+  @@index([tenantId])
+  @@map("experiments")
+}
+
+model ExperimentVariant {
+  id              String   @id @default(uuid()) @db.Uuid
+  experimentId    String   @map("experiment_id") @db.Uuid
+  contentId       String?  @map("content_id") @db.Uuid
+  label           String   @db.VarChar(255)
+  trafficPercent  Int      @default(50) @map("traffic_percent")
+  presetOverrides Json     @default("{}") @map("preset_overrides") @db.JsonB
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  engagementRate  Decimal  @default(0) @map("engagement_rate") @db.Decimal(6, 4)
+  completionRate  Decimal  @default(0) @map("completion_rate") @db.Decimal(6, 4)
+  shareRate       Decimal  @default(0) @map("share_rate") @db.Decimal(6, 4)
+  viralScore      Int?     @map("viral_score")
+  metrics         Json     @default("{}") @db.JsonB
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  experiment Experiment   @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  content    ContentItem? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+
+  @@index([experimentId])
+  @@map("experiment_variants")
 }

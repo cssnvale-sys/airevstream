@@ -37,6 +37,8 @@ export const PresetSchema = z.object({
   tier: z.enum(['simple', 'advanced', 'complex']).optional(),
   /** Constrained ranges for numeric overrides */
   ranges: z.record(z.object({ min: z.number(), max: z.number() })).optional(),
+  /** Semver version for preset data format tracking */
+  version: z.string().regex(/^\d+\.\d+\.\d+$/).optional(),
 });
 
 export type Preset = z.infer<typeof PresetSchema>;
@@ -59,6 +61,40 @@ export const ProductionDirectivesSchema = z.object({
 }).strict();
 
 export type ProductionDirectives = z.infer<typeof ProductionDirectivesSchema>;
+
+// ─── Engine Routing ───
+
+export const EngineRoutingSchema = z.object({
+  keyframeEngine: z.enum(['comfyui', 'veo', 'sora', 'runway', 'kling']).optional(),
+  motionEngine: z.enum(['comfyui', 'veo', 'sora', 'runway', 'kling']).optional(),
+  assemblyEngine: z.enum(['remotion', 'ffmpeg']).optional(),
+}).strict();
+
+export type EngineRouting = z.infer<typeof EngineRoutingSchema>;
+
+// ─── Recipe Constraints ───
+
+export const RecipeConstraintsSchema = z.object({
+  maxRuntimeSeconds: z.number().int().min(1).optional(),
+  maxCostUsd: z.number().min(0).optional(),
+  allowedAspects: z.array(z.string()).optional(),
+  allowedFps: z.array(z.number()).optional(),
+}).strict();
+
+export type RecipeConstraints = z.infer<typeof RecipeConstraintsSchema>;
+
+// ─── Continuity Lock Levels ───
+
+export const ContinuityLockLevelSchema = z.enum(['off', 'standard', 'strong']);
+export type ContinuityLockLevel = z.infer<typeof ContinuityLockLevelSchema>;
+
+export const ContinuityLocksSchema = z.object({
+  characterLock: ContinuityLockLevelSchema.optional(),
+  wardrobeLock: ContinuityLockLevelSchema.optional(),
+  environmentLock: ContinuityLockLevelSchema.optional(),
+}).strict();
+
+export type ContinuityLocks = z.infer<typeof ContinuityLocksSchema>;
 
 // ─── Recipe Categories ───
 
@@ -85,6 +121,10 @@ export const RecipeSchema = z.object({
   tier: z.enum(['simple', 'advanced', 'complex']).optional(),
   /** Production directives for agent pipeline */
   directives: ProductionDirectivesSchema.optional(),
+  /** Engine routing — which engines this recipe uses */
+  routing: EngineRoutingSchema.optional(),
+  /** Budget and format constraints */
+  constraints: RecipeConstraintsSchema.optional(),
 });
 
 export type Recipe = z.infer<typeof RecipeSchema>;

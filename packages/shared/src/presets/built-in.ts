@@ -4,7 +4,19 @@
  * These are non-deletable presets covering the major families.
  */
 
-import type { Preset, Recipe, ProductionDirectives } from './schema.js';
+import type { Preset, Recipe, ProductionDirectives, EngineRouting, RecipeConstraints } from './schema.js';
+
+// ─── Default Engine Routing ───
+
+const DEFAULT_ROUTING: EngineRouting = { keyframeEngine: 'comfyui', assemblyEngine: 'remotion' };
+const CINEMATIC_ROUTING: EngineRouting = { keyframeEngine: 'comfyui', motionEngine: 'veo', assemblyEngine: 'remotion' };
+
+// ─── Category Constraints ───
+
+const ONE_OFF_CONSTRAINTS: RecipeConstraints = { maxRuntimeSeconds: 300, maxCostUsd: 25, allowedAspects: ['16:9', '9:16'], allowedFps: [24, 30] };
+const SERIES_CONSTRAINTS: RecipeConstraints = { maxRuntimeSeconds: 600, maxCostUsd: 40, allowedAspects: ['16:9', '9:16'], allowedFps: [24, 30] };
+const SHORTS_CONSTRAINTS: RecipeConstraints = { maxRuntimeSeconds: 90, maxCostUsd: 10, allowedAspects: ['9:16', '1:1'], allowedFps: [24, 30] };
+const CINEMATIC_CONSTRAINTS: RecipeConstraints = { maxRuntimeSeconds: 600, maxCostUsd: 60, allowedAspects: ['16:9', '2.39:1'], allowedFps: [24] };
 
 // ─── Visual Presets (Color Grades) ───
 
@@ -18,6 +30,8 @@ export const VISUAL_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       colorGrade: { contrast: 40, saturation: -60, shadows: -20, highlights: 10 },
+      generation: { steps: 35, cfg: 8, sampler: 'dpmpp_2m', scheduler: 'karras' },
+      negativePrompt: 'color, vibrant, rainbow, saturated',
     },
     ranges: { 'colorGrade.saturation': { min: -80, max: -30 }, 'colorGrade.contrast': { min: 20, max: 60 } },
   },
@@ -42,6 +56,8 @@ export const VISUAL_PRESETS: Preset[] = [
     overrides: {
       colorGrade: { saturation: 40, tint: -30, contrast: 30, temperature: -20 },
       postProcess: { filmGrain: 10, sharpen: 20 },
+      generation: { steps: 30, cfg: 7.5, sampler: 'dpmpp_2m', scheduler: 'karras' },
+      negativePrompt: 'soft focus, desaturated, vintage',
     },
     ranges: { 'colorGrade.tint': { min: -50, max: -10 }, 'colorGrade.saturation': { min: 20, max: 60 } },
   },
@@ -92,6 +108,8 @@ export const VISUAL_PRESETS: Preset[] = [
     overrides: {
       colorGrade: { contrast: 35, saturation: -30, temperature: -25, shadows: -30, highlights: -10 },
       postProcess: { filmGrain: 15, vignette: 25 },
+      generation: { steps: 32, cfg: 7, sampler: 'dpmpp_2m', scheduler: 'karras' },
+      negativePrompt: 'bright, cheerful, saturated, comedy',
     },
     ranges: { 'colorGrade.contrast': { min: 20, max: 50 }, 'colorGrade.shadows': { min: -50, max: -10 } },
   },
@@ -131,6 +149,8 @@ export const VISUAL_PRESETS: Preset[] = [
       colorGrade: { saturation: -10, contrast: -15, temperature: 10, highlights: 15 },
       postProcess: { vignette: 10 },
       lighting: 'soft diffused backlight, overcast feel',
+      generation: { steps: 28, cfg: 6.5, sampler: 'dpmpp_2m', scheduler: 'karras', denoise: 0.9 },
+      negativePrompt: 'harsh, high-contrast, sharp edges, gritty',
     },
   },
 ];
@@ -251,7 +271,7 @@ export const AUDIO_PRESETS: Preset[] = [
     tags: ['voice', 'clean', 'minimal'],
     builtIn: true,
     overrides: {
-      audioPlan: { fg: { source: 'tts', volume: 0.9 } },
+      audioPlan: { fg: { source: 'tts', volume: 0.9, levelDb: -10 } },
     },
   },
   {
@@ -263,8 +283,8 @@ export const AUDIO_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       audioPlan: {
-        bg: { source: 'generate', volume: 0.2, loop: true, fadeInMs: 2000, fadeOutMs: 2000 },
-        fg: { source: 'tts', volume: 0.9 },
+        bg: { source: 'generate', volume: 0.2, loop: true, fadeInMs: 2000, fadeOutMs: 2000, levelDb: -24 },
+        fg: { source: 'tts', volume: 0.9, levelDb: -10, duckingDb: -8 },
       },
     },
   },
@@ -277,8 +297,8 @@ export const AUDIO_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       audioPlan: {
-        bg: { source: 'generate', volume: 0.35, loop: true },
-        fg: { source: 'tts', volume: 0.9 },
+        bg: { source: 'generate', volume: 0.35, loop: true, levelDb: -18 },
+        fg: { source: 'tts', volume: 0.9, levelDb: -10, duckingDb: -10 },
       },
     },
   },
@@ -291,9 +311,9 @@ export const AUDIO_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       audioPlan: {
-        bg: { source: 'generate', volume: 0.3, loop: true, fadeInMs: 2000, fadeOutMs: 2000 },
-        mg: { source: 'generate', volume: 0.5 },
-        fg: { source: 'tts', volume: 0.9 },
+        bg: { source: 'generate', volume: 0.3, loop: true, fadeInMs: 2000, fadeOutMs: 2000, levelDb: -24 },
+        mg: { source: 'generate', volume: 0.5, levelDb: -18 },
+        fg: { source: 'tts', volume: 0.9, levelDb: -10, duckingDb: -8 },
       },
     },
   },
@@ -306,9 +326,9 @@ export const AUDIO_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       audioPlan: {
-        bg: { source: 'generate', volume: 0.25, loop: true, fadeInMs: 3000, fadeOutMs: 1000 },
-        mg: { source: 'generate', volume: 0.4 },
-        fg: { source: 'tts', volume: 0.9 },
+        bg: { source: 'generate', volume: 0.25, loop: true, fadeInMs: 3000, fadeOutMs: 1000, levelDb: -22 },
+        mg: { source: 'generate', volume: 0.4, levelDb: -16 },
+        fg: { source: 'tts', volume: 0.9, levelDb: -10, duckingDb: -10 },
       },
     },
   },
@@ -321,8 +341,8 @@ export const AUDIO_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       audioPlan: {
-        bg: { source: 'generate', volume: 0.15, loop: true, fadeInMs: 2000, fadeOutMs: 2000 },
-        fg: { source: 'tts', volume: 0.95 },
+        bg: { source: 'generate', volume: 0.15, loop: true, fadeInMs: 2000, fadeOutMs: 2000, levelDb: -30 },
+        fg: { source: 'tts', volume: 0.95, levelDb: -9, duckingDb: -8 },
       },
     },
   },
@@ -335,9 +355,9 @@ export const AUDIO_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       audioPlan: {
-        bg: { source: 'generate', volume: 0.35, loop: true, fadeInMs: 3000, fadeOutMs: 3000 },
-        mg: { source: 'generate', volume: 0.5 },
-        fg: { source: 'tts', volume: 0.85 },
+        bg: { source: 'generate', volume: 0.35, loop: true, fadeInMs: 3000, fadeOutMs: 3000, levelDb: -18 },
+        mg: { source: 'generate', volume: 0.5, levelDb: -14 },
+        fg: { source: 'tts', volume: 0.85, levelDb: -10, duckingDb: -10 },
       },
     },
   },
@@ -726,6 +746,7 @@ export const CONTINUITY_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       seedPolicy: 'series-lock',
+      continuityLocks: { characterLock: 'strong', wardrobeLock: 'strong', environmentLock: 'strong' },
     },
   },
   {
@@ -737,6 +758,7 @@ export const CONTINUITY_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       seedPolicy: 'scene-lock',
+      continuityLocks: { characterLock: 'standard', wardrobeLock: 'standard', environmentLock: 'standard' },
     },
   },
   {
@@ -748,6 +770,7 @@ export const CONTINUITY_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       seedPolicy: 'free',
+      continuityLocks: { characterLock: 'off', wardrobeLock: 'off', environmentLock: 'off' },
     },
   },
   {
@@ -759,6 +782,7 @@ export const CONTINUITY_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       seedPolicy: 'shot-offset',
+      continuityLocks: { characterLock: 'standard', wardrobeLock: 'standard', environmentLock: 'off' },
     },
   },
   {
@@ -770,6 +794,7 @@ export const CONTINUITY_PRESETS: Preset[] = [
     builtIn: true,
     overrides: {
       seedPolicy: 'series-lock',
+      continuityLocks: { characterLock: 'strong', wardrobeLock: 'strong', environmentLock: 'strong' },
     },
   },
 ];
@@ -911,6 +936,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Explainer',
     tier: 'simple',
     directives: { targetShotCount: 6, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'moderate', lensPackage: 'standard-mix', narrativeStructure: 'hicc' },
+    routing: DEFAULT_ROUTING,
+    constraints: ONE_OFF_CONSTRAINTS,
     presetIds: [
       'visual.cool-modern.v1',
       'camera.wide-establishing.v1',
@@ -930,6 +957,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Product Review',
     tier: 'simple',
     directives: { targetShotCount: 8, avgShotLengthSec: 4, pacing: 'moderate', dialogueDensity: 'dense', lensPackage: 'portrait-heavy', narrativeStructure: 'hicc' },
+    routing: DEFAULT_ROUTING,
+    constraints: ONE_OFF_CONSTRAINTS,
     presetIds: [
       'visual.warm-vintage.v1',
       'camera.orbit-reveal.v1',
@@ -949,6 +978,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Social Clip',
     tier: 'simple',
     directives: { targetShotCount: 5, avgShotLengthSec: 3, pacing: 'fast', dialogueDensity: 'sparse', lensPackage: 'standard-mix', narrativeStructure: 'hook-loop' },
+    routing: DEFAULT_ROUTING,
+    constraints: ONE_OFF_CONSTRAINTS,
     presetIds: [
       'visual.cyberpunk.v1',
       'camera.dolly-in.v1',
@@ -970,6 +1001,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Educational',
     tier: 'simple',
     directives: { targetShotCount: 8, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'moderate', lensPackage: 'wide-only', narrativeStructure: 'hicc', seedPolicy: 'scene-lock' },
+    routing: DEFAULT_ROUTING,
+    constraints: SERIES_CONSTRAINTS,
     presetIds: [
       'visual.cool-modern.v1',
       'camera.wide-establishing.v1',
@@ -989,6 +1022,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Personal Vlog',
     tier: 'simple',
     directives: { targetShotCount: 6, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'dense', lensPackage: 'portrait-heavy', narrativeStructure: 'three-act', seedPolicy: 'scene-lock' },
+    routing: DEFAULT_ROUTING,
+    constraints: SERIES_CONSTRAINTS,
     presetIds: [
       'visual.wes-anderson.v1',
       'camera.portrait-closeup.v1',
@@ -1008,6 +1043,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Podcast Visual',
     tier: 'simple',
     directives: { targetShotCount: 6, avgShotLengthSec: 6, pacing: 'slow', dialogueDensity: 'dense', lensPackage: 'portrait-heavy', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    routing: DEFAULT_ROUTING,
+    constraints: SERIES_CONSTRAINTS,
     presetIds: [
       'visual.film-noir.v1',
       'camera.portrait-closeup.v1',
@@ -1029,6 +1066,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'TikTok Hook',
     tier: 'simple',
     directives: { targetShotCount: 5, avgShotLengthSec: 3, pacing: 'frenetic', dialogueDensity: 'sparse', lensPackage: 'standard-mix', narrativeStructure: 'hook-loop', seedPolicy: 'free' },
+    routing: DEFAULT_ROUTING,
+    constraints: SHORTS_CONSTRAINTS,
     presetIds: [
       'visual.cyberpunk.v1',
       'camera.dolly-in.v1',
@@ -1048,6 +1087,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Aesthetic Reel',
     tier: 'simple',
     directives: { targetShotCount: 6, avgShotLengthSec: 3, pacing: 'moderate', dialogueDensity: 'none', lensPackage: 'standard-mix', narrativeStructure: 'montage', seedPolicy: 'free' },
+    routing: DEFAULT_ROUTING,
+    constraints: SHORTS_CONSTRAINTS,
     presetIds: [
       'visual.golden-hour.v1',
       'camera.orbit-reveal.v1',
@@ -1068,6 +1109,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Quick Tutorial',
     tier: 'simple',
     directives: { targetShotCount: 4, avgShotLengthSec: 4, pacing: 'fast', dialogueDensity: 'moderate', lensPackage: 'wide-only', narrativeStructure: 'hicc', seedPolicy: 'free' },
+    routing: DEFAULT_ROUTING,
+    constraints: SHORTS_CONSTRAINTS,
     presetIds: [
       'visual.cool-modern.v1',
       'camera.wide-establishing.v1',
@@ -1089,6 +1132,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Drama',
     tier: 'simple',
     directives: { targetShotCount: 9, avgShotLengthSec: 5, pacing: 'slow', dialogueDensity: 'dense', lensPackage: 'anamorphic', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    routing: CINEMATIC_ROUTING,
+    constraints: CINEMATIC_CONSTRAINTS,
     presetIds: [
       'visual.warm-vintage.v1',
       'camera.anamorphic-wide.v1',
@@ -1108,6 +1153,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Noir',
     tier: 'simple',
     directives: { targetShotCount: 8, avgShotLengthSec: 5, pacing: 'slow', dialogueDensity: 'moderate', lensPackage: 'portrait-heavy', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    routing: CINEMATIC_ROUTING,
+    constraints: CINEMATIC_CONSTRAINTS,
     presetIds: [
       'visual.film-noir.v1',
       'camera.portrait-closeup.v1',
@@ -1127,6 +1174,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Epic',
     tier: 'simple',
     directives: { targetShotCount: 9, avgShotLengthSec: 5, pacing: 'slow', dialogueDensity: 'sparse', lensPackage: 'anamorphic', narrativeStructure: 'three-act', seedPolicy: 'series-lock' },
+    routing: CINEMATIC_ROUTING,
+    constraints: CINEMATIC_CONSTRAINTS,
     presetIds: [
       'visual.golden-hour.v1',
       'camera.anamorphic-wide.v1',
@@ -1148,6 +1197,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Thriller',
     tier: 'simple',
     directives: { targetShotCount: 8, avgShotLengthSec: 4, pacing: 'moderate', dialogueDensity: 'moderate', lensPackage: 'portrait-heavy', narrativeStructure: 'setup-twist', seedPolicy: 'series-lock' },
+    routing: CINEMATIC_ROUTING,
+    constraints: CINEMATIC_CONSTRAINTS,
     presetIds: [
       'visual.dark-thriller.v1',
       'camera.over-shoulder.v1',
@@ -1167,6 +1218,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Educational',
     tier: 'simple',
     directives: { targetShotCount: 7, avgShotLengthSec: 5, pacing: 'moderate', dialogueDensity: 'dense', lensPackage: 'wide-only', narrativeStructure: 'educational', seedPolicy: 'scene-lock' },
+    routing: DEFAULT_ROUTING,
+    constraints: ONE_OFF_CONSTRAINTS,
     presetIds: [
       'visual.cool-modern.v1',
       'camera.wide-establishing.v1',
@@ -1186,6 +1239,8 @@ export const MASTER_BUNDLES: Recipe[] = [
     mood: 'Dreamy ASMR',
     tier: 'simple',
     directives: { targetShotCount: 6, avgShotLengthSec: 4, pacing: 'slow', dialogueDensity: 'sparse', lensPackage: 'standard-mix', narrativeStructure: 'montage', seedPolicy: 'free' },
+    routing: DEFAULT_ROUTING,
+    constraints: SHORTS_CONSTRAINTS,
     presetIds: [
       'visual.dreamy-soft.v1',
       'camera.steadicam.v1',

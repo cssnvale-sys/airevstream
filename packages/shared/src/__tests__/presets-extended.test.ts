@@ -101,4 +101,13 @@ describe('extended presets', () => {
   it('should have 15 master bundles', () => {
     expect(MASTER_BUNDLES).toHaveLength(15);
   });
+
+  it('all master bundles should have routing and constraints', () => {
+    for (const bundle of MASTER_BUNDLES) {
+      expect(bundle.routing).toBeDefined();
+      expect(bundle.constraints).toBeDefined();
+      expect(bundle.constraints!.maxRuntimeSeconds).toBeGreaterThan(0);
+      expect(bundle.constraints!.maxCostUsd).toBeGreaterThan(0);
+    }
+  });
 });

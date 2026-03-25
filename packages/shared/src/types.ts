@@ -377,6 +377,8 @@ export interface AudioLayerSpec {
   fadeInMs?: number;
   fadeOutMs?: number;
   loop?: boolean;
+  levelDb?: number;          // Target level in dBFS (e.g., -14 for fg, -24 for bg)
+  duckingDb?: number;        // Ducking depth in dB when fg is active
 }
 
 export interface AudioPlan {
@@ -384,6 +386,16 @@ export interface AudioPlan {
   mg?: AudioLayerSpec;       // Midground (effects, room tone)
   fg?: AudioLayerSpec;       // Foreground (dialogue, foley)
   masterVolume?: number;     // 0.0-1.0
+}
+
+// ─── Continuity Locks ───
+
+export type ContinuityLockLevel = 'off' | 'standard' | 'strong';
+
+export interface ContinuityLocks {
+  characterLock?: ContinuityLockLevel;
+  wardrobeLock?: ContinuityLockLevel;
+  environmentLock?: ContinuityLockLevel;
 }
 
 // ─── Seed Policy ───
@@ -449,6 +461,9 @@ export interface ShotSpec {
     exaggeration?: number;
     characterId?: string;
   };
+
+  // --- Continuity Locks ---
+  continuityLocks?: ContinuityLocks;
 
   // --- Prompt & Script ---
   promptSlots?: Record<string, string>;

@@ -12,6 +12,9 @@
 
 import type { ShotSpec } from '../types.js';
 import type { Preset, Recipe, ProductionDirectives } from './schema.js';
+import type { ConstraintViolation } from '../constraint-validator.js';
+import { validateShotSpec, validateRecipeConstraints } from '../constraint-validator.js';
+import type { ProviderName } from '../constraint-validator.js';
 
 /**
  * Deep merge two objects. Arrays are replaced, not concatenated.
@@ -167,4 +170,131 @@ export function resolvePresetsWithDirectives(
   );
 
   return { shotSpec: resolvedRec as unknown as ShotSpec, directives, ranges };
+}
+
+// ─── Resolve & Validate ───
+
+export interface ResolveValidationResult extends ResolveWithDirectivesResult {
+  violations: ConstraintViolation[];
+}
+
+/**
+ * Resolve presets with directives, then validate against provider and recipe constraints.
+ */
+export function resolveAndValidate(
+  base: ShotSpec,
+  options: ResolveOptions & { recipeDirectives?: ProductionDirectives },
+  provider?: ProviderName,
+): ResolveValidationResult {
+  const result = resolvePresetsWithDirectives(base, options);
+  const violations: ConstraintViolation[] = [];
+
+  // Validate against provider constraints
+  if (provider) {
+    violations.push(...validateShotSpec(result.shotSpec, provider));
+  }
+
+  // Validate against recipe constraints
+  if (options.recipe?.constraints) {
+    violations.push(...validateRecipeConstraints(result.shotSpec, options.recipe.constraints));
+  }
+
+  return { ...result, violations };
+}
+
+// ─── Sticky Override Tracking ───
+
+export type StickyFields = Set<string>;
+
+/**
+ * Resolve presets, then restore user-edited fields from `stickyOverrides`.
+ * Prevents preset swaps from silently overwriting user-tuned values.
+ */
+export function resolveWithStickyOverrides(
+  base: ShotSpec,
+  options: ResolveOptions,
+  stickyFields: StickyFields,
+  currentValues: Record<string, unknown>,
+): ShotSpec {
+  const resolved = resolvePresets(base, options);
+  const resolvedRec = resolved as unknown as Record<string, unknown>;
+
+  for (const path of stickyFields) {
+    const parts = path.split('.');
+    if (parts.length === 1) {
+      if (path in currentValues) {
+        resolvedRec[path] = currentValues[path];
+      }
+    } else if (parts.length === 2) {
+      const [parent, child] = parts;
+      const currentParent = currentValues[parent] as Record<string, unknown> | undefined;
+      if (currentParent && child in currentParent) {
+        const resolvedParent = { ...((resolvedRec[parent] as Record<string, unknown>) ?? {}) };
+        resolvedParent[child] = currentParent[child];
+        resolvedRec[parent] = resolvedParent;
+      }
+    }
+  }
+
+  return resolvedRec as unknown as ShotSpec;
+}
+
+// ─── Preset Diff Generation ───
+
+export interface PresetDiffEntry {
+  path: string;
+  label: string;
+  before: unknown;
+  after: unknown;
+}
+
+/**
+ * Compare before/after states and generate a diff of changed fields.
+ * Walks top-level keys and one level of nesting for objects.
+ */
+export function generatePresetDiff(
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+): PresetDiffEntry[] {
+  const entries: PresetDiffEntry[] = [];
+  const allKeys = new Set([...Object.keys(before), ...Object.keys(after)]);
+
+  for (const key of allKeys) {
+    const bVal = before[key];
+    const aVal = after[key];
+
+    // Skip internal keys
+    if (key.startsWith('_')) continue;
+
+    // Both are plain objects — diff one level deeper
+    if (
+      bVal != null && typeof bVal === 'object' && !Array.isArray(bVal) &&
+      aVal != null && typeof aVal === 'object' && !Array.isArray(aVal)
+    ) {
+      const bObj = bVal as Record<string, unknown>;
+      const aObj = aVal as Record<string, unknown>;
+      const subKeys = new Set([...Object.keys(bObj), ...Object.keys(aObj)]);
+      for (const sub of subKeys) {
+        if (bObj[sub] !== aObj[sub]) {
+          entries.push({
+            path: `${key}.${sub}`,
+            label: `${key}.${sub}`,
+            before: bObj[sub],
+            after: aObj[sub],
+          });
+        }
+      }
+    } else if (bVal !== aVal) {
+      // Handle arrays — compare by JSON string
+      if (Array.isArray(bVal) && Array.isArray(aVal)) {
+        if (JSON.stringify(bVal) !== JSON.stringify(aVal)) {
+          entries.push({ path: key, label: key, before: bVal, after: aVal });
+        }
+      } else {
+        entries.push({ path: key, label: key, before: bVal, after: aVal });
+      }
+    }
+  }
+
+  return entries;
 }

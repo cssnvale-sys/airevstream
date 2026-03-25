@@ -61,6 +61,22 @@ describe('master bundles', () => {
     }
   });
 
+  it('recipe constraints should have valid structure', () => {
+    for (const bundle of MASTER_BUNDLES) {
+      if (bundle.constraints) {
+        if (bundle.constraints.allowedAspects) {
+          expect(bundle.constraints.allowedAspects.length).toBeGreaterThan(0);
+        }
+        if (bundle.constraints.allowedFps) {
+          expect(bundle.constraints.allowedFps.length).toBeGreaterThan(0);
+          for (const fps of bundle.constraints.allowedFps) {
+            expect(fps).toBeGreaterThan(0);
+          }
+        }
+      }
+    }
+  });
+
   it('legacy recipes should have category and directives', () => {
     for (const recipe of LEGACY_RECIPES) {
       expect(recipe.category).toBeDefined();

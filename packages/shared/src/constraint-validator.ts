@@ -7,6 +7,7 @@
  */
 
 import type { ShotSpec } from './types.js';
+import type { RecipeConstraints } from './presets/schema.js';
 import { SIMPLE_MODE_GUARDRAILS } from './constants.js';
 
 // ─── Types ───
@@ -221,6 +222,35 @@ export function validateSimpleModeConstraints(
       });
     }
   });
+
+  return violations;
+}
+
+/**
+ * Validate resolved spec against recipe constraints.
+ * Checks aspect ratio, fps, and other recipe-level limits.
+ */
+export function validateRecipeConstraints(
+  spec: ShotSpec,
+  constraints: RecipeConstraints,
+): ConstraintViolation[] {
+  const violations: ConstraintViolation[] = [];
+
+  if (constraints.allowedAspects && spec.aspect && !constraints.allowedAspects.includes(spec.aspect)) {
+    violations.push({
+      field: 'aspect',
+      message: `Aspect ratio '${spec.aspect}' not allowed by recipe. Allowed: ${constraints.allowedAspects.join(', ')}`,
+      severity: 'error',
+    });
+  }
+
+  if (constraints.allowedFps && spec.fps && !constraints.allowedFps.includes(spec.fps)) {
+    violations.push({
+      field: 'fps',
+      message: `FPS ${spec.fps} not allowed by recipe. Allowed: ${constraints.allowedFps.join(', ')}`,
+      severity: 'error',
+    });
+  }
 
   return violations;
 }

@@ -555,3 +555,123 @@ export interface TimestampedScript {
     endSec: number;
   }>;
 }
+
+// ─── Assembly Manifest ───
+
+/**
+ * The assembly manifest is the bridge between ComfyUI (asset factory)
+ * and Remotion (film assembly engine). It carries persisted agent outputs,
+ * shot-level data, and output specifications through the production pipeline.
+ *
+ * Stored in `Storyboard.scriptJson` — no migration required.
+ */
+export interface AssemblyManifest {
+  /** Schema version for forward compatibility */
+  schemaVersion: '1.0.0';
+  /** Content item ID */
+  contentId: string;
+  /** Storyboard ID */
+  storyboardId: string;
+  /** Remotion composition ID to render with */
+  compositionId: string;
+  /** Quality tier controlling generation defaults */
+  qualityTier: 'draft' | 'standard' | 'cinema';
+  /** Production type controlling composition selection */
+  productionType: 'short' | 'long' | 'cinema' | 'thumbnail';
+
+  /** Persisted agent outputs (closes G1) */
+  agentOutputs?: {
+    director?: Record<string, unknown>;
+    lookdev?: Record<string, unknown>;
+    dialogue?: Record<string, unknown>;
+    sound?: Record<string, unknown>;
+    psychology?: Record<string, unknown>;
+    finishing?: Record<string, unknown>;
+  };
+
+  /** Remotion-ready shot data */
+  shots: AssembledShot[];
+
+  /** Global color grade applied to all shots */
+  globalColorGrade?: ColorGradeSpec;
+
+  /** Beat timing markers derived from DirectorOutput.sections */
+  beatTimings?: Array<{
+    startSec: number;
+    endSec: number;
+    section: 'hook' | 'intro' | 'content' | 'cta';
+    preset?: string;
+    label: string;
+  }>;
+
+  /** Subtitles derived from FinishingOutput or DialogueOutput */
+  subtitles?: Array<{
+    startSec: number;
+    endSec: number;
+    text: string;
+    position?: 'top' | 'center' | 'bottom';
+  }>;
+
+  /** Output specification for Remotion render */
+  outputSpec: {
+    width: number;
+    height: number;
+    fps: number;
+    aspect: string;
+    codec: 'h264' | 'prores';
+    totalDurationSec: number;
+  };
+
+  /** Preset stack applied to this production (for audit trail) */
+  presetStack?: string[];
+  /** Recipe ID if a recipe was used */
+  recipeId?: string;
+  /** Timestamps */
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * A single shot within the assembly manifest, carrying all data
+ * needed for both ComfyUI generation and Remotion rendering.
+ */
+export interface AssembledShot {
+  shotId: string;
+  shotNumber: number;
+  startSec: number;
+  endSec: number;
+  durationSec: number;
+
+  /** Keyframe image URL (populated after ComfyUI generation) */
+  keyframeUrl?: string;
+  /** Video plate URL (populated after video generation) */
+  videoPlateUrl?: string;
+  /** Audio stem URLs per layer */
+  audioStemUrls?: { fg?: string; mg?: string; bg?: string };
+
+  /** Visual direction */
+  camera?: CameraSpec;
+  colorGrade?: ColorGradeSpec;
+  shotClass?: string;
+  transition?: string;
+  beat?: string;
+
+  /** Dialogue (from Dialogue agent — closes G12) */
+  dialogue?: {
+    text: string;
+    voice: string;
+    emotion: string;
+    pacing: 'slow' | 'normal' | 'fast';
+  };
+
+  /** Audio plan (from Sound agent — closes G3) */
+  audioPlan?: AudioPlan;
+
+  /** Continuity locks */
+  continuityLocks?: ContinuityLocks;
+  /** Resolved seed for reproducibility */
+  seed?: number;
+
+  /** Post-generation quality score */
+  qualityScore?: number;
+}

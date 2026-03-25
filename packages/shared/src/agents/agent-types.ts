@@ -320,6 +320,8 @@ export interface AgentPipelineState {
   startedAt: string;
   completedAt?: string;
   currentAgent?: AgentRole;
+  /** Persisted agent outputs keyed by role (populated after pipeline completes) */
+  agentOutputs?: Partial<Record<AgentRole, unknown>>;
 }
 
 export type ComplexityMode = 'simple' | 'advanced' | 'complex';

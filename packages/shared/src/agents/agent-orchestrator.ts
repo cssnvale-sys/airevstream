@@ -186,6 +186,9 @@ export class AgentOrchestrator {
       state.status = 'failed';
     }
 
+    // Persist agent outputs on state for downstream consumers (closes G1)
+    state.agentOutputs = outputs;
+
     state.completedAt = new Date().toISOString();
     return state;
   }

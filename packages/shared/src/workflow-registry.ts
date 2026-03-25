@@ -6,7 +6,22 @@
  * ComfyUI workflow JSON files used for generation.
  */
 
+import type { ConstraintViolation } from './constraint-validator.js';
+import type { ShotSpec } from './types.js';
+
 // ─── Types ───
+
+export type QualityTier = 'draft' | 'standard' | 'cinema';
+
+export interface TierDefaults {
+  steps?: number;
+  cfg?: number;
+  sampler?: string;
+  scheduler?: string;
+  width?: number;
+  height?: number;
+  denoise?: number;
+}
 
 export interface WorkflowMetadata {
   /** Unique workflow ID */
@@ -23,6 +38,22 @@ export interface WorkflowMetadata {
   shotClasses: string[];
   /** Which ShotSpec fields can be overridden in this workflow */
   allowedOverrides: string[];
+  /** Quality tiers this workflow supports */
+  qualityTiers?: QualityTier[];
+  /** Continuity tier capability */
+  continuityTier?: 'none' | 'standard' | 'strong';
+  /** Generation defaults per quality tier */
+  tierDefaults?: Record<string, TierDefaults>;
+  /** Output format specification */
+  outputFormat?: { type: 'image' | 'video' | 'image+video'; formats: string[] };
+  /** Estimated generation time in seconds per tier */
+  estimatedTimeSec?: Record<string, number>;
+  /** Fields required in ShotSpec for this workflow */
+  requiredFields?: string[];
+  /** Whether this workflow supports frame anchoring for continuity */
+  supportsFrameAnchoring?: boolean;
+  /** Searchable tags */
+  tags?: string[];
 }
 
 // ─── Shot Classes ───
@@ -59,6 +90,18 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: ['Establishing_Wide', 'Montage_Quick'],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.width', 'generation.height', 'generation.sampler'],
+    qualityTiers: ['draft', 'standard', 'cinema'],
+    continuityTier: 'standard',
+    tierDefaults: {
+      draft: { steps: 15, cfg: 6, sampler: 'euler_ancestral', width: 768, height: 768 },
+      standard: { steps: 25, cfg: 7, sampler: 'dpmpp_2m', width: 1024, height: 1024 },
+      cinema: { steps: 40, cfg: 8, sampler: 'dpmpp_sde', scheduler: 'karras', width: 1344, height: 768 },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { draft: 8, standard: 18, cinema: 40 },
+    requiredFields: ['promptBlocks'],
+    supportsFrameAnchoring: true,
+    tags: ['general', 'storyboard', 'keyframe'],
   },
   {
     id: 'avatar-generation',
@@ -68,6 +111,18 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: ['Dialogue_Closeup', 'Reaction_Medium'],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.sampler'],
+    qualityTiers: ['draft', 'standard', 'cinema'],
+    continuityTier: 'strong',
+    tierDefaults: {
+      draft: { steps: 15, cfg: 6, sampler: 'euler_ancestral', width: 768, height: 1024 },
+      standard: { steps: 28, cfg: 7.5, sampler: 'dpmpp_2m', width: 896, height: 1152 },
+      cinema: { steps: 45, cfg: 8, sampler: 'dpmpp_sde', scheduler: 'karras', width: 1024, height: 1344 },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { draft: 10, standard: 22, cinema: 50 },
+    requiredFields: ['promptBlocks'],
+    supportsFrameAnchoring: true,
+    tags: ['character', 'portrait', 'avatar', 'face'],
   },
   {
     id: 'scenery-generation',
@@ -77,6 +132,18 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: ['Establishing_Wide', 'Reveal_Dolly'],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.width', 'generation.height', 'generation.sampler', 'generation.scheduler'],
+    qualityTiers: ['draft', 'standard', 'cinema'],
+    continuityTier: 'standard',
+    tierDefaults: {
+      draft: { steps: 15, cfg: 6, sampler: 'euler_ancestral', width: 1024, height: 576 },
+      standard: { steps: 25, cfg: 7, sampler: 'dpmpp_2m', width: 1344, height: 768 },
+      cinema: { steps: 40, cfg: 8, sampler: 'dpmpp_sde', scheduler: 'karras', width: 1536, height: 896 },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { draft: 10, standard: 20, cinema: 45 },
+    requiredFields: ['promptBlocks'],
+    supportsFrameAnchoring: true,
+    tags: ['scenery', 'environment', 'landscape', 'wide'],
   },
   {
     id: 'thumbnail-generation',
@@ -86,8 +153,19 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: [],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.width', 'generation.height'],
+    qualityTiers: ['draft', 'standard'],
+    continuityTier: 'none',
+    tierDefaults: {
+      draft: { steps: 15, cfg: 7, sampler: 'euler_ancestral', width: 1280, height: 720 },
+      standard: { steps: 25, cfg: 7.5, sampler: 'dpmpp_2m', width: 1280, height: 720 },
+    },
+    outputFormat: { type: 'image', formats: ['png', 'jpg'] },
+    estimatedTimeSec: { draft: 6, standard: 14 },
+    requiredFields: ['promptBlocks'],
+    supportsFrameAnchoring: false,
+    tags: ['thumbnail', 'social', 'still'],
   },
-  // Shot-class-specific workflows (to be added in B4)
+  // Shot-class-specific workflows
   {
     id: 'dialogue-closeup',
     name: 'Dialogue Close-up',
@@ -96,6 +174,17 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: ['Dialogue_Closeup'],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.sampler', 'generation.loras'],
+    qualityTiers: ['standard', 'cinema'],
+    continuityTier: 'strong',
+    tierDefaults: {
+      standard: { steps: 28, cfg: 7.5, sampler: 'dpmpp_2m', width: 896, height: 1152, denoise: 0.85 },
+      cinema: { steps: 45, cfg: 8, sampler: 'dpmpp_sde', scheduler: 'karras', width: 1024, height: 1344, denoise: 0.9 },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { standard: 24, cinema: 55 },
+    requiredFields: ['promptBlocks', 'camera'],
+    supportsFrameAnchoring: true,
+    tags: ['dialogue', 'closeup', 'portrait', 'character'],
   },
   {
     id: 'establishing-wide',
@@ -105,6 +194,17 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: ['Establishing_Wide'],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.width', 'generation.height', 'generation.sampler'],
+    qualityTiers: ['standard', 'cinema'],
+    continuityTier: 'standard',
+    tierDefaults: {
+      standard: { steps: 25, cfg: 7, sampler: 'dpmpp_2m', width: 1344, height: 768 },
+      cinema: { steps: 40, cfg: 8, sampler: 'dpmpp_sde', scheduler: 'karras', width: 1536, height: 896 },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { standard: 20, cinema: 45 },
+    requiredFields: ['promptBlocks'],
+    supportsFrameAnchoring: true,
+    tags: ['establishing', 'wide', 'environment', 'opening'],
   },
   {
     id: 'insert-hands',
@@ -114,6 +214,17 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: ['Insert_Hands'],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.sampler'],
+    qualityTiers: ['standard', 'cinema'],
+    continuityTier: 'standard',
+    tierDefaults: {
+      standard: { steps: 25, cfg: 7.5, sampler: 'dpmpp_2m', width: 1024, height: 1024 },
+      cinema: { steps: 40, cfg: 8, sampler: 'dpmpp_sde', scheduler: 'karras', width: 1344, height: 1344 },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { standard: 18, cinema: 40 },
+    requiredFields: ['promptBlocks'],
+    supportsFrameAnchoring: false,
+    tags: ['insert', 'macro', 'detail', 'hands'],
   },
   {
     id: 'action-tracking',
@@ -123,6 +234,17 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     provider: 'comfyui',
     shotClasses: ['Action_Tracking'],
     allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.width', 'generation.height', 'generation.sampler'],
+    qualityTiers: ['standard', 'cinema'],
+    continuityTier: 'standard',
+    tierDefaults: {
+      standard: { steps: 25, cfg: 7, sampler: 'dpmpp_2m', width: 1344, height: 768 },
+      cinema: { steps: 40, cfg: 7.5, sampler: 'dpmpp_sde', scheduler: 'karras', width: 1536, height: 896 },
+    },
+    outputFormat: { type: 'image+video', formats: ['png', 'mp4'] },
+    estimatedTimeSec: { standard: 22, cinema: 50 },
+    requiredFields: ['promptBlocks', 'camera'],
+    supportsFrameAnchoring: true,
+    tags: ['action', 'tracking', 'motion', 'dynamic'],
   },
 ];
 
@@ -139,4 +261,76 @@ export function getWorkflowForShotClass(shotClass: string): WorkflowMetadata | u
  */
 export function getWorkflowsForProvider(provider: string): WorkflowMetadata[] {
   return WORKFLOW_REGISTRY.filter(w => w.provider === provider);
+}
+
+/**
+ * Get a workflow for a shot class with quality tier defaults applied.
+ * Returns the workflow metadata and the resolved generation defaults for the given tier.
+ */
+export function getWorkflowWithDefaults(
+  shotClass: string,
+  qualityTier: QualityTier,
+): { workflow: WorkflowMetadata; defaults: TierDefaults } | undefined {
+  const workflow = getWorkflowForShotClass(shotClass);
+  if (!workflow) return undefined;
+
+  // Check if workflow supports the requested tier
+  if (workflow.qualityTiers && !workflow.qualityTiers.includes(qualityTier)) {
+    // Fall back to the highest supported tier
+    const fallbackTier = workflow.qualityTiers[workflow.qualityTiers.length - 1];
+    if (!fallbackTier) return { workflow, defaults: {} };
+    const defaults = workflow.tierDefaults?.[fallbackTier] ?? {};
+    return { workflow, defaults };
+  }
+
+  const defaults = workflow.tierDefaults?.[qualityTier] ?? {};
+  return { workflow, defaults };
+}
+
+/**
+ * Validate that a ShotSpec meets the requirements of a workflow.
+ * Returns an array of constraint violations (empty if valid).
+ */
+export function validateWorkflowRequirements(
+  spec: Partial<ShotSpec>,
+  workflow: WorkflowMetadata,
+): ConstraintViolation[] {
+  const violations: ConstraintViolation[] = [];
+
+  if (!workflow.requiredFields) return violations;
+
+  for (const field of workflow.requiredFields) {
+    const value = getNestedValue(spec, field);
+    if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
+      violations.push({
+        field,
+        message: `Workflow "${workflow.name}" requires field "${field}"`,
+        severity: 'error',
+      });
+    }
+  }
+
+  return violations;
+}
+
+/**
+ * Find workflows that match all of the given tags.
+ */
+export function getWorkflowsByTags(tags: string[]): WorkflowMetadata[] {
+  if (tags.length === 0) return [...WORKFLOW_REGISTRY];
+  return WORKFLOW_REGISTRY.filter(w =>
+    tags.every(tag => w.tags?.includes(tag)),
+  );
+}
+
+// ─── Helpers ───
+
+function getNestedValue(obj: unknown, path: string): unknown {
+  const parts = path.split('.');
+  let current: unknown = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
 }

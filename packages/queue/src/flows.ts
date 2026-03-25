@@ -210,6 +210,79 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
   return result;
 }
 
+// ─── Preview Pipeline ───
+
+export interface PreviewPipelineParams {
+  tenantId: string;
+  contentId: string;
+  channelId: string;
+  topic: string;
+  contentType: 'short' | 'long' | 'thumbnail' | 'image';
+  storyboardId?: string;
+  shotIds?: string[];
+  /** Resolved preset overrides */
+  overrides?: Record<string, unknown>;
+}
+
+/**
+ * Preview Pipeline DAG — simplified version of cinema pipeline.
+ *
+ * Skips QC gate, audio mix, and final review for fast turnaround.
+ * Uses draft tier defaults from workflow registry.
+ *
+ * Execution order:
+ * 1. production:generate-storyboard (LEAF — runs first)
+ * 2. production:generate-shots (depends on storyboard)
+ * 3. production:render-video (ROOT — runs last, draft quality)
+ */
+export async function startPreviewPipeline(params: PreviewPipelineParams) {
+  const flow = getFlowProducer();
+
+  const tree: FlowJob = {
+    // Step 3: Render video (ROOT — runs last)
+    name: 'production:render-video',
+    queueName: 'production',
+    data: {
+      contentId: params.contentId,
+      storyboardId: params.storyboardId ?? '',
+      channelId: params.channelId,
+      qualityPreset: 'draft',
+    },
+    children: [
+      {
+        // Step 2: Generate shots (draft quality, no QC gate)
+        name: 'production:generate-shots',
+        queueName: 'production',
+        data: {
+          storyboardId: params.storyboardId ?? '',
+          shotIds: params.shotIds ?? [],
+          cinemaBibleId: '',
+          qualityPreset: 'draft',
+          contentId: params.contentId,
+          channelId: params.channelId,
+          ...(params.overrides ? { overrides: params.overrides } : {}),
+        },
+        children: [
+          {
+            // Step 1: Generate storyboard (LEAF — runs first)
+            name: 'production:generate-storyboard',
+            queueName: 'production',
+            data: {
+              contentId: params.contentId,
+              channelId: params.channelId,
+              scriptJson: {},
+              qualityPreset: 'draft',
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const result = await flow.add(tree);
+  return result;
+}
+
 // ─── Seasoning Pipeline ───
 
 export interface SeasoningPipelineParams {

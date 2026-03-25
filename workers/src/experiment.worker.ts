@@ -69,6 +69,32 @@ async function handleEvaluate(data: ExperimentEvaluateJob) {
       },
     });
     logger.info({ experimentId: data.experimentId, winnerId: decision.winnerId }, 'Experiment completed with winner');
+
+    // Feedback loop: update SuggestionLog entries with viralScoreAfter
+    try {
+      const winningVariant = experiment.variants.find(v => v.id === decision.winnerId);
+      if (winningVariant?.viralScore != null) {
+        const presetOverrides = (winningVariant.presetOverrides as Record<string, unknown>) ?? {};
+        const presetIds = Object.keys(presetOverrides);
+        if (presetIds.length > 0) {
+          const updated = await db.suggestionLog.updateMany({
+            where: {
+              tenantId: experiment.tenantId,
+              presetId: { in: presetIds },
+              outcome: 'accepted',
+              viralScoreAfter: null,
+            },
+            data: { viralScoreAfter: winningVariant.viralScore },
+          });
+          if (updated.count > 0) {
+            logger.info({ experimentId: data.experimentId, updatedLogs: updated.count }, 'Updated suggestion logs with viral score after');
+          }
+        }
+      }
+    } catch (feedbackErr) {
+      // Non-blocking — log and continue
+      logger.warn({ experimentId: data.experimentId, error: feedbackErr }, 'Failed to update suggestion feedback loop');
+    }
   } else {
     // Update significance even if no winner yet
     await db.experiment.update({

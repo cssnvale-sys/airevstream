@@ -35,6 +35,7 @@ model Tenant {
   costBudgets        CostBudget[]
   userPresets        UserPreset[]
   experiments        Experiment[]
+  suggestionLogs     SuggestionLog[]
 
   @@map("tenants")
 }
@@ -162,6 +163,7 @@ model Channel {
   affiliateClicks    AffiliateClick[]
   aiServiceUsage     AiServiceUsage[]
   sequences          Sequence[]
+  suggestionLogs     SuggestionLog[]
 
   @@index([socialAccountId])
   @@index([familyId])
@@ -418,6 +420,7 @@ model ContentItem {
   assetRegistryEntries AssetRegistryEntry[]
   sequenceItems   SequenceItem[]
   experimentVariants ExperimentVariant[]
+  suggestionLogs  SuggestionLog[]
 
   @@index([channelId])
   @@index([status])
@@ -1123,4 +1126,33 @@ model ExperimentVariant {
 
   @@index([experimentId])
   @@map("experiment_variants")
+}
+
+// ============================================================
+// SUGGESTION TRACKING
+// ============================================================
+
+model SuggestionLog {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  channelId           String?  @map("channel_id") @db.Uuid
+  contentId           String?  @map("content_id") @db.Uuid
+  presetId            String   @map("preset_id") @db.VarChar(100)
+  dimension           String   @db.VarChar(30)
+  reason              String
+  expectedImprovement String   @map("expected_improvement") @db.VarChar(20)
+  outcome             String   @default("shown") @db.VarChar(20) // shown|accepted|rejected|ignored
+  viralScoreBefore    Int?     @map("viral_score_before")
+  viralScoreAfter     Int?     @map("viral_score_after")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  channel Channel?     @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  content ContentItem? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([channelId])
+  @@index([presetId])
+  @@map("suggestion_logs")
 }

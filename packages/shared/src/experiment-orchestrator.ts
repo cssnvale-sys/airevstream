@@ -9,6 +9,15 @@
 import { calculateSignificance } from './viral-scoring.js';
 import type { ViralDimensions, ViralScoreResult } from './viral-scoring.js';
 
+// ─── Channel Context ───
+
+export interface ChannelContext {
+  niches?: string[];
+  tone?: string;
+  targetAudience?: string;
+  platform?: string;
+}
+
 // ─── Types ───
 
 export interface ExperimentConfig {
@@ -298,4 +307,106 @@ export function suggestPresetVariant(
   // Sort: significant > moderate > minor
   const order: Record<string, number> = { significant: 0, moderate: 1, minor: 2 };
   return suggestions.sort((a, b) => (order[a.expectedImprovement] ?? 3) - (order[b.expectedImprovement] ?? 3));
+}
+
+// ─── Channel-Aware Preset Suggestions ───
+
+/** Niche → preset IDs that perform well for that niche */
+const NICHE_PRESET_BOOST: Record<string, string[]> = {
+  educational: ['edit.end-card.v1', 'camera.steadicam.v1'],
+  comedy: ['audio.energetic-beat.v1', 'edit.fast-cuts.v1'],
+  cinematic: ['visual.wes-anderson.v1', 'camera.dolly-in.v1'],
+  gaming: ['edit.fast-cuts.v1', 'audio.energetic-beat.v1'],
+  tech: ['edit.end-card.v1', 'edit.dynamic-pacing.v1'],
+  lifestyle: ['visual.bright-cartoon.v1', 'camera.steadicam.v1'],
+  music: ['audio.cinematic-full.v1', 'audio.energetic-beat.v1'],
+  fitness: ['edit.fast-cuts.v1', 'camera.steadicam.v1'],
+  beauty: ['visual.bright-cartoon.v1', 'camera.dolly-in.v1'],
+  news: ['edit.dynamic-pacing.v1', 'edit.end-card.v1'],
+};
+
+/** Platform → preset IDs optimized for that platform */
+const PLATFORM_PRESET_BOOST: Record<string, string[]> = {
+  tiktok: ['output.reels-portrait.v1', 'edit.fast-cuts.v1'],
+  instagram: ['output.reels-portrait.v1', 'visual.bright-cartoon.v1'],
+  youtube: ['output.youtube-landscape.v1', 'edit.end-card.v1'],
+  facebook: ['output.youtube-landscape.v1', 'edit.dynamic-pacing.v1'],
+};
+
+/** Tone → preset IDs that match the tone */
+const TONE_PRESET_BOOST: Record<string, string[]> = {
+  cinematic: ['visual.wes-anderson.v1', 'camera.dolly-in.v1'],
+  dramatic: ['audio.cinematic-full.v1', 'edit.dynamic-pacing.v1'],
+  comedic: ['edit.fast-cuts.v1', 'audio.energetic-beat.v1'],
+  professional: ['camera.steadicam.v1', 'edit.end-card.v1'],
+  casual: ['visual.bright-cartoon.v1', 'edit.fast-cuts.v1'],
+  educational: ['edit.end-card.v1', 'camera.steadicam.v1'],
+};
+
+/**
+ * Channel-aware version of suggestPresetVariant.
+ * Calls the base function then re-ranks based on channel niche/tone/platform boosting.
+ * Falls back to base behavior when no channel context provided.
+ */
+export function suggestPresetVariantForChannel(
+  viralScore: ViralScoreResult,
+  currentPresets?: string[],
+  channel?: ChannelContext,
+): PresetSuggestion[] {
+  const baseSuggestions = suggestPresetVariant(viralScore, currentPresets);
+  if (!channel || baseSuggestions.length === 0) return baseSuggestions;
+
+  // Build a set of "boosted" preset IDs from channel context
+  const boosted = new Set<string>();
+
+  // Niche boosts
+  if (channel.niches) {
+    for (const niche of channel.niches) {
+      const presets = NICHE_PRESET_BOOST[niche.toLowerCase()];
+      if (presets) presets.forEach(p => boosted.add(p));
+    }
+  }
+
+  // Platform boosts
+  if (channel.platform) {
+    const presets = PLATFORM_PRESET_BOOST[channel.platform.toLowerCase()];
+    if (presets) presets.forEach(p => boosted.add(p));
+  }
+
+  // Tone boosts
+  if (channel.tone) {
+    const presets = TONE_PRESET_BOOST[channel.tone.toLowerCase()];
+    if (presets) presets.forEach(p => boosted.add(p));
+  }
+
+  if (boosted.size === 0) return baseSuggestions;
+
+  // Re-rank: boosted presets come first within each improvement tier
+  const order: Record<string, number> = { significant: 0, moderate: 1, minor: 2 };
+  return [...baseSuggestions].sort((a, b) => {
+    const tierDiff = (order[a.expectedImprovement] ?? 3) - (order[b.expectedImprovement] ?? 3);
+    if (tierDiff !== 0) return tierDiff;
+    // Within same tier, boost channel-relevant presets
+    const aBoost = boosted.has(a.presetId) ? 0 : 1;
+    const bBoost = boosted.has(b.presetId) ? 0 : 1;
+    return aBoost - bBoost;
+  });
+}
+
+/**
+ * Compute a suggestion boost multiplier based on historical performance.
+ * Returns a value between 0.5 and 2.0 for re-ranking.
+ * Higher acceptance rate and improvement → higher boost.
+ */
+export function computeSuggestionBoost(
+  _presetId: string,
+  historicalAcceptanceRate: number,
+  historicalAvgImprovement: number,
+): number {
+  // Acceptance rate contributes 0-1.0 boost
+  const acceptanceBoost = Math.max(0, Math.min(1, historicalAcceptanceRate));
+  // Improvement contributes 0-0.5 boost (improvement is typically 0-100 points)
+  const improvementBoost = Math.max(0, Math.min(0.5, historicalAvgImprovement / 200));
+  // Base multiplier 0.5, max 2.0
+  return Math.max(0.5, Math.min(2.0, 0.5 + acceptanceBoost + improvementBoost));
 }

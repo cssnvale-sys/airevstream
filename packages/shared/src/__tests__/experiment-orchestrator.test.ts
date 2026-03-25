@@ -4,8 +4,10 @@ import {
   allocateTraffic,
   shouldDeclareWinner,
   suggestPresetVariant,
+  suggestPresetVariantForChannel,
+  computeSuggestionBoost,
 } from '../experiment-orchestrator.js';
-import type { ExperimentConfig, VariantMetrics } from '../experiment-orchestrator.js';
+import type { ExperimentConfig, VariantMetrics, ChannelContext } from '../experiment-orchestrator.js';
 import type { ViralScoreResult } from '../viral-scoring.js';
 
 // ─── validateExperimentConfig ───
@@ -294,5 +296,146 @@ describe('suggestPresetVariant', () => {
       expect(s.dimension).toBeTruthy();
       expect(['minor', 'moderate', 'significant']).toContain(s.expectedImprovement);
     }
+  });
+});
+
+// ─── suggestPresetVariantForChannel ───
+
+describe('suggestPresetVariantForChannel', () => {
+  const weakScore: ViralScoreResult = {
+    overall: 30,
+    tier: 'low',
+    shareCoefficient: 0.2,
+    dimensions: {
+      hookStrength: 20,
+      retentionPotential: 30,
+      ctaClarity: 25,
+      sharePotential: 40,
+      platformFit: 30,
+      trendAlignment: 20,
+    },
+    issues: [],
+  };
+
+  it('returns same results as base when no channel context', () => {
+    const base = suggestPresetVariant(weakScore);
+    const channelAware = suggestPresetVariantForChannel(weakScore);
+    expect(channelAware).toEqual(base);
+  });
+
+  it('returns same results when channel has no matching context', () => {
+    const base = suggestPresetVariant(weakScore);
+    const channelAware = suggestPresetVariantForChannel(weakScore, undefined, {});
+    expect(channelAware).toEqual(base);
+  });
+
+  it('boosts niche-relevant presets within same tier', () => {
+    const channel: ChannelContext = { niches: ['comedy'] };
+    const suggestions = suggestPresetVariantForChannel(weakScore, undefined, channel);
+    expect(suggestions.length).toBeGreaterThan(0);
+
+    // Within the same improvement tier, comedy-relevant presets should appear earlier
+    const comedyPresets = new Set(['audio.energetic-beat.v1', 'edit.fast-cuts.v1']);
+    const firstTier = suggestions[0].expectedImprovement;
+    const sameTier = suggestions.filter(s => s.expectedImprovement === firstTier);
+    if (sameTier.length > 1) {
+      const boostedIdx = sameTier.findIndex(s => comedyPresets.has(s.presetId));
+      const unboostedIdx = sameTier.findIndex(s => !comedyPresets.has(s.presetId));
+      if (boostedIdx >= 0 && unboostedIdx >= 0) {
+        expect(boostedIdx).toBeLessThan(unboostedIdx);
+      }
+    }
+  });
+
+  it('boosts platform-relevant presets', () => {
+    const channel: ChannelContext = { platform: 'tiktok' };
+    const suggestions = suggestPresetVariantForChannel(weakScore, undefined, channel);
+    expect(suggestions.length).toBeGreaterThan(0);
+
+    // TikTok-relevant presets should be present
+    const tiktokPresets = new Set(['output.reels-portrait.v1', 'edit.fast-cuts.v1']);
+    const hasTiktokPreset = suggestions.some(s => tiktokPresets.has(s.presetId));
+    expect(hasTiktokPreset).toBe(true);
+  });
+
+  it('boosts tone-relevant presets', () => {
+    const channel: ChannelContext = { tone: 'cinematic' };
+    const suggestions = suggestPresetVariantForChannel(weakScore, undefined, channel);
+    expect(suggestions.length).toBeGreaterThan(0);
+  });
+
+  it('combines niche + platform + tone boosts', () => {
+    const channel: ChannelContext = { niches: ['educational'], platform: 'youtube', tone: 'professional' };
+    const suggestions = suggestPresetVariantForChannel(weakScore, undefined, channel);
+    expect(suggestions.length).toBeGreaterThan(0);
+
+    // end-card is boosted by educational niche, youtube platform, AND professional tone
+    const endCardIdx = suggestions.findIndex(s => s.presetId === 'edit.end-card.v1');
+    expect(endCardIdx).toBeGreaterThanOrEqual(0);
+  });
+
+  it('still excludes current presets', () => {
+    const channel: ChannelContext = { niches: ['comedy'] };
+    const all = suggestPresetVariantForChannel(weakScore, undefined, channel);
+    const excluded = suggestPresetVariantForChannel(weakScore, [all[0].presetId], channel);
+    expect(excluded.length).toBeLessThan(all.length);
+    expect(excluded.every(s => s.presetId !== all[0].presetId)).toBe(true);
+  });
+
+  it('returns empty for strong scores regardless of channel', () => {
+    const strong: ViralScoreResult = {
+      overall: 90,
+      tier: 'viral',
+      shareCoefficient: 0.9,
+      dimensions: {
+        hookStrength: 90,
+        retentionPotential: 85,
+        ctaClarity: 80,
+        sharePotential: 85,
+        platformFit: 95,
+        trendAlignment: 80,
+      },
+      issues: [],
+    };
+    const channel: ChannelContext = { niches: ['comedy'], platform: 'tiktok' };
+    const suggestions = suggestPresetVariantForChannel(strong, undefined, channel);
+    expect(suggestions).toHaveLength(0);
+  });
+});
+
+// ─── computeSuggestionBoost ───
+
+describe('computeSuggestionBoost', () => {
+  it('returns 0.5 for zero acceptance and improvement', () => {
+    const boost = computeSuggestionBoost('test.v1', 0, 0);
+    expect(boost).toBe(0.5);
+  });
+
+  it('returns higher boost for high acceptance rate', () => {
+    const low = computeSuggestionBoost('test.v1', 0.2, 0);
+    const high = computeSuggestionBoost('test.v1', 0.8, 0);
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('returns higher boost for high improvement', () => {
+    const low = computeSuggestionBoost('test.v1', 0.5, 10);
+    const high = computeSuggestionBoost('test.v1', 0.5, 80);
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('clamps to minimum 0.5', () => {
+    const boost = computeSuggestionBoost('test.v1', -1, -50);
+    expect(boost).toBe(0.5);
+  });
+
+  it('clamps to maximum 2.0', () => {
+    const boost = computeSuggestionBoost('test.v1', 1.0, 500);
+    expect(boost).toBe(2.0);
+  });
+
+  it('combines acceptance and improvement', () => {
+    const boost = computeSuggestionBoost('test.v1', 0.5, 50);
+    expect(boost).toBeGreaterThan(0.5);
+    expect(boost).toBeLessThanOrEqual(2.0);
   });
 });

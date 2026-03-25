@@ -27,7 +27,6 @@ async function handleEvaluate(data: ExperimentEvaluateJob) {
 
   const experiment = await db.experiment.findUnique({
     where: { id: data.experimentId },
-    include: { variants: true },
   });
 
   if (!experiment) {
@@ -51,7 +50,12 @@ async function handleEvaluate(data: ExperimentEvaluateJob) {
   }
 
   try {
-    const variantResults: VariantMetrics[] = experiment.variants.map(v => ({
+    // Re-read variants after acquiring lock to get the freshest metric data
+    const variants = await db.experimentVariant.findMany({
+      where: { experimentId: data.experimentId },
+    });
+
+    const variantResults: VariantMetrics[] = variants.map(v => ({
       id: v.id,
       label: v.label,
       impressions: v.impressions,
@@ -65,6 +69,7 @@ async function handleEvaluate(data: ExperimentEvaluateJob) {
       variantResults,
       Number(experiment.confidenceLevel),
       experiment.minSampleSize,
+      experiment.primaryMetric,
     );
 
     logger.info({ experimentId: data.experimentId, decision }, 'Evaluation result');
@@ -83,7 +88,7 @@ async function handleEvaluate(data: ExperimentEvaluateJob) {
 
       // Feedback loop: update SuggestionLog entries with viralScoreAfter
       try {
-        const winningVariant = experiment.variants.find(v => v.id === decision.winnerId);
+        const winningVariant = variants.find(v => v.id === decision.winnerId);
         if (winningVariant?.viralScore != null) {
           const presetOverrides = (winningVariant.presetOverrides as Record<string, unknown>) ?? {};
           // Extract preset IDs from both keys and string values (handles both conventions)
@@ -135,10 +140,23 @@ async function handleRecordMetric(data: ExperimentRecordMetricJob) {
 
   const variant = await db.experimentVariant.findUnique({
     where: { id: data.variantId },
+    include: { experiment: { select: { tenantId: true, status: true } } },
   });
 
   if (!variant) {
     logger.warn({ variantId: data.variantId }, 'Variant not found');
+    return;
+  }
+
+  // Verify tenant ownership
+  if (variant.experiment.tenantId !== data.tenantId) {
+    logger.warn({ variantId: data.variantId, expectedTenant: data.tenantId, actualTenant: variant.experiment.tenantId }, 'Tenant mismatch on record-metric');
+    return;
+  }
+
+  // Only accept metrics for running experiments
+  if (variant.experiment.status !== 'running') {
+    logger.info({ variantId: data.variantId, status: variant.experiment.status }, 'Experiment not running, skipping metric record');
     return;
   }
 

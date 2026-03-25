@@ -175,14 +175,40 @@ export function allocateTraffic(variantCount: number): number[] {
 
 // ─── Winner Determination ───
 
+/** Map primaryMetric to the VariantMetrics field used for comparison */
+function getMetricRate(v: VariantMetrics, primaryMetric: string): number {
+  switch (primaryMetric) {
+    case 'engagement': return v.engagementRate;
+    case 'retention': return v.completionRate;
+    case 'clickRate': return v.impressions > 0 ? v.clicks / v.impressions : 0;
+    case 'viralScore': return v.engagementRate; // viralScore is int, use engagement as proxy
+    case 'views': return v.impressions > 0 ? v.clicks / v.impressions : 0;
+    default: return v.engagementRate;
+  }
+}
+
+/** Human-readable label for the metric */
+function getMetricLabel(primaryMetric: string): string {
+  switch (primaryMetric) {
+    case 'engagement': return 'engagement';
+    case 'retention': return 'completion';
+    case 'clickRate': return 'click rate';
+    case 'viralScore': return 'engagement';
+    case 'views': return 'click rate';
+    default: return 'engagement';
+  }
+}
+
 /**
  * Evaluate whether an experiment has a statistically significant winner.
  * Reuses calculateSignificance from viral-scoring.ts.
+ * Uses the primaryMetric to determine which rate to compare.
  */
 export function shouldDeclareWinner(
   variantResults: VariantMetrics[],
   confidenceLevel: number,
   minSampleSize: number,
+  primaryMetric: string = 'engagement',
 ): WinnerDecision {
   if (variantResults.length < 2) {
     return { winnerId: null, significance: 1, reason: 'Need at least 2 variants' };
@@ -199,10 +225,14 @@ export function shouldDeclareWinner(
     };
   }
 
-  // Sort by engagement rate (descending)
-  const sorted = [...variantResults].sort((a, b) => b.engagementRate - a.engagementRate);
+  // Sort by the primary metric rate (descending)
+  const sorted = [...variantResults].sort((a, b) =>
+    getMetricRate(b, primaryMetric) - getMetricRate(a, primaryMetric),
+  );
   const best = sorted[0];
   const secondBest = sorted[1];
+  const bestRate = getMetricRate(best, primaryMetric);
+  const secondBestRate = getMetricRate(secondBest, primaryMetric);
 
   const significanceThreshold = 1 - confidenceLevel; // e.g., 0.95 → 0.05
 
@@ -210,22 +240,24 @@ export function shouldDeclareWinner(
     {
       variantId: secondBest.id,
       impressions: secondBest.impressions,
-      conversions: Math.round(secondBest.engagementRate * secondBest.impressions),
-      rate: secondBest.engagementRate,
+      conversions: Math.round(secondBestRate * secondBest.impressions),
+      rate: secondBestRate,
     },
     {
       variantId: best.id,
       impressions: best.impressions,
-      conversions: Math.round(best.engagementRate * best.impressions),
-      rate: best.engagementRate,
+      conversions: Math.round(bestRate * best.impressions),
+      rate: bestRate,
     },
   );
+
+  const metricLabel = getMetricLabel(primaryMetric);
 
   if (pValue <= significanceThreshold) {
     return {
       winnerId: best.id,
       significance: pValue,
-      reason: `"${best.label}" wins with ${(best.engagementRate * 100).toFixed(1)}% engagement (p=${pValue})`,
+      reason: `"${best.label}" wins with ${(bestRate * 100).toFixed(1)}% ${metricLabel} (p=${pValue})`,
     };
   }
 

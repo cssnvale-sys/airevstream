@@ -1,0 +1,192 @@
+'use client';
+
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { useExperiments } from '@/hooks/use-experiments';
+import { cn, formatNumber } from '@/lib/utils';
+import { FlaskConical, Plus, Play, Square, Trophy, BarChart3 } from 'lucide-react';
+import Link from 'next/link';
+import { CreateExperimentModal } from '@/components/experiments/create-experiment-modal';
+
+interface ExperimentRow {
+  id: string;
+  name: string;
+  hypothesis: string | null;
+  status: string;
+  primaryMetric: string;
+  confidenceLevel: number;
+  significance: number | null;
+  winnerId: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  createdAt: string;
+  _count: { variants: number };
+}
+
+interface ExperimentsResponse {
+  data: ExperimentRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
+  draft: { bg: 'bg-bg-tertiary', text: 'text-text-secondary' },
+  running: { bg: 'bg-accent-green/10', text: 'text-accent-green' },
+  completed: { bg: 'bg-accent-blue/10', text: 'text-accent-blue' },
+  stopped: { bg: 'bg-accent-orange/10', text: 'text-accent-orange' },
+};
+
+export default function ExperimentsPage() {
+  const [showCreate, setShowCreate] = useState(false);
+  const { data: rawData, isLoading, mutate } = useExperiments<ExperimentsResponse>();
+
+  const experimentsResponse = (rawData as { data: ExperimentRow[]; total: number } | undefined);
+  const experiments = experimentsResponse?.data ?? [];
+  const total = experimentsResponse?.total ?? 0;
+
+  const activeCount = experiments.filter(e => e.status === 'running').length;
+  const completedCount = experiments.filter(e => e.status === 'completed').length;
+  const withWinnerCount = experiments.filter(e => e.winnerId).length;
+  const totalVariants = experiments.reduce((sum, e) => sum + e._count.variants, 0);
+
+  return (
+    <AppLayout>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-page-title text-text-primary">Experiments</h1>
+          <p className="text-text-secondary mt-1">A/B tests and multivariate experiments for content optimization.</p>
+        </div>
+        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+          <Plus size={16} />
+          New Experiment
+        </button>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-caption text-text-secondary">Active</span>
+            <Play size={18} className="text-accent-green" />
+          </div>
+          <p className="text-page-title text-text-primary">{activeCount}</p>
+        </div>
+        <div className="card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-caption text-text-secondary">Completed</span>
+            <Square size={18} className="text-accent-blue" />
+          </div>
+          <p className="text-page-title text-text-primary">{completedCount}</p>
+        </div>
+        <div className="card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-caption text-text-secondary">Winners Found</span>
+            <Trophy size={18} className="text-accent-orange" />
+          </div>
+          <p className="text-page-title text-text-primary">{withWinnerCount}</p>
+        </div>
+        <div className="card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-caption text-text-secondary">Total Variants</span>
+            <BarChart3 size={18} className="text-accent-purple" />
+          </div>
+          <p className="text-page-title text-text-primary">{formatNumber(totalVariants)}</p>
+        </div>
+      </div>
+
+      {/* Experiments table */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
+        </div>
+      ) : experiments.length === 0 ? (
+        <div className="card flex flex-col items-center justify-center py-12 text-center">
+          <FlaskConical size={32} className="text-text-secondary mb-3" />
+          <h3 className="text-lg font-medium text-text-primary">No experiments yet</h3>
+          <p className="text-sm text-text-secondary mt-1">
+            Create your first experiment to start A/B testing content variants.
+          </p>
+          <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 flex items-center gap-2">
+            <Plus size={16} />
+            New Experiment
+          </button>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <table className="w-full text-body">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-text-secondary font-medium">Name</th>
+                <th className="text-left py-3 px-4 text-text-secondary font-medium">Status</th>
+                <th className="text-left py-3 px-4 text-text-secondary font-medium">Metric</th>
+                <th className="text-center py-3 px-4 text-text-secondary font-medium">Variants</th>
+                <th className="text-right py-3 px-4 text-text-secondary font-medium">Significance</th>
+                <th className="text-left py-3 px-4 text-text-secondary font-medium">Winner</th>
+                <th className="text-right py-3 px-4 text-text-secondary font-medium">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {experiments.map((exp) => {
+                const badge = STATUS_BADGES[exp.status] ?? STATUS_BADGES.draft;
+                return (
+                  <tr key={exp.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
+                    <td className="py-3 px-4">
+                      <Link href={`/experiments/${exp.id}`} className="text-text-primary hover:text-accent-blue font-medium">
+                        {exp.name}
+                      </Link>
+                      {exp.hypothesis && (
+                        <p className="text-caption text-text-tertiary mt-0.5 truncate max-w-xs">{exp.hypothesis}</p>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={cn('px-2 py-0.5 rounded-full text-caption font-medium capitalize', badge.bg, badge.text)}>
+                        {exp.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-text-secondary capitalize">{exp.primaryMetric}</td>
+                    <td className="py-3 px-4 text-center text-text-secondary">{exp._count.variants}</td>
+                    <td className="py-3 px-4 text-right">
+                      {exp.significance != null ? (
+                        <span className={cn(
+                          'font-mono',
+                          exp.significance <= 0.05 ? 'text-accent-green' : 'text-text-tertiary',
+                        )}>
+                          p={exp.significance.toFixed(4)}
+                        </span>
+                      ) : (
+                        <span className="text-text-tertiary">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {exp.winnerId ? (
+                        <Trophy size={14} className="text-accent-green inline" />
+                      ) : (
+                        <span className="text-text-tertiary">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right text-text-tertiary">
+                      {new Date(exp.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {total > 0 && (
+            <div className="px-4 py-2 border-t border-border text-caption text-text-tertiary">
+              {total} experiment{total !== 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+      )}
+
+      <CreateExperimentModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => { setShowCreate(false); mutate(); }}
+      />
+    </AppLayout>
+  );
+}

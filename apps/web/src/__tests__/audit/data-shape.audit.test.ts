@@ -27,6 +27,7 @@ describe('Bug Class 5: Data shape mismatches', () => {
       'cinema-bible/[id]/route.ts',
       'cinema-bible/route.ts',
       'content/viral-score/route.ts',
+      'content/viral-suggestions/route.ts',
     ]);
     const violations: string[] = [];
 

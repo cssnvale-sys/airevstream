@@ -22,6 +22,7 @@ import {
   ClipboardCheck,
   Sprout,
   GitBranch,
+  FlaskConical,
   Menu,
   X,
 } from 'lucide-react';
@@ -39,6 +40,7 @@ const navItems = [
   { href: '/library', label: 'Library', icon: Library },
   { href: '/approvals', label: 'Approvals', icon: ClipboardCheck },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/experiments', label: 'Experiments', icon: FlaskConical },
   { href: '/system', label: 'System', icon: Activity },
   { href: '/workflows', label: 'Workflows', icon: GitBranch },
   { href: '/affiliate', label: 'Affiliate', icon: BadgeDollarSign },
@@ -121,6 +123,10 @@ export function Sidebar() {
       case 'w':
       case 'W':
         if (!e.metaKey && !e.ctrlKey) router.push('/workflows');
+        break;
+      case 'e':
+      case 'E':
+        if (!e.metaKey && !e.ctrlKey) router.push('/experiments');
         break;
     }
   }, [router]);

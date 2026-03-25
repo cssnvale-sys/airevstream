@@ -12,8 +12,12 @@ import {
   BarChart3,
   FileText,
   Download,
+  FlaskConical,
+  Trophy,
+  Play,
 } from 'lucide-react';
 import { exportToCSV } from '@/lib/export';
+import { useExperiments } from '@/hooks/use-experiments';
 import { toast } from '@/lib/toast';
 import {
   LineChart,
@@ -32,7 +36,7 @@ import {
 // ---------------------------------------------------------------------------
 
 type Period = '7d' | '30d' | '90d' | 'all';
-type TabKey = 'revenue' | 'engagement' | 'content' | 'costs' | 'audience';
+type TabKey = 'revenue' | 'engagement' | 'content' | 'costs' | 'audience' | 'experiments';
 
 interface KpiCard {
   label: string;
@@ -134,6 +138,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'content', label: 'Content' },
   { key: 'costs', label: 'Costs' },
   { key: 'audience', label: 'Audience' },
+  { key: 'experiments', label: 'Experiments' },
 ];
 
 // Empty fallbacks (no mock data — charts show empty state)
@@ -180,6 +185,7 @@ export default function AnalyticsPage() {
 
   // API hooks
   const { data: analyticsData, isLoading, error: analyticsError } = useAnalytics('overview', `period=${period}`);
+  const { data: experimentsRaw } = useExperiments<{ data: Array<{ id: string; name: string; status: string; primaryMetric: string; significance: number | null; winnerId: string | null; createdAt: string; _count: { variants: number } }>; total: number }>('limit=20');
 
   const analytics: AnalyticsData = (analyticsData?.data as AnalyticsData | undefined) ?? {};
 
@@ -687,6 +693,100 @@ export default function AnalyticsPage() {
     </div>
   );
 
+  const renderExperimentsTab = () => {
+    const expData = (experimentsRaw as { data: Array<{ id: string; name: string; status: string; primaryMetric: string; significance: number | null; winnerId: string | null; createdAt: string; _count: { variants: number } }>; total: number } | undefined);
+    const experiments = expData?.data ?? [];
+    const activeExps = experiments.filter(e => e.status === 'running');
+    const completedExps = experiments.filter(e => e.status === 'completed');
+    const withWinner = experiments.filter(e => e.winnerId);
+    const winRate = completedExps.length > 0
+      ? ((withWinner.length / completedExps.length) * 100).toFixed(0)
+      : '0';
+
+    return (
+      <div className="space-y-6">
+        {/* Summary cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="card">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-caption text-text-secondary">Active</span>
+              <Play size={18} className="text-accent-green" />
+            </div>
+            <p className="text-page-title text-text-primary">{activeExps.length}</p>
+          </div>
+          <div className="card">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-caption text-text-secondary">Completed</span>
+              <FlaskConical size={18} className="text-accent-blue" />
+            </div>
+            <p className="text-page-title text-text-primary">{completedExps.length}</p>
+          </div>
+          <div className="card">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-caption text-text-secondary">Win Rate</span>
+              <Trophy size={18} className="text-accent-orange" />
+            </div>
+            <p className="text-page-title text-text-primary">{winRate}%</p>
+          </div>
+          <div className="card">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-caption text-text-secondary">Total Variants</span>
+              <BarChart3 size={18} className="text-accent-purple" />
+            </div>
+            <p className="text-page-title text-text-primary">
+              {experiments.reduce((sum, e) => sum + e._count.variants, 0)}
+            </p>
+          </div>
+        </div>
+
+        {/* Recent completions */}
+        {completedExps.length > 0 && (
+          <div className="card">
+            <h3 className="text-card-title text-text-primary mb-4">Recent Completions</h3>
+            <table className="w-full text-body">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 text-text-secondary font-medium">Name</th>
+                  <th className="text-left py-2 text-text-secondary font-medium">Metric</th>
+                  <th className="text-right py-2 text-text-secondary font-medium">Significance</th>
+                  <th className="text-center py-2 text-text-secondary font-medium">Winner</th>
+                </tr>
+              </thead>
+              <tbody>
+                {completedExps.slice(0, 10).map((exp) => (
+                  <tr key={exp.id} className="border-b border-border last:border-b-0">
+                    <td className="py-2.5 text-text-primary">{exp.name}</td>
+                    <td className="py-2.5 text-text-secondary capitalize">{exp.primaryMetric}</td>
+                    <td className="py-2.5 text-right font-mono text-text-secondary">
+                      {exp.significance != null ? `p=${exp.significance.toFixed(4)}` : '-'}
+                    </td>
+                    <td className="py-2.5 text-center">
+                      {exp.winnerId ? (
+                        <Trophy size={14} className="text-accent-green inline" />
+                      ) : (
+                        <span className="text-text-tertiary">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {experiments.length === 0 && (
+          <div className="card flex flex-col items-center justify-center py-12 text-center">
+            <FlaskConical size={32} className="text-text-secondary mb-3" />
+            <h3 className="text-lg font-medium text-text-primary">No experiments yet</h3>
+            <p className="text-sm text-text-secondary mt-1">
+              Create experiments from the Experiments page to start tracking results here.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'revenue':
@@ -699,6 +799,8 @@ export default function AnalyticsPage() {
         return renderCostsTab();
       case 'audience':
         return renderAudienceTab();
+      case 'experiments':
+        return renderExperimentsTab();
     }
   };
 

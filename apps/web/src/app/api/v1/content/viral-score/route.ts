@@ -13,6 +13,8 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   const ip = getClientIp(req);
   const rl = checkRateLimit(`content/viral-score:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
@@ -29,9 +31,7 @@ export async function GET(req: NextRequest) {
     const content = await ctx.db.contentItem.findFirst({
       where: {
         id: contentId,
-        channel: ctx.tenantId
-          ? { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } }
-          : undefined,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       include: {
         channel: { select: { id: true, name: true, socialAccount: { select: { platform: true } } } },

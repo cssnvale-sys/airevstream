@@ -6,11 +6,36 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
-### KI-073: Suggestion Log Migration Not Yet Applied
+### KI-073: ~~Suggestion Log Migration Not Yet Applied~~ — FIXED (Session 40)
 **Severity**: Medium
-**Status**: Open (Session 37)
-`SuggestionLog` model defined in schema.prisma with migration `0007_add_suggestion_logs`, but `prisma migrate dev` not yet run against a live database. `prisma generate` was run so types are available.
-**Action**: Run `npx prisma migrate dev` from packages/db when database is available.
+**Status**: Fixed — All 9 migrations applied via `prisma migrate deploy`.
+
+### KI-076: AccountLifecycle Migration Not Yet Applied
+**Severity**: Medium
+**Status**: Open (Session 42)
+**Context**: Migration `0011_add_account_lifecycle` creates the AccountLifecycle table. Must run `prisma migrate deploy` before lifecycle features work. Required for email account lifecycle pipeline (discovery → signup → seasoning enrollment).
+
+### KI-077: Non-YouTube Discovery Stubs Return Unknown
+**Severity**: Low
+**Status**: By Design (Session 42, D064 pattern)
+**Context**: TikTok, Instagram, Facebook `discoverAccount()` implementations are stubs that return `exists: 'unknown'`. This triggers `needsHuman: true` in the lifecycle planner, requiring manual intervention for non-YouTube platforms. YouTube is the only platform with real login probe discovery.
+**Action**: Implement real discovery for each platform as browser automation matures.
+
+### KI-078: Non-YouTube Profile Setup Stubs Are No-Op
+**Severity**: Low
+**Status**: By Design (Session 42, D064 pattern)
+**Context**: TikTok, Instagram, Facebook `setProfileAssets()` implementations are stubs that return success without doing anything. Profile setup will be "skipped" on these platforms (lifecycle continues, doesn't block). Only YouTube has real profile upload via YouTube Studio branding page.
+**Action**: Implement real profile upload for each platform as browser automation matures.
+
+### KI-074: Asset Tenant Scoping Migration Not Yet Applied
+**Severity**: Medium
+**Status**: Open (Session 41)
+**Context**: Migration `0010_add_asset_tenant_scoping` adds tenantId to Avatar and SceneryAsset, avatarId to AssetRegistryEntry. Must run `prisma migrate deploy` before asset management features work. Existing rows will be backfilled to the first tenant.
+
+### KI-075: MinIO CORS Configuration Required for Direct Uploads
+**Severity**: Medium
+**Status**: Open (Session 41)
+**Context**: Presigned PUT uploads from the browser require MinIO CORS to allow PUT requests from the web origin. Update MinIO configuration or docker-compose to set `MINIO_BROWSER_CORS_ORIGIN`.
 
 ### KI-070: Simple Wizard Plan Generation Uses Fallback Only
 **Severity**: Low
@@ -130,17 +155,13 @@ The seasoning pipeline (signup, warming, graduation) is fully implemented but un
 CaptchaSolver and SmsVerifier are D064 stubs — they throw without API keys and return placeholder data with them. Signup automation will hit CAPTCHA/SMS walls on all platforms without real implementations.
 **Action**: Obtain 2Captcha API key and sms-activate.org API key, then implement real solver logic.
 
-### KI-064: Prisma Migration Not Applied for Seasoning Models
+### KI-064: ~~Prisma Migration Not Applied for Seasoning Models~~ — FIXED (Session 40)
 **Severity**: High
-**Status**: Open
-SeasoningCohort and SeasoningEnrollment models are defined in schema.prisma but no migration has been run. The `prisma generate` was run to update the client, but `prisma migrate dev` requires a running PostgreSQL instance.
-**Action**: Run `npx prisma migrate dev --name add_seasoning_models` when database is available.
+**Status**: Fixed — Migration `0008_add_seasoning_assets_sequences` applied via `prisma migrate deploy`.
 
-### KI-072: Experiment Migration Not Yet Applied
+### KI-072: ~~Experiment Migration Not Yet Applied~~ — FIXED (Session 40)
 **Severity**: Medium
-**Status**: Open (Session 36)
-`Experiment` and `ExperimentVariant` models defined in schema.prisma with migration `0006_add_experiments`, but `prisma migrate dev` not yet run against a live database. `prisma generate` was run so types are available.
-**Action**: Run `npx prisma migrate dev --name add_experiments` from packages/db when database is available.
+**Status**: Fixed — Migration `0006_add_experiments` applied via `prisma migrate deploy`.
 
 ### KI-061: Tier 3 Features Require External Setup
 **Severity**: Low

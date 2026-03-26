@@ -4,6 +4,196 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 42 — Account Lifecycle Pipeline: Auto-Discovery, Signup, Seasoning & Posting Coordination
+
+**Date:** 2026-03-26
+**Focus:** End-to-end automated lifecycle — add email + password → discover existing socials → auto-signup where needed → profile setup → warming enrollment → posting coordination.
+
+### What Was Done
+
+#### Phase 1: Schema + Types + Queue + Flow Producer
+- Added `AccountLifecycle` Prisma model (50th) with unique emailAccountId FK, tenant scoping, discoveryResults JSONB, status state machine (8 states + failed)
+- Created migration `0011_add_account_lifecycle` with indexes on tenantId and status
+- Added `AccountLifecycleStatus`, `PlatformDiscoveryResult`, `ActivityLock` types to shared
+- Added 6 lifecycle job types + job data interfaces to queue package
+- Added `startAccountLifecyclePipeline()` entry point in flows.ts (not a static DAG — D110)
+
+#### Phase 2: Browser Automation — Discovery + Profile Setup
+- Added `DiscoveryResult` and `ProfileAssetsConfig` interfaces to browser-automation types
+- Added abstract `discoverAccount()` and `setProfileAssets()` methods to BasePlatformWorkflow
+- Implemented real YouTube discovery (Google login probe) and profile upload (YouTube Studio branding)
+- Added D064 stubs for TikTok, Instagram, Facebook (return `exists: 'unknown'`)
+
+#### Phase 3: Lifecycle Worker (9th worker)
+- Created `lifecycle.worker.ts` with 6 handlers: init, discover, plan, signup, set-profile, enroll
+- Init creates AccountLifecycle record, queues discovery with 30-90s stagger
+- Discover uses browser automation login probe, atomically updates discoveryResults JSONB
+- Plan reads results: exists=true → create SocialAccount, exists=false → queue signup, unknown → WorkflowJob
+- Signup reuses browser automation `createAccount`, chains to set-profile or enroll
+- Set-profile downloads avatar from MinIO, calls `setProfileAssets` on platform
+- Enroll auto-creates SeasoningCohort, calls `startSeasoningPipeline()`
+
+#### Phase 4: Warm/Post Coordination
+- Added activity lock helpers (get/acquire/release) in account.worker using SocialAccount.metadata
+- Modified handleSeasoningWarm: check posting lock, reschedule with jitter if busy
+- Modified handleSeasoningGraduate: auto-complete lifecycle if autoPosting enabled
+- Modified posting.worker: check warming lock, break if time-sensitive, acquire lock (30 min TTL)
+
+#### Phase 5: API Routes (3 new + 2 modified)
+- GET/POST `/accounts/[id]/lifecycle` — status retrieval + pipeline start with validation
+- POST `/accounts/[id]/lifecycle/retry` — retry failed pipelines
+- GET `/lifecycle/active` — list active lifecycles for tenant dashboard
+- Modified POST `/accounts` — auto-starts lifecycle when targetPlatforms provided
+- Modified GET `/accounts/[id]` — includes lifecycle status in response
+
+#### Phase 6: Frontend
+- Created `use-lifecycle.ts` hook — `useLifecycle` (5s polling), `useActiveLifecycles`, `startLifecycle`, `retryLifecycle`
+- Created `LifecycleStatusPanel` — per-platform progress (discovery → signup → profile → warming), retry button
+- Created `PlatformSelect` — checkbox grid for YouTube/TikTok/Instagram/Facebook
+- Created `AvatarAssignPicker` — mini avatar grid with selection toggle
+- Enhanced `AddEmailModal` in accounts page — 4-step wizard (Email → Platforms → Avatar → Review)
+
+### Decisions Made
+- D109: AccountLifecycle model as single source of truth per email+platform
+- D110: Worker-chained saga (not static DAG) — lifecycle steps depend on runtime discovery
+- D111: Discovery via browser login probe — platform APIs require OAuth dev accounts
+- D112: Activity lock in SocialAccount.metadata — lightweight optimistic lock with TTL
+- D113: Lifecycle worker as 9th worker — clean separation from account worker
+
+### Build Status
+- 14 packages building, 0 errors
+- All 507+ unit tests passing, 33 audit tests passing
+- ~175 API route files (3 new + 2 modified), 50 Prisma models (1 new), 113 decisions (D001-D113)
+- ~15 new files, ~12 modified files
+
+---
+
+## Session 41 — Asset Management System: Characters, Backgrounds, Branding
+
+**Date:** 2026-03-26
+**Focus:** Full end-to-end asset management — presigned upload infrastructure, avatar/scenery/branding CRUD, production worker asset generation, frontend pages/components, content creation integration.
+
+### What Was Done
+
+#### Phase 1: Schema + Types + Queue
+- Added `tenantId` to Avatar and SceneryAsset models (D104)
+- Added `avatarId` FK to AssetRegistryEntry for avatar-asset linking
+- Added `updatedAt` to SceneryAsset
+- Created migration `0010_add_asset_tenant_scoping` with backfill SQL
+- Added Avatar, SceneryAsset, BrandingPackage, upload types to shared types
+- Added `ProductionAssetGenerateJob` to queue package + production union
+- Added `production:asset-generate` to JobType union
+
+#### Phase 2: Upload Infrastructure (D105)
+- Created presigned PUT API route (`/upload/presigned-put`) — tenant-namespaced keys, bucket allowlist
+- Created `useUpload` hook — 2-step flow (get presigned URL → XHR PUT with progress)
+- Created `FileUpload` component — drag-drop zone, client-side validation, progress bar
+
+#### Phase 3-5: API Routes (14 new files)
+- Avatar CRUD: list/create, detail/update/delete, image slot management, ComfyUI generation
+- Scenery CRUD: list/create with category filter, detail/update/delete
+- Channel branding: get/upsert, generation queue
+- Channel assets: aggregated endpoint, scenery assign/unassign
+- Asset registry: list with type/content/shot/avatar filters
+- All routes have viewer role checks, rate limiting, tenant scoping
+
+#### Phase 6: Production Worker (D106)
+- Added `handleAssetGenerate()` — ComfyUI template rendering, MinIO upload, asset registration, source model update
+- Supports avatar (per-slot image generation), scenery, and branding asset types
+- Wired via `production:asset-generate` job name
+
+#### Phase 7-9: Frontend
+- Created `use-assets.ts` — 8 SWR hooks for all asset endpoints
+- Created `/assets` page with 3 tabs (Characters, Backgrounds, Branding)
+- Created `/assets/[assetId]` avatar detail page with multi-angle image grid
+- Created 8 components: AvatarCard, SceneryCard, CreateAvatarModal, CreateSceneryModal, BrandingEditor, AssetPickerModal, GenerationStatus, ChannelAssetsTab
+
+#### Phase 10: Navigation + Integration
+- Added Assets to sidebar (Palette icon) after Series, `t` keyboard shortcut
+- Added Assets tab to channel detail page
+- Added avatar picker + background picker to simple create wizard describe screen
+
+### Decisions Made
+- D104: Tenant scoping for Avatar/SceneryAsset
+- D105: Presigned PUT upload pattern (browser → MinIO direct)
+- D106: Reuse production queue for asset generation
+- D107: Avatar images store bucket/key not URLs
+- D108: Asset browser as reusable picker component
+
+### Build Status
+- 14 packages building, 0 errors
+- All 507+ unit tests passing, 33 audit tests passing
+- ~170 API route files (14 new), 52 Prisma models (0 new models, 3 modified), 108 decisions (D001-D108)
+- ~30 new files, ~8 modified files
+
+---
+
+## Session 40 — Series System: Evolve Sequence into Content Series
+
+**Date:** 2026-03-25
+**Focus:** Full implementation of the Series system — rename Sequence→Series, add Episodes, SeriesAvatar join table, 11 API routes, frontend pages/components, preset resolution layer, bible resolver.
+
+### What Was Done
+
+#### Phase 1: Schema + Types
+- Renamed `Sequence` → `Series` in Prisma schema with 9 new fields (coverImageUrl, targetAudience, tags, defaultPresetIds, defaultRecipeId, bibleOverrides, postingCadence, youtubePlaylistId, baseSeed)
+- Renamed `SequenceItem` → `Episode` with new UUID PK, episodeNumber, title, publishedAt
+- Created `SeriesAvatar` join table (seriesId, avatarId, role, isPrimary)
+- Added denormalized `seriesId` to ContentItem, renamed `sequenceId` → `seriesId` on AssetRegistryEntry
+- Created migration `0009_rename_sequence_to_series` (data-preserving ALTER TABLE RENAME)
+- Updated shared types: Series, Episode, SeriesAvatar interfaces, SeriesStatus type
+
+#### Phase 2: Shared Utilities
+- Created `series-bible-resolver.ts` — deep-merge series overrides on channel CinemaBible
+- Updated preset resolver — inserted series presets as Layer 2 (between recipe and individual)
+- Updated `getActiveRanges()` and `resolvePresetsWithDirectives()` with seriesPresets support
+
+#### Phase 3: API Routes (11 new files)
+- `series/route.ts` — GET (paginated, channelId/status/search filters), POST
+- `series/[id]/route.ts` — GET (detail with avatars/counts), PUT, DELETE
+- `series/[id]/episodes/route.ts` — GET (paginated with content), POST (auto-increment episodeNumber)
+- `series/[id]/episodes/[episodeId]/route.ts` — PUT, DELETE
+- `series/[id]/episodes/reorder/route.ts` — PUT (batch $transaction)
+- `series/[id]/avatars/route.ts` — GET, POST, DELETE
+- `series/[id]/bible/route.ts` — GET (resolved), PUT (overrides)
+- `series/[id]/presets/route.ts` — GET, PUT
+- `series/[id]/analytics/route.ts` — GET (aggregate metrics)
+- `series/[id]/playlist-sync/route.ts` — POST (YouTube stub)
+- `channels/[id]/series/route.ts` — GET
+- All routes: tenant scoping via channel chain, viewer role checks, rate limiting
+
+#### Phase 4: Queue + Workers
+- Added `SeriesPlaylistSyncJob` to queue types + QueueJobMap
+- Added `seriesId` to `CinemaPipelineParams`
+- Added `handlePlaylistSync` stub to posting worker
+
+#### Phase 5: Frontend
+- Created `use-series.ts` — 8 SWR hooks
+- Series list page (`/series`) with stat cards + sortable table
+- Series detail page (`/series/[seriesId]`) with 4 tabs (Overview, Episodes, Avatars, Analytics)
+- 6 components: CreateSeriesModal, EpisodeTable, AddEpisodeModal, SeriesAvatarManager, SeriesAnalytics, SeriesCard
+- Sidebar: added Series nav (Layers icon, `r` shortcut) — now 17 nav items
+- Channel detail: added Series tab with SeriesCard grid + CreateSeriesModal
+- Simple wizard: added optional series dropdown
+
+#### Phase 6: Build Verification + Audit Fixes
+- Fixed 4 TypeScript compilation errors (SortOrder casting, CinemaBible field names)
+- Fixed 6 double `/api/v1` prefix violations
+- Fixed 1 Decimal data shape issue (qualityScore in episode detail)
+- All 14 packages build, 27 test tasks pass, 33 audit tests pass
+
+### Decisions Made
+- D099: Rename Sequence→Series (zero consumers, correct domain concept)
+- D100: Series preset layer between recipe and individual
+- D101: CinemaBible overrides via deep merge (not separate bible per series)
+- D102: SeriesAvatar join table (matches ChannelAvatar pattern)
+- D103: Episode UUID PK + episodeNumber distinct from position
+
+### Issues Found
+- KI-074: Series migration (0009) not yet applied to live database
+
+---
+
 ## Session 39 — New Audit Tests + Targeted 4-Wave Audit
 
 **Date:** 2026-03-25

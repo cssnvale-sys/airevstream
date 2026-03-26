@@ -24,7 +24,7 @@
 |------|--------|--------|-------|
 | 3.1 | content.worker | Done | AI content generation + approve/reject/regenerate |
 | 3.2 | account.worker | Done | Create + sync + health check + warm + 5 seasoning handlers (enroll, signup, warm, check-due, graduate) |
-| 3.3 | posting.worker | Done | Publish + schedule with rate limiting |
+| 3.3 | posting.worker | Done | Publish + schedule with rate limiting + series playlist sync stub |
 | 3.4 | research.worker | Done | Trend analysis + topic generation via AI |
 | 3.5 | maintenance.worker | Done | Cleanup + backup. All 5 tested |
 
@@ -303,6 +303,46 @@
 | VD-7 | Analytics experiments tab | Done | Summary cards (active, completed, win rate, total variants), recent completions table |
 | VD-8 | Bug fixes + tests | Done | D071 fix in viral-score, viewer check on viral-suggestions, 24 new unit tests |
 
+### Phase 23: Series System — Sequence→Series Evolution (Session 40) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| SR-1 | Schema migration | Done | Rename Sequence→Series, SequenceItem→Episode, new SeriesAvatar join table, migration 0009 |
+| SR-2 | Shared types + utilities | Done | Series/Episode/SeriesAvatar interfaces, series-bible-resolver, preset resolver Layer 2 |
+| SR-3 | API routes (11 files) | Done | CRUD, episodes, avatars, bible, presets, analytics, playlist sync, channel series |
+| SR-4 | Queue + worker | Done | SeriesPlaylistSyncJob, seriesId in pipeline params, posting worker stub |
+| SR-5 | Frontend hooks + pages | Done | 8 SWR hooks, /series list page, /series/[seriesId] detail page (4 tabs) |
+| SR-6 | Frontend components | Done | CreateSeriesModal, EpisodeTable, AddEpisodeModal, SeriesAvatarManager, SeriesAnalytics, SeriesCard |
+| SR-7 | Integration | Done | Sidebar nav (17 items), channel detail Series tab, simple wizard series dropdown |
+| SR-8 | Build verification | Done | All 14 packages build, 27 test tasks pass, 33 audit tests pass, 0 audit violations |
+
+### Phase 24: Asset Management System (Session 41) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| AM-1 | Schema migration | Done | tenantId on Avatar/SceneryAsset, avatarId on AssetRegistryEntry, updatedAt on SceneryAsset, migration 0010 |
+| AM-2 | Upload infrastructure | Done | Presigned PUT API route, useUpload hook, FileUpload component (D105) |
+| AM-3 | Avatar CRUD (4 routes) | Done | List/create, detail/update/delete, image slot management, ComfyUI generation |
+| AM-4 | Scenery CRUD (2 routes) | Done | List/create with category filter, detail/update/delete |
+| AM-5 | Channel assets (5 routes) | Done | Branding upsert/generate, scenery assign/unassign, aggregated assets, registry list |
+| AM-6 | Production worker | Done | handleAssetGenerate — ComfyUI rendering, MinIO upload, source model update (D106) |
+| AM-7 | Frontend hooks | Done | 8 SWR hooks + useUpload in use-assets.ts |
+| AM-8 | Assets pages | Done | /assets page (3 tabs), /assets/[assetId] avatar detail page |
+| AM-9 | Asset components (8 files) | Done | AvatarCard, SceneryCard, create modals, BrandingEditor, AssetPickerModal, GenerationStatus, ChannelAssetsTab |
+| AM-10 | Navigation + integration | Done | Sidebar (Palette icon, `t` shortcut), channel Assets tab, wizard avatar/scenery pickers |
+| AM-11 | Build verification | Done | 14 packages build, all tests + 33 audit tests pass |
+
+### Phase 25: Account Lifecycle Pipeline (Session 42) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| AL-1 | AccountLifecycle Prisma model | Done | 50th model, migration `0011_add_account_lifecycle`, unique emailAccountId FK, discoveryResults JSONB |
+| AL-2 | Shared types + queue jobs | Done | AccountLifecycleStatus, PlatformDiscoveryResult, ActivityLock types, 6 job interfaces, lifecycle queue |
+| AL-3 | Flow producer entry point | Done | `startAccountLifecyclePipeline()` — queues lifecycle:init (not static DAG, D110) |
+| AL-4 | Browser discovery + profile | Done | Abstract methods on BasePlatformWorkflow, real YouTube impl, D064 stubs for TikTok/IG/FB |
+| AL-5 | Lifecycle worker (6 handlers) | Done | init, discover, plan, signup, set-profile, enroll — 9th worker with concurrency 2 |
+| AL-6 | Warm/post coordination | Done | Activity lock helpers, warming reschedule with jitter, posting lock-break priority (D112) |
+| AL-7 | API routes (3 new + 2 modified) | Done | lifecycle GET/POST, retry, active list, accounts POST auto-start, accounts GET includes lifecycle |
+| AL-8 | Frontend (4 new + 1 modified) | Done | useLifecycle hook, LifecycleStatusPanel, PlatformSelect, AvatarAssignPicker, 4-step wizard |
+| AL-9 | Build verification | Done | 14 packages build, 27 test tasks pass, 33 audit tests pass, 0 violations |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -337,11 +377,12 @@
 - **Channel-Topic Suggestion System (Session 37)**: SuggestionLog model (46th), channel-aware suggestions with niche/tone/platform boosting, 5 new API routes, channels list + detail pages, ChannelViralDashboard, ViralScorePanel accept/reject, experiment feedback loop. 16 new tests. 0 regressions.
 - **Full codebase audit — 8-wave (Session 38)**: 606 files (~85K LOC) audited, 60 issues found and fixed across 36 files. CRITICAL: 8x double /api/v1 prefix on experiment mutations. 12x tenant scoping violations, 9x missing Decimal wrapping, 19x silent catch blocks. D095 evaluating status, D096 preset ID extraction. 0 regressions.
 - **Targeted 4-wave audit (Session 39)**: 4 new audit tests + targeted fix pass. 78 .strict() removed, 19 tenant scoping fixes, 8 status enum fixes, 4 experiment security/race fixes, 3 channel fixes, 3 type fixes. shouldDeclareWinner now respects primaryMetric (D098). Audit suite: 24→33 tests, 9→13 files. 0 regressions.
+- **Account lifecycle pipeline (Session 42)**: AccountLifecycle model (50th), 9th worker (lifecycle), browser login probe discovery, activity lock warm/post coordination, 3 new + 2 modified API routes, 4-step wizard frontend, 5 decisions (D109-D113). 0 regressions.
 
 ## Architecture Highlights
-- **Prisma Schema**: 46 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36 + SuggestionLog Session 37)
+- **Prisma Schema**: 50 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36 + SuggestionLog Session 37 + Series + Episode + SeriesAvatar Session 40 + AccountLifecycle Session 42)
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: 124 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Next.js API Routes**: ~175 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 19 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 4 compositions (short 9:16, long 16:9, thumbnail still, CinemaVideo 24fps) with H.I.C.C. beat timing — CinemaVideo now wired in render handler (Session 20)

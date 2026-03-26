@@ -7,6 +7,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Account lifecycle pipeline** (Session 42): End-to-end automated flow — email+password → discovery → signup → profile setup → seasoning enrollment → posting coordination. 6-handler lifecycle worker, browser-based login probe discovery, activity lock warm/post coordination
+- **AccountLifecycle Prisma model** (Session 42): 50th model — status state machine (pending→discovering→planning→signing_up→setting_profile→enrolling→active→completed/failed), discoveryResults JSONB, tenant-scoped
+- **Browser discovery + profile setup** (Session 42): Abstract `discoverAccount()` and `setProfileAssets()` on BasePlatformWorkflow. Real YouTube implementation (Google login probe + YouTube Studio branding). D064 stubs for TikTok/Instagram/Facebook
+- **Lifecycle worker** (Session 42): 9th BullMQ worker with 6 handlers (init, discover, plan, signup, set-profile, enroll). Worker-chained saga pattern — not static DAG (D110)
+- **Activity lock coordination** (Session 42): Optimistic lock in SocialAccount.metadata with TTL. Warming and posting workers check/acquire/release locks to prevent simultaneous activity (D112)
+- **Lifecycle API routes** (Session 42): GET/POST `/accounts/[id]/lifecycle`, POST retry, GET `/lifecycle/active`. Auto-start lifecycle from POST `/accounts` when targetPlatforms provided
+- **Lifecycle frontend** (Session 42): useLifecycle hook (5s polling), LifecycleStatusPanel (per-platform progress), PlatformSelect, AvatarAssignPicker, 4-step AddEmailModal wizard
+- **5 architecture decisions** (Session 42): D109 (AccountLifecycle model), D110 (worker-chained saga), D111 (browser login probe), D112 (activity lock), D113 (9th worker)
+- **Asset management system** (Session 41): Full end-to-end character (avatar), background (scenery), and branding asset management — presigned PUT upload infrastructure, 14 API routes, production worker asset generation handler, frontend pages/components, channel Assets tab, wizard integration
+- **Presigned PUT upload** (Session 41): Direct browser-to-MinIO uploads with tenant-namespaced keys, progress tracking via XHR, drag-drop FileUpload component (D105)
+- **Avatar CRUD** (Session 41): 4 API routes — list/create, detail/update/delete, multi-angle image slot management (face/waist/body_front/body_back), ComfyUI generation queueing
+- **Scenery CRUD** (Session 41): 2 API routes — list/create with category filtering, detail/update/delete with MinIO cleanup
+- **Channel assets** (Session 41): Branding upsert/generate, channel scenery assign/unassign, aggregated channel assets endpoint, channel detail Assets tab
+- **Asset registry** (Session 41): Added avatarId FK to AssetRegistryEntry, asset registry list with filters
+- **Assets page** (Session 41): /assets page with Characters/Backgrounds/Branding tabs, /assets/[id] avatar detail with multi-angle image grid, upload/generate per slot
+- **8 reusable asset components** (Session 41): AvatarCard, SceneryCard, CreateAvatarModal, CreateSceneryModal, BrandingEditor, AssetPickerModal, GenerationStatus, ChannelAssetsTab
+- **Asset hooks** (Session 41): useAvatars, useAvatar, useSceneryAssets, useSceneryAsset, useBrandingPackage, useChannelAssets, useChannelScenery, useAssetRegistry, useUpload
+- **Navigation** (Session 41): Assets sidebar entry (Palette icon) after Series, `t` keyboard shortcut, channel detail Assets tab
+- **Wizard integration** (Session 41): Avatar picker + background picker in simple create wizard describe screen
+- **Schema migration** (Session 41): `0010_add_asset_tenant_scoping` — tenantId on Avatar/SceneryAsset, avatarId on AssetRegistryEntry, updatedAt on SceneryAsset (D104)
+- **Shared types** (Session 41): Avatar, AvatarImages, AvatarImageSlot, AvatarImageRef, SceneryAsset, SceneryCategory, BrandingPackage, PresignedPutResponse, UploadedAssetRef
+- **Series system** (Session 40): Full content series management — Series model (replaces Sequence) with cover images, target audience, tags, default presets/recipe, bible overrides, posting cadence, YouTube playlist sync stub
+- **Episode model** (Session 40): Replaces SequenceItem — UUID PK, episodeNumber (user-facing, stable), position (internal sort), title override, publishedAt timestamp
+- **SeriesAvatar join table** (Session 40): Assign avatars to series with roles (main_character, supporting, narrator, antagonist) and isPrimary flag
+- **Series preset resolution layer** (Session 40): Inserted between recipe and individual presets in the 5-layer resolution stack (D100)
+- **Series bible resolver** (Session 40): Deep-merge series overrides on top of channel CinemaBible with null-value key removal
+- **11 new series API routes** (Session 40): CRUD, episodes, avatars, bible, presets, analytics, playlist sync, channel series listing — all tenant-scoped
+- **Series frontend** (Session 40): /series list page, /series/[id] detail page (4 tabs), 6 components, 8 SWR hooks, sidebar nav with `r` shortcut
+- **Series integration** (Session 40): Channel detail Series tab, simple wizard series dropdown, denormalized seriesId on ContentItem
 - **4 new automated audit tests** (Session 39): api-prefix (double /api/v1), strict-zod (.strict() detection), console-log (console.log/debugger in production), status-enum (incomplete status handling). Audit suite: 24→33 tests across 9→13 files.
 - **New audit helpers** (Session 39): `findFrontendSourceFiles()`, `findProductionSourceFiles()`, `extractStatusEnums()`, `SourceFile` type for monorepo-wide scanning
 

@@ -490,3 +490,78 @@
 **Date**: 2026-03-25
 **Decision**: The `shouldDeclareWinner()` function in experiment-orchestrator now accepts an optional `primaryMetric` parameter to determine which metric field to use for winner evaluation. Defaults to `'engagement'` for backward compatibility.
 **Rationale**: The Experiment model has `primaryMetric` with 5 valid values (views, engagement, retention, clickRate, viralScore), but the orchestrator always used `engagementRate`. This made the metric selection meaningless. Now `getMetricRate(variant, primaryMetric)` maps each metric to the corresponding VariantMetrics field (e.g., retention→completionRate, clickRate→clicks/impressions). The worker passes `experiment.primaryMetric` to the function.
+
+## D099: Rename Sequence to Series
+**Date**: 2026-03-25
+**Decision**: Rename the `Sequence` Prisma model to `Series` and `SequenceItem` to `Episode`. Use data-preserving ALTER TABLE RENAME migration.
+**Rationale**: The Sequence model had zero consumers (no API routes, no frontend, no workers). "Series" is the correct domain concept — a channel has multiple series (e.g., "Ancient Rome", "WWII"), each with episodes, avatars, and style settings. Renaming rather than creating new models avoids data loss and preserves the existing schema structure.
+
+## D100: Series Preset Resolution Layer
+**Date**: 2026-03-25
+**Decision**: Insert series default presets as a new layer in the 5-layer preset resolution stack: recipe → **series defaults** → individual → user overrides.
+**Rationale**: Series style is more specific than a recipe but less specific than per-shot presets. This follows the existing `resolvePresets()` deep-merge pattern. Series presets auto-populate the preset picker when creating content within a series, providing visual consistency across episodes without requiring manual preset selection.
+
+## D101: CinemaBible Overrides via Deep Merge
+**Date**: 2026-03-25
+**Decision**: Series stores `bibleOverrides` as a JSON object that deep-merges on top of the channel's CinemaBible, rather than a separate bible per series.
+**Rationale**: CinemaBible data is large (look, character, environment, prompt sections). Duplicating it per series would be wasteful and error-prone. The override stores only diffs — a series can override the look bible's color palette while inheriting everything else. Null values in overrides remove the key, enabling selective deletion.
+
+## D102: SeriesAvatar Join Table
+**Date**: 2026-03-25
+**Decision**: Use a `SeriesAvatar` join table with composite PK `(seriesId, avatarId)` and `role`/`isPrimary` fields, rather than a JSON array on the Series model.
+**Rationale**: Matches the existing `ChannelAvatar` pattern. Enables Prisma includes, cascade deletes, FK constraints, and proper relational queries. Roles (main_character, supporting, narrator, antagonist) provide semantic meaning for agent pipelines.
+
+## D103: Episode UUID PK with Separate episodeNumber
+**Date**: 2026-03-25
+**Decision**: Episodes have their own UUID primary key plus a separate `episodeNumber` (user-facing) and `position` (internal sort order), with `@@unique([seriesId, episodeNumber])`.
+**Rationale**: Episode numbers are user-facing and stable — a creator may skip numbers (e.g., Episode 1, 2, 5) for content strategy reasons. Position is internal sort order for drag-reorder, decoupled from the public numbering. The UUID PK enables standard REST patterns (GET /episodes/:id) and avoids the composite key complexity of the old SequenceItem model.
+
+## D104: Tenant Scoping for Avatar and SceneryAsset
+**Date**: 2026-03-26
+**Decision**: Add `tenantId` (required, FK → Tenant) to Avatar and SceneryAsset models with backfill migration.
+**Rationale**: Both models lacked tenant isolation. Any user could see/modify any avatar or scenery. Required for multi-tenant security. Migration backfills existing rows to the first tenant, then sets NOT NULL. Follows D076 pattern.
+
+## D105: Presigned PUT Upload Pattern
+**Date**: 2026-03-26
+**Decision**: Browser uploads files directly to MinIO via presigned PUT URLs. API route generates tenant-prefixed keys and presigned URLs, frontend PUTs directly.
+**Rationale**: Avoids streaming large files through Next.js server (memory pressure, timeouts). The API only generates a signed URL with tenant-namespaced key (`{tenantId}/{type}/{uuid}/{filename}`), keeping files organized and tenant-isolated. Frontend tracks progress via XHR upload events.
+
+## D106: Reuse Production Queue for Asset Generation
+**Date**: 2026-03-26
+**Decision**: Add `ProductionAssetGenerateJob` to existing production queue rather than creating a new queue.
+**Rationale**: Production worker already has ComfyUI client, template rendering, bucket upload, and asset registration logic. Adding a new job type to the existing queue avoids queue proliferation and reuses proven infrastructure. Job routes via `production:asset-generate` name.
+
+## D107: Avatar Images Store Bucket/Key Not URLs
+**Date**: 2026-03-26
+**Decision**: Avatar `images` JSON stores `{ bucket, key }` pairs per slot rather than presigned URLs.
+**Rationale**: Presigned URLs expire (typically 1 hour). Storing bucket/key enables on-demand URL generation via the existing `usePresignedUrl` hook with 50-minute SWR cache. This is consistent with the existing asset registry pattern.
+
+## D108: Asset Browser as Reusable Picker Component
+**Date**: 2026-03-26
+**Decision**: Single `AssetPickerModal` component accepts `type: 'avatar' | 'scenery'` and is reused across /assets page, channel detail Assets tab, and simple wizard.
+**Rationale**: Avoids duplicating search/filter/grid UI across multiple contexts. The picker fetches its own data via SWR hooks, supports exclusion lists (for already-assigned assets), and returns only the selected ID to the parent.
+
+## D109: AccountLifecycle Model as Single Source of Truth
+**Date**: 2026-03-26
+**Decision**: Create a dedicated `AccountLifecycle` Prisma model (1:1 with EmailAccount) that tracks end-to-end pipeline status per email, per platform.
+**Rationale**: A single source of truth for lifecycle progress (discovery → signup → profile → seasoning). Drives the UI progress view with per-platform discoveryResults JSONB. Status state machine has 8 normal states + failed, allowing retry from failure point.
+
+## D110: Worker-Chained Saga for Lifecycle Pipeline
+**Date**: 2026-03-26
+**Decision**: Use a worker-chained saga pattern instead of a static FlowProducer DAG for the lifecycle pipeline. Each handler queues the next step based on runtime state.
+**Rationale**: Unlike the cinema pipeline where all steps are known upfront, lifecycle steps depend on runtime discovery results — can't build a static DAG because we don't know which platforms need signup vs. which already exist. Init handler chains subsequent jobs based on discoveryResults.
+
+## D111: Discovery via Browser Login Probe
+**Date**: 2026-03-26
+**Decision**: Detect existing platform accounts by navigating to the login page with the email and checking the platform's response (password prompt = exists, "account not found" = doesn't exist).
+**Rationale**: Platform APIs require OAuth developer accounts and approval processes. Login probe uses existing browser automation infrastructure (stealth Playwright, fingerprinting, proxy rotation). Slower but zero external dependencies. CAPTCHA triggers result in `exists: 'unknown'` with needs_human flag.
+
+## D112: Activity Lock in SocialAccount.metadata
+**Date**: 2026-03-26
+**Decision**: Use a lightweight optimistic lock stored in `SocialAccount.metadata.activityLock` with type, lockedAt, expiresAt, and jobId fields for coordinating warming and posting activities.
+**Rationale**: Both seasoning (warming) and posting workers need the same browser session but can't run simultaneously on the same account. Redis distributed locks would add complexity. The metadata lock uses Prisma optimistic concurrency with TTL-based expiry for crash recovery. Posting can break a warming lock if time-sensitive (posting is higher priority).
+
+## D113: Lifecycle Worker as 9th Worker
+**Date**: 2026-03-26
+**Decision**: Create a dedicated `lifecycle.worker.ts` with its own `lifecycle` BullMQ queue rather than extending the existing account worker.
+**Rationale**: The lifecycle worker is an orchestration layer that calls into existing account/seasoning primitives. Keeping it separate from the account worker maintains clean separation of concerns — account worker handles individual account operations, lifecycle worker coordinates the multi-step pipeline across multiple accounts and platforms.

@@ -9,9 +9,13 @@ import { apiPut } from '@/hooks/use-api';
 import { NicheTagInput } from '@/components/channels/niche-tag-input';
 import { ChannelViralDashboard } from '@/components/channels/channel-viral-dashboard';
 import { cn } from '@/lib/utils';
-import { Radio, ArrowLeft, Save } from 'lucide-react';
+import { Radio, ArrowLeft, Save, Layers } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
+import { useChannelSeries } from '@/hooks/use-series';
+import { SeriesCard } from '@/components/series/series-card';
+import { CreateSeriesModal } from '@/components/series/create-series-modal';
+import { ChannelAssetsTab } from '@/components/channels/channel-assets-tab';
 
 interface ChannelDetail {
   id: string;
@@ -55,10 +59,12 @@ interface ViralStatsData {
   tierCounts: Record<string, number>;
 }
 
-type Tab = 'profile' | 'content' | 'viral';
+type Tab = 'profile' | 'content' | 'series' | 'assets' | 'viral';
 const TABS: Array<{ key: Tab; label: string }> = [
   { key: 'profile', label: 'Profile' },
   { key: 'content', label: 'Content' },
+  { key: 'series', label: 'Series' },
+  { key: 'assets', label: 'Assets' },
   { key: 'viral', label: 'Viral Analysis' },
 ];
 
@@ -70,8 +76,10 @@ export default function ChannelDetailPage() {
   const { channelId } = useParams<{ channelId: string }>();
   const { data: rawData, isLoading, mutate } = useChannel<ChannelDetail>(channelId);
   const { data: viralRaw } = useChannelViralStats<ViralStatsData>(channelId);
+  const { data: seriesRaw, mutate: mutateSeries } = useChannelSeries<Array<{ id: string; name: string; description: string | null; status: string; tags: string[]; _count: { episodes: number } }>>(channelId);
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [saving, setSaving] = useState(false);
+  const [showCreateSeries, setShowCreateSeries] = useState(false);
 
   // Editable profile state
   const channel = rawData?.data;
@@ -282,6 +290,36 @@ export default function ChannelDetailPage() {
     <ChannelViralDashboard channelId={channel.id} />
   );
 
+  const renderSeriesTab = () => {
+    const channelSeries = seriesRaw?.data ?? [];
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-card-title text-text-primary">Series ({channelSeries.length})</h3>
+          <button onClick={() => setShowCreateSeries(true)} className="btn-primary flex items-center gap-2 text-sm">
+            <Layers size={14} />
+            New Series
+          </button>
+        </div>
+        {channelSeries.length === 0 ? (
+          <div className="card text-center py-8">
+            <Layers size={32} className="mx-auto text-text-secondary mb-3" />
+            <p className="text-text-secondary mb-3">No series for this channel yet.</p>
+            <button onClick={() => setShowCreateSeries(true)} className="btn-primary text-sm">
+              Create First Series
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {channelSeries.map((s) => (
+              <SeriesCard key={s.id} series={s} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <AppLayout>
       {/* Header */}
@@ -320,7 +358,16 @@ export default function ChannelDetailPage() {
       {/* Tab content */}
       {activeTab === 'profile' && renderProfileTab()}
       {activeTab === 'content' && renderContentTab()}
+      {activeTab === 'series' && renderSeriesTab()}
+      {activeTab === 'assets' && <ChannelAssetsTab channelId={channelId} />}
       {activeTab === 'viral' && renderViralTab()}
+
+      <CreateSeriesModal
+        open={showCreateSeries}
+        onClose={() => setShowCreateSeries(false)}
+        onCreated={() => mutateSeries()}
+        defaultChannelId={channelId}
+      />
     </AppLayout>
   );
 }

@@ -1,6 +1,7 @@
 import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
+import { startAccountLifecyclePipeline } from '@airevstream/queue';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -10,6 +11,10 @@ const CreateAccountSchema = z.object({
   password: z.string().min(1).max(256),
   tier: z.enum(['tier1', 'tier2', 'tier3']).optional(),
   notes: z.string().max(1000).optional().nullable(),
+  targetPlatforms: z.array(z.enum(['youtube', 'tiktok', 'instagram', 'facebook'])).optional(),
+  avatarId: z.string().uuid().optional(),
+  autoSeasoning: z.boolean().optional(),
+  autoPosting: z.boolean().optional(),
 });
 
 /**
@@ -109,7 +114,7 @@ export async function POST(req: NextRequest) {
       return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
     }
 
-    const { email, password, tier, notes } = parsed.data;
+    const { email, password, tier, notes, targetPlatforms, avatarId, autoSeasoning, autoPosting } = parsed.data;
 
     // Check for duplicate email
     const existing = await ctx.db.emailAccount.findUnique({ where: { email } });
@@ -134,8 +139,27 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Auto-start lifecycle pipeline when targetPlatforms is provided
+    let lifecycleJobId: string | undefined;
+    if (targetPlatforms && targetPlatforms.length > 0) {
+      try {
+        const result = await startAccountLifecyclePipeline({
+          emailAccountId: account.id,
+          tenantId: ctx.tenantId!,
+          targetPlatforms,
+          avatarId,
+          autoSeasoning,
+          autoPosting,
+        });
+        lifecycleJobId = result.jobId;
+      } catch (lifecycleErr) {
+        console.error('Failed to start lifecycle pipeline:', lifecycleErr);
+        // Don't fail the account creation — lifecycle can be started manually
+      }
+    }
+
     const { passwordEnc: _, ...safe } = account;
-    return success(safe);
+    return success({ ...safe, lifecycleJobId });
   } catch (err) {
     console.error('POST /api/v1/accounts failed:', err);
     return error('INTERNAL_ERROR', 'Failed to create account', 500);

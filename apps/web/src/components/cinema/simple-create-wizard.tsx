@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChannels, apiPost } from '@/hooks/use-api';
+import { useChannelSeries } from '@/hooks/use-series';
 import { toast } from '@/lib/toast';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
@@ -21,6 +22,8 @@ import { IntakeScreen } from './intake-screen';
 import type { IntakeResult } from './intake-screen';
 import { PlanReviewCard } from './plan-review-card';
 import { PipelineProgress } from './pipeline-progress';
+import { AssetPickerModal } from '@/components/assets/asset-picker-modal';
+import { useAvatars, useSceneryAssets } from '@/hooks/use-assets';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,6 +37,7 @@ interface Channel {
 
 interface SimpleFormData {
   channelId: string;
+  seriesId: string;
   recipeId: string;
   category: string;
   topic: string;
@@ -42,6 +46,8 @@ interface SimpleFormData {
   emotion: string;
   hasSpeaking: boolean;
   duration: string;
+  avatarId: string;
+  sceneryId: string;
   overrides: Record<string, unknown>;
   directives: ProductionDirectives;
 }
@@ -69,6 +75,7 @@ const EMOTION_OPTIONS = [
 
 const INITIAL_SIMPLE_FORM: SimpleFormData = {
   channelId: '',
+  seriesId: '',
   recipeId: '',
   category: '',
   topic: '',
@@ -77,6 +84,8 @@ const INITIAL_SIMPLE_FORM: SimpleFormData = {
   emotion: 'exciting',
   hasSpeaking: true,
   duration: '30',
+  avatarId: '',
+  sceneryId: '',
   overrides: {},
   directives: {},
 };
@@ -100,6 +109,8 @@ export function SimpleCreateWizard() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [generating, setGenerating] = useState(false);
   const [contentId, setContentId] = useState<string | null>(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showSceneryPicker, setShowSceneryPicker] = useState(false);
   const [planSummary, setPlanSummary] = useState<{
     title: string;
     concept: string;
@@ -112,6 +123,17 @@ export function SimpleCreateWizard() {
 
   // Auto-select single channel
   const effectiveChannelId = form.channelId || (channels.length === 1 ? channels[0].id : '');
+
+  const { data: seriesData } = useChannelSeries<Array<{ id: string; name: string }>>(effectiveChannelId || null);
+  const channelSeriesList = seriesData?.data ?? [];
+
+  // Avatar/Scenery lookup for selected names
+  const { data: avatarsData } = useAvatars<Array<{ id: string; name: string }>>();
+  const avatarsList = avatarsData?.data ?? [];
+  const { data: sceneryData } = useSceneryAssets<Array<{ id: string; name: string }>>();
+  const sceneryList = sceneryData?.data ?? [];
+  const selectedAvatarName = avatarsList.find((a) => a.id === form.avatarId)?.name;
+  const selectedSceneryName = sceneryList.find((s) => s.id === form.sceneryId)?.name;
 
   const update = useCallback(
     <K extends keyof SimpleFormData>(key: K, value: SimpleFormData[K]) => {
@@ -242,6 +264,7 @@ export function SimpleCreateWizard() {
         script: '',
         shots: [],
         status: 'generating',
+        ...(form.seriesId ? { seriesId: form.seriesId } : {}),
       });
       const id = contentRes.data?.id;
       if (id) {
@@ -259,6 +282,7 @@ export function SimpleCreateWizard() {
           emotion: form.emotion,
           characterDescription: form.characterDescription,
           hasSpeaking: form.hasSpeaking,
+          ...(form.seriesId ? { seriesId: form.seriesId } : {}),
         });
         toast.success('Cinema pipeline started!');
       }
@@ -295,6 +319,23 @@ export function SimpleCreateWizard() {
       {channels.length === 1 && (
         <div className="text-sm text-text-secondary">
           Channel: <span className="text-text-primary font-medium">{channels[0].name}</span>
+        </div>
+      )}
+
+      {/* Series selector (optional) */}
+      {effectiveChannelId && channelSeriesList.length > 0 && (
+        <div>
+          <label className="block text-caption text-text-secondary mb-1.5">Series (optional)</label>
+          <select
+            value={form.seriesId}
+            onChange={(e) => update('seriesId', e.target.value)}
+            className="input w-full max-w-sm"
+          >
+            <option value="">No series</option>
+            {channelSeriesList.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -353,6 +394,26 @@ export function SimpleCreateWizard() {
             className="input w-full"
             maxLength={100}
           />
+          {avatarsList.length > 0 && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setShowAvatarPicker(true)}
+                className="text-caption text-accent-blue hover:underline"
+              >
+                {form.avatarId ? `Avatar: ${selectedAvatarName}` : 'Pick an avatar'}
+              </button>
+              {form.avatarId && (
+                <button
+                  type="button"
+                  onClick={() => update('avatarId', '')}
+                  className="ml-2 text-caption text-text-tertiary hover:text-text-secondary"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div>
@@ -365,6 +426,26 @@ export function SimpleCreateWizard() {
             className="input w-full"
             maxLength={100}
           />
+          {sceneryList.length > 0 && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setShowSceneryPicker(true)}
+                className="text-caption text-accent-blue hover:underline"
+              >
+                {form.sceneryId ? `Background: ${selectedSceneryName}` : 'Pick a background'}
+              </button>
+              {form.sceneryId && (
+                <button
+                  type="button"
+                  onClick={() => update('sceneryId', '')}
+                  className="ml-2 text-caption text-text-tertiary hover:text-text-secondary"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div>
@@ -699,6 +780,19 @@ export function SimpleCreateWizard() {
           </button>
         </div>
       )}
+
+      <AssetPickerModal
+        open={showAvatarPicker}
+        onClose={() => setShowAvatarPicker(false)}
+        type="avatar"
+        onSelect={(id) => { update('avatarId', id); setShowAvatarPicker(false); }}
+      />
+      <AssetPickerModal
+        open={showSceneryPicker}
+        onClose={() => setShowSceneryPicker(false)}
+        type="scenery"
+        onSelect={(id) => { update('sceneryId', id); setShowSceneryPicker(false); }}
+      />
     </>
   );
 }

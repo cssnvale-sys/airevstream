@@ -24,6 +24,8 @@ import {
   GitBranch,
   FlaskConical,
   Radio,
+  Layers,
+  Palette,
   Menu,
   X,
 } from 'lucide-react';
@@ -35,6 +37,8 @@ const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/accounts', label: 'Accounts', icon: Users },
   { href: '/channels', label: 'Channels', icon: Radio },
+  { href: '/series', label: 'Series', icon: Layers },
+  { href: '/assets', label: 'Assets', icon: Palette },
   { href: '/seasoning', label: 'Seasoning', icon: Sprout },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/create', label: 'Create', icon: Sparkles },
@@ -133,6 +137,14 @@ export function Sidebar() {
       case 'c':
       case 'C':
         if (!e.metaKey && !e.ctrlKey) router.push('/channels');
+        break;
+      case 'r':
+      case 'R':
+        if (!e.metaKey && !e.ctrlKey) router.push('/series');
+        break;
+      case 't':
+      case 'T':
+        if (!e.metaKey && !e.ctrlKey) router.push('/assets');
         break;
     }
   }, [router]);

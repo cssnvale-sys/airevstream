@@ -51,11 +51,27 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!account) return notFound('Email account not found');
 
+    // Also fetch lifecycle status
+    const lifecycle = await ctx.db.accountLifecycle.findUnique({
+      where: { emailAccountId: id },
+    });
+
     const { passwordEnc, ...safe } = account;
     // Strip encrypted credentials from social accounts
     const data = {
       ...safe,
       socialAccounts: safe.socialAccounts.map(({ credentialsEnc, ...sa }) => sa),
+      lifecycle: lifecycle ? {
+        id: lifecycle.id,
+        status: lifecycle.status,
+        targetPlatforms: lifecycle.targetPlatforms,
+        discoveryResults: lifecycle.discoveryResults,
+        currentStep: lifecycle.currentStep,
+        cohortId: lifecycle.cohortId,
+        error: lifecycle.error,
+        startedAt: lifecycle.startedAt?.toISOString() ?? null,
+        completedAt: lifecycle.completedAt?.toISOString() ?? null,
+      } : null,
     };
 
     return success(data);

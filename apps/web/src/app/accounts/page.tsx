@@ -9,12 +9,15 @@ import { cn, formatRelativeTime, statusColor, platformIcon } from '@/lib/utils';
 import {
   Plus, Upload, Search, ChevronDown, ChevronUp,
   X, Mail, Activity, Hash, Globe, Tag, Palette, User, Trash2,
-  RefreshCw, HeartPulse, Flame,
+  RefreshCw, HeartPulse, Flame, ArrowLeft, ArrowRight, Rocket,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState as EmptyStateComponent } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
+import { PlatformSelect } from '@/components/accounts/platform-select';
+import { AvatarAssignPicker } from '@/components/accounts/avatar-assign-picker';
+import { LifecycleStatusPanel } from '@/components/accounts/lifecycle-status-panel';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -122,26 +125,51 @@ function AddEmailModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tier, setTier] = useState('tier2');
+  const [targetPlatforms, setTargetPlatforms] = useState<string[]>([]);
+  const [avatarId, setAvatarId] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   if (!open) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
+    setStep(1);
+    setEmail('');
+    setPassword('');
+    setTier('tier2');
+    setTargetPlatforms([]);
+    setAvatarId(undefined);
+    setError('');
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleSubmit = async () => {
     setError('');
     setSubmitting(true);
     try {
-      await apiPost('/accounts', { email, password, tier });
-      setEmail('');
-      setPassword('');
-      setTier('tier2');
+      const payload: Record<string, unknown> = { email, password, tier };
+      if (targetPlatforms.length > 0) {
+        payload.targetPlatforms = targetPlatforms;
+        if (avatarId) payload.avatarId = avatarId;
+        payload.autoSeasoning = true;
+      }
+      await apiPost('/accounts', payload);
+      resetForm();
       onSuccess();
       onClose();
-      toast.success('Account added successfully');
+      toast.success(
+        targetPlatforms.length > 0
+          ? 'Account added — lifecycle pipeline started'
+          : 'Account added successfully',
+      );
     } catch (err) {
       console.error('Failed to add account:', err);
       setError('Failed to add account');
@@ -150,56 +178,166 @@ function AddEmailModal({
     }
   };
 
+  const stepTitles = ['Email & Password', 'Select Platforms', 'Assign Avatar', 'Review'];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={handleClose}>
       <div className="card w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-text-primary">Add Email Account</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-text-primary">{stepTitles[step - 1]}</h2>
+          <button onClick={handleClose} className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={18} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input w-full"
-              placeholder="user@example.com"
-              required
+
+        {/* Step indicators */}
+        <div className="flex gap-1 mb-6">
+          {[1, 2, 3, 4].map((s) => (
+            <div
+              key={s}
+              className={cn(
+                'h-1 flex-1 rounded-full transition-colors',
+                s <= step ? 'bg-violet-500' : 'bg-zinc-700',
+              )}
             />
+          ))}
+        </div>
+
+        {/* Step 1: Email & Password */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-text-secondary mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input w-full"
+                placeholder="user@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-text-secondary mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input w-full"
+                placeholder="Account password"
+                minLength={8}
+              />
+              <p className="text-xs text-text-secondary mt-1">Minimum 8 characters</p>
+            </div>
+            <div>
+              <label className="block text-sm text-text-secondary mb-1">Tier</label>
+              <select value={tier} onChange={(e) => setTier(e.target.value)} className="input w-full">
+                <option value="tier1">Tier 1 (Fresh)</option>
+                <option value="tier2">Tier 2 (Warmed)</option>
+                <option value="tier3">Tier 3 (Established)</option>
+              </select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setStep(2)}
+                disabled={!email.trim() || !password.trim() || password.length < 8}
+                className="btn-primary flex-1 flex items-center justify-center gap-1.5"
+              >
+                Next <ArrowRight size={16} />
+              </button>
+              <button type="button" onClick={handleClose} className="btn-secondary">Cancel</button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input w-full"
-              placeholder="Account password"
-              required
-              minLength={8}
-            />
-            <p className="text-xs text-text-secondary mt-1">Minimum 8 characters</p>
+        )}
+
+        {/* Step 2: Select Platforms */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <p className="text-sm text-text-secondary">
+              Select platforms to auto-discover, sign up, and warm accounts on.
+            </p>
+            <PlatformSelect selected={targetPlatforms} onChange={setTargetPlatforms} />
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setStep(1)} className="btn-secondary flex items-center gap-1.5">
+                <ArrowLeft size={16} /> Back
+              </button>
+              <button
+                onClick={() => setStep(targetPlatforms.length > 0 ? 3 : 4)}
+                className="btn-primary flex-1 flex items-center justify-center gap-1.5"
+              >
+                {targetPlatforms.length > 0 ? 'Next' : 'Skip'} <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">Tier</label>
-            <select value={tier} onChange={(e) => setTier(e.target.value)} className="input w-full">
-              <option value="tier1">Tier 1 (Fresh)</option>
-              <option value="tier2">Tier 2 (Warmed)</option>
-              <option value="tier3">Tier 3 (Established)</option>
-            </select>
+        )}
+
+        {/* Step 3: Assign Avatar */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <p className="text-sm text-text-secondary">
+              Optionally assign an avatar for profile images after signup.
+            </p>
+            <AvatarAssignPicker selectedId={avatarId} onChange={setAvatarId} />
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setStep(2)} className="btn-secondary flex items-center gap-1.5">
+                <ArrowLeft size={16} /> Back
+              </button>
+              <button
+                onClick={() => setStep(4)}
+                className="btn-primary flex-1 flex items-center justify-center gap-1.5"
+              >
+                {avatarId ? 'Next' : 'Skip'} <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <div className="flex gap-2 pt-2">
-            <button type="submit" disabled={submitting || !email.trim() || !password.trim()} className="btn-primary flex-1">
-              {submitting ? 'Adding...' : 'Add Account'}
-            </button>
-            <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+        )}
+
+        {/* Step 4: Review */}
+        {step === 4 && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-zinc-800/50 p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Email</span>
+                <span className="text-text-primary">{email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Tier</span>
+                <span className="text-text-primary capitalize">{tier.replace('tier', 'Tier ')}</span>
+              </div>
+              {targetPlatforms.length > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Platforms</span>
+                  <span className="text-text-primary capitalize">{targetPlatforms.join(', ')}</span>
+                </div>
+              )}
+              {avatarId && (
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Avatar</span>
+                  <span className="text-text-primary">Assigned</span>
+                </div>
+              )}
+            </div>
+            {targetPlatforms.length > 0 && (
+              <p className="text-xs text-text-secondary">
+                We&apos;ll check for existing accounts, sign up where needed, and start warming.
+                This takes ~21 days to fully season accounts.
+              </p>
+            )}
+            {error && <p className="text-sm text-red-400">{error}</p>}
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setStep(targetPlatforms.length > 0 ? 3 : 2)} className="btn-secondary flex items-center gap-1.5">
+                <ArrowLeft size={16} /> Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="btn-primary flex-1 flex items-center justify-center gap-1.5"
+              >
+                <Rocket size={16} />
+                {submitting ? 'Creating...' : targetPlatforms.length > 0 ? 'Create & Start Pipeline' : 'Create Account'}
+              </button>
+            </div>
           </div>
-        </form>
+        )}
       </div>
     </div>
   );
@@ -567,6 +705,14 @@ function DetailPanel({
                   <p className="text-lg font-bold text-text-primary">{allChannels.length}</p>
                 </div>
               </div>
+            </div>
+
+            {/* Lifecycle Pipeline */}
+            <div>
+              <h4 className="text-sm font-medium text-text-primary mb-3 flex items-center gap-2">
+                <Rocket size={14} /> Lifecycle Pipeline
+              </h4>
+              <LifecycleStatusPanel emailAccountId={accountId} />
             </div>
 
             {/* Niche Tags */}

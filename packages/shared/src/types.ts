@@ -63,7 +63,7 @@ export type ContentStatus =
 export type AffiliateMode = 'dedicated' | 'commercial_break' | 'none';
 
 // ─── Storyboard Types ───
-export type StoryboardStatus = 'draft' | 'approved' | 'in_production';
+export type StoryboardStatus = 'draft' | 'pending_review' | 'approved' | 'in_production';
 export type ShotStatus = 'pending' | 'generating' | 'generated' | 'approved' | 'failed';
 
 // ─── Scheduled Post Types ───

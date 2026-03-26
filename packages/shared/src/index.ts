@@ -32,3 +32,4 @@ export * from './series-bible-resolver.js';
 export * from './seasoning-types.js';
 export * from './seasoning-config.js';
 export * from './seasoning-orchestrator.js';
+export * from './approval-gate.js';

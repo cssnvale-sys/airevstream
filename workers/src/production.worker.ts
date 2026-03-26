@@ -1182,12 +1182,50 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
   }
 
   // Update storyboard status
-  if (allApproved) {
+  const qualityPreset = (data as unknown as Record<string, unknown>).qualityPreset as string | undefined;
+  if (allApproved && qualityPreset === 'draft') {
+    // Draft quality — skip review, auto-approve
     await db.storyboard.update({
       where: { id: data.storyboardId },
       data: { status: 'approved' },
     });
-    logger.info({ storyboardId: data.storyboardId }, 'QC gate passed — all shots approved');
+    logger.info({ storyboardId: data.storyboardId }, 'QC gate passed — all shots approved (draft quality, skipping review)');
+  } else if (allApproved) {
+    // Non-draft quality — pause for user review
+    await db.storyboard.update({
+      where: { id: data.storyboardId },
+      data: { status: 'pending_review' },
+    });
+
+    // Get shot stats for the alert
+    const approvedCount = shots.filter(s => {
+      const qs = qcDecisionInputs.find(q => q.shotId === s.id);
+      return qs ? qs.qcScores.overall >= 85 : true;
+    }).length;
+
+    // Create alert for storyboard review
+    try {
+      const storyboard = await db.storyboard.findUnique({
+        where: { id: data.storyboardId },
+        select: { content: { select: { title: true, channelId: true, channel: { select: { socialAccount: { select: { emailAccount: { select: { tenantId: true } } } } } } } } },
+      });
+      const tenantId = storyboard?.content?.channel?.socialAccount?.emailAccount?.tenantId ?? null;
+      await db.alert.create({
+        data: {
+          tenantId,
+          severity: 'info',
+          category: 'content',
+          title: 'Storyboard ready for review',
+          message: `${approvedCount}/${shots.length} shots approved — review to proceed to rendering`,
+          source: 'production-worker',
+          metadata: { storyboardId: data.storyboardId, contentId: data.contentId, link: `/studio/${data.contentId}` },
+        },
+      });
+    } catch (alertErr) {
+      logger.warn({ alertErr }, 'Failed to create storyboard review alert');
+    }
+
+    logger.info({ storyboardId: data.storyboardId }, 'QC gate passed — storyboard set to pending_review');
   } else {
     logger.info({ storyboardId: data.storyboardId }, 'QC gate — some shots need review or regeneration');
   }

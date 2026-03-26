@@ -1,7 +1,7 @@
 import { createWorker, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob, type ContentFinalReviewJob, type ContentViralScoreJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
-import { createLogger, scoreViralPotential } from '@airevstream/shared';
+import { createLogger, scoreViralPotential, APPROVAL_DEFAULTS, evaluateApprovalGate, updateTrustAfterAction } from '@airevstream/shared';
 import type { ViralScoringInput } from '@airevstream/shared';
 import type { Job } from 'bullmq';
 
@@ -17,6 +17,10 @@ const logger = createLogger('worker:content');
 
 async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob | ContentViralScoreJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing content job');
+
+  if (job.name === 'content:check-approval-timeouts') {
+    return handleCheckApprovalTimeouts();
+  }
 
   if (job.name === 'content:generate') {
     const data = job.data as ContentGenerateJob;
@@ -115,11 +119,25 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
 
     await job.updateProgress(80);
 
+    // Look up trust score to determine gate window
+    let gateWindowHrs: number = APPROVAL_DEFAULTS.INITIAL_GATE_WINDOW_HRS;
+    try {
+      const trustScore = await db.approvalTrustScore.findFirst({
+        where: { dimensionType: 'content_type', dimensionValue: content.contentType },
+      });
+      if (trustScore) {
+        gateWindowHrs = Number(trustScore.gateWindowHrs);
+      }
+    } catch (err) {
+      logger.warn({ err }, 'Failed to look up approval trust score — using default gate window');
+    }
+
     // Save generated content and update status
     await db.contentItem.update({
       where: { id: data.contentId },
       data: {
         status: 'pending_approval',
+        approvalGateWindowHrs: gateWindowHrs,
         aiServiceId: serviceId ?? undefined,
         generationParams: {
           aiModel: resultModel,
@@ -131,6 +149,28 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
         },
       },
     });
+
+    // Create alert for pending approval
+    try {
+      const channelWithAccount = await db.channel.findUnique({
+        where: { id: content.channelId },
+        select: { socialAccount: { select: { emailAccount: { select: { tenantId: true } } } } },
+      });
+      const tenantId = channelWithAccount?.socialAccount?.emailAccount?.tenantId ?? null;
+      await db.alert.create({
+        data: {
+          tenantId,
+          severity: 'info',
+          category: 'content',
+          title: 'Content awaiting approval',
+          message: `"${content.title ?? 'Untitled'}" needs review (auto-approves in ${gateWindowHrs}h)`,
+          source: 'content-worker',
+          metadata: { contentId: data.contentId, contentType: content.contentType, link: `/content/${data.contentId}` },
+        },
+      });
+    } catch (alertErr) {
+      logger.warn({ alertErr }, 'Failed to create approval alert');
+    }
 
     await job.updateProgress(90);
 
@@ -268,7 +308,7 @@ async function handleFinalReview(data: ContentFinalReviewJob) {
     const content = await db.contentItem.findUnique({
       where: { id: data.contentId },
       include: {
-        channel: { select: { socialAccount: { select: { platform: true } } } },
+        channel: { select: { socialAccount: { select: { platform: true, emailAccount: { select: { tenantId: true } } } } } },
         storyboards: {
           where: { id: data.storyboardId },
           select: {
@@ -335,11 +375,47 @@ async function handleFinalReview(data: ContentFinalReviewJob) {
       });
       logger.info({ contentId: data.contentId }, 'Content auto-approved');
     } else {
+      // Look up trust score to determine gate window
+      let gateWindowHrs: number = APPROVAL_DEFAULTS.INITIAL_GATE_WINDOW_HRS;
+      try {
+        const trustScore = await db.approvalTrustScore.findFirst({
+          where: { dimensionType: 'content_type', dimensionValue: content.contentType },
+        });
+        if (trustScore) {
+          gateWindowHrs = Number(trustScore.gateWindowHrs);
+        }
+      } catch (err) {
+        logger.warn({ err }, 'Failed to look up approval trust score — using default gate window');
+      }
+
       await db.contentItem.update({
         where: { id: data.contentId },
-        data: { status: 'pending_approval', performance: updatedPerf as any },
+        data: {
+          status: 'pending_approval',
+          approvalGateWindowHrs: gateWindowHrs,
+          performance: updatedPerf as any,
+        },
       });
-      logger.info({ contentId: data.contentId }, 'Content sent for manual review');
+
+      // Create alert for pending approval
+      try {
+        const tenantId = content.channel?.socialAccount?.emailAccount?.tenantId ?? null;
+        await db.alert.create({
+          data: {
+            tenantId,
+            severity: 'info',
+            category: 'content',
+            title: 'Content awaiting approval',
+            message: `"${content.title ?? 'Untitled'}" needs review (auto-approves in ${gateWindowHrs}h)`,
+            source: 'content-worker',
+            metadata: { contentId: data.contentId, contentType: content.contentType, qualityScore: viralScore.overall, link: `/content/${data.contentId}` },
+          },
+        });
+      } catch (alertErr) {
+        logger.warn({ alertErr }, 'Failed to create approval alert');
+      }
+
+      logger.info({ contentId: data.contentId, gateWindowHrs }, 'Content sent for manual review with gate window');
     }
 
     return { contentId: data.contentId, status: data.autoApprove ? 'approved' : 'pending_approval', viralScore };
@@ -439,6 +515,84 @@ async function handleViralScore(data: ContentViralScoreJob) {
   }
 }
 
+// ─── Approval Timeout Checker ───
+
+async function handleCheckApprovalTimeouts() {
+  const db = getDb();
+  logger.info('Checking approval gate timeouts');
+
+  try {
+    const pendingItems = await db.contentItem.findMany({
+      where: { status: 'pending_approval' },
+      select: {
+        id: true,
+        contentType: true,
+        approvalGateWindowHrs: true,
+        createdAt: true,
+        qualityScore: true,
+      },
+    });
+
+    if (pendingItems.length === 0) {
+      logger.debug('No pending approval items');
+      return;
+    }
+
+    let autoApprovedCount = 0;
+    const now = new Date();
+
+    for (const item of pendingItems) {
+      const gateWindowHrs = item.approvalGateWindowHrs != null
+        ? Number(item.approvalGateWindowHrs)
+        : APPROVAL_DEFAULTS.INITIAL_GATE_WINDOW_HRS;
+
+      // Look up trust score for this content type
+      let trustScore = 50; // default
+      try {
+        const ts = await db.approvalTrustScore.findFirst({
+          where: { dimensionType: 'content_type', dimensionValue: item.contentType },
+        });
+        if (ts) trustScore = Number(ts.trustScore);
+      } catch {
+        // Use default
+      }
+
+      const result = evaluateApprovalGate({
+        trustScore,
+        gateWindowHrs,
+        contentCreatedAt: item.createdAt,
+        qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+        now,
+      });
+
+      if (result.shouldAutoApprove) {
+        await db.contentItem.update({
+          where: { id: item.id },
+          data: {
+            status: 'approved',
+            approvedAt: now,
+            approvedBy: 'auto:timeout',
+          },
+        });
+        autoApprovedCount++;
+        logger.info({ contentId: item.id, reason: result.reason }, 'Content auto-approved by timeout');
+      } else if (result.shouldAutoReject) {
+        await db.contentItem.update({
+          where: { id: item.id },
+          data: { status: 'draft' },
+        });
+        logger.info({ contentId: item.id, reason: result.reason }, 'Content auto-rejected by quality threshold');
+      }
+    }
+
+    if (autoApprovedCount > 0) {
+      logger.info({ autoApprovedCount, totalChecked: pendingItems.length }, 'Approval timeout check complete');
+    }
+  } catch (err) {
+    logger.error({ err }, 'Approval timeout check failed');
+  }
+}
+
 export function startContentWorker() {
   const worker = createWorker('content', processContentJob, { concurrency: 2 });
 
@@ -449,6 +603,15 @@ export function startContentWorker() {
   worker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'Content job failed');
   });
+
+  // Register repeatable approval timeout check (every 5 minutes)
+  const { getQueue } = require('@airevstream/queue');
+  const contentQueue = getQueue('content');
+  contentQueue.add('content:check-approval-timeouts', { _trigger: 'repeatable' } as any, {
+    repeat: { every: 5 * 60 * 1000 }, // 5 minutes
+    removeOnComplete: true,
+    removeOnFail: 10,
+  }).catch((err: unknown) => logger.error({ err }, 'Failed to register approval timeout repeatable job'));
 
   logger.info('Content worker started');
   return worker;

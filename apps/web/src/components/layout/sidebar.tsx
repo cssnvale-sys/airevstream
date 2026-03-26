@@ -32,6 +32,8 @@ import {
 import { removeToken } from '@/lib/auth';
 import { useState, useEffect, useCallback } from 'react';
 import { KeyboardShortcutsModal } from '@/components/ui/keyboard-shortcuts';
+import useSWR from 'swr';
+import { getToken } from '@/lib/auth';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
@@ -54,9 +56,20 @@ const navItems = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
+const hitlFetcher = async (url: string) => {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(url, { headers });
+  if (!res.ok) return null;
+  return res.json();
+};
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: hitlData } = useSWR('/api/v1/workflows/hitl?limit=1', hitlFetcher, { refreshInterval: 30000 });
+  const hitlCount = hitlData?.meta?.total ?? hitlData?.total ?? 0;
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('sidebar_collapsed') === '1';
@@ -198,6 +211,11 @@ export function Sidebar() {
             >
               <Icon size={18} className="shrink-0" />
               {(isMobile || !collapsed) && item.label}
+              {item.href === '/workflows' && hitlCount > 0 && (isMobile || !collapsed) && (
+                <span className="ml-auto min-w-[18px] h-[18px] bg-accent-red text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {hitlCount > 99 ? '99+' : hitlCount}
+                </span>
+              )}
             </Link>
           );
         })}

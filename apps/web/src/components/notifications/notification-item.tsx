@@ -12,6 +12,7 @@ export type Notification = {
   message: string | null;
   createdAt: string;
   status: 'open' | 'acknowledged' | 'resolved';
+  metadata?: Record<string, unknown> | null;
   link?: string;
 };
 

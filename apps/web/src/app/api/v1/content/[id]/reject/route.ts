@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { updateTrustAfterAction, APPROVAL_DEFAULTS } from '@airevstream/shared';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -77,6 +78,46 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         },
       }),
     ]);
+
+    // Update approval trust score (non-blocking)
+    try {
+      const contentItem = await ctx.db.contentItem.findUnique({
+        where: { id },
+        select: { contentType: true, qualityScore: true },
+      });
+      if (contentItem) {
+        const existing = await ctx.db.approvalTrustScore.findFirst({
+          where: { dimensionType: 'content_type', dimensionValue: contentItem.contentType },
+        });
+        const current = existing
+          ? { trustScore: Number(existing.trustScore), gateWindowHrs: Number(existing.gateWindowHrs) }
+          : { trustScore: 50, gateWindowHrs: APPROVAL_DEFAULTS.INITIAL_GATE_WINDOW_HRS };
+        const trustUpdate = updateTrustAfterAction({
+          currentTrustScore: current.trustScore,
+          currentGateWindowHrs: current.gateWindowHrs,
+          action: 'reject',
+          qualityScore: contentItem.qualityScore != null ? Number(contentItem.qualityScore) : null,
+        });
+        await ctx.db.approvalTrustScore.upsert({
+          where: { id: existing?.id ?? '00000000-0000-0000-0000-000000000000' },
+          create: {
+            dimensionType: 'content_type',
+            dimensionValue: contentItem.contentType,
+            trustScore: trustUpdate.newTrustScore,
+            gateWindowHrs: trustUpdate.newGateWindowHrs,
+            totalApproved: 0,
+            totalRejected: 1,
+          },
+          update: {
+            trustScore: trustUpdate.newTrustScore,
+            gateWindowHrs: trustUpdate.newGateWindowHrs,
+            totalRejected: { increment: 1 },
+          },
+        });
+      }
+    } catch (trustErr) {
+      console.error('Failed to update trust score on reject:', trustErr);
+    }
 
     return success({
       ...updated,

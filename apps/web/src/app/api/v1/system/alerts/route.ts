@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
           message: true,
           source: true,
           status: true,
+          metadata: true,
           acknowledgedAt: true,
           resolvedAt: true,
           createdAt: true,

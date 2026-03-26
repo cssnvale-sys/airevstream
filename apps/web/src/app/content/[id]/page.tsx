@@ -1,20 +1,24 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost, apiPut } from '@/hooks/use-api';
 import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
 import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
 import { QualityBreakdown } from '@/components/content/quality-breakdown';
 import { ShotGallery } from '@/components/content/shot-gallery';
 import { MediaPreview } from '@/components/ui/media-preview';
+import { QualityBadge } from '@/components/ui/quality-badge';
 import {
   ArrowLeft, Check, X, Clock, Send, Archive,
   FileText, Film, Video, Image, Mic, ImageIcon,
   Loader2, Calendar, Globe, Tag, Cpu, BarChart3,
   Copy, Share2, Eye, ThumbsUp, MessageCircle,
+  MoreHorizontal,
 } from 'lucide-react';
 
 interface ContentDetail {
@@ -119,7 +123,9 @@ export default function ContentDetailPage() {
   const item = data?.data;
 
   const [acting, setActing] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [repurposeOpen, setRepurposeOpen] = useState(false);
   const [repurposeFormat, setRepurposeFormat] = useState<'short' | 'reel' | 'story'>('short');
@@ -210,6 +216,7 @@ export default function ContentDetailPage() {
               <span className={cn('badge text-xs', statusColor(item.status))}>{item.status.replace(/_/g, ' ')}</span>
               <span className="text-xs text-text-secondary">{contentTypeLabel(item.contentType)}</span>
               <span className="text-xs text-text-secondary">v{item.version}</span>
+              {item.qualityScore != null && <QualityBadge score={item.qualityScore} size="sm" />}
             </div>
           </div>
           {/* Action buttons based on status */}
@@ -236,26 +243,49 @@ export default function ContentDetailPage() {
                 </button>
               </>
             )}
-            {item.storyboards.length > 0 && item.status !== 'draft' && (
-              <button onClick={() => handleAction('rescore')} disabled={acting} className="btn-secondary flex items-center gap-1.5">
-                <BarChart3 size={14} /> Rescore
-              </button>
-            )}
-            {['generated', 'approved', 'posted'].includes(item.status) && (
-              <button onClick={() => setRepurposeOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5">
-                <Copy size={14} /> Repurpose
-              </button>
-            )}
-            {item.status === 'approved' && (
-              <button onClick={() => setDistributeOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5">
-                <Share2 size={14} /> Distribute
-              </button>
-            )}
-            {!['archived', 'failed'].includes(item.status) && (
-              <button onClick={() => handleAction('archive')} disabled={acting} className="btn-secondary flex items-center gap-1.5">
-                <Archive size={14} /> Archive
-              </button>
-            )}
+            {/* Secondary actions dropdown */}
+            {(() => {
+              const hasRescore = item.storyboards.length > 0 && item.status !== 'draft';
+              const hasRepurpose = ['generated', 'approved', 'posted'].includes(item.status);
+              const hasDistribute = item.status === 'approved';
+              const hasArchive = !['archived', 'failed'].includes(item.status);
+              if (!hasRescore && !hasRepurpose && !hasDistribute && !hasArchive) return null;
+              return (
+                <div className="relative">
+                  <button
+                    onClick={() => setMoreMenuOpen(v => !v)}
+                    disabled={acting}
+                    className="btn-secondary flex items-center gap-1.5"
+                  >
+                    <MoreHorizontal size={14} /> More
+                  </button>
+                  {moreMenuOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-border bg-bg-secondary shadow-lg z-20 py-1">
+                      {hasRescore && (
+                        <button onClick={() => { handleAction('rescore'); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                          <BarChart3 size={14} /> Rescore
+                        </button>
+                      )}
+                      {hasRepurpose && (
+                        <button onClick={() => { setRepurposeOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                          <Copy size={14} /> Repurpose
+                        </button>
+                      )}
+                      {hasDistribute && (
+                        <button onClick={() => { setDistributeOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                          <Share2 size={14} /> Distribute
+                        </button>
+                      )}
+                      {hasArchive && (
+                        <button onClick={() => { setArchiveOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                          <Archive size={14} /> Archive
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -402,7 +432,9 @@ export default function ContentDetailPage() {
                   );
                 })()}
                 <p className="text-xs text-text-secondary mt-3">
-                  Connect platform APIs in Settings to enable auto-tracking.
+                  Connect platform APIs in{' '}
+                  <Link href="/settings" className="text-accent-blue hover:underline">Settings</Link>
+                  {' '}to enable auto-tracking.
                 </p>
               </div>
             )}
@@ -529,7 +561,8 @@ export default function ContentDetailPage() {
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Reason for rejection (optional)"
+                placeholder="Explain what needs to change..."
+                required
                 rows={3}
                 className="w-full px-3 py-2 mb-4 text-sm rounded-lg bg-bg-tertiary border border-border text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent-blue resize-none"
               />
@@ -543,7 +576,7 @@ export default function ContentDetailPage() {
                 </button>
                 <button
                   onClick={() => handleAction('reject')}
-                  disabled={acting}
+                  disabled={acting || !rejectReason.trim()}
                   className="btn-primary text-sm"
                 >
                   {acting ? 'Rejecting...' : 'Reject'}
@@ -690,6 +723,16 @@ export default function ContentDetailPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={archiveOpen}
+        title="Archive Content"
+        message="This will archive the content. Archived content can be found in the library with the 'archived' filter."
+        confirmLabel="Archive"
+        variant="warning"
+        onConfirm={() => { setArchiveOpen(false); handleAction('archive'); }}
+        onCancel={() => setArchiveOpen(false)}
+        loading={acting}
+      />
     </AppLayout>
   );
 }

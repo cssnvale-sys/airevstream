@@ -4,10 +4,11 @@ import { useState, useMemo, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { Check, X, Loader2, FileText, Video, Image, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, X, Loader2, FileText, Video, Image, CheckCircle, ChevronLeft, ChevronRight, Clock, ChevronDown, ChevronUp, Shield } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
+import { QualityBadge } from '@/components/ui/quality-badge';
 
 interface ApprovalItem {
   id: string;
@@ -15,8 +16,21 @@ interface ApprovalItem {
   contentType: string;
   status: string;
   qualityScore: number | null;
+  approvalGateWindowHrs: number | null;
   createdAt: string;
   channel?: { id: string; name: string };
+}
+
+function formatCountdown(createdAt: string, gateWindowHrs: number | null): { text: string; urgency: 'normal' | 'amber' | 'red' } | null {
+  if (gateWindowHrs == null) return null;
+  const deadline = new Date(new Date(createdAt).getTime() + gateWindowHrs * 60 * 60 * 1000);
+  const remainingMs = deadline.getTime() - Date.now();
+  if (remainingMs <= 0) return { text: 'Auto-approving...', urgency: 'red' };
+  const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+  const mins = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+  const text = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  const urgency = remainingMs < 30 * 60 * 1000 ? 'red' : remainingMs < 2 * 60 * 60 * 1000 ? 'amber' : 'normal';
+  return { text: `Auto-approves in ${text}`, urgency };
 }
 
 const TYPE_ICONS: Record<string, typeof FileText> = {
@@ -28,6 +42,18 @@ const TYPE_ICONS: Record<string, typeof FileText> = {
 const CONTENT_TYPES = ['all', 'video_short', 'video_long', 'image', 'article', 'post'] as const;
 const PAGE_SIZE = 20;
 
+interface TrustScore {
+  id: string;
+  dimensionType: string;
+  dimensionValue: string;
+  trustScore: number;
+  gateWindowHrs: number;
+  totalApproved: number;
+  totalRejected: number;
+  totalAutoApproved: number;
+  avgOutcomeScore: number;
+}
+
 export default function ApprovalsPage() {
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -36,6 +62,7 @@ export default function ApprovalsPage() {
   const [bulkActing, setBulkActing] = useState(false);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
+  const [trustOpen, setTrustOpen] = useState(false);
 
   const queryParams = useMemo(() => {
     const parts = [`page=${page}`, `limit=${PAGE_SIZE}`];
@@ -44,6 +71,8 @@ export default function ApprovalsPage() {
   }, [page, typeFilter]);
 
   const { data: approvalsRes, isLoading, error: fetchError, mutate } = useApi<ApprovalItem[]>(`/approvals?${queryParams}`);
+  const { data: trustRes } = useApi<TrustScore[]>(trustOpen ? '/approvals/trust-scores' : null);
+  const trustScores = trustRes?.data ?? [];
   const items = approvalsRes?.data ?? [];
   const meta = approvalsRes?.meta;
   const totalPages = meta?.pages ?? 1;
@@ -214,10 +243,33 @@ export default function ApprovalsPage() {
                       <div className="font-medium text-text-primary truncate">
                         {item.title ?? 'Untitled content'}
                       </div>
-                      <div className="text-xs text-text-secondary mt-0.5">
-                        {item.channel?.name ?? 'No channel'} | {item.contentType} | {formatRelativeTime(item.createdAt)}
-                        {item.qualityScore != null && ` | Quality: ${Number(item.qualityScore)}/10`}
+                      <div className="flex items-center gap-1.5 text-xs text-text-secondary mt-0.5">
+                        <span>{item.channel?.name ?? 'No channel'}</span>
+                        <span>|</span>
+                        <span>{item.contentType}</span>
+                        <span>|</span>
+                        <span>{formatRelativeTime(item.createdAt)}</span>
+                        {item.qualityScore != null && (
+                          <>
+                            <span>|</span>
+                            <QualityBadge score={Number(item.qualityScore)} size="sm" />
+                          </>
+                        )}
                       </div>
+                      {(() => {
+                        const countdown = formatCountdown(item.createdAt, item.approvalGateWindowHrs);
+                        if (!countdown) return null;
+                        return (
+                          <div className={cn('flex items-center gap-1 text-xs mt-0.5', {
+                            'text-text-secondary': countdown.urgency === 'normal',
+                            'text-accent-amber': countdown.urgency === 'amber',
+                            'text-accent-red font-medium': countdown.urgency === 'red',
+                          })}>
+                            <Clock size={10} />
+                            <span>{countdown.text}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -271,6 +323,48 @@ export default function ApprovalsPage() {
           </>
         )}
 
+        {/* Trust Scores */}
+        <div className="mt-6">
+          <button
+            onClick={() => setTrustOpen((v) => !v)}
+            className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <Shield size={14} />
+            Trust Scores
+            {trustOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+          {trustOpen && (
+            <div className="mt-3 rounded-lg border border-border bg-bg-secondary p-4">
+              {trustScores.length === 0 ? (
+                <p className="text-sm text-text-secondary">No trust scores recorded yet. Scores build as you approve or reject content.</p>
+              ) : (
+                <div className="space-y-2">
+                  {trustScores.map((ts) => (
+                    <div key={ts.id} className="flex items-center justify-between text-sm py-1.5 border-b border-border last:border-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-text-secondary">{ts.dimensionType}:</span>
+                        <span className="text-text-primary font-medium">{ts.dimensionValue}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-text-secondary">
+                        <span className={cn(
+                          'font-medium',
+                          ts.trustScore >= 80 ? 'text-accent-green' : ts.trustScore >= 50 ? 'text-accent-amber' : 'text-accent-red',
+                        )}>
+                          Trust: {ts.trustScore}
+                        </span>
+                        <span>Gate: {ts.gateWindowHrs}h</span>
+                        <span className="text-accent-green">{ts.totalApproved} approved</span>
+                        <span className="text-accent-red">{ts.totalRejected} rejected</span>
+                        <span>{ts.totalAutoApproved} auto</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <ConfirmDialog
           open={!!rejectTarget}
           title="Reject Content"
@@ -285,7 +379,14 @@ export default function ApprovalsPage() {
         <ConfirmDialog
           open={bulkRejectOpen}
           title="Reject Selected Content"
-          message={`Are you sure you want to reject ${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''}? They will be moved back to draft.`}
+          message={(() => {
+            const selectedItems = items.filter(i => selectedIds.has(i.id));
+            const names = selectedItems.slice(0, 3).map(i => `"${i.title ?? 'Untitled'}"`).join(', ');
+            const remaining = selectedItems.length - 3;
+            return remaining > 0
+              ? `This will reject: ${names}, and ${remaining} more. They will be moved back to draft.`
+              : `This will reject: ${names}. They will be moved back to draft.`;
+          })()}
           confirmLabel="Reject All"
           variant="danger"
           onConfirm={() => handleBulkAction('reject')}

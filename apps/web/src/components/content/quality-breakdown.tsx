@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
+import { QUALITY_THRESHOLDS } from '@airevstream/shared';
 
 interface QualityBreakdownData {
   contentId: string;
@@ -21,14 +22,14 @@ interface QualityBreakdownData {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 70) return 'bg-accent-green';
-  if (score >= 40) return 'bg-accent-amber';
+  if (score >= QUALITY_THRESHOLDS.AUTO_APPROVE) return 'bg-accent-green';
+  if (score >= QUALITY_THRESHOLDS.REVIEW_REQUIRED) return 'bg-accent-amber';
   return 'bg-accent-red';
 }
 
 function scoreLabelColor(score: number): string {
-  if (score >= 70) return 'text-accent-green';
-  if (score >= 40) return 'text-accent-amber';
+  if (score >= QUALITY_THRESHOLDS.AUTO_APPROVE) return 'text-accent-green';
+  if (score >= QUALITY_THRESHOLDS.REVIEW_REQUIRED) return 'text-accent-amber';
   return 'text-accent-red';
 }
 
@@ -89,12 +90,12 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
     <div className="space-y-4">
       {/* Overall score circle */}
       <div className="flex items-center gap-4">
-        <div className={cn('w-16 h-16 rounded-full flex items-center justify-center border-4', overall >= 70 ? 'border-accent-green' : overall >= 40 ? 'border-accent-amber' : 'border-accent-red')}>
+        <div className={cn('w-16 h-16 rounded-full flex items-center justify-center border-4', overall >= QUALITY_THRESHOLDS.AUTO_APPROVE ? 'border-accent-green' : overall >= QUALITY_THRESHOLDS.REVIEW_REQUIRED ? 'border-accent-amber' : 'border-accent-red')}>
           <span className={cn('text-xl font-bold', scoreLabelColor(overall))}>{overall}</span>
         </div>
         <div>
           <p className="text-sm font-medium text-text-primary">Overall Quality</p>
-          <p className="text-xs text-text-secondary">{overall >= 70 ? 'Good' : overall >= 40 ? 'Needs improvement' : 'Low quality'}</p>
+          <p className="text-xs text-text-secondary">{overall >= QUALITY_THRESHOLDS.AUTO_APPROVE ? 'Excellent' : overall >= QUALITY_THRESHOLDS.REVIEW_REQUIRED ? 'Needs review' : overall >= QUALITY_THRESHOLDS.AUTO_REJECT ? 'Low quality' : 'Rejected'}</p>
         </div>
         <button onClick={handleRecalculate} disabled={recalculating} className="btn-secondary btn-sm flex items-center gap-1 ml-auto" title="Recalculate">
           {recalculating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}

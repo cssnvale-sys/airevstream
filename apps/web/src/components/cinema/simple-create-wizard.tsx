@@ -6,6 +6,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Loader2,
   Sparkles,
   Clapperboard,
@@ -16,7 +17,7 @@ import { useChannelSeries } from '@/hooks/use-series';
 import { toast } from '@/lib/toast';
 import { useComplexityMode } from '@/hooks/use-complexity-mode';
 import { isVisible, FIELD_VISIBILITY } from '@/lib/complexity-fields';
-import { SIMPLE_MODE_GUARDRAILS } from '@airevstream/shared';
+import { SIMPLE_MODE_GUARDRAILS, APPROVAL_DEFAULTS } from '@airevstream/shared';
 import type { ProductionDirectives, Recipe } from '@airevstream/shared';
 import { IntakeScreen } from './intake-screen';
 import type { IntakeResult } from './intake-screen';
@@ -647,6 +648,14 @@ export function SimpleCreateWizard() {
           onRegenerate={() => generatePlan()}
           regenerating={generating}
         />
+
+        <div className="rounded-lg border border-border bg-bg-secondary p-3 text-sm text-text-secondary flex items-start gap-2">
+          <Clock size={14} className="shrink-0 mt-0.5 text-accent-blue" />
+          <span>
+            After generation, you'll have up to {APPROVAL_DEFAULTS.INITIAL_GATE_WINDOW_HRS}h to review before auto-approval.
+            Higher quality scores may auto-approve sooner.
+          </span>
+        </div>
       </div>
     );
   };

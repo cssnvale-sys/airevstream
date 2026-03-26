@@ -26,6 +26,7 @@ export interface ShotData {
   startSec: number;
   endSec: number;
   keyframeUrls: string[];
+  plateVideoUrl: string | null;
   qualityScore: number | null;
   shotspec: Record<string, unknown>;
 }

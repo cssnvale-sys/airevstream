@@ -33,6 +33,8 @@ async function pollAlerts(ctx: ApiContext, lastCheck: Date): Promise<SystemEvent
 
   if (!alert) return null;
 
+  const metadata = (alert.metadata as Record<string, unknown>) ?? {};
+
   return {
     type: 'alert',
     id: eventId(),
@@ -43,6 +45,8 @@ async function pollAlerts(ctx: ApiContext, lastCheck: Date): Promise<SystemEvent
       message: alert.message ?? '',
       category: alert.category,
       source: alert.source ?? 'system',
+      link: (metadata.link as string) ?? undefined,
+      metadata,
     },
   };
 }
@@ -171,7 +175,6 @@ export async function GET(req: NextRequest) {
   const tenantChannelIds = tenantChannels.map((c) => c.id);
 
   const signal = req.signal;
-  let cycleIndex = 0;
   let lastCheck = new Date(Date.now() - 60_000); // Start checking from 1 minute ago
 
   const stream = new ReadableStream({
@@ -193,19 +196,20 @@ export async function GET(req: NextRequest) {
         }
       }, 30_000);
 
-      // Poll real data every 10 seconds, cycling through event types
+      // Poll all event types in parallel every 10 seconds
       const eventInterval = setInterval(async () => {
+        const cycleStart = new Date();
         try {
-          const poller = pollers[cycleIndex % pollers.length];
-          cycleIndex++;
-
-          const event = await poller.fn(ctx, lastCheck, tenantChannelIds);
-          if (event) {
-            controller.enqueue(sseMessage(event.type, event));
+          const results = await Promise.allSettled(
+            pollers.map(p => p.fn(ctx, lastCheck, tenantChannelIds))
+          );
+          for (const result of results) {
+            if (result.status === 'fulfilled' && result.value) {
+              controller.enqueue(sseMessage(result.value.type, result.value));
+            }
           }
-          lastCheck = new Date();
+          lastCheck = cycleStart;
         } catch (err) {
-          // DB query failed — log for observability but keep the stream alive
           console.error('SSE poll error (cycle skipped):', err);
         }
       }, 10_000);

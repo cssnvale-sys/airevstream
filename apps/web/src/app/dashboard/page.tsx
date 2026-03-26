@@ -19,7 +19,20 @@ import {
 } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
 import { toast } from '@/lib/toast';
+import { QualityBadge } from '@/components/ui/quality-badge';
 import Link from 'next/link';
+
+function formatCountdown(createdAt: string, gateWindowHrs: number | null): { text: string; urgency: 'normal' | 'amber' | 'red' } | null {
+  if (gateWindowHrs == null) return null;
+  const deadline = new Date(new Date(createdAt).getTime() + gateWindowHrs * 60 * 60 * 1000);
+  const remainingMs = deadline.getTime() - Date.now();
+  if (remainingMs <= 0) return { text: 'Auto-approving...', urgency: 'red' };
+  const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+  const mins = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+  const text = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  const urgency = remainingMs < 30 * 60 * 1000 ? 'red' : remainingMs < 2 * 60 * 60 * 1000 ? 'amber' : 'normal';
+  return { text, urgency };
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,9 +40,11 @@ import Link from 'next/link';
 
 interface ApprovalItem {
   id: string;
+  title: string | null;
   channel?: { id: string; name: string };
   contentType: string;
   qualityScore: number | null;
+  approvalGateWindowHrs: number | null;
   status: string;
   createdAt: string;
 }
@@ -333,39 +348,52 @@ export default function DashboardPage() {
           <p className="text-text-secondary text-sm py-4 text-center">No pending approvals</p>
         ) : (
           <div className="divide-y divide-border">
-            {approvals.slice(0, 5).map((item) => (
-              <div key={item.id} className="flex items-center gap-3 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">{item.channel?.name ?? 'No channel'}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={cn('badge text-xs', statusColor(item.status))}>{item.contentType}</span>
-                    <span className="text-xs text-text-secondary">
-                      Score: {item.qualityScore != null && !isNaN(Number(item.qualityScore)) ? Number(item.qualityScore) : '--'}
-                    </span>
+            {approvals.slice(0, 5).map((item) => {
+              const countdown = formatCountdown(item.createdAt, item.approvalGateWindowHrs);
+              return (
+                <div key={item.id} className="flex items-center gap-3 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text-primary truncate">{item.title ?? item.channel?.name ?? 'No channel'}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={cn('badge text-xs', statusColor(item.status))}>{item.contentType}</span>
+                      {item.qualityScore != null && (
+                        <QualityBadge score={Number(item.qualityScore)} size="sm" />
+                      )}
+                      {countdown && (
+                        <span className={cn('text-xs', {
+                          'text-text-secondary': countdown.urgency === 'normal',
+                          'text-accent-amber': countdown.urgency === 'amber',
+                          'text-accent-red font-medium': countdown.urgency === 'red',
+                        })}>
+                          <Clock size={10} className="inline mr-0.5" />
+                          {countdown.text}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      disabled={actionInFlight === item.id}
+                      onClick={() => handleApproval(item.id, 'approve')}
+                      className="btn-success btn-sm flex items-center gap-1"
+                      aria-label="Approve"
+                    >
+                      <CheckCircle2 size={14} />
+                      <span className="hidden sm:inline">Approve</span>
+                    </button>
+                    <button
+                      disabled={actionInFlight === item.id}
+                      onClick={() => handleApproval(item.id, 'reject')}
+                      className="btn-danger btn-sm flex items-center gap-1"
+                      aria-label="Reject"
+                    >
+                      <XCircle size={14} />
+                      <span className="hidden sm:inline">Reject</span>
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    disabled={actionInFlight === item.id}
-                    onClick={() => handleApproval(item.id, 'approve')}
-                    className="btn-success btn-sm flex items-center gap-1"
-                    aria-label="Approve"
-                  >
-                    <CheckCircle2 size={14} />
-                    <span className="hidden sm:inline">Approve</span>
-                  </button>
-                  <button
-                    disabled={actionInFlight === item.id}
-                    onClick={() => handleApproval(item.id, 'reject')}
-                    className="btn-danger btn-sm flex items-center gap-1"
-                    aria-label="Reject"
-                  >
-                    <XCircle size={14} />
-                    <span className="hidden sm:inline">Reject</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

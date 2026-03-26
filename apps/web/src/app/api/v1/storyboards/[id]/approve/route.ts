@@ -1,0 +1,90 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+
+type RouteParams = { params: Promise<{ id: string }> };
+
+/**
+ * POST /api/v1/storyboards/[id]/approve
+ * Approve a storyboard that is in pending_review status and resume the pipeline.
+ */
+export async function POST(req: NextRequest, { params }: RouteParams) {
+  try {
+    const ctx = await authenticate(req);
+    if (ctx instanceof NextResponse) return ctx;
+
+    if (ctx.role === 'viewer') {
+      return forbidden('Viewers cannot approve storyboards');
+    }
+
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`storyboard-approve:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
+    const { id } = await params;
+    if (!isUUID(id)) return validationError('Invalid ID format');
+
+    const storyboard = await ctx.db.storyboard.findFirst({
+      where: {
+        id,
+        content: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } },
+      },
+      include: {
+        content: { select: { id: true, channelId: true, contentType: true, title: true } },
+        shots: { select: { id: true, status: true }, orderBy: { shotNumber: 'asc' } },
+      },
+    });
+
+    if (!storyboard) return notFound('Storyboard not found');
+
+    if (storyboard.status !== 'pending_review') {
+      return error('INVALID_STATE', `Cannot approve storyboard with status "${storyboard.status}"`, 409);
+    }
+
+    // Set storyboard to approved
+    await ctx.db.storyboard.update({
+      where: { id },
+      data: { status: 'approved' },
+    });
+
+    // Queue remaining pipeline steps (audio mix → render → final review)
+    // Import queue dynamically to avoid circular deps
+    try {
+      const { getQueue } = await import('@airevstream/queue');
+      const productionQueue = getQueue('production');
+
+      // Queue audio mix
+      await productionQueue.add('production:mix-audio', {
+        contentId: storyboard.content.id,
+        storyboardId: id,
+        channelId: storyboard.content.channelId,
+      } as any);
+
+      // Queue video render
+      await productionQueue.add('production:render-video', {
+        contentId: storyboard.content.id,
+        storyboardId: id,
+        channelId: storyboard.content.channelId,
+        qualityPreset: 'cinema',
+      } as any);
+
+      // Queue final review
+      const contentQueue = getQueue('content');
+      await contentQueue.add('content:final-review', {
+        contentId: storyboard.content.id,
+        storyboardId: id,
+        autoApprove: false,
+      } as any);
+    } catch (queueErr) {
+      console.error('Failed to queue pipeline continuation jobs:', queueErr);
+      // Still return success — the storyboard is approved even if queuing fails
+    }
+
+    return success({ id, status: 'approved', pipelineResumed: true });
+  } catch (err) {
+    console.error('POST /api/v1/storyboards/[id]/approve error:', err);
+    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+  }
+}

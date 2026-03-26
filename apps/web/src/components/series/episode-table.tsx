@@ -7,7 +7,8 @@ import { Plus, GripVertical, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { AddEpisodeModal } from './add-episode-modal';
 import { apiDelete } from '@/hooks/use-api';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Episode {
   id: string;
@@ -40,15 +41,16 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function EpisodeTable({ seriesId }: Props) {
   const [showAdd, setShowAdd] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const { data: rawData, isLoading, mutate } = useSeriesEpisodes<Episode[]>(seriesId);
 
   const episodes = rawData?.data ?? [];
 
   const handleDelete = async (episodeId: string) => {
-    if (!confirm('Remove this episode from the series?')) return;
     try {
       await apiDelete(`/series/${seriesId}/episodes/${episodeId}`);
       toast.success('Episode removed');
+      setDeleteId(null);
       mutate();
     } catch {
       toast.error('Failed to remove episode');
@@ -119,7 +121,7 @@ export function EpisodeTable({ seriesId }: Props) {
                   </td>
                   <td className="px-3 py-2">
                     <button
-                      onClick={() => handleDelete(ep.id)}
+                      onClick={() => setDeleteId(ep.id)}
                       className="text-text-secondary hover:text-accent-red transition-colors"
                       title="Remove episode"
                     >
@@ -132,6 +134,16 @@ export function EpisodeTable({ seriesId }: Props) {
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Remove Episode"
+        message="Remove this episode from the series? The underlying content will not be deleted."
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => deleteId && handleDelete(deleteId)}
+        onCancel={() => setDeleteId(null)}
+      />
 
       <AddEpisodeModal
         open={showAdd}

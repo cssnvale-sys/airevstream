@@ -33,8 +33,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const storefront = await ctx.db.storefront.findUnique({
-      where: { id },
+    const storefront = await ctx.db.storefront.findFirst({
+      where: {
+        id,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      },
       include: {
         products: {
           orderBy: { displayOrder: 'asc' },
@@ -43,16 +46,6 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     });
 
     if (!storefront) return notFound('Storefront not found');
-
-    // Verify tenant ownership through channel → socialAccount → emailAccount
-    const ownsChannel = await ctx.db.channel.findFirst({
-      where: {
-        id: storefront.channelId,
-        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
-      },
-      select: { id: true },
-    });
-    if (!ownsChannel) return notFound('Storefront not found');
 
     return success(storefront);
   } catch (err) {
@@ -81,18 +74,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.storefront.findUnique({ where: { id } });
-    if (!existing) return notFound('Storefront not found');
-
-    // Verify tenant ownership through channel → socialAccount → emailAccount
-    const ownsChannel = await ctx.db.channel.findFirst({
+    const existing = await ctx.db.storefront.findFirst({
       where: {
-        id: existing.channelId,
-        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+        id,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true },
     });
-    if (!ownsChannel) return notFound('Storefront not found');
+    if (!existing) return notFound('Storefront not found');
 
     const body = await req.json();
     const parsed = updateStorefrontSchema.safeParse(body);
@@ -144,18 +133,14 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
-    const existing = await ctx.db.storefront.findUnique({ where: { id } });
-    if (!existing) return notFound('Storefront not found');
-
-    // Verify tenant ownership through channel → socialAccount → emailAccount
-    const ownsChannel = await ctx.db.channel.findFirst({
+    const existing = await ctx.db.storefront.findFirst({
       where: {
-        id: existing.channelId,
-        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+        id,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
       select: { id: true },
     });
-    if (!ownsChannel) return notFound('Storefront not found');
+    if (!existing) return notFound('Storefront not found');
 
     await ctx.db.storefront.delete({ where: { id } });
 

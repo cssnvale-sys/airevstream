@@ -45,6 +45,21 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           include: {
             shots: {
               orderBy: { shotNumber: 'asc' },
+              select: {
+                id: true,
+                storyboardId: true,
+                shotNumber: true,
+                startSec: true,
+                endSec: true,
+                status: true,
+                qualityScore: true,
+                generationCost: true,
+                shotspec: true,
+                keyframeUrls: true,
+                plateVideoUrl: true,
+                createdAt: true,
+                updatedAt: true,
+              },
             },
           },
         },

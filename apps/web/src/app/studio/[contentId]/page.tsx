@@ -13,7 +13,9 @@ import { CostPreviewPanel } from '@/components/cinema/cost-preview-panel';
 import type { ShotData } from '@/components/cinema/shot-editor-panel';
 import type { GuidanceSuggestion } from '@/components/cinema/ai-guidance-panel';
 import Link from 'next/link';
-import { List, Table2 } from 'lucide-react';
+import { List, Table2, ImageIcon, Film as FilmIcon, Check, X, RotateCcw, Loader2 } from 'lucide-react';
+import { MediaPreview } from '@/components/ui/media-preview';
+import { QualityBadge } from '@/components/ui/quality-badge';
 import { ComplexityToggle } from '@/components/ui/complexity-toggle';
 import { ExportVariants } from '@/components/cinema/export-variants';
 import { ProvenanceViewer } from '@/components/cinema/provenance-viewer';
@@ -41,10 +43,17 @@ interface StudioContent {
       startSec: number;
       endSec: number;
       keyframeUrls: string[];
+      plateVideoUrl: string | null;
       qualityScore: number | null;
       shotspec: Record<string, unknown>;
     }>;
   }>;
+}
+
+function parseStorageUrl(url: string): { bucket: string; key: string } | null {
+  const slashIdx = url.indexOf('/');
+  if (slashIdx <= 0) return null;
+  return { bucket: url.slice(0, slashIdx), key: url.slice(slashIdx + 1) };
 }
 
 export default function StudioPage() {
@@ -52,6 +61,8 @@ export default function StudioPage() {
   const { data, error, isLoading, mutate } = useApi<StudioContent>(`/content/${contentId}?include=storyboards`);
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'editor' | 'table'>('editor');
+  const [previewMode, setPreviewMode] = useState<'keyframe' | 'video'>('keyframe');
+  const [reviewActing, setReviewActing] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<GuidanceSuggestion[]>([]);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const { progress: jobProgress, status: jobStatus, isComplete: jobDone } = useJobStatus(activeJobId);
@@ -128,6 +139,35 @@ export default function StudioPage() {
     await handleUpdateShot(selectedShotId, { ...shot.shotspec, ...patch });
   }, [selectedShotId, shots, handleUpdateShot]);
 
+  const handleShotAction = useCallback(async (shotId: string, action: 'approve' | 'reject' | 'regenerate') => {
+    setReviewActing(shotId);
+    try {
+      await apiPost(`/storyboard-shots/${shotId}/approve`, { action });
+      toast.success(`Shot ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'regenerating'}`);
+      await mutate();
+    } catch (err) {
+      console.error(`Failed to ${action} shot:`, err);
+      toast.error(`Failed to ${action} shot`);
+    } finally {
+      setReviewActing(null);
+    }
+  }, [mutate]);
+
+  const handleApproveAllAndRender = useCallback(async () => {
+    if (!storyboard) return;
+    setReviewActing('all');
+    try {
+      await apiPost(`/storyboards/${storyboard.id}/approve`);
+      toast.success('Storyboard approved — pipeline resuming');
+      await mutate();
+    } catch (err) {
+      console.error('Failed to approve storyboard:', err);
+      toast.error('Failed to approve storyboard');
+    } finally {
+      setReviewActing(null);
+    }
+  }, [storyboard, mutate]);
+
   // Fetch AI guidance when selected shot changes (debounced)
   useEffect(() => {
     if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current);
@@ -157,8 +197,36 @@ export default function StudioPage() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-text-secondary">Loading studio...</div>
+      <div className="flex flex-col h-screen animate-pulse">
+        {/* Top bar skeleton */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-bg-secondary shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-10 bg-bg-tertiary rounded" />
+            <div className="h-4 w-48 bg-bg-tertiary rounded" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-24 bg-bg-tertiary rounded" />
+            <div className="h-8 w-16 bg-bg-tertiary rounded" />
+          </div>
+        </div>
+        {/* Main content skeleton */}
+        <div className="flex-1 overflow-hidden">
+          <div className="grid grid-cols-12 h-full">
+            <div className="col-span-10 p-4 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 bg-bg-tertiary rounded-lg" />
+              ))}
+            </div>
+            <div className="col-span-2 border-l border-border p-3 space-y-4">
+              <div className="h-32 bg-bg-tertiary rounded-lg" />
+              <div className="h-24 bg-bg-tertiary rounded-lg" />
+            </div>
+          </div>
+        </div>
+        {/* Timeline skeleton */}
+        <div className="h-16 border-t border-border bg-bg-secondary px-4 py-2">
+          <div className="h-full bg-bg-tertiary rounded" />
+        </div>
       </div>
     );
   }
@@ -217,6 +285,120 @@ export default function StudioPage() {
         </div>
       </div>
 
+      {/* Storyboard review banner */}
+      {storyboard?.status === 'pending_review' && (
+        <div className="border-b border-accent-amber/30 bg-accent-amber/5 px-4 py-3 shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-text-primary">Storyboard Ready for Review</h2>
+              <p className="text-xs text-text-secondary mt-0.5">
+                {shots.filter(s => s.status === 'approved').length}/{shots.length} shots approved
+                {shots.filter(s => s.status === 'pending').length > 0 && `, ${shots.filter(s => s.status === 'pending').length} pending`}
+                {shots.filter(s => s.status === 'failed').length > 0 && `, ${shots.filter(s => s.status === 'failed').length} failed`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleApproveAllAndRender}
+                disabled={reviewActing === 'all'}
+                className="btn-primary flex items-center gap-1.5 text-sm"
+              >
+                {reviewActing === 'all' ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Approve All & Render
+              </button>
+            </div>
+          </div>
+          {/* Per-shot review controls */}
+          <div className="mt-3 space-y-1.5 max-h-48 overflow-y-auto">
+            {shots.map(shot => (
+              <div key={shot.id} className="flex items-center justify-between py-1 px-2 rounded bg-bg-secondary/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-text-primary w-8">#{shot.shotNumber}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    shot.status === 'approved' ? 'bg-accent-green/10 text-accent-green' :
+                    shot.status === 'failed' ? 'bg-accent-red/10 text-accent-red' :
+                    shot.status === 'generating' ? 'bg-accent-blue/10 text-accent-blue' :
+                    'bg-bg-tertiary text-text-secondary'
+                  }`}>
+                    {shot.status}
+                  </span>
+                  {shot.qualityScore != null && <QualityBadge score={shot.qualityScore} size="sm" />}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleShotAction(shot.id, 'approve')}
+                    disabled={reviewActing === shot.id || shot.status === 'approved'}
+                    className="p-1 rounded text-accent-green hover:bg-accent-green/10 disabled:opacity-30"
+                    title="Approve shot"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleShotAction(shot.id, 'reject')}
+                    disabled={reviewActing === shot.id || shot.status === 'failed'}
+                    className="p-1 rounded text-accent-red hover:bg-accent-red/10 disabled:opacity-30"
+                    title="Reject shot"
+                  >
+                    <X size={14} />
+                  </button>
+                  <button
+                    onClick={() => handleShotAction(shot.id, 'regenerate')}
+                    disabled={reviewActing === shot.id || shot.status === 'generating'}
+                    className="p-1 rounded text-accent-blue hover:bg-accent-blue/10 disabled:opacity-30"
+                    title="Regenerate shot"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Shot preview bar */}
+      {(() => {
+        const selectedShot = shots.find(s => s.id === selectedShotId);
+        if (!selectedShot) return null;
+        const hasVideo = !!selectedShot.plateVideoUrl;
+        const videoUrl = selectedShot.plateVideoUrl ? parseStorageUrl(selectedShot.plateVideoUrl) : null;
+        const keyframeUrl = selectedShot.keyframeUrls?.[0] ? parseStorageUrl(selectedShot.keyframeUrls[0]) : null;
+
+        return (
+          <div className="border-b border-border bg-bg-secondary px-4 py-2 shrink-0">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-xs text-text-secondary">Shot {selectedShot.shotNumber} Preview</span>
+              <div className="flex items-center border border-border rounded-md">
+                <button
+                  onClick={() => setPreviewMode('keyframe')}
+                  className={cn('px-2 py-1 text-xs flex items-center gap-1', previewMode === 'keyframe' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
+                >
+                  <ImageIcon size={12} /> Keyframe
+                </button>
+                <button
+                  onClick={() => setPreviewMode('video')}
+                  disabled={!hasVideo}
+                  className={cn('px-2 py-1 text-xs flex items-center gap-1', previewMode === 'video' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary', !hasVideo && 'opacity-40 cursor-not-allowed')}
+                >
+                  <FilmIcon size={12} /> Video
+                </button>
+              </div>
+            </div>
+            <div className="max-w-md">
+              {previewMode === 'video' && videoUrl ? (
+                <MediaPreview bucket={videoUrl.bucket} objectKey={videoUrl.key} type="video" className="w-full aspect-video" />
+              ) : keyframeUrl ? (
+                <MediaPreview bucket={keyframeUrl.bucket} objectKey={keyframeUrl.key} type="image" className="w-full aspect-video" alt={`Shot ${selectedShot.shotNumber} keyframe`} />
+              ) : (
+                <div className="w-full aspect-video bg-bg-tertiary rounded-lg flex items-center justify-center">
+                  <ImageIcon size={24} className="text-text-secondary opacity-40" />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Main content area */}
       <div className="flex-1 overflow-hidden">
         <div className="grid grid-cols-12 h-full">
@@ -255,11 +437,13 @@ export default function StudioPage() {
 
           {/* Right panel: guidance + progress (2 cols) */}
           <div className="col-span-2 border-l border-border p-3 overflow-y-auto space-y-4">
-            <AiGuidancePanel
-              suggestions={suggestions}
-              onApplyAction={handleApplyGuidance}
-            />
             <PipelineProgress contentId={contentId} />
+            {isVisible('advanced', mode) && (
+              <AiGuidancePanel
+                suggestions={suggestions}
+                onApplyAction={handleApplyGuidance}
+              />
+            )}
             {activeJobId && !jobDone && (
               <div className="p-3 rounded-lg bg-bg-tertiary">
                 <p className="text-xs text-text-secondary mb-1">Job Progress</p>

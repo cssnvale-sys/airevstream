@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useWorkflows, apiPost } from '@/hooks/use-api';
+import { useWorkflows, useApi, apiPost } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Activity, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Activity, ChevronLeft, ChevronRight, RefreshCw, User } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { CopyButton } from '@/components/ui/copy-button';
 import { toast } from '@/lib/toast';
+import { HitlTaskCard, type HitlTask } from '@/components/workflows/hitl-task-card';
 
 interface WorkflowJob {
   id: string;
@@ -35,10 +36,15 @@ const JOB_TYPE_FILTERS = ['all', 'content_generation', 'image_generation', 'vide
 const PAGE_SIZE = 20;
 
 export default function WorkflowsPage() {
+  const [activeTab, setActiveTab] = useState<'jobs' | 'hitl'>('jobs');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [jobTypeFilter, setJobTypeFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+
+  // HITL tasks
+  const { data: hitlRes, isLoading: hitlLoading, mutate: hitlMutate } = useApi<HitlTask[]>('/workflows/hitl?limit=50');
+  const hitlTasks = hitlRes?.data ?? [];
 
   // Build query params
   const queryParams = useMemo(() => {
@@ -90,22 +96,26 @@ export default function WorkflowsPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-text-primary">Workflows</h1>
           <div className="flex items-center gap-3">
-            {/* Job type filter */}
-            <select
-              value={jobTypeFilter}
-              onChange={(e) => updateJobTypeFilter(e.target.value)}
-              className="input text-caption"
-            >
-              {JOB_TYPE_FILTERS.map((t) => (
-                <option key={t} value={t}>
-                  {t === 'all' ? 'All Types' : t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                </option>
-              ))}
-            </select>
+            {activeTab === 'jobs' && (
+              <>
+                {/* Job type filter */}
+                <select
+                  value={jobTypeFilter}
+                  onChange={(e) => updateJobTypeFilter(e.target.value)}
+                  className="input text-caption"
+                >
+                  {JOB_TYPE_FILTERS.map((t) => (
+                    <option key={t} value={t}>
+                      {t === 'all' ? 'All Types' : t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
             {/* Refresh button */}
             <button
-              onClick={() => mutate()}
+              onClick={() => activeTab === 'jobs' ? mutate() : hitlMutate()}
               className="btn-icon"
               title="Refresh"
             >
@@ -113,6 +123,55 @@ export default function WorkflowsPage() {
             </button>
           </div>
         </div>
+
+        {/* Tab switcher */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveTab('jobs')}
+            className={cn(
+              'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+              activeTab === 'jobs' ? 'bg-accent-blue text-white' : 'bg-bg-secondary text-text-secondary hover:text-text-primary',
+            )}
+          >
+            All Jobs
+          </button>
+          <button
+            onClick={() => setActiveTab('hitl')}
+            className={cn(
+              'px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5',
+              activeTab === 'hitl' ? 'bg-accent-blue text-white' : 'bg-bg-secondary text-text-secondary hover:text-text-primary',
+            )}
+          >
+            <User size={14} />
+            Human Tasks
+            {hitlTasks.length > 0 && (
+              <span className="min-w-[18px] h-[18px] bg-accent-red text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                {hitlTasks.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeTab === 'hitl' ? (
+          hitlLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="animate-spin text-text-secondary" size={32} />
+            </div>
+          ) : hitlTasks.length === 0 ? (
+            <EmptyState
+              icon={CheckCircle}
+              title="No human tasks"
+              description="All tasks that require human intervention will appear here."
+            />
+          ) : (
+            <div className="space-y-3">
+              {hitlTasks.map((task) => (
+                <HitlTaskCard key={task.id} task={task} onComplete={() => hitlMutate()} />
+              ))}
+            </div>
+          )
+        ) : (
+          <>
 
         {/* Status filter tabs */}
         <div className="flex gap-2 mb-6">
@@ -228,6 +287,8 @@ export default function WorkflowsPage() {
                 </div>
               </div>
             )}
+          </>
+        )}
           </>
         )}
       </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { updateTrustAfterAction, APPROVAL_DEFAULTS } from '@airevstream/shared';
 
 const RejectBodySchema = z.object({
   feedback: z.string().max(2000).optional(),
@@ -68,12 +69,46 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         });
       }
 
-      return { id, action, status: action === 'approve' ? 'approved' : 'draft' };
+      return { id, action, status: action === 'approve' ? 'approved' : 'draft', contentType: content.contentType, qualityScore: content.qualityScore };
     });
 
     if (!result) return error('NOT_FOUND', 'Content not found', 404);
 
-    return success(result);
+    // Update approval trust score (non-blocking)
+    try {
+      const existing = await ctx.db.approvalTrustScore.findFirst({
+        where: { dimensionType: 'content_type', dimensionValue: result.contentType },
+      });
+      const current = existing
+        ? { trustScore: Number(existing.trustScore), gateWindowHrs: Number(existing.gateWindowHrs) }
+        : { trustScore: 50, gateWindowHrs: APPROVAL_DEFAULTS.INITIAL_GATE_WINDOW_HRS };
+      const trustUpdate = updateTrustAfterAction({
+        currentTrustScore: current.trustScore,
+        currentGateWindowHrs: current.gateWindowHrs,
+        action: action as 'approve' | 'reject',
+        qualityScore: result.qualityScore != null ? Number(result.qualityScore) : null,
+      });
+      await ctx.db.approvalTrustScore.upsert({
+        where: { id: existing?.id ?? '00000000-0000-0000-0000-000000000000' },
+        create: {
+          dimensionType: 'content_type',
+          dimensionValue: result.contentType,
+          trustScore: trustUpdate.newTrustScore,
+          gateWindowHrs: trustUpdate.newGateWindowHrs,
+          totalApproved: action === 'approve' ? 1 : 0,
+          totalRejected: action === 'reject' ? 1 : 0,
+        },
+        update: {
+          trustScore: trustUpdate.newTrustScore,
+          gateWindowHrs: trustUpdate.newGateWindowHrs,
+          ...(action === 'approve' ? { totalApproved: { increment: 1 } } : { totalRejected: { increment: 1 } }),
+        },
+      });
+    } catch (trustErr) {
+      console.error('Failed to update trust score:', trustErr);
+    }
+
+    return success({ id: result.id, action: result.action, status: result.status });
   } catch (err) {
     console.error(`POST /approvals/${id}/${action} failed:`, err);
     return error('INTERNAL_ERROR', `Failed to ${action} content`, 500);

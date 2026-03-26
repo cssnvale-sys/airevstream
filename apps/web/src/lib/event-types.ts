@@ -30,6 +30,8 @@ export type AlertEvent = SystemEventBase & {
     message: string;
     category: string;
     source: string;
+    link?: string;
+    metadata?: Record<string, unknown>;
   };
 };
 

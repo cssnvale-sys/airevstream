@@ -7,7 +7,9 @@ import { getToken } from '@/lib/auth';
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { NotificationItem, type Notification } from './notification-item';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useRouter } from 'next/navigation';
+import { useSystemEvents } from '@/lib/sse';
 
 type AlertsResponse = {
   success: boolean;
@@ -37,6 +39,14 @@ export function NotificationCenter() {
     fetcher,
     { refreshInterval: 30000 },
   );
+
+  // Wire SSE alert events for immediate refresh
+  const { alert: sseAlert } = useSystemEvents();
+  useEffect(() => {
+    if (sseAlert) {
+      mutate(); // Immediately refresh the notification list when an SSE alert arrives
+    }
+  }, [sseAlert, mutate]);
 
   const alerts = (data?.data as Notification[] | undefined) ?? [];
   const unreadCount = alerts.filter((a) => a.status === 'open').length;
@@ -169,8 +179,9 @@ export function NotificationCenter() {
 
   const handleNotificationClick = useCallback(
     (notification: Notification) => {
-      if (notification.link) {
-        router.push(notification.link);
+      const link = notification.link ?? (notification.metadata?.link as string | undefined);
+      if (link) {
+        router.push(link);
         setOpen(false);
       }
     },
@@ -229,15 +240,12 @@ export function NotificationCenter() {
           {/* Notification list */}
           <div className="flex-1 overflow-y-auto divide-y divide-border">
             {alerts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 px-4">
-                <div className="p-3 rounded-full bg-bg-tertiary mb-3">
-                  <Inbox size={24} className="text-text-secondary" />
-                </div>
-                <p className="text-body text-text-secondary">No notifications</p>
-                <p className="text-caption text-text-secondary mt-1">
-                  You&apos;re all caught up
-                </p>
-              </div>
+              <EmptyState
+                icon={Inbox}
+                title="No notifications"
+                description="You're all caught up"
+                className="py-12"
+              />
             ) : (
               alerts.map((notification) => (
                 <NotificationItem

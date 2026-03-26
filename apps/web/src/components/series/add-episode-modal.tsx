@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
 import { apiPost, useApi } from '@/hooks/use-api';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface Props {
   open: boolean;
@@ -24,6 +24,15 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   const [title, setTitle] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   const { data: contentData } = useApi<ContentOption[]>(
     open ? `/content?limit=50${search ? `&search=${encodeURIComponent(search)}` : ''}` : null,
@@ -58,7 +67,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
+      <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4" role="dialog" aria-modal="true">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Add Episode</h2>
           <button onClick={onClose} className="text-text-secondary hover:text-text-primary">

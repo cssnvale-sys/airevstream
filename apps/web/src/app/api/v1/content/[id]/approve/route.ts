@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { updateTrustAfterAction, APPROVAL_DEFAULTS } from '@airevstream/shared';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -23,36 +24,32 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
-    const item = await ctx.db.contentItem.findFirst({
-      where: {
-        id,
-        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-      },
-      select: { id: true, status: true },
-    });
-
-    if (!item) {
-      return notFound('Content item not found');
-    }
-
     const approvableStatuses = ['generated', 'pending_approval'];
-    if (item.status === 'approved') {
-      return error('ALREADY_APPROVED', 'Content item is already approved', 409);
-    }
-    if (!approvableStatuses.includes(item.status)) {
-      return error('INVALID_STATE', `Cannot approve content with status "${item.status}"`, 409);
-    }
 
-    const [updated] = await ctx.db.$transaction([
-      ctx.db.contentItem.update({
+    const updated = await ctx.db.$transaction(async (tx) => {
+      const item = await tx.contentItem.findFirst({
+        where: {
+          id,
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+        select: { id: true, status: true },
+      });
+
+      if (!item) return null;
+
+      if (item.status === 'approved') return 'already_approved' as const;
+      if (!approvableStatuses.includes(item.status)) return item.status;
+
+      const result = await tx.contentItem.update({
         where: { id },
         data: {
           status: 'approved',
           approvedAt: new Date(),
           approvedBy: ctx.userId,
         },
-      }),
-      ctx.db.actionAuditLog.create({
+      });
+
+      await tx.actionAuditLog.create({
         data: {
           actionType: 'content.approve',
           tier: 1,
@@ -60,8 +57,60 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           result: { status: 'approved' },
           status: 'completed',
         },
-      }),
-    ]);
+      });
+
+      return result;
+    });
+
+    if (updated === null) {
+      return notFound('Content item not found');
+    }
+    if (updated === 'already_approved') {
+      return error('ALREADY_APPROVED', 'Content item is already approved', 409);
+    }
+    if (typeof updated === 'string') {
+      return error('INVALID_STATE', `Cannot approve content with status "${updated}"`, 409);
+    }
+
+    // Update approval trust score (non-blocking)
+    try {
+      const contentItem = await ctx.db.contentItem.findUnique({
+        where: { id },
+        select: { contentType: true, qualityScore: true },
+      });
+      if (contentItem) {
+        const existing = await ctx.db.approvalTrustScore.findFirst({
+          where: { dimensionType: 'content_type', dimensionValue: contentItem.contentType },
+        });
+        const current = existing
+          ? { trustScore: Number(existing.trustScore), gateWindowHrs: Number(existing.gateWindowHrs) }
+          : { trustScore: 50, gateWindowHrs: APPROVAL_DEFAULTS.INITIAL_GATE_WINDOW_HRS };
+        const updated = updateTrustAfterAction({
+          currentTrustScore: current.trustScore,
+          currentGateWindowHrs: current.gateWindowHrs,
+          action: 'approve',
+          qualityScore: contentItem.qualityScore != null ? Number(contentItem.qualityScore) : null,
+        });
+        await ctx.db.approvalTrustScore.upsert({
+          where: { id: existing?.id ?? '00000000-0000-0000-0000-000000000000' },
+          create: {
+            dimensionType: 'content_type',
+            dimensionValue: contentItem.contentType,
+            trustScore: updated.newTrustScore,
+            gateWindowHrs: updated.newGateWindowHrs,
+            totalApproved: 1,
+            totalRejected: 0,
+          },
+          update: {
+            trustScore: updated.newTrustScore,
+            gateWindowHrs: updated.newGateWindowHrs,
+            totalApproved: { increment: 1 },
+          },
+        });
+      }
+    } catch (trustErr) {
+      console.error('Failed to update trust score on approve:', trustErr);
+    }
 
     return success({
       ...updated,

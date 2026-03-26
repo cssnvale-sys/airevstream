@@ -3,6 +3,9 @@
 import { cn } from '@/lib/utils';
 import { Film, Clock, ChevronDown, ChevronUp, ImageIcon } from 'lucide-react';
 import { useState } from 'react';
+import { usePresignedUrl } from '@/hooks/use-presigned-url';
+import { QualityBadge } from '@/components/ui/quality-badge';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface StoryboardShot {
   id: string;
@@ -20,6 +23,43 @@ interface Storyboard {
   status: string;
   totalDurationSec: number | null;
   shots: StoryboardShot[];
+}
+
+function parseStorageUrl(url: string): { bucket: string; key: string } | null {
+  // Format: "bucket/path/to/file" or "bucket-name/key"
+  const slashIdx = url.indexOf('/');
+  if (slashIdx <= 0) return null;
+  return { bucket: url.slice(0, slashIdx), key: url.slice(slashIdx + 1) };
+}
+
+function KeyframeImage({ url }: { url: string }) {
+  const parsed = parseStorageUrl(url);
+  const { url: presignedUrl, isLoading } = usePresignedUrl(parsed?.bucket ?? null, parsed?.key ?? null);
+
+  if (isLoading) {
+    return (
+      <div className="w-16 h-12 rounded bg-bg-tertiary flex items-center justify-center animate-pulse">
+        <ImageIcon size={14} className="text-text-secondary opacity-40" />
+      </div>
+    );
+  }
+
+  if (!presignedUrl) {
+    return (
+      <div className="w-16 h-12 rounded bg-bg-tertiary flex items-center justify-center">
+        <ImageIcon size={14} className="text-text-secondary opacity-40" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={presignedUrl}
+      alt="Keyframe"
+      className="w-16 h-12 rounded object-cover bg-bg-tertiary"
+      loading="lazy"
+    />
+  );
 }
 
 function formatDuration(seconds: number): string {
@@ -50,6 +90,7 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
               <span className={cn('badge text-xs', shot.status === 'generated' ? 'badge-active' : 'badge-idle')}>
                 {shot.status}
               </span>
+              {shot.qualityScore != null && <QualityBadge score={shot.qualityScore} size="sm" />}
             </div>
           </div>
         </div>
@@ -79,9 +120,7 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
           {shot.keyframeUrls && shot.keyframeUrls.length > 0 && (
             <div className="flex gap-2 mt-2">
               {shot.keyframeUrls.map((url, i) => (
-                <div key={i} className="w-16 h-12 rounded bg-bg-tertiary flex items-center justify-center">
-                  <ImageIcon size={14} className="text-text-secondary opacity-40" />
-                </div>
+                <KeyframeImage key={i} url={url} />
               ))}
             </div>
           )}
@@ -94,10 +133,12 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
 export function ShotGallery({ storyboards }: { storyboards: Storyboard[] }) {
   if (!storyboards || storyboards.length === 0) {
     return (
-      <div className="text-center py-6">
-        <Film size={32} className="mx-auto text-text-secondary opacity-40 mb-2" />
-        <p className="text-sm text-text-secondary">No storyboards generated yet</p>
-      </div>
+      <EmptyState
+        icon={Film}
+        title="No storyboards yet"
+        description="Generate a storyboard to see shots here"
+        className="py-6"
+      />
     );
   }
 

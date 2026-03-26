@@ -645,7 +645,8 @@ export class FacebookWorkflow extends BasePlatformWorkflow {
       const loggedInSelector = 'div[role="navigation"] a[href*="/me"], div[aria-label="Account"]';
       const el = await this.page.$(loggedInSelector);
       return el !== null;
-    } catch {
+    } catch (err) {
+      this.logger.debug({ err }, 'Facebook isLoggedIn check failed');
       return false;
     }
   }

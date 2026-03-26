@@ -1,7 +1,7 @@
-import { createWorker, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob, type ContentFinalReviewJob, type ContentViralScoreJob } from '@airevstream/queue';
+import { createWorker, getQueue, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob, type ContentFinalReviewJob, type ContentViralScoreJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
-import { createLogger, scoreViralPotential, APPROVAL_DEFAULTS, evaluateApprovalGate, updateTrustAfterAction } from '@airevstream/shared';
+import { createLogger, scoreViralPotential, APPROVAL_DEFAULTS, evaluateApprovalGate } from '@airevstream/shared';
 import type { ViralScoringInput } from '@airevstream/shared';
 import type { Job } from 'bullmq';
 
@@ -553,8 +553,8 @@ async function handleCheckApprovalTimeouts() {
           where: { dimensionType: 'content_type', dimensionValue: item.contentType },
         });
         if (ts) trustScore = Number(ts.trustScore);
-      } catch {
-        // Use default
+      } catch (err) {
+        logger.debug({ err, contentType: item.contentType }, 'Trust score lookup failed — using default');
       }
 
       const result = evaluateApprovalGate({
@@ -605,7 +605,6 @@ export function startContentWorker() {
   });
 
   // Register repeatable approval timeout check (every 5 minutes)
-  const { getQueue } = require('@airevstream/queue');
   const contentQueue = getQueue('content');
   contentQueue.add('content:check-approval-timeouts', { _trigger: 'repeatable' } as any, {
     repeat: { every: 5 * 60 * 1000 }, // 5 minutes

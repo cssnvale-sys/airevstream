@@ -16,7 +16,7 @@ import type { AudioVisualizationProps } from '../types';
  * @remotion/media-utils getAudioData() and visualizeAudio() here.
  */
 export const AudioVisualization: React.FC<AudioVisualizationProps> = ({
-  audioUrl,
+  audioUrl: _audioUrl,
   config,
 }) => {
   const frame = useCurrentFrame();

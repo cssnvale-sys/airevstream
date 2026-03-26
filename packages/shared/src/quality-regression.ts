@@ -94,7 +94,8 @@ export async function isVMAFAvailable(execFn?: ExecFn): Promise<boolean> {
   try {
     const { stdout } = await exec('ffmpeg', ['-filters']);
     return stdout.includes('libvmaf');
-  } catch {
+  } catch (err) {
+    console.warn('[VMAF] ffmpeg with libvmaf not available:', err instanceof Error ? err.message : String(err));
     return false;
   }
 }

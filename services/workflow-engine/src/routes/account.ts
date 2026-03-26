@@ -103,7 +103,27 @@ export async function accountRoutes(app: FastifyInstance) {
       });
     }
 
-    return reply.send({ success: true, data: account });
+    // Wrap Decimal fields for JSON serialization (nested affiliatePool + affiliateProduct)
+    const serializedAccount = {
+      ...account,
+      socialAccounts: account.socialAccounts.map((sa) => ({
+        ...sa,
+        channels: sa.channels.map((ch) => ({
+          ...ch,
+          affiliatePool: ch.affiliatePool.map((pool) => ({
+            ...pool,
+            performanceScore: Number(pool.performanceScore),
+            affiliateProduct: pool.affiliateProduct ? {
+              ...pool.affiliateProduct,
+              commissionRate: pool.affiliateProduct.commissionRate != null ? Number(pool.affiliateProduct.commissionRate) : null,
+              totalRevenue: Number(pool.affiliateProduct.totalRevenue),
+            } : pool.affiliateProduct,
+          })),
+        })),
+      })),
+    };
+
+    return reply.send({ success: true, data: serializedAccount });
   });
 
   // Create email account

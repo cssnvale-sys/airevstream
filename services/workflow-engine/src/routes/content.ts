@@ -29,6 +29,17 @@ const createContentSchema = z.object({
   affiliateMode: z.enum(['dedicated', 'commercial_break', 'none']).optional(),
 });
 
+/** Wrap Decimal fields on a flat ContentItem for JSON serialization */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function serializeContentItem(item: Record<string, any>): Record<string, unknown> {
+  return {
+    ...item,
+    qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+    durationSec: item.durationSec != null ? Number(item.durationSec) : null,
+    approvalGateWindowHrs: item.approvalGateWindowHrs != null ? Number(item.approvalGateWindowHrs) : null,
+  };
+}
+
 export async function contentRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate);
 
@@ -154,7 +165,7 @@ export async function contentRoutes(app: FastifyInstance) {
       prompt: parsed.data.prompt,
     });
 
-    return reply.status(201).send({ success: true, data: content });
+    return reply.status(201).send({ success: true, data: serializeContentItem(content) });
   });
 
   // Update content metadata
@@ -180,7 +191,7 @@ export async function contentRoutes(app: FastifyInstance) {
       data: updateData,
     });
 
-    return reply.send({ success: true, data: content });
+    return reply.send({ success: true, data: serializeContentItem(content) });
   });
 
   // Approve content
@@ -193,7 +204,7 @@ export async function contentRoutes(app: FastifyInstance) {
       data: { status: 'approved', approvedAt: new Date(), approvedBy: request.user?.sub ?? 'system' },
     });
 
-    return reply.send({ success: true, data: content });
+    return reply.send({ success: true, data: serializeContentItem(content) });
   });
 
   // Reject content
@@ -211,7 +222,7 @@ export async function contentRoutes(app: FastifyInstance) {
       data: { actionType: 'content.reject', tier: 2, parameters: { contentId: id, feedback } as Prisma.InputJsonValue, status: 'completed' },
     });
 
-    return reply.send({ success: true, data: content });
+    return reply.send({ success: true, data: serializeContentItem(content) });
   });
 
   // Regenerate content (creates new version)
@@ -247,7 +258,7 @@ export async function contentRoutes(app: FastifyInstance) {
       prompt: existing.prompt ?? undefined,
     });
 
-    return reply.status(201).send({ success: true, data: newContent });
+    return reply.status(201).send({ success: true, data: serializeContentItem(newContent) });
   });
 
   // Get content versions

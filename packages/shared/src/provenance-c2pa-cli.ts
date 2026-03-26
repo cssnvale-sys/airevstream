@@ -33,7 +33,8 @@ export async function isC2PAToolAvailable(execFn?: C2PAExecFn): Promise<boolean>
   try {
     const { stdout } = await exec('c2patool', ['--version']);
     return stdout.includes('c2patool');
-  } catch {
+  } catch (err) {
+    console.warn('[C2PA] c2patool not available:', err instanceof Error ? err.message : String(err));
     return false;
   }
 }

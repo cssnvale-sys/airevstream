@@ -1,4 +1,4 @@
-import type { AiServiceType, AiServiceStatus, AiServiceProvider } from '@airevstream/shared';
+import type { AiServiceType, AiServiceProvider } from '@airevstream/shared';
 
 // ─── Provider Interface ───
 

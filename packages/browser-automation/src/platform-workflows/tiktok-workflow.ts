@@ -535,7 +535,8 @@ export class TikTokWorkflow extends BasePlatformWorkflow {
       const avatarSelector = '[data-e2e="profile-icon"], div[class*="avatar" i] img';
       const avatar = await this.page.$(avatarSelector);
       return avatar !== null;
-    } catch {
+    } catch (err) {
+      this.logger.debug({ err }, 'TikTok isLoggedIn check failed');
       return false;
     }
   }

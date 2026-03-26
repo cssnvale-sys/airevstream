@@ -28,7 +28,8 @@ export class ComfyUIClient {
         signal: AbortSignal.timeout(5000),
       });
       return res.ok;
-    } catch {
+    } catch (err) {
+      logger.warn({ err }, 'ComfyUI health check failed');
       return false;
     }
   }

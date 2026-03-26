@@ -191,7 +191,8 @@ export class SessionManager {
       const filePath = this.sessionPath(accountId, platform);
       await stat(filePath);
       return true;
-    } catch {
+    } catch (err) {
+      logger.debug({ accountId, platform, err }, 'No session file found');
       return false;
     }
   }
@@ -225,8 +226,9 @@ export class SessionManager {
       const ageMs = Date.now() - fileStat.mtimeMs;
       const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
       return ageMs > maxAgeMs;
-    } catch {
+    } catch (err) {
       // No session file means it's "expired"
+      logger.debug({ accountId, platform, err }, 'Session file not found — treating as expired');
       return true;
     }
   }
@@ -242,7 +244,8 @@ export class SessionManager {
       return files
         .filter((f) => f.endsWith('.json'))
         .map((f) => f.replace('.json', ''));
-    } catch {
+    } catch (err) {
+      logger.debug({ platform, err }, 'Failed to list sessions directory');
       return [];
     }
   }

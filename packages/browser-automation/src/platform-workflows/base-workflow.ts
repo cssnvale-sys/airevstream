@@ -180,7 +180,8 @@ export abstract class BasePlatformWorkflow {
         if (element) return true;
       }
       return false;
-    } catch {
+    } catch (err) {
+      this.logger.debug({ err }, 'isLoggedIn check failed');
       return false;
     }
   }
@@ -252,8 +253,9 @@ export abstract class BasePlatformWorkflow {
           await this.humanBehavior.delay(500, 1000);
           return;
         }
-      } catch {
+      } catch (err) {
         // Selector not found or not clickable, try next
+        this.logger.debug({ selector, err }, 'Cookie dialog selector not found or not clickable');
       }
     }
   }

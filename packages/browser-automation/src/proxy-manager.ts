@@ -134,8 +134,9 @@ export class ProxyManager {
       try {
         const parsed = JSON.parse(body ?? '{}') as { origin?: string };
         ip = parsed.origin ?? '';
-      } catch {
+      } catch (parseErr) {
         // If the verification URL doesn't return JSON, use the raw body
+        logger.debug({ parseErr, server: proxy.server }, 'Verification URL returned non-JSON response, using raw body');
         ip = (body ?? '').trim().substring(0, 45);
       }
 
@@ -175,8 +176,8 @@ export class ProxyManager {
       if (browser) {
         try {
           await browser.close();
-        } catch {
-          // Ignore close errors
+        } catch (closeErr) {
+          logger.debug({ closeErr, server: proxy.server }, 'Error closing verification browser');
         }
       }
     }

@@ -10,7 +10,6 @@ import type {
   AgentRole,
   AgentTask,
   AgentPipelineState,
-  AgentTaskStatus,
   ComplexityMode,
   DirectorInput,
   DirectorOutput,
@@ -25,11 +24,8 @@ import type {
   RenderInput,
   RenderOutput,
   PsychologyInput,
-  PsychologyOutput,
   QCDecisionInput,
-  QCDecisionOutput,
   FinishingInput,
-  FinishingOutput,
 } from './agent-types.js';
 import { AGENT_CONFIGS, getExecutionOrder, getAgentPromptForMode } from './agent-prompts.js';
 import { createLogger } from '../logger.js';

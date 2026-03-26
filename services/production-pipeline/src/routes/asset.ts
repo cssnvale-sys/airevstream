@@ -49,7 +49,20 @@ export async function assetRoutes(app: FastifyInstance) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return reply.send({ success: true, data: storyboards });
+    // Wrap Decimal fields for JSON serialization
+    const serializedStoryboards = storyboards.map((sb) => ({
+      ...sb,
+      totalDurationSec: sb.totalDurationSec != null ? Number(sb.totalDurationSec) : null,
+      shots: sb.shots.map((shot) => ({
+        ...shot,
+        startSec: Number(shot.startSec),
+        endSec: Number(shot.endSec),
+        qualityScore: shot.qualityScore != null ? Number(shot.qualityScore) : null,
+        generationCost: shot.generationCost != null ? Number(shot.generationCost) : null,
+      })),
+    }));
+
+    return reply.send({ success: true, data: serializedStoryboards });
   });
 
   // Get presigned download URL for a shot keyframe or scenery asset

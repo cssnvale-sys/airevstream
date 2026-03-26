@@ -80,7 +80,7 @@ export interface ResolveResult {
   height: number;
   fps: number;
   durationInFrames: number;
-  codec: 'h264' | 'prores';
+  codec: 'h264' | 'h265' | 'prores';
 }
 
 // ─── Core Resolver ───

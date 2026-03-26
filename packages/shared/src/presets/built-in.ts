@@ -188,7 +188,7 @@ export const CAMERA_PRESETS: Preset[] = [
     tags: ['movement', 'dramatic', 'approach'],
     builtIn: true,
     overrides: {
-      camera: { lens: '50mm', framing: 'medium', dof: 'medium', movement: 'dolly-in', stabilization: 'dolly' },
+      camera: { lens: '50mm', framing: 'medium', dof: 'medium', movement: 'dolly-in', stabilization: 'gimbal' },
     },
   },
   {

@@ -1,4 +1,3 @@
-import type { Page } from 'playwright';
 import type {
   AccountCredentials,
   DiscoveryResult,
@@ -569,7 +568,8 @@ export class YouTubeWorkflow extends BasePlatformWorkflow {
       const avatarSelector = 'button#avatar-btn, img#img[alt="Avatar image"]';
       const avatar = await this.page.$(avatarSelector);
       return avatar !== null;
-    } catch {
+    } catch (err) {
+      this.logger.debug({ err }, 'YouTube isLoggedIn check failed');
       return false;
     }
   }

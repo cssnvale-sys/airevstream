@@ -593,7 +593,8 @@ export class InstagramWorkflow extends BasePlatformWorkflow {
       const loggedInSelector = 'svg[aria-label="Home"], a[href*="/direct/inbox"]';
       const el = await this.page.$(loggedInSelector);
       return el !== null;
-    } catch {
+    } catch (err) {
+      this.logger.debug({ err }, 'Instagram isLoggedIn check failed');
       return false;
     }
   }

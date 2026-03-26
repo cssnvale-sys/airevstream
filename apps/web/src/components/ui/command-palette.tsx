@@ -9,6 +9,7 @@ import {
   Search, FileText, Film, Image, Video, Mic, ImageIcon, Radio, Users, X,
   LayoutDashboard, CalendarDays, Sparkles, Library, BarChart3, Activity,
   BadgeDollarSign, Wallet, Settings, ClipboardCheck, Sprout, GitBranch,
+  Layers, Palette, FlaskConical,
 } from 'lucide-react';
 
 interface SearchResults {
@@ -32,6 +33,9 @@ function contentTypeIcon(type: string) {
 const PAGE_LINKS = [
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Accounts', href: '/accounts', icon: Users },
+  { label: 'Channels', href: '/channels', icon: Radio },
+  { label: 'Series', href: '/series', icon: Layers },
+  { label: 'Assets', href: '/assets', icon: Palette },
   { label: 'Seasoning', href: '/seasoning', icon: Sprout },
   { label: 'Calendar', href: '/calendar', icon: CalendarDays },
   { label: 'Create', href: '/create', icon: Sparkles },
@@ -39,6 +43,7 @@ const PAGE_LINKS = [
   { label: 'Library', href: '/library', icon: Library },
   { label: 'Approvals', href: '/approvals', icon: ClipboardCheck },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'Experiments', href: '/experiments', icon: FlaskConical },
   { label: 'System', href: '/system', icon: Activity },
   { label: 'Workflows', href: '/workflows', icon: GitBranch },
   { label: 'Affiliate', href: '/affiliate', icon: BadgeDollarSign },

@@ -78,8 +78,9 @@ export function FileUpload({
         const result = await upload(file, bucket);
         setCompletedFile(result.fileName);
         onUploaded(result);
-      } catch {
-        // Error state is already set by useUpload
+      } catch (err) {
+        // Error state is already set by useUpload hook
+        console.error('File upload failed:', err);
       }
     },
     [bucket, onUploaded, upload, reset, validateFile],

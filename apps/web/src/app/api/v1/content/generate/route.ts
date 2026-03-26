@@ -62,10 +62,19 @@ export async function POST(req: NextRequest) {
       return error('NOT_FOUND', 'Channel not found', 404);
     }
 
-    // If an affiliate product is specified, verify it exists
+    // If an affiliate product is specified, verify it exists and is linked to a tenant channel
     if (affiliateProductId) {
-      const product = await ctx.db.affiliateProduct.findUnique({
-        where: { id: affiliateProductId },
+      const product = await ctx.db.affiliateProduct.findFirst({
+        where: {
+          id: affiliateProductId,
+          channelPools: {
+            some: {
+              channel: {
+                socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+              },
+            },
+          },
+        },
         select: { id: true },
       });
       if (!product) {

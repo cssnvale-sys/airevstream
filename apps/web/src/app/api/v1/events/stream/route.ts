@@ -192,6 +192,8 @@ export async function GET(req: NextRequest) {
         try {
           controller.enqueue(sseComment('ping'));
         } catch {
+          // Stream closed by client — clean up heartbeat
+          console.debug('SSE heartbeat: stream closed, stopping heartbeat');
           clearInterval(heartbeatInterval);
         }
       }, 30_000);

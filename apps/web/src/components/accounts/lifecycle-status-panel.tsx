@@ -104,7 +104,8 @@ export function LifecycleStatusPanel({ emailAccountId }: LifecycleStatusPanelPro
       await retryLifecycle(emailAccountId);
       toast.success('Lifecycle retry started');
       mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to retry lifecycle:', err);
       toast.error('Failed to retry lifecycle');
     }
   };

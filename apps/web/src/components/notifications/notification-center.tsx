@@ -63,7 +63,7 @@ export function NotificationCenter() {
       for (const alert of alerts) {
         if (!prevIds.has(alert.id)) {
           const variant =
-            alert.severity === 'critical'
+            alert.severity === 'critical' || alert.severity === 'error'
               ? 'error'
               : alert.severity === 'warning'
                 ? 'warning'

@@ -3,7 +3,7 @@
 import { AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/lib/utils';
 
-export type NotificationSeverity = 'critical' | 'warning' | 'info';
+export type NotificationSeverity = 'critical' | 'error' | 'warning' | 'info';
 
 export type Notification = {
   id: string;
@@ -22,6 +22,11 @@ const severityConfig: Record<
 > = {
   critical: {
     icon: AlertTriangle,
+    colorClass: 'text-accent-red',
+    bgClass: 'bg-accent-red/10',
+  },
+  error: {
+    icon: AlertCircle,
     colorClass: 'text-accent-red',
     bgClass: 'bg-accent-red/10',
   },

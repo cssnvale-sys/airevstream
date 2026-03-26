@@ -61,7 +61,8 @@ export default function SeriesDetailPage() {
       await apiPut(`/series/${seriesId}`, { status: newStatus });
       toast.success(`Series status updated to ${newStatus}`);
       mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to update series status:', err);
       toast.error('Failed to update series status');
     }
   };

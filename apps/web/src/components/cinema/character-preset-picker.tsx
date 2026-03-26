@@ -2,7 +2,6 @@
 
 import { cn } from '@/lib/utils';
 import { CHARACTER_PRESETS } from '@airevstream/shared';
-import type { Preset } from '@airevstream/shared';
 
 interface CharacterPresetPickerProps {
   onApply: (overrides: Record<string, unknown>) => void;

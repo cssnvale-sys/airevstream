@@ -151,3 +151,56 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return error('INTERNAL_ERROR', 'Failed to assign avatar to channel', 500);
   }
 }
+
+/**
+ * DELETE /api/v1/channels/[id]/avatars?avatarId=xxx
+ * Unassign an avatar from a channel
+ */
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+  if (ctx.role === 'viewer') {
+    return forbidden('Viewers cannot perform this action');
+  }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`channels-avatars:DELETE:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
+  const { id } = await params;
+  if (!isUUID(id)) return validationError('Invalid ID format');
+
+  try {
+    const avatarId = req.nextUrl.searchParams.get('avatarId');
+    if (!avatarId || !isUUID(avatarId)) {
+      return validationError('avatarId query parameter is required and must be a valid UUID');
+    }
+
+    // Verify channel belongs to tenant
+    const channel = await ctx.db.channel.findFirst({
+      where: {
+        id,
+        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+      },
+    });
+    if (!channel) return notFound('Channel not found');
+
+    // Verify the assignment exists
+    const existing = await ctx.db.channelAvatar.findUnique({
+      where: { channelId_avatarId: { channelId: id, avatarId } },
+    });
+    if (!existing) {
+      return notFound('Avatar is not assigned to this channel');
+    }
+
+    await ctx.db.channelAvatar.delete({
+      where: { channelId_avatarId: { channelId: id, avatarId } },
+    });
+
+    return success({ deleted: true });
+  } catch (err) {
+    console.error('DELETE avatars failed:', err);
+    return error('INTERNAL_ERROR', 'Failed to unassign avatar from channel', 500);
+  }
+}

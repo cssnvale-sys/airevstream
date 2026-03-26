@@ -91,7 +91,8 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
       setTimeout(() => {
         handleClose();
       }, 500);
-    } catch {
+    } catch (err) {
+      console.error('Failed to save preset:', err);
       setSaveError('Failed to save preset');
       setState('preview');
     }

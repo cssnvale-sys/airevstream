@@ -132,7 +132,7 @@ export default function ContentDetailPage() {
   const [distributeOpen, setDistributeOpen] = useState(false);
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [distributeSchedule, setDistributeSchedule] = useState('');
-  const { data: channelsData } = useApi<{ id: string; name: string; platform: string }[]>('/channels?limit=100');
+  const { data: channelsData } = useApi<{ id: string; name: string; socialAccount: { platform: string } | null }[]>('/channels?limit=100');
   const channels = channelsData?.data ?? [];
 
   const handleAction = async (action: 'approve' | 'reject' | 'schedule' | 'archive' | 'publish' | 'rescore') => {
@@ -670,7 +670,7 @@ export default function ContentDetailPage() {
                           className="rounded border-border"
                         />
                         <span className="text-sm text-text-primary">{ch.name}</span>
-                        <span className="text-xs text-text-secondary ml-auto">{ch.platform}</span>
+                        <span className="text-xs text-text-secondary ml-auto">{ch.socialAccount?.platform ?? 'unknown'}</span>
                       </label>
                     ))}
                   </div>

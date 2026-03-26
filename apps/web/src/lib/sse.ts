@@ -122,8 +122,8 @@ export function useSSE(url: string, options: SSEOptions = {}): SSEState {
           const data: unknown = JSON.parse(e.data);
           setLastEvent(data);
           onEventRef.current?.['connected']?.(data);
-        } catch {
-          // Ignore parse errors on connection event
+        } catch (err) {
+          console.warn('SSE: failed to parse "connected" event data:', err);
         }
       });
 
@@ -135,8 +135,8 @@ export function useSSE(url: string, options: SSEOptions = {}): SSEState {
             const data: unknown = JSON.parse(e.data);
             setLastEvent(data);
             onEventRef.current?.[eventType]?.(data);
-          } catch {
-            // Ignore parse errors
+          } catch (err) {
+            console.warn(`SSE: failed to parse "${eventType}" event data:`, err);
           }
         });
       }
@@ -147,8 +147,8 @@ export function useSSE(url: string, options: SSEOptions = {}): SSEState {
           const data: unknown = JSON.parse(e.data);
           setLastEvent(data);
           onEventRef.current?.['message']?.(data);
-        } catch {
-          // Ignore parse errors
+        } catch (err) {
+          console.warn('SSE: failed to parse message event data:', err);
         }
       };
 

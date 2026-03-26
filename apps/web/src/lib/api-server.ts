@@ -209,7 +209,8 @@ export async function authenticateApiKey(
     // API key context uses 'api-key' as userId and derives role from scopes
     const role = key.scopes.includes('admin') ? 'admin' : 'operator';
     return { userId: `apikey:${key.id}`, role, tenantId: key.tenantId, db };
-  } catch {
+  } catch (err) {
+    console.error('authenticateApiKey() failed:', err);
     return error('UNAUTHORIZED', 'API key authentication failed', 401);
   }
 }

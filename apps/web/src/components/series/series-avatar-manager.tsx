@@ -50,7 +50,8 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
       setSelectedAvatarId('');
       setSelectedRole('');
       onUpdate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to assign avatar:', err);
       toast.error('Failed to assign avatar');
     } finally {
       setSubmitting(false);
@@ -63,7 +64,8 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
       await apiDelete(`/series/${seriesId}/avatars?avatarId=${avatarId}`);
       toast.success('Avatar removed');
       onUpdate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to remove avatar:', err);
       toast.error('Failed to remove avatar');
     }
   };

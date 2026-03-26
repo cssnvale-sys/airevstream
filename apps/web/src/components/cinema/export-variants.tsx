@@ -104,12 +104,13 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
       }
 
       toast.success(`${variants.length} export${variants.length > 1 ? 's' : ''} queued`);
-    } catch {
+    } catch (err) {
+      console.error('Failed to queue exports:', err);
       toast.error('Failed to queue exports');
     } finally {
       setExporting(false);
     }
-  }, [selected, contentId, storyboardId, channelId, qualityPreset]);
+  }, [selected, contentId, storyboardId, channelId, topic, contentType, qualityPreset]);
 
   return (
     <div className="border border-border rounded-md overflow-hidden">

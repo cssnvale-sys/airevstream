@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const parsed = EnrollSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error.issues[0].message);
 
-    if (!ctx.tenantId) return error('VALIDATION_ERROR', 'Tenant required', 400);
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     // Verify cohort exists and belongs to tenant
     const cohort = await ctx.db.seasoningCohort.findFirst({

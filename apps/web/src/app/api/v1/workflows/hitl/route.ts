@@ -8,6 +8,7 @@ import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const { page, limit, skip } = parseQuery(req);
 

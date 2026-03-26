@@ -41,7 +41,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         duration = parsed.data.duration;
       }
     } catch {
-      // no body — use default duration
+      // No body or invalid JSON — use default duration (expected for bodyless requests)
+      console.debug('POST /api/v1/system/alerts/[id]/snooze: no JSON body, using default duration');
     }
 
     await ctx.db.alert.update({

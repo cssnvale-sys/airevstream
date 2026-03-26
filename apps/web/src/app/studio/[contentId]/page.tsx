@@ -35,7 +35,7 @@ interface StudioContent {
   storyboards: Array<{
     id: string;
     status: string;
-    totalDurationSec: number;
+    totalDurationSec: number | null;
     shots: Array<{
       id: string;
       shotNumber: number;

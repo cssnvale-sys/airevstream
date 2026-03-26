@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
     return success(storefront);
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      console.error('POST /api/v1/affiliate/storefronts slug conflict:', err.meta);
       return error('CONFLICT', 'A storefront with this slug already exists', 409);
     }
     console.error('POST /api/v1/affiliate/storefronts error:', err);

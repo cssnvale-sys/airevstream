@@ -51,7 +51,8 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
       await apiPost(`/content/${contentId}/quality-score`);
       mutate();
       toast.success('Quality score recalculated');
-    } catch {
+    } catch (err) {
+      console.error('Failed to recalculate quality score:', err);
       toast.error('Failed to recalculate quality score');
     } finally {
       setRecalculating(false);

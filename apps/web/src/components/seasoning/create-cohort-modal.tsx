@@ -35,8 +35,8 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
       setName('');
       setPlatforms([]);
       onClose();
-    } catch {
-      // Error already handled by onSubmit caller (toast shown there)
+    } catch (err) {
+      console.error('CreateCohortModal submit failed:', err);
     } finally {
       setSubmitting(false);
     }

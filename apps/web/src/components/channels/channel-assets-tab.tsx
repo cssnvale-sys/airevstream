@@ -10,7 +10,6 @@ import { AssetPickerModal } from '@/components/assets/asset-picker-modal';
 import { BrandingEditor } from '@/components/assets/branding-editor';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { BUCKETS } from '@airevstream/shared';
-import { cn } from '@/lib/utils';
 
 interface ChannelAssetsTabProps {
   channelId: string;
@@ -167,9 +166,13 @@ export function ChannelAssetsTab({ channelId }: ChannelAssetsTabProps) {
     setRemoving(true);
     try {
       if (removeTarget.type === 'avatar') {
-        await apiDelete(`/channels/${channelId}/avatars/${removeTarget.id}`);
+        // Avatar assignments use channelId_avatarId composite key — no individual DELETE route exists.
+        // Use the avatars POST pattern or a dedicated unassign endpoint.
+        // For now, use the avatars endpoint with the avatar ID as query param.
+        await apiDelete(`/channels/${channelId}/avatars?avatarId=${removeTarget.id}`);
       } else {
-        await apiDelete(`/channels/${channelId}/scenery/${removeTarget.id}`);
+        // Scenery DELETE expects sceneryId as query parameter, not path segment
+        await apiDelete(`/channels/${channelId}/scenery?sceneryId=${removeTarget.id}`);
       }
       toast.success(`${removeTarget.type === 'avatar' ? 'Character' : 'Background'} removed`);
       mutateAssets();

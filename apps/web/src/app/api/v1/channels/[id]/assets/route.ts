@@ -41,12 +41,18 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     ]);
 
     const avatars = channelAvatars.map((ca) => ({
-      ...ca.avatar,
+      id: ca.avatar.id,
+      avatarId: ca.avatar.id,
       isPrimary: ca.isPrimary,
       role: ca.role,
+      avatar: ca.avatar,
     }));
 
-    const scenery = channelScenery.map((cs) => cs.scenery);
+    const scenery = channelScenery.map((cs) => ({
+      id: cs.scenery.id,
+      sceneryId: cs.scenery.id,
+      scenery: cs.scenery,
+    }));
 
     return success({ avatars, scenery, branding });
   } catch (err) {

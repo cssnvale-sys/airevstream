@@ -106,6 +106,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return success(updated);
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      console.error('PATCH /api/v1/affiliate/storefronts/[id] slug conflict:', err.meta);
       return error('CONFLICT', 'A storefront with this slug already exists', 409);
     }
     console.error('PATCH /api/v1/affiliate/storefronts/[id] error:', err);

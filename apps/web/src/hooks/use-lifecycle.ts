@@ -1,7 +1,7 @@
 'use client';
 
 import { useApi, apiPost } from '@/hooks/use-api';
-import type { AccountLifecycle, PlatformDiscoveryResult } from '@airevstream/shared';
+import type { PlatformDiscoveryResult } from '@airevstream/shared';
 
 interface LifecycleResponse {
   lifecycle: {
@@ -40,7 +40,7 @@ interface ActiveLifecycleItem {
  */
 export function useLifecycle(emailAccountId: string | undefined) {
   const { data, error, isLoading, mutate } = useApi<LifecycleResponse>(
-    emailAccountId ? `accounts/${emailAccountId}/lifecycle` : null,
+    emailAccountId ? `/accounts/${emailAccountId}/lifecycle` : null,
     { refreshInterval: 5000 },
   );
 
@@ -56,7 +56,7 @@ export function useLifecycle(emailAccountId: string | undefined) {
  * Fetch all active lifecycles for the dashboard.
  */
 export function useActiveLifecycles() {
-  const { data, error, isLoading, mutate } = useApi<ActiveLifecycleItem[]>('lifecycle/active');
+  const { data, error, isLoading, mutate } = useApi<ActiveLifecycleItem[]>('/lifecycle/active');
 
   return {
     lifecycles: data?.data ?? [],
@@ -79,7 +79,7 @@ export async function startLifecycle(
   },
 ) {
   return apiPost<{ success: boolean; data: { jobId: string; status: string } }>(
-    `accounts/${emailAccountId}/lifecycle`,
+    `/accounts/${emailAccountId}/lifecycle`,
     params,
   );
 }
@@ -89,7 +89,7 @@ export async function startLifecycle(
  */
 export async function retryLifecycle(emailAccountId: string) {
   return apiPost<{ success: boolean; data: { jobId: string; status: string } }>(
-    `accounts/${emailAccountId}/lifecycle/retry`,
+    `/accounts/${emailAccountId}/lifecycle/retry`,
     {},
   );
 }

@@ -55,7 +55,8 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
       setSelectedContentId('');
       setTitle('');
       setSearch('');
-    } catch {
+    } catch (err) {
+      console.error('Failed to add episode:', err);
       toast.error('Failed to add episode');
     } finally {
       setSubmitting(false);

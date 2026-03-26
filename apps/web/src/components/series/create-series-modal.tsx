@@ -49,7 +49,8 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
       setDescription('');
       setTargetAudience('');
       setTags('');
-    } catch {
+    } catch (err) {
+      console.error('Failed to create series:', err);
       toast.error('Failed to create series');
     } finally {
       setSubmitting(false);

@@ -89,7 +89,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     let redirectUrl: URL;
     try {
       redirectUrl = new URL(product.url);
-    } catch {
+    } catch (urlErr) {
+      console.error('Invalid product URL for redirect:', product.id, urlErr);
       return error('INVALID_URL', 'Product has an invalid URL', 500);
     }
     if (redirectUrl.protocol !== 'https:' && redirectUrl.protocol !== 'http:') {

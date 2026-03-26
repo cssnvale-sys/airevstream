@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     const statusFilter = url.searchParams.get('status');
     const planFilter = url.searchParams.get('plan');
 
-    const validStatuses = ['active', 'suspended', 'trial'];
+    const validStatuses = ['active', 'suspended', 'cancelled'];
     const validPlans = ['free', 'starter', 'pro', 'enterprise'];
 
     if (statusFilter && validStatuses.includes(statusFilter)) where.status = statusFilter;

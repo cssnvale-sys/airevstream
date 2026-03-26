@@ -2,7 +2,6 @@
 
 import { cn } from '@/lib/utils';
 import { VISUAL_PRESETS } from '@airevstream/shared';
-import type { Preset } from '@airevstream/shared';
 
 interface StyleCardPickerProps {
   onApply: (overrides: Record<string, unknown>) => void;

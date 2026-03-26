@@ -80,13 +80,18 @@ export function BibleEditor({ bible, onSave }: BibleEditorProps) {
 
   async function handleSave() {
     setSaving(true);
-    await onSave(bible.id, {
-      lookBible: look,
-      characterBible: character,
-      environmentBible: environment,
-      promptBible: prompt,
-    });
-    setSaving(false);
+    try {
+      await onSave(bible.id, {
+        lookBible: look,
+        characterBible: character,
+        environmentBible: environment,
+        promptBible: prompt,
+      });
+    } catch (err) {
+      console.error('Failed to save cinema bible:', err);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

@@ -11,6 +11,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   if (ctx.role === 'viewer') {
     return forbidden('Viewers cannot perform this action');

@@ -7,6 +7,9 @@ import { NotificationCenter } from '@/components/notifications/notification-cent
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Home',
   '/accounts': 'Accounts',
+  '/channels': 'Channels',
+  '/series': 'Series',
+  '/assets': 'Assets',
   '/seasoning': 'Seasoning',
   '/calendar': 'Content Calendar',
   '/create': 'Create Content',
@@ -14,6 +17,7 @@ const pageTitles: Record<string, string> = {
   '/library': 'Content Library',
   '/approvals': 'Approvals',
   '/analytics': 'Analytics',
+  '/experiments': 'Experiments',
   '/system': 'System Health',
   '/workflows': 'Workflows',
   '/affiliate': 'Affiliate Manager',

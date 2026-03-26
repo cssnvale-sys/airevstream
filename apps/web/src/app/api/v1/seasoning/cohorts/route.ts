@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const parsed = CreateCohortSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error.issues[0].message);
 
-    if (!ctx.tenantId) return error('VALIDATION_ERROR', 'Tenant required', 400);
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const cohort = await ctx.db.seasoningCohort.create({
       data: {

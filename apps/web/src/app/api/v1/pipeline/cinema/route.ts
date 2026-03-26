@@ -58,7 +58,14 @@ export async function POST(req: NextRequest) {
     if (body.shotIds?.length) {
       const { runPreGenQC } = await import('@airevstream/shared');
       const shots = await ctx.db.storyboardShot.findMany({
-        where: { id: { in: body.shotIds } },
+        where: {
+          id: { in: body.shotIds },
+          storyboard: {
+            content: {
+              channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+            },
+          },
+        },
         select: { shotspec: true },
       });
       const specs = shots.map(s => (s.shotspec as Record<string, unknown>) ?? { promptBlocks: [] });

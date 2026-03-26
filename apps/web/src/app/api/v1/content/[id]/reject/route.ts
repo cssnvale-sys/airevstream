@@ -29,26 +29,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
-    const item = await ctx.db.contentItem.findFirst({
-      where: {
-        id,
-        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-      },
-      select: { id: true, status: true },
-    });
-
-    if (!item) {
-      return notFound('Content item not found');
-    }
-
-    const rejectableStatuses = ['generated', 'pending_approval'];
-    if (item.status === 'draft') {
-      return error('ALREADY_DRAFT', 'Content item is already a draft', 409);
-    }
-    if (!rejectableStatuses.includes(item.status)) {
-      return error('INVALID_STATE', `Cannot reject content with status "${item.status}"`, 409);
-    }
-
     let body: unknown = {};
     try {
       body = await req.json();
@@ -58,14 +38,35 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const parsed = RejectSchema.safeParse(body);
     const feedback = parsed.success ? parsed.data.feedback : undefined;
 
-    const [updated] = await ctx.db.$transaction([
-      ctx.db.contentItem.update({
+    const rejectableStatuses = ['generated', 'pending_approval'];
+
+    // Use interactive transaction to prevent TOCTOU race on status check
+    const result = await ctx.db.$transaction(async (tx) => {
+      const item = await tx.contentItem.findFirst({
+        where: {
+          id,
+          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        },
+        select: { id: true, status: true },
+      });
+
+      if (!item) return { kind: 'not_found' as const };
+
+      if (item.status === 'draft') {
+        return { kind: 'already_draft' as const };
+      }
+      if (!rejectableStatuses.includes(item.status)) {
+        return { kind: 'invalid_state' as const, status: item.status };
+      }
+
+      const updated = await tx.contentItem.update({
         where: { id },
         data: {
           status: 'draft',
         },
-      }),
-      ctx.db.actionAuditLog.create({
+      });
+
+      await tx.actionAuditLog.create({
         data: {
           actionType: 'content.reject',
           tier: 1,
@@ -76,8 +77,22 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           result: { previousStatus: item.status, newStatus: 'draft' },
           status: 'completed',
         },
-      }),
-    ]);
+      });
+
+      return { kind: 'rejected' as const, updated };
+    });
+
+    if (result.kind === 'not_found') {
+      return notFound('Content item not found');
+    }
+    if (result.kind === 'already_draft') {
+      return error('ALREADY_DRAFT', 'Content item is already a draft', 409);
+    }
+    if (result.kind === 'invalid_state') {
+      return error('INVALID_STATE', `Cannot reject content with status "${result.status}"`, 409);
+    }
+
+    const updated = result.updated;
 
     // Update approval trust score (non-blocking)
     try {

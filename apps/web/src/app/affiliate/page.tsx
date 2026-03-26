@@ -403,8 +403,6 @@ export default function AffiliatePage() {
         <PerformanceTab
           revenue={revenue}
           loading={revenueLoading}
-          channels={channels}
-          products={products}
         />
       )}
 
@@ -896,13 +894,9 @@ function LinksTab({
 function PerformanceTab({
   revenue,
   loading,
-  channels,
-  products,
 }: {
   revenue: RevenueData | null;
   loading: boolean;
-  channels: Channel[];
-  products: AffiliateProduct[];
 }) {
   // Build product x channel matrix from revenue data
   const matrix = useMemo(() => {

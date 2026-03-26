@@ -31,8 +31,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     try {
       const raw = await req.json();
       body = WarmBodySchema.parse(raw);
-    } catch {
-      // Body is optional — defaults are fine
+    } catch (parseErr) {
+      // Body is optional — defaults are fine, but log unexpected parse errors
+      if (parseErr instanceof SyntaxError) {
+        // Expected when body is empty or not JSON — safe to ignore
+      } else {
+        console.error('Unexpected error parsing warm body:', parseErr);
+      }
     }
 
     const emailAccount = await ctx.db.emailAccount.findFirst({

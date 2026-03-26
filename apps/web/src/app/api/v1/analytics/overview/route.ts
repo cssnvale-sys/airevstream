@@ -20,6 +20,7 @@ function getDateRange(period: string): { start: Date; end: Date } {
 export async function GET(req: NextRequest) {
   const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const url = new URL(req.url);

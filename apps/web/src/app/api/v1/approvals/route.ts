@@ -5,6 +5,7 @@ export async function GET(req: NextRequest) {
   try {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const { page, limit, skip, sort, order, params } = parseQuery(req);
     const statusParam = params.get('status') ?? undefined;
@@ -48,6 +49,8 @@ export async function GET(req: NextRequest) {
     const items = rawItems.map((item) => ({
       ...item,
       qualityScore: item.qualityScore != null ? Number(item.qualityScore) : null,
+      approvalGateWindowHrs: item.approvalGateWindowHrs != null ? Number(item.approvalGateWindowHrs) : null,
+      durationSec: item.durationSec != null ? Number(item.durationSec) : null,
     }));
 
     return paginated(items, total, page, limit);

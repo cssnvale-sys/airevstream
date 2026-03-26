@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSeriesEpisodes } from '@/hooks/use-series';
 import { cn } from '@/lib/utils';
-import { Plus, GripVertical, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { AddEpisodeModal } from './add-episode-modal';
 import { apiDelete } from '@/hooks/use-api';
@@ -52,7 +52,8 @@ export function EpisodeTable({ seriesId }: Props) {
       toast.success('Episode removed');
       setDeleteId(null);
       mutate();
-    } catch {
+    } catch (err) {
+      console.error('Failed to remove episode:', err);
       toast.error('Failed to remove episode');
     }
   };

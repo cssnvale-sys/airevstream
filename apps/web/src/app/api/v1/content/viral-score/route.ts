@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       where: { category: 'trends', tenantId: ctx.tenantId },
       orderBy: { createdAt: 'desc' },
       take: 20,
-      select: { title: true, relevanceScore: true },
+      select: { title: true },
     });
 
     const storyboard = content.storyboards[0];

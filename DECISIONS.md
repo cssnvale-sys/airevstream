@@ -600,3 +600,18 @@
 **Date**: 2026-03-26
 **Decision**: Group secondary content detail actions (rescore, repurpose, distribute, archive) into a "More..." dropdown menu instead of showing individual buttons.
 **Rationale**: The content detail header had too many action buttons (approve, reject, schedule, edit, rescore, repurpose, distribute, archive), creating visual clutter and reducing the prominence of primary actions. Grouping secondary actions behind a dropdown keeps primary actions visible while making secondary ones accessible. This follows the progressive disclosure principle.
+
+## D121: Deep Audit Wave Methodology — 7 Waves, 26 Agents
+**Date**: 2026-03-26
+**Decision**: Structure deep codebase audits as 7 sequential waves with strict file ownership per agent, processing 362 non-test source files (~96K LOC) with 26 agents total: Auth & system (3), Content & cinema (5), Domain pages (5), Frontend infra (3), Backend packages (5), Services + workers (2), Remotion (1).
+**Rationale**: Sequential waves allow verification after each wave before proceeding, preventing cascading breakage. Strict file ownership (no overlapping file edits) eliminates merge conflicts between parallel agents. Agent count per wave scales with file count and complexity — more agents for larger waves, fewer for simpler ones. This methodology produced 105 fixes with 0 regressions across all 7 waves.
+
+## D122: Silent Catch Logging Level Differentiation
+**Date**: 2026-03-26
+**Decision**: Use `console.warn` or `logger.debug` for expected/recoverable failures (health check pings, SSE JSON parse errors, optional feature probes) and `console.error` for unexpected failures (database errors, authentication failures, data corruption).
+**Rationale**: The audit found ~35 silent catch blocks. Not all failures warrant `console.error` — some are expected operational conditions (e.g., a health check failing is informational, not an error). Differentiating log levels keeps error logs actionable and reduces noise while still ensuring no catch block is completely silent.
+
+## D123: Lifecycle Hook URL Leading Slash Requirement
+**Date**: 2026-03-26
+**Decision**: All URL paths passed to `useApi()` and mutation helpers (`apiPost`, `apiPut`, `apiPatch`, `apiDelete`) must start with a leading `/`. The helpers prepend `/api/v1` to the path, so a missing slash causes path concatenation errors (e.g., `/api/v1accounts/...` instead of `/api/v1/accounts/...`).
+**Rationale**: 4 lifecycle hooks were missing the leading slash, causing all lifecycle API calls to return 404. This was a CRITICAL runtime bug that was invisible at build time. The fix is simple (add the slash) but the pattern is easy to miss during development. Codified as a decision so future code reviews catch it.

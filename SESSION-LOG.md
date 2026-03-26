@@ -4,6 +4,62 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 45 — Deep Multi-Wave Codebase Audit (7 Waves, 26 Agents)
+
+**Date**: 2026-03-26
+**Focus**: Comprehensive 7-wave parallel-agent codebase audit across 362 non-test source files (~96K LOC). 26 agents across 7 waves found and fixed 105 issues with 0 regressions.
+
+### Wave 1: Auth & System Routes (29 files, 3 agents)
+- 4 issues fixed: 1 silent catch, 1 invalid status, 2 silent catches
+
+### Wave 2: Content & Cinema (63 files, 5 agents)
+- 14 issues fixed: 1 TOCTOU race condition, 2 CRITICAL tenant scoping violations, 2 dead code removals, 2 data shape mismatches, 5 silent catches, 2 dead imports
+
+### Wave 3: Domain Pages (140 files, 5 agents)
+- 31 issues fixed: 10 tenant scoping violations (7 CRITICAL in analytics), 3 Decimal wrapping, 14 silent catches, 2 dead imports, 1 dead code, 1 missing DELETE handler
+
+### Wave 4: Frontend Infra (66 files, 3 agents)
+- 18 issues fixed: 4 CRITICAL missing leading slashes in lifecycle hooks (caused 404s), 3 tenant scoping, 3 silent catches, 2 data shape mismatches, 4 integration mismatches, 1 silent catch, 1 dead import
+
+### Wave 5: Backend Packages (79 files, 5 agents)
+- 24 issues fixed: 14 silent catches, 3 dead imports, 2 Decimal wrapping, 1 integration mismatch (codec), 1 integration mismatch (stabilization), 3 dead imports in orchestrator
+
+### Wave 6: Services + Workers (31 files, 2 agents)
+- 10 issues fixed: 7 Decimal wrapping across services, 2 silent catches, 1 dead import
+
+### Wave 7: Remotion (14 files, 1 agent)
+- 1 issue fixed: unused destructured variable
+
+### Key Findings by Category
+| Category | Count | Severity |
+|----------|-------|----------|
+| Tenant scoping violations | ~16 | CRITICAL — analytics routes, workflow routes, approvals missing 403 guards |
+| Silent catch blocks | ~35 | Medium — across all layers |
+| Decimal wrapping | ~12 | Medium — services and API routes |
+| Dead imports/code | ~12 | Low |
+| Integration mismatches | ~8 | High — missing pages in nav, lifecycle hook paths, codec type |
+| Data shape mismatches | ~4 | High — channel assets API, notification severity |
+| TOCTOU race conditions | ~1 | High — content reject route |
+| Missing API handlers | ~1 | High — channel avatar DELETE |
+| Critical runtime bugs | 4 | CRITICAL — lifecycle hooks missing leading "/" caused 404s |
+
+### Key Decisions
+- D121: Deep audit wave methodology — 7 waves, 26 agents, strict file ownership, verify after each wave
+- D122: Silent catch logging level — use console.warn/logger.debug for expected failures, console.error for unexpected
+- D123: Lifecycle hook URL fix — leading "/" required for useApi path concatenation
+
+### Flagged Issues (not fixed — require architectural decisions)
+- 3 Fastify service route groups (account, content, workflow) lack tenant scoping — need `resolveTenantId` pattern decision
+- ColorGradeSpec missing filmGrain/vignette fields (cross-file integration gap)
+- Duplicate ContinuityLocks type definition in types.ts and presets/schema.ts
+
+### Verification
+- `turbo build`: 14 packages pass
+- `turbo test`: 507+ unit tests pass (27 tasks)
+- `npm run audit`: 33 audit tests pass (0 violations)
+
+---
+
 ## Session 44 — Deep UX/UI Audit Fixes
 
 **Date**: 2026-03-26

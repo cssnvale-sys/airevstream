@@ -369,6 +369,18 @@
 | UX-8 | Empty state consistency | Done | NotificationCenter + ShotGallery use EmptyState component |
 | UX-9 | Content detail polish | Done | Secondary action dropdown (D120), required reject reason, settings link |
 
+### Phase 28: Deep Multi-Wave Codebase Audit (Session 45) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| DA-1 | Wave 1: Auth & system routes | Done | 29 files, 3 agents, 4 issues (silent catches, invalid status) |
+| DA-2 | Wave 2: Content & cinema | Done | 63 files, 5 agents, 14 issues (TOCTOU, 2 CRITICAL tenant scoping, data shapes, silent catches) |
+| DA-3 | Wave 3: Domain pages | Done | 140 files, 5 agents, 31 issues (10 tenant scoping [7 CRITICAL analytics], 3 Decimal, 14 silent catches) |
+| DA-4 | Wave 4: Frontend infra | Done | 66 files, 3 agents, 18 issues (4 CRITICAL lifecycle hook 404s, integration mismatches) |
+| DA-5 | Wave 5: Backend packages | Done | 79 files, 5 agents, 24 issues (14 silent catches, dead imports, Decimal, integration mismatches) |
+| DA-6 | Wave 6: Services + workers | Done | 31 files, 2 agents, 10 issues (7 Decimal wrapping, 2 silent catches) |
+| DA-7 | Wave 7: Remotion | Done | 14 files, 1 agent, 1 issue (unused destructured variable) |
+| DA-8 | Build verification | Done | 14 packages build, 507+ unit tests + 33 audit tests pass, 0 regressions |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -404,13 +416,14 @@
 - **Full codebase audit — 8-wave (Session 38)**: 606 files (~85K LOC) audited, 60 issues found and fixed across 36 files. CRITICAL: 8x double /api/v1 prefix on experiment mutations. 12x tenant scoping violations, 9x missing Decimal wrapping, 19x silent catch blocks. D095 evaluating status, D096 preset ID extraction. 0 regressions.
 - **Targeted 4-wave audit (Session 39)**: 4 new audit tests + targeted fix pass. 78 .strict() removed, 19 tenant scoping fixes, 8 status enum fixes, 4 experiment security/race fixes, 3 channel fixes, 3 type fixes. shouldDeclareWinner now respects primaryMetric (D098). Audit suite: 24→33 tests, 9→13 files. 0 regressions.
 - **Account lifecycle pipeline (Session 42)**: AccountLifecycle model (50th), 9th worker (lifecycle), browser login probe discovery, activity lock warm/post coordination, 3 new + 2 modified API routes, 4-step wizard frontend, 5 decisions (D109-D113). 0 regressions.
+- **Deep multi-wave codebase audit (Session 45)**: 7-wave audit with 26 agents across 362 files (~96K LOC). 105 issues found and fixed: ~16 tenant scoping (CRITICAL), ~35 silent catches, ~12 Decimal wrapping, ~12 dead imports/code, ~8 integration mismatches, ~4 data shape mismatches, 4 CRITICAL lifecycle hook 404s, 1 TOCTOU, 1 missing DELETE handler. 3 decisions (D121-D123). 3 new KIs flagged (KI-079 through KI-081). 0 regressions.
 - **Deep UX/UI audit fixes (Session 44)**: 6-wave audit — TOCTOU race fix, storefront tenant-scoped findFirst, SSE parallel polling (~40s→10s latency), confirmation dialogs, studio skeleton, theme-aware lifecycle panel, empty states, content detail dropdown. ~16 files modified, 3 decisions (D118-D120). 0 regressions.
 - **Approval pipeline & UX overhaul (Session 43)**: 7-phase implementation — approval-gate.ts pure functions, QualityBadge component, shot keyframe images, gate window countdown, trust score upsert, storyboard pending_review step, HITL task queue UI, SSE→notification wiring, dashboard + wizard approval info. 6 new files, ~20 modified, 4 decisions (D114-D117). 0 regressions.
 
 ## Architecture Highlights
 - **Prisma Schema**: 50 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36 + SuggestionLog Session 37 + Series + Episode + SeriesAvatar Session 40 + AccountLifecycle Session 42)
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: ~180 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Next.js API Routes**: ~180 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation. 123 architecture decisions (D001-D123).
 - **Dashboard**: 19 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
 - **Approval Pipeline**: ApprovalTrustScore adaptive gate windows, evaluateApprovalGate/updateTrustAfterAction pure functions, 5-min timeout auto-approve, storyboard pending_review checkpoint, per-shot approve/reject/regenerate, HITL task queue, QualityBadge component (Session 43)
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)

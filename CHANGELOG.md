@@ -7,9 +7,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Deep multi-wave codebase audit** (Session 45): 7-wave parallel-agent audit across 362 files (~96K LOC), 26 agents, 105 issues found and fixed with 0 regressions. 3 decisions (D121-D123).
 - **Deep UX/UI audit fixes** (Session 44): 6-wave audit fixing security, confirmation dialogs, loading states, SSE latency, empty states, and content detail polish across ~16 files. 3 decisions (D118-D120).
 
 ### Fixed
+- **CRITICAL: Tenant scoping violations** (Session 45): ~16 missing 403 guards across analytics routes, workflow routes, and approvals — data could leak across tenants
+- **CRITICAL: Lifecycle hook 404s** (Session 45): 4 hooks missing leading "/" in URL paths, causing all lifecycle API calls to fail with 404
+- **Silent catch blocks** (Session 45): ~35 instances across all layers now log with console.error or console.warn (D122)
+- **Decimal wrapping** (Session 45): ~12 missing `Number()` conversions across services and API routes
+- **Integration mismatches** (Session 45): ~8 fixes including missing nav pages, lifecycle hook paths, codec type mismatches
+- **Data shape mismatches** (Session 45): ~4 fixes in channel assets API and notification severity
+- **TOCTOU race condition** (Session 45): Content reject route atomic status check
+- **Missing channel avatar DELETE handler** (Session 45): Added missing API handler
+- **Dead imports and code** (Session 45): ~12 removals across all layers
 - **TOCTOU race condition** (Session 44): Content approve route now validates status inside `$transaction` atomically (D118)
 - **Storefront data leak** (Session 44): Combined separate fetch + ownership check into single tenant-scoped `findFirst` for GET/PATCH/DELETE
 - **SSE latency** (Session 44): Replaced round-robin single-poller with `Promise.allSettled` parallel polling — effective latency ~40s to ~10s (D119)

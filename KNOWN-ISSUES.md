@@ -6,6 +6,24 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
+### KI-079: Fastify Service Routes Lack Tenant Scoping
+**Severity**: High
+**Status**: Open (Session 45 — flagged, not fixed)
+**Context**: 3 Fastify service route groups (account, content, workflow in `services/workflow-engine/`) lack tenant scoping. These routes resolve the authenticated user but do not filter queries by tenantId. Requires an architectural decision on a `resolveTenantId` pattern for Fastify services (different from the Next.js `authenticate()` pattern).
+**Action**: Design a Fastify tenant scoping middleware or plugin, then audit all service routes.
+
+### KI-080: ColorGradeSpec Missing filmGrain/vignette Fields
+**Severity**: Low
+**Status**: Open (Session 45 — flagged, not fixed)
+**Context**: `ColorGradeSpec` in `packages/shared/src/types.ts` is missing `filmGrain` and `vignette` fields that are referenced in some cinema pipeline code paths. This is a cross-file integration gap — the type definition and usage sites are out of sync.
+**Action**: Add the missing fields to `ColorGradeSpec` and verify all consumers.
+
+### KI-081: Duplicate ContinuityLocks Type Definition
+**Severity**: Low
+**Status**: Open (Session 45 — flagged, not fixed)
+**Context**: `ContinuityLocks` is defined in both `packages/shared/src/types.ts` and `packages/shared/src/presets/schema.ts`. The two definitions may drift over time.
+**Action**: Remove the duplicate and re-export from a single canonical location.
+
 ### KI-073: ~~Suggestion Log Migration Not Yet Applied~~ — FIXED (Session 40)
 **Severity**: Medium
 **Status**: Fixed — All 9 migrations applied via `prisma migrate deploy`.

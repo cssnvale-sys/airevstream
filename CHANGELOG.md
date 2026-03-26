@@ -7,6 +7,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Deep UX/UI audit fixes** (Session 44): 6-wave audit fixing security, confirmation dialogs, loading states, SSE latency, empty states, and content detail polish across ~16 files. 3 decisions (D118-D120).
+
+### Fixed
+- **TOCTOU race condition** (Session 44): Content approve route now validates status inside `$transaction` atomically (D118)
+- **Storefront data leak** (Session 44): Combined separate fetch + ownership check into single tenant-scoped `findFirst` for GET/PATCH/DELETE
+- **SSE latency** (Session 44): Replaced round-robin single-poller with `Promise.allSettled` parallel polling — effective latency ~40s to ~10s (D119)
+- **Missing confirmation dialogs** (Session 44): Content archive, episode delete now use themed ConfirmDialog instead of direct action / browser `confirm()`
+- **AddEpisodeModal accessibility** (Session 44): Added Escape key handler, `role="dialog"`, `aria-modal="true"`
+- **Approvals bulk reject UX** (Session 44): Dialog now shows first 3 item titles with "and N more" suffix
+- **Studio loading state** (Session 44): Replaced plain text with structured skeleton matching studio layout
+- **LifecycleStatusPanel theming** (Session 44): Replaced 15+ hardcoded zinc/color classes with theme-aware equivalents
+- **Empty states** (Session 44): NotificationCenter and ShotGallery now use `EmptyState` component
+- **Content detail action clutter** (Session 44): Grouped secondary actions into "More..." dropdown (D120)
+- **Reject reason validation** (Session 44): Content reject textarea now required (disabled button when empty)
+- **Toast imports** (Session 44): Standardized episode-table.tsx and add-episode-modal.tsx to use `@/lib/toast`
+
+### Changed
+- **Studio layout** (Session 44): AI guidance panel collapsed in simple mode, PipelineProgress moved to top of right panel
+
+### Added
+- **Approval pipeline & UX overhaul** (Session 43): 7-phase implementation activating dormant ApprovalTrustScore infrastructure. approval-gate.ts pure functions, gate window countdown, trust score visibility, QualityBadge component, SSE→notification wiring, storyboard pending_review step, per-shot approve/reject/regenerate, HITL task queue UI, dashboard + wizard approval info. 6 new files, ~20 modified. 4 decisions (D114-D117).
+- **Shot visualization fixes** (Session 43): ShotGallery renders actual keyframe images via usePresignedUrl, Studio video preview toggle, plateVideoUrl in content detail API
+- **Storyboard approval step** (Session 43): pending_review status, QC gate pipeline pause, 2 new API routes, Studio review UI with per-shot controls
+- **HITL task queue UI** (Session 43): Workflows page HITL tab, HitlTaskCard component, sidebar badge with 30s SWR polling
 - **Account lifecycle pipeline** (Session 42): End-to-end automated flow — email+password → discovery → signup → profile setup → seasoning enrollment → posting coordination. 6-handler lifecycle worker, browser-based login probe discovery, activity lock warm/post coordination
 - **AccountLifecycle Prisma model** (Session 42): 50th model — status state machine (pending→discovering→planning→signing_up→setting_profile→enrolling→active→completed/failed), discoveryResults JSONB, tenant-scoped
 - **Browser discovery + profile setup** (Session 42): Abstract `discoverAccount()` and `setProfileAssets()` on BasePlatformWorkflow. Real YouTube implementation (Google login probe + YouTube Studio branding). D064 stubs for TikTok/Instagram/Facebook

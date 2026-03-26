@@ -4,6 +4,61 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 44 — Deep UX/UI Audit Fixes
+
+**Date**: 2026-03-26
+**Focus**: 6-wave UX/UI audit fixing security, confirmation dialogs, loading states, SSE latency, empty states, and content detail polish across ~16 files.
+
+### Wave 1: Security & Data Integrity (Critical)
+- **Storefront detail route** (`apps/web/src/app/api/v1/affiliate/storefronts/[id]/route.ts`): Combined separate fetch + ownership check into single tenant-scoped `findFirst` query for GET, PATCH, DELETE handlers. Eliminates data leaking into memory before ownership verification.
+- **Content approve route** (`apps/web/src/app/api/v1/content/[id]/approve/route.ts`): Moved status check inside `$transaction` to eliminate TOCTOU race condition. Status validation now happens atomically with the update.
+
+### Wave 2: Confirmation Dialogs & Destructive Actions
+- **Content detail** (`apps/web/src/app/content/[id]/page.tsx`): Archive button now shows ConfirmDialog instead of acting directly.
+- **EpisodeTable** (`apps/web/src/components/series/episode-table.tsx`): Replaced browser `confirm()` with themed ConfirmDialog. Fixed toast import to use `@/lib/toast`.
+- **AddEpisodeModal** (`apps/web/src/components/series/add-episode-modal.tsx`): Added Escape key handler, `role="dialog"` and `aria-modal="true"`, fixed toast import.
+- **Approvals page** (`apps/web/src/app/approvals/page.tsx`): Bulk reject dialog now shows first 3 item titles with "and N more" suffix.
+
+### Wave 3: Loading States & Visual Feedback
+- **Studio page** (`apps/web/src/app/studio/[contentId]/page.tsx`): Replaced plain "Loading studio..." text with structured skeleton matching studio layout (top bar, 10/2 grid, timeline). Collapsed AI guidance panel in simple mode, moved PipelineProgress to top of right panel.
+- **LifecycleStatusPanel** (`apps/web/src/components/accounts/lifecycle-status-panel.tsx`): Replaced 15+ hardcoded zinc/color Tailwind classes with theme-aware equivalents (text-text-secondary, text-accent-blue, bg-bg-secondary, border-border, etc.).
+- Toast imports standardized in episode-table.tsx and add-episode-modal.tsx.
+
+### Wave 4: SSE & Realtime
+- **SSE stream route** (`apps/web/src/app/api/v1/events/stream/route.ts`): Replaced round-robin single-poller pattern with `Promise.allSettled` parallel polling of all 4 event types per cycle. Effective latency reduced from ~40s to 10s. Fixed lastCheck timing to use pre-query timestamp.
+
+### Wave 5: Empty States & Component Consistency
+- **NotificationCenter** (`apps/web/src/components/notifications/notification-center.tsx`): Replaced inline empty state with `EmptyState` component.
+- **ShotGallery** (`apps/web/src/components/content/shot-gallery.tsx`): Replaced inline empty state with `EmptyState` component.
+
+### Wave 6: Content Detail & Navigation Polish
+- **Content detail** (`apps/web/src/app/content/[id]/page.tsx`): Grouped secondary actions (rescore, repurpose, distribute, archive) into "More..." dropdown menu. Added Settings link in engagement metrics section. Made reject reason required (textarea + disabled button when empty).
+
+### Key Decisions
+- D118: TOCTOU fix pattern — move status checks inside $transaction for atomic read-then-write
+- D119: SSE parallel polling — Promise.allSettled for all event types per cycle, pre-query lastCheck timestamp
+- D120: Secondary action grouping — "More..." dropdown for content detail actions to reduce button clutter
+
+### Files Modified (~16)
+- `apps/web/src/app/api/v1/affiliate/storefronts/[id]/route.ts` — tenant-scoped findFirst
+- `apps/web/src/app/api/v1/content/[id]/approve/route.ts` — TOCTOU fix ($transaction)
+- `apps/web/src/app/content/[id]/page.tsx` — ConfirmDialog, dropdown, required reject reason
+- `apps/web/src/components/series/episode-table.tsx` — ConfirmDialog, toast import
+- `apps/web/src/components/series/add-episode-modal.tsx` — Escape key, aria, toast import
+- `apps/web/src/app/approvals/page.tsx` — bulk reject item titles
+- `apps/web/src/app/studio/[contentId]/page.tsx` — skeleton loader, layout polish
+- `apps/web/src/components/accounts/lifecycle-status-panel.tsx` — theme-aware classes
+- `apps/web/src/app/api/v1/events/stream/route.ts` — parallel polling
+- `apps/web/src/components/notifications/notification-center.tsx` — EmptyState
+- `apps/web/src/components/content/shot-gallery.tsx` — EmptyState
+
+### Verification
+- `turbo build`: 14 packages pass
+- `turbo test`: 507+ unit tests pass (27 tasks)
+- `npm run audit`: 33 audit tests pass (0 violations)
+
+---
+
 ## Session 42 — Account Lifecycle Pipeline: Auto-Discovery, Signup, Seasoning & Posting Coordination
 
 **Date:** 2026-03-26
@@ -2920,3 +2975,93 @@ Implemented all 34 identified system gaps across 7 phases using parallel agents.
 - `turbo test`: 222 unit tests ✓ (27 tasks)
 - `turbo audit`: 24 audit tests ✓ (9 files)
 - All type errors fixed (unknown→Boolean/String patterns)
+
+---
+
+## Session 43 — Approval Pipeline, Asset Visualization & Notification UX Overhaul
+
+**Date**: 2026-03-26
+**Focus**: Activate dormant ApprovalTrustScore infrastructure, fix shot visualization, build proper approval UX with gate windows, notifications, storyboard review, and HITL task UI.
+
+### Phase 1: Shot Visualization Fixes
+- Fixed ShotGallery to render actual keyframe images using `KeyframeImage` component with `usePresignedUrl`
+- Added `plateVideoUrl` to content detail API shot select
+- Added video preview toggle in Studio with `MediaPreview` component
+
+### Phase 2: Quality Score UX
+- Created `QualityBadge` component (`apps/web/src/components/ui/quality-badge.tsx`) using `QUALITY_THRESHOLDS` (85/60/30)
+- Used QualityBadge across approvals page, content detail header, shot gallery
+- Updated `quality-breakdown.tsx` thresholds from hardcoded 70/40 to `QUALITY_THRESHOLDS`
+
+### Phase 3: Approval Gate Window Logic
+- Created `approval-gate.ts` (`packages/shared/src/approval-gate.ts`) with `evaluateApprovalGate()` and `updateTrustAfterAction()` pure functions
+- Set `approvalGateWindowHrs` in content worker when entering `pending_approval`
+- Added repeatable timeout checker (`content:check-approval-timeouts` every 5 min)
+- Updated trust scores in all approve/reject routes (3 files)
+
+### Phase 4: Approval Notifications
+- Created alerts in content worker when content enters `pending_approval`
+- Wired SSE events to notification center using `useSystemEvents()` for immediate SWR cache refresh
+- Added `metadata` to SSE alert events and system alerts API select
+
+### Phase 5: Storyboard Approval Step
+- Added `pending_review` to `StoryboardStatus` type
+- Updated QC gate to pause at `pending_review` for non-draft quality
+- Created storyboard approve API route (`POST /storyboards/[id]/approve`)
+- Created per-shot approve/reject/regenerate API route (`POST /storyboard-shots/[shotId]/approve`)
+- Added storyboard review UI in Studio with per-shot controls and "Approve All & Render" button
+
+### Phase 6: HITL Task Queue UI
+- Added HITL tab to Workflows page (tab switcher: "All Jobs" | "Human Tasks")
+- Created `HitlTaskCard` component with priority badges, content links, and "Mark Complete" button
+- Added HITL count badge to sidebar Workflows nav item (SWR 30s polling)
+
+### Phase 7: Approval UX Polish
+- Added gate window countdown on approvals page (urgency coloring: normal/amber/red)
+- Created trust scores API route (`GET /approvals/trust-scores`)
+- Added collapsible Trust Scores section on approvals page
+- Updated dashboard approval widget with QualityBadge and gate window countdown
+- Added approval info note on simple-create-wizard review screen
+
+### New Files (6)
+- `packages/shared/src/approval-gate.ts`
+- `apps/web/src/components/ui/quality-badge.tsx`
+- `apps/web/src/app/api/v1/approvals/trust-scores/route.ts`
+- `apps/web/src/app/api/v1/storyboards/[id]/approve/route.ts`
+- `apps/web/src/app/api/v1/storyboard-shots/[shotId]/approve/route.ts`
+- `apps/web/src/components/workflows/hitl-task-card.tsx`
+
+### Modified Files (~20)
+- `packages/shared/src/index.ts` — barrel export for approval-gate
+- `packages/shared/src/types.ts` — StoryboardStatus + pending_review
+- `apps/web/src/lib/event-types.ts` — AlertEvent link + metadata fields
+- `apps/web/src/components/content/shot-gallery.tsx` — keyframe images + QualityBadge
+- `apps/web/src/components/content/quality-breakdown.tsx` — thresholds from constants
+- `apps/web/src/components/cinema/shot-editor-panel.tsx` — ShotData.plateVideoUrl
+- `apps/web/src/components/cinema/simple-create-wizard.tsx` — approval info note
+- `apps/web/src/components/notifications/notification-center.tsx` — SSE→SWR wiring
+- `apps/web/src/components/notifications/notification-item.tsx` — metadata field
+- `apps/web/src/components/layout/sidebar.tsx` — HITL count badge
+- `apps/web/src/app/approvals/page.tsx` — countdown, trust scores, QualityBadge
+- `apps/web/src/app/dashboard/page.tsx` — countdown, QualityBadge
+- `apps/web/src/app/workflows/page.tsx` — HITL tab
+- `apps/web/src/app/studio/[contentId]/page.tsx` — video preview, storyboard review UI
+- `apps/web/src/app/api/v1/content/[id]/route.ts` — plateVideoUrl in shot select
+- `apps/web/src/app/api/v1/content/[id]/approve/route.ts` — trust score update
+- `apps/web/src/app/api/v1/content/[id]/reject/route.ts` — trust score update
+- `apps/web/src/app/api/v1/approvals/[id]/[action]/route.ts` — trust score update
+- `apps/web/src/app/api/v1/events/stream/route.ts` — metadata in SSE alerts
+- `apps/web/src/app/api/v1/system/alerts/route.ts` — metadata in select
+- `workers/src/content.worker.ts` — gate window, alerts, timeout checker
+- `workers/src/production.worker.ts` — QC gate pause at pending_review
+
+### Key Decisions
+- D114: Approval gate logic as pure functions in shared package (testable, no DB deps)
+- D115: Trust score update via upsert on approve/reject (adaptive gate windows)
+- D116: Storyboard pending_review pauses pipeline at QC gate (uses existing DAG structure)
+- D117: HITL task count via SWR 30s polling in sidebar (lightweight, no SSE)
+
+### Verification
+- `turbo build`: 14 packages ✓
+- `turbo test`: 507+ unit tests ✓ (27 tasks)
+- `npm run audit`: 33 audit tests ✓ (0 violations)

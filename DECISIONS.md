@@ -565,3 +565,38 @@
 **Date**: 2026-03-26
 **Decision**: Create a dedicated `lifecycle.worker.ts` with its own `lifecycle` BullMQ queue rather than extending the existing account worker.
 **Rationale**: The lifecycle worker is an orchestration layer that calls into existing account/seasoning primitives. Keeping it separate from the account worker maintains clean separation of concerns — account worker handles individual account operations, lifecycle worker coordinates the multi-step pipeline across multiple accounts and platforms.
+
+## D114: Approval Gate Logic as Pure Functions in Shared Package
+**Date**: 2026-03-26
+**Decision**: Implement `evaluateApprovalGate()` and `updateTrustAfterAction()` as pure functions in `packages/shared/src/approval-gate.ts`, with no database or Node.js dependencies.
+**Rationale**: Pure functions are easily testable and composable. Workers call them to evaluate gate status, API routes call them to update trust scores. The logic stays in one place rather than being scattered across workers and routes.
+
+## D115: Trust Score Update via Upsert on Approve/Reject
+**Date**: 2026-03-26
+**Decision**: Update `ApprovalTrustScore` via Prisma `upsert` in all approve/reject routes, incrementing `totalApproved`/`totalRejected` and adjusting trust score and gate window.
+**Rationale**: The `ApprovalTrustScore` model was already migrated but never written to. Upsert handles both first-time creation and subsequent updates. Trust adjustments are small (±2/±5) to avoid wild swings. Gate window shrinks on approval (faster auto-approve) and grows on rejection (more review time).
+
+## D116: Storyboard pending_review Pauses Pipeline at QC Gate
+**Date**: 2026-03-26
+**Decision**: When the production worker QC gate completes for non-draft quality, set storyboard status to `pending_review` instead of proceeding to audio mix. Pipeline resumes when user approves via the storyboard approve API route.
+**Rationale**: Leverages the existing FlowProducer DAG structure — child jobs (audio mix, render) are queued separately when the user approves, rather than being pre-queued. No DAG modification needed. The storyboard approve route queues the remaining pipeline steps.
+
+## D117: HITL Task Count via SWR Polling in Sidebar
+**Date**: 2026-03-26
+**Decision**: Show HITL task count in the sidebar via a SWR-based fetch to `/workflows/hitl?limit=1` with 30-second refresh, rather than using SSE.
+**Rationale**: SSE events are already used for real-time alerts and content status updates. Adding another SSE subscription for HITL count would increase server-side polling load for a low-priority indicator. SWR polling at 30s is sufficient for a sidebar badge and avoids adding another SSE event type.
+
+## D118: TOCTOU Fix — Status Check Inside $transaction
+**Date**: 2026-03-26
+**Decision**: Move status validation checks inside Prisma `$transaction` blocks for approve/reject operations, so the read and write happen atomically.
+**Rationale**: A separate `findFirst` followed by an `update` creates a time-of-check-to-time-of-use (TOCTOU) window where another request could change the status between the check and the update. Using `$transaction` with an interactive transaction ensures the status check and state change are atomic.
+
+## D119: SSE Parallel Polling with Promise.allSettled
+**Date**: 2026-03-26
+**Decision**: Replace the SSE round-robin single-poller pattern (polling one event type per 10s cycle) with `Promise.allSettled` parallel polling of all 4 event types per cycle. Use a pre-query timestamp for `lastCheck` to avoid missing events.
+**Rationale**: The round-robin pattern meant each event type was only polled every ~40s (4 types x 10s interval). Parallel polling queries all types simultaneously, reducing effective latency to the 10s cycle interval. `Promise.allSettled` ensures one failing query does not block the others. Pre-query timestamp prevents missed events that arrive during query execution.
+
+## D120: Secondary Action Grouping via Dropdown Menu
+**Date**: 2026-03-26
+**Decision**: Group secondary content detail actions (rescore, repurpose, distribute, archive) into a "More..." dropdown menu instead of showing individual buttons.
+**Rationale**: The content detail header had too many action buttons (approve, reject, schedule, edit, rescore, repurpose, distribute, archive), creating visual clutter and reducing the prominence of primary actions. Grouping secondary actions behind a dropdown keeps primary actions visible while making secondary ones accessible. This follows the progressive disclosure principle.

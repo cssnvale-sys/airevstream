@@ -343,6 +343,32 @@
 | AL-8 | Frontend (4 new + 1 modified) | Done | useLifecycle hook, LifecycleStatusPanel, PlatformSelect, AvatarAssignPicker, 4-step wizard |
 | AL-9 | Build verification | Done | 14 packages build, 27 test tasks pass, 33 audit tests pass, 0 violations |
 
+### Phase 26: Approval Pipeline & UX Overhaul (Session 43) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| AP-1 | Shot visualization | Done | KeyframeImage component + usePresignedUrl, Studio video preview toggle, plateVideoUrl in API |
+| AP-2 | Quality score UX | Done | QualityBadge component (sm/md/lg), thresholds aligned to QUALITY_THRESHOLDS, deployed across 4 surfaces |
+| AP-3 | Approval gate logic | Done | approval-gate.ts (evaluateApprovalGate + updateTrustAfterAction), gate window on pending_approval, 5-min timeout checker |
+| AP-4 | Trust score updates | Done | Upsert ApprovalTrustScore on all approve/reject routes (3 files), trust scores API route |
+| AP-5 | Approval notifications | Done | Alert creation in content worker, SSE→notification center wiring, metadata in SSE events |
+| AP-6 | Storyboard approval | Done | pending_review status, QC gate pause, 2 new API routes, Studio review UI with per-shot controls |
+| AP-7 | HITL task queue UI | Done | Workflows HITL tab, HitlTaskCard component, sidebar badge (30s SWR polling) |
+| AP-8 | UX polish | Done | Gate countdown (urgency colors), trust scores section, dashboard + wizard approval info |
+| AP-9 | Build verification | Done | 14 packages build, 33 audit tests pass, 0 violations, 0 regressions |
+
+### Phase 27: Deep UX/UI Audit Fixes (Session 44) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| UX-1 | Storefront tenant-scoped findFirst | Done | GET/PATCH/DELETE combined fetch+ownership into single query |
+| UX-2 | Content approve TOCTOU fix | Done | Status check moved inside $transaction (D118) |
+| UX-3 | Confirmation dialogs | Done | Content archive + episode delete use ConfirmDialog, approvals bulk reject shows titles |
+| UX-4 | AddEpisodeModal accessibility | Done | Escape key, role="dialog", aria-modal="true", toast import |
+| UX-5 | Studio skeleton loader | Done | Structured skeleton matching studio layout, AI guidance collapsed in simple mode |
+| UX-6 | LifecycleStatusPanel theming | Done | 15+ hardcoded classes → theme-aware equivalents |
+| UX-7 | SSE parallel polling | Done | Promise.allSettled for all 4 event types per cycle (D119) |
+| UX-8 | Empty state consistency | Done | NotificationCenter + ShotGallery use EmptyState component |
+| UX-9 | Content detail polish | Done | Secondary action dropdown (D120), required reject reason, settings link |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -378,12 +404,15 @@
 - **Full codebase audit — 8-wave (Session 38)**: 606 files (~85K LOC) audited, 60 issues found and fixed across 36 files. CRITICAL: 8x double /api/v1 prefix on experiment mutations. 12x tenant scoping violations, 9x missing Decimal wrapping, 19x silent catch blocks. D095 evaluating status, D096 preset ID extraction. 0 regressions.
 - **Targeted 4-wave audit (Session 39)**: 4 new audit tests + targeted fix pass. 78 .strict() removed, 19 tenant scoping fixes, 8 status enum fixes, 4 experiment security/race fixes, 3 channel fixes, 3 type fixes. shouldDeclareWinner now respects primaryMetric (D098). Audit suite: 24→33 tests, 9→13 files. 0 regressions.
 - **Account lifecycle pipeline (Session 42)**: AccountLifecycle model (50th), 9th worker (lifecycle), browser login probe discovery, activity lock warm/post coordination, 3 new + 2 modified API routes, 4-step wizard frontend, 5 decisions (D109-D113). 0 regressions.
+- **Deep UX/UI audit fixes (Session 44)**: 6-wave audit — TOCTOU race fix, storefront tenant-scoped findFirst, SSE parallel polling (~40s→10s latency), confirmation dialogs, studio skeleton, theme-aware lifecycle panel, empty states, content detail dropdown. ~16 files modified, 3 decisions (D118-D120). 0 regressions.
+- **Approval pipeline & UX overhaul (Session 43)**: 7-phase implementation — approval-gate.ts pure functions, QualityBadge component, shot keyframe images, gate window countdown, trust score upsert, storyboard pending_review step, HITL task queue UI, SSE→notification wiring, dashboard + wizard approval info. 6 new files, ~20 modified, 4 decisions (D114-D117). 0 regressions.
 
 ## Architecture Highlights
 - **Prisma Schema**: 50 models with full-text search GIN indexes on key tables (36 base + SeasoningCohort + SeasoningEnrollment Session 25 + AssetRegistryEntry + Sequence + SequenceItem Session 31 + UserPreset Session 33 + Experiment + ExperimentVariant Session 36 + SuggestionLog Session 37 + Series + Episode + SeriesAvatar Session 40 + AccountLifecycle Session 42)
 - **AI Service Registry**: Provider abstraction (Ollama, OpenAI-compat, HTTP), fallback chain orchestration, circuit breaker pattern, health monitoring, cost estimation, usage logging
-- **Next.js API Routes**: ~175 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
+- **Next.js API Routes**: ~180 route files with JWT auth (jose + scrypt), Prisma queries, pagination, validation
 - **Dashboard**: 19 views (content detail, approvals, workflows, affiliate, forgot/reset password) + notification center + SSE real-time updates + command palette + breadcrumbs
+- **Approval Pipeline**: ApprovalTrustScore adaptive gate windows, evaluateApprovalGate/updateTrustAfterAction pure functions, 5-min timeout auto-approve, storyboard pending_review checkpoint, per-shot approve/reject/regenerate, HITL task queue, QualityBadge component (Session 43)
 - **Browser Automation**: Stealth Playwright contexts, Bezier mouse paths, Gaussian delays, QWERTY typos, proxy rotation with circuit breaker, session persistence, 4 platform workflows (YouTube/TikTok/Instagram/Facebook)
 - **Remotion**: 4 compositions (short 9:16, long 16:9, thumbnail still, CinemaVideo 24fps) with H.I.C.C. beat timing — CinemaVideo now wired in render handler (Session 20)
 - **ComfyUI**: 4 SDXL workflow templates with {{placeholder}} syntax + client API wrapper + template renderer
@@ -400,7 +429,7 @@
 - **API Keys**: Secure key generation (ars_ prefix), SHA-256 hashed storage, scope-based access control, rate limiting
 - **Subscriptions**: Plan management with period tracking, usage metering (accounts/channels/content/API calls/storage)
 - **Database Seed**: Full seed script with admin user, AI services, sample content, channels, accounts
-- **Real-time**: SSE endpoint with DB-polled events (alerts, workflow-updates, content-status, system-metrics), auto-reconnect with exponential backoff
+- **Real-time**: SSE endpoint with DB-polled events (alerts, workflow-updates, content-status, system-metrics), auto-reconnect with exponential backoff, parallel polling via Promise.allSettled (D119, Session 44)
 - **Security**: AI service API keys encrypted (AES-256-GCM), invite flow hides temp password, API keys SHA-256 hashed with revocation support, admin role checks on all AI service management routes, IP format validation on rate limiter, 30s fetch timeouts on frontend
 - **API Key Access**: 13 read-only GET endpoints accept both JWT and API key via authenticateAny() (analytics, content, channels, system, calendar, jobs)
 - **Settings**: DB-backed via SystemSetting model (general, notifications, appearance) — persists across restarts

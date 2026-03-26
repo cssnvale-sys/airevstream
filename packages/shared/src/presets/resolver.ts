@@ -4,8 +4,9 @@
  * Resolution order (highest priority last):
  *   1. System defaults (from constants.ts DEFAULT_GENERATION)
  *   2. Recipe presets (in order)
- *   3. Individual component presets
- *   4. User overrides (explicit ShotSpec fields)
+ *   3. Series default presets (in order)
+ *   4. Individual component presets
+ *   5. User overrides (explicit ShotSpec fields)
  *
  * Lower layers provide defaults; higher layers override them.
  */
@@ -49,7 +50,9 @@ function deepMerge<T extends Record<string, unknown>>(base: T, overlay: Record<s
 export interface ResolveOptions {
   /** Recipe to apply (resolved first) */
   recipe?: Recipe;
-  /** Individual presets to apply (in order, after recipe) */
+  /** Series default presets (applied after recipe, before individual presets) */
+  seriesPresets?: Preset[];
+  /** Individual presets to apply (in order, after series presets) */
   presets?: Preset[];
   /** All available presets (for resolving recipe presetIds) */
   allPresets?: Preset[];
@@ -80,14 +83,21 @@ export function resolvePresets(
     }
   }
 
-  // Layer 2: Individual presets (in order)
+  // Layer 2: Series default presets (in order, between recipe and individual)
+  if (options.seriesPresets) {
+    for (const preset of options.seriesPresets) {
+      resolved = deepMerge(resolved, preset.overrides);
+    }
+  }
+
+  // Layer 3: Individual presets (in order)
   if (options.presets) {
     for (const preset of options.presets) {
       resolved = deepMerge(resolved, preset.overrides);
     }
   }
 
-  // Layer 3: User overrides (highest priority)
+  // Layer 4: User overrides (highest priority)
   if (options.userOverrides) {
     resolved = deepMerge(resolved, options.userOverrides as Record<string, unknown>);
   }
@@ -104,6 +114,7 @@ export function getActiveRanges(
   presets: Preset[],
   recipe?: Recipe,
   allPresets?: Preset[],
+  seriesPresets?: Preset[],
 ): Record<string, { min: number; max: number }> {
   const ranges: Record<string, { min: number; max: number }> = {};
 
@@ -119,7 +130,18 @@ export function getActiveRanges(
     }
   }
 
-  // Layer 2: Individual preset ranges (override recipe)
+  // Layer 2: Series preset ranges (override recipe)
+  if (seriesPresets) {
+    for (const preset of seriesPresets) {
+      if (preset?.ranges) {
+        for (const [key, range] of Object.entries(preset.ranges)) {
+          ranges[key] = range;
+        }
+      }
+    }
+  }
+
+  // Layer 3: Individual preset ranges (override series)
   for (const preset of presets) {
     if (preset?.ranges) {
       for (const [key, range] of Object.entries(preset.ranges)) {
@@ -167,6 +189,7 @@ export function resolvePresetsWithDirectives(
     options.presets ?? [],
     options.recipe,
     options.allPresets,
+    options.seriesPresets,
   );
 
   return { shotSpec: resolvedRec as unknown as ShotSpec, directives, ranges };

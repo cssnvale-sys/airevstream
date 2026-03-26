@@ -1,6 +1,8 @@
 import type { Page } from 'playwright';
 import type {
   AccountCredentials,
+  DiscoveryResult,
+  ProfileAssetsConfig,
   WarmingConfig,
   WarmingSessionResult,
   WarmingActivity,
@@ -569,6 +571,204 @@ export class YouTubeWorkflow extends BasePlatformWorkflow {
       return avatar !== null;
     } catch {
       return false;
+    }
+  }
+
+  // ─── Discovery ───
+
+  /**
+   * Discover whether a Google/YouTube account exists for this email.
+   * Uses login probe: enter email on Google sign-in, check for password prompt vs error.
+   */
+  async discoverAccount(credentials: AccountCredentials): Promise<DiscoveryResult> {
+    await this.init();
+    this.logger.info({ email: credentials.email }, 'Starting YouTube account discovery');
+
+    try {
+      // Navigate to Google sign-in
+      const navStep = await this.executeStep('navigate-to-google-signin', async () => {
+        await this.page.goto(this.GOOGLE_LOGIN_URL, { waitUntil: 'domcontentloaded' });
+        await this.dismissCookieDialog();
+      });
+      if (!navStep.success) return { exists: 'unknown', error: navStep.error };
+
+      // Enter email
+      const emailStep = await this.executeStep('enter-email', async () => {
+        await this.humanBehavior.type(this.page, 'input[type="email"]', credentials.email);
+        await this.humanBehavior.delay(300, 600);
+        await this.page.click('#identifierNext');
+        await this.humanBehavior.delay(2000, 4000);
+      });
+      if (!emailStep.success) return { exists: 'unknown', error: emailStep.error };
+
+      // Check for CAPTCHA
+      const captchaCheck = await this.handleCaptcha();
+      if (captchaCheck.needsHuman) {
+        return {
+          exists: 'unknown',
+          needsHuman: true,
+          humanTaskDescription: captchaCheck.taskDescription,
+        };
+      }
+
+      // Check what Google shows: password prompt (exists) or "Couldn't find" (doesn't exist)
+      const result = await this.executeStep('check-result', async () => {
+        // Check for "Couldn't find your Google Account"
+        const notFoundText = await this.page.$('text=Couldn\'t find your Google Account');
+        const notFoundText2 = await this.page.$('text=couldn\'t find your Google Account');
+        if (notFoundText || notFoundText2) {
+          return { found: false };
+        }
+
+        // Check for password input (account exists)
+        const passwordInput = await this.page.$('input[type="password"]');
+        if (passwordInput) {
+          // Try to extract display name from header
+          const displayName = await this.page.$eval(
+            '[data-identifier], [data-email]',
+            (el) => el.textContent?.trim(),
+          ).catch(() => undefined);
+          return { found: true, displayName };
+        }
+
+        // Ambiguous state
+        return { ambiguous: true };
+      });
+
+      if (!result.success || !result.data) {
+        return { exists: 'unknown', error: result.error ?? 'Discovery step failed' };
+      }
+
+      if (result.data.found === false) {
+        return { exists: false };
+      }
+
+      if (result.data.found === true) {
+        return {
+          exists: true,
+          accountInfo: {
+            username: result.data.displayName as string | undefined,
+          },
+        };
+      }
+
+      return { exists: 'unknown' };
+    } catch (err) {
+      this.logger.error({ err, email: credentials.email }, 'YouTube discovery failed');
+      return { exists: 'unknown', error: String(err) };
+    }
+  }
+
+  // ─── Profile Setup ───
+
+  /**
+   * Upload profile image and banner to YouTube Studio channel customization.
+   */
+  async setProfileAssets(config: ProfileAssetsConfig): Promise<WorkflowResult> {
+    await this.init();
+    this.logger.info('Starting YouTube profile asset setup');
+
+    try {
+      // Navigate to YouTube Studio branding page
+      const navStep = await this.executeStep('navigate-to-studio-branding', async () => {
+        await this.page.goto(`${this.YOUTUBE_STUDIO_URL}/channel/editing/branding`, {
+          waitUntil: 'domcontentloaded',
+        });
+        await this.humanBehavior.delay(2000, 3000);
+      });
+      if (!navStep.success) return this.buildResult(false, navStep.error);
+
+      // Upload profile picture
+      if (config.profileImagePath) {
+        const uploadStep = await this.executeStep('upload-profile-picture', async () => {
+          // Click the change/upload button for profile picture
+          const uploadButton = await this.page.$('button:has-text("Upload"), button:has-text("Change")');
+          if (uploadButton) {
+            await uploadButton.click();
+            await this.humanBehavior.delay(1000, 2000);
+          }
+
+          // Set file via input
+          const fileInput = await this.page.$('input[type="file"][accept*="image"]');
+          if (fileInput) {
+            await fileInput.setInputFiles(config.profileImagePath!);
+            await this.humanBehavior.delay(2000, 4000);
+
+            // Click Done/Save if a crop dialog appears
+            const doneButton = await this.page.$('button:has-text("Done"), button:has-text("DONE")');
+            if (doneButton) {
+              await doneButton.click();
+              await this.humanBehavior.delay(1000, 2000);
+            }
+          }
+        });
+        if (!uploadStep.success) {
+          this.logger.warn({ error: uploadStep.error }, 'Profile picture upload failed, continuing');
+        }
+      }
+
+      // Upload banner
+      if (config.bannerImagePath) {
+        const bannerStep = await this.executeStep('upload-banner', async () => {
+          // Look for the banner upload section
+          const bannerSection = await this.page.$('text=Banner image');
+          if (bannerSection) {
+            const uploadButton = await bannerSection.$('xpath=../following-sibling::*//button');
+            if (uploadButton) {
+              await uploadButton.click();
+              await this.humanBehavior.delay(1000, 2000);
+            }
+          }
+
+          const fileInput = await this.page.$$('input[type="file"][accept*="image"]');
+          if (fileInput.length > 1) {
+            await fileInput[1].setInputFiles(config.bannerImagePath!);
+            await this.humanBehavior.delay(3000, 5000);
+
+            const doneButton = await this.page.$('button:has-text("Done"), button:has-text("DONE")');
+            if (doneButton) {
+              await doneButton.click();
+              await this.humanBehavior.delay(1000, 2000);
+            }
+          }
+        });
+        if (!bannerStep.success) {
+          this.logger.warn({ error: bannerStep.error }, 'Banner upload failed, continuing');
+        }
+      }
+
+      // Set display name (via Basic info)
+      if (config.displayName) {
+        const nameStep = await this.executeStep('set-display-name', async () => {
+          await this.page.goto(`${this.YOUTUBE_STUDIO_URL}/channel/editing/profile`, {
+            waitUntil: 'domcontentloaded',
+          });
+          await this.humanBehavior.delay(2000, 3000);
+
+          const nameInput = await this.page.$('input[aria-label*="Name"], #channel-name-input');
+          if (nameInput) {
+            await nameInput.click({ clickCount: 3 }); // Select all
+            await this.humanBehavior.type(this.page, 'input[aria-label*="Name"], #channel-name-input', config.displayName!);
+          }
+        });
+        if (!nameStep.success) {
+          this.logger.warn({ error: nameStep.error }, 'Display name setup failed, continuing');
+        }
+      }
+
+      // Publish changes
+      const publishStep = await this.executeStep('publish-changes', async () => {
+        const publishButton = await this.page.$('button:has-text("Publish"), button:has-text("PUBLISH")');
+        if (publishButton) {
+          await publishButton.click();
+          await this.humanBehavior.delay(2000, 4000);
+        }
+      });
+
+      return this.buildResult(true);
+    } catch (err) {
+      this.logger.error({ err }, 'YouTube profile setup failed');
+      return this.buildResult(false, String(err));
     }
   }
 

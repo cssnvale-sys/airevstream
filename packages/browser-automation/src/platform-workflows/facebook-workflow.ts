@@ -1,5 +1,7 @@
 import type {
   AccountCredentials,
+  DiscoveryResult,
+  ProfileAssetsConfig,
   WarmingConfig,
   WarmingSessionResult,
   WarmingActivity,
@@ -659,5 +661,19 @@ export class FacebookWorkflow extends BasePlatformWorkflow {
       return [capitalize(parts[0]), capitalize(parts[1])];
     }
     return [capitalize(local), 'Smith'];
+  }
+
+  // ─── Discovery (D064 stub) ───
+
+  async discoverAccount(credentials: AccountCredentials): Promise<DiscoveryResult> {
+    this.logger.info({ email: credentials.email, platform: credentials.platform }, 'Discovery not yet implemented — returning unknown');
+    return { exists: 'unknown', needsHuman: true, humanTaskDescription: `${credentials.platform} discovery not yet implemented. Check manually.` };
+  }
+
+  // ─── Profile Setup (D064 stub) ───
+
+  async setProfileAssets(config: ProfileAssetsConfig): Promise<WorkflowResult> {
+    this.logger.info({ platform: 'facebook' }, 'Profile asset setup not yet implemented — returning success');
+    return this.buildResult(true);
   }
 }

@@ -186,6 +186,26 @@ export interface ProductionRepairShotJob {
   denoise?: number;
 }
 
+// ─── Asset Generation Job Types ───
+
+export interface ProductionAssetGenerateJob {
+  tenantId: string;
+  /** 'avatar' | 'scenery' | 'branding' */
+  assetType: string;
+  /** Source model ID (Avatar.id, SceneryAsset.id, or BrandingPackage.id) */
+  sourceModelId: string;
+  /** ComfyUI workflow type (e.g. 'avatar', 'scenery', 'thumbnail') */
+  workflowType: string;
+  /** Generation prompt */
+  prompt: string;
+  /** Additional generation params */
+  params: Record<string, unknown>;
+  /** For avatars: which image slot to fill */
+  slot?: string;
+  /** Channel ID (for branding) */
+  channelId?: string;
+}
+
 // ─── Experiment Job Types ───
 
 export interface ExperimentEvaluateJob {
@@ -199,6 +219,62 @@ export interface ExperimentRecordMetricJob {
   metric: string;
   value: number;
   tenantId: string;
+}
+
+// ─── Series Job Types ───
+
+export interface SeriesPlaylistSyncJob {
+  seriesId: string;
+  youtubePlaylistId: string;
+  tenantId: string;
+}
+
+// ─── Lifecycle Job Types ───
+
+export interface LifecycleInitJob {
+  emailAccountId: string;
+  tenantId: string;
+  targetPlatforms: string[];
+  avatarId?: string;
+  autoSeasoning?: boolean;
+  autoPosting?: boolean;
+}
+
+export interface LifecycleDiscoverJob {
+  lifecycleId: string;
+  emailAccountId: string;
+  platform: string;
+  tenantId: string;
+}
+
+export interface LifecyclePlanJob {
+  lifecycleId: string;
+  emailAccountId: string;
+  tenantId: string;
+}
+
+export interface LifecycleSignupJob {
+  lifecycleId: string;
+  emailAccountId: string;
+  platform: string;
+  tenantId: string;
+  avatarId?: string;
+}
+
+export interface LifecycleSetProfileJob {
+  lifecycleId: string;
+  socialAccountId: string;
+  platform: string;
+  avatarId?: string;
+  tenantId: string;
+}
+
+export interface LifecycleEnrollJob {
+  lifecycleId: string;
+  emailAccountId: string;
+  tenantId: string;
+  socialAccountIds: string[];
+  platforms: string[];
 }
 
 // ─── Seasoning Job Types ───
@@ -239,12 +315,13 @@ export interface SeasoningGraduateJob {
 export interface QueueJobMap {
   content: ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob | ContentViralScoreJob;
   account: AccountCreateJob | AccountSyncJob | AccountHealthCheckJob | AccountWarmJob;
-  posting: PostingScheduleJob | PostingPublishJob;
+  posting: PostingScheduleJob | PostingPublishJob | SeriesPlaylistSyncJob;
   research: ResearchTrendsJob | ResearchTopicsJob | ResearchKnowledgeUpdateJob | ResearchPopulateKnowledgeJob;
   maintenance: MaintenanceCleanupJob | MaintenanceBackupJob | MaintenanceMetricsJob;
-  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob | ProductionGenerateShotsJob | ProductionQCGateJob | ProductionMixAudioJob | ProductionRepairShotJob;
+  production: ProductionRenderVideoJob | ProductionGenerateImageJob | ProductionGenerateAudioJob | ProductionStoryboardJob | ProductionGenerateShotsJob | ProductionQCGateJob | ProductionMixAudioJob | ProductionRepairShotJob | ProductionAssetGenerateJob;
   seasoning: SeasoningEnrollJob | SeasoningSignupJob | SeasoningWarmJob | SeasoningCheckJob | SeasoningGraduateJob;
   experiment: ExperimentEvaluateJob | ExperimentRecordMetricJob;
+  lifecycle: LifecycleInitJob | LifecycleDiscoverJob | LifecyclePlanJob | LifecycleSignupJob | LifecycleSetProfileJob | LifecycleEnrollJob;
 }
 
 export type QueueName = keyof QueueJobMap;
@@ -350,5 +427,5 @@ export async function closeAllQueues(): Promise<void> {
 export { Queue, Worker, QueueEvents, Job };
 
 export { FlowProducer } from 'bullmq';
-export { getFlowProducer, startContentPipeline, startCinemaPipeline, startPreviewPipeline, startSeasoningPipeline, closeFlowProducer } from './flows.js';
-export type { ContentPipelineParams, CinemaPipelineParams, PreviewPipelineParams, SeasoningPipelineParams } from './flows.js';
+export { getFlowProducer, startContentPipeline, startCinemaPipeline, startPreviewPipeline, startSeasoningPipeline, startAccountLifecyclePipeline, closeFlowProducer } from './flows.js';
+export type { ContentPipelineParams, CinemaPipelineParams, PreviewPipelineParams, SeasoningPipelineParams, AccountLifecyclePipelineParams } from './flows.js';

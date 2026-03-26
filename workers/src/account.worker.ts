@@ -8,7 +8,7 @@ import {
   createLogger,
   determineNextAction, calculateNextSessionTime, selectActivitiesForSession, assessRisk,
   DEFAULT_SEASONING_SCHEDULE, SEASONING_RISK_THRESHOLDS, getNextPhase,
-  type SeasoningPhase, type ActivityLogEntry,
+  type SeasoningPhase, type ActivityLogEntry, type ActivityLock,
 } from '@airevstream/shared';
 import { decrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
@@ -66,6 +66,63 @@ function decryptCredential(encrypted: string): string {
   const config = getConfig();
   if (!config.ENCRYPTION_KEY) throw new Error('ENCRYPTION_KEY not configured');
   return decrypt(encrypted, config.ENCRYPTION_KEY);
+}
+
+// ─── Activity Lock Helpers (D112) ───
+
+function getActivityLock(metadata: unknown): ActivityLock | null {
+  if (typeof metadata !== 'object' || metadata === null) return null;
+  const meta = metadata as Record<string, unknown>;
+  const lock = meta.activityLock as ActivityLock | undefined;
+  if (!lock?.lockedAt || !lock?.expiresAt) return null;
+  // Check TTL expiry
+  if (new Date(lock.expiresAt).getTime() < Date.now()) return null;
+  return lock;
+}
+
+async function acquireActivityLock(
+  socialAccountId: string,
+  type: 'warming' | 'posting',
+  jobId: string,
+  durationMinutes: number,
+): Promise<boolean> {
+  const db = getDb();
+  const social = await db.socialAccount.findUnique({ where: { id: socialAccountId } });
+  if (!social) return false;
+
+  const existingLock = getActivityLock(social.metadata);
+  if (existingLock) {
+    // Lock held by someone else and not expired
+    return false;
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + durationMinutes * 60 * 1000);
+  const meta = (typeof social.metadata === 'object' && social.metadata !== null ? social.metadata : {}) as Record<string, unknown>;
+
+  await db.socialAccount.update({
+    where: { id: socialAccountId },
+    data: {
+      metadata: {
+        ...meta,
+        activityLock: { type, lockedAt: now.toISOString(), expiresAt: expiresAt.toISOString(), jobId },
+      } as any,
+    },
+  });
+  return true;
+}
+
+async function releaseActivityLock(socialAccountId: string): Promise<void> {
+  const db = getDb();
+  const social = await db.socialAccount.findUnique({ where: { id: socialAccountId } });
+  if (!social) return;
+
+  const meta = (typeof social.metadata === 'object' && social.metadata !== null ? social.metadata : {}) as Record<string, unknown>;
+  const { activityLock: _, ...rest } = meta;
+  await db.socialAccount.update({
+    where: { id: socialAccountId },
+    data: { metadata: rest as any },
+  });
 }
 
 async function processAccountJob(job: Job) {
@@ -660,6 +717,28 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
     return;
   }
 
+  // Activity lock check (D112)
+  if (enrollment.socialAccountId) {
+    const social = await db.socialAccount.findUnique({ where: { id: enrollment.socialAccountId } });
+    const existingLock = getActivityLock(social?.metadata);
+    if (existingLock && existingLock.type === 'posting') {
+      // Posting in progress — reschedule with jitter
+      const jitterMs = 60000 + Math.floor(Math.random() * 120000); // 1-3 min
+      logger.info({ enrollmentId: data.enrollmentId, lockType: existingLock.type }, 'Activity lock held by posting — rescheduling');
+      const queue = getQueue('seasoning');
+      await queue.add('seasoning:warm', data as any, { delay: jitterMs });
+      return { status: 'rescheduled', reason: 'posting_lock' };
+    }
+
+    const lockAcquired = await acquireActivityLock(enrollment.socialAccountId, 'warming', `warm-${data.enrollmentId}`, 30);
+    if (!lockAcquired) {
+      logger.warn({ enrollmentId: data.enrollmentId }, 'Failed to acquire activity lock — rescheduling');
+      const queue = getQueue('seasoning');
+      await queue.add('seasoning:warm', data as any, { delay: 60000 });
+      return { status: 'rescheduled', reason: 'lock_conflict' };
+    }
+  }
+
   // Risk check before warming
   const activityLog = (Array.isArray(enrollment.activityLog) ? enrollment.activityLog : []) as unknown as ActivityLogEntry[];
   const risk = assessRisk({
@@ -819,6 +898,11 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
     },
   });
 
+  // Release activity lock
+  if (enrollment.socialAccountId) {
+    await releaseActivityLock(enrollment.socialAccountId);
+  }
+
   logger.info({
     enrollmentId: data.enrollmentId,
     phase: phaseKey,
@@ -939,6 +1023,26 @@ async function handleSeasoningGraduate(data: SeasoningGraduateJob) {
       data: { status: 'completed', completedAt: new Date() },
     });
     logger.info({ cohortId: enrollment.cohortId }, 'Seasoning cohort fully completed');
+  }
+
+  // Post-graduation hook: check AccountLifecycle for auto-posting (D112)
+  if (data.socialAccountId) {
+    const social = await db.socialAccount.findUnique({
+      where: { id: data.socialAccountId },
+      select: { emailAccountId: true },
+    });
+    if (social) {
+      const lifecycle = await db.accountLifecycle.findUnique({
+        where: { emailAccountId: social.emailAccountId },
+      });
+      if (lifecycle?.autoPosting) {
+        await db.accountLifecycle.update({
+          where: { id: lifecycle.id },
+          data: { status: 'completed', completedAt: new Date(), currentStep: 'completed' },
+        });
+        logger.info({ lifecycleId: lifecycle.id }, 'Lifecycle completed — auto-posting enabled');
+      }
+    }
   }
 
   logger.info({ enrollmentId: data.enrollmentId, socialAccountId: data.socialAccountId }, 'Account graduated from seasoning');

@@ -36,6 +36,9 @@ model Tenant {
   userPresets        UserPreset[]
   experiments        Experiment[]
   suggestionLogs     SuggestionLog[]
+  avatars            Avatar[]
+  sceneryAssets      SceneryAsset[]
+  accountLifecycles  AccountLifecycle[]
 
   @@map("tenants")
 }
@@ -91,6 +94,7 @@ model EmailAccount {
   tenant               Tenant?               @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   socialAccounts       SocialAccount[]
   seasoningEnrollments SeasoningEnrollment[]
+  accountLifecycle     AccountLifecycle?
 
   @@index([tenantId])
   @@map("email_accounts")
@@ -162,7 +166,7 @@ model Channel {
   affiliatePool      ChannelAffiliatePool[]
   affiliateClicks    AffiliateClick[]
   aiServiceUsage     AiServiceUsage[]
-  sequences          Sequence[]
+  series             Series[]
   suggestionLogs     SuggestionLog[]
 
   @@index([socialAccountId])
@@ -176,6 +180,7 @@ model Channel {
 
 model Avatar {
   id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
   name              String   @db.VarChar(255)
 
   // Physical Description
@@ -194,8 +199,12 @@ model Avatar {
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   channelAvatars    ChannelAvatar[]
+  seriesAvatars     SeriesAvatar[]
+  assetRegistryEntries AssetRegistryEntry[]
 
+  @@index([tenantId])
   @@map("avatars")
 }
 
@@ -231,15 +240,19 @@ model BrandingPackage {
 
 model SceneryAsset {
   id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
   name      String   @db.VarChar(255)
   category  String?  @db.VarChar(50) // city, nature, studio, fantasy
   imageUrl  String   @map("image_url")
   prompt    String?
   metadata  Json     @default("{}") @db.JsonB
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   channelScenery ChannelScenery[]
 
+  @@index([tenantId])
   @@map("scenery_assets")
 }
 
@@ -404,6 +417,9 @@ model ContentItem {
   // Provenance
   provenance      Json     @default("{}") @db.JsonB
 
+  // Series (denormalized for fast filtering; Episode join table is source of truth)
+  seriesId        String?  @map("series_id") @db.Uuid
+
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -412,13 +428,14 @@ model ContentItem {
   affiliateProduct AffiliateProduct? @relation(fields: [affiliateProductId], references: [id], onDelete: SetNull)
   parent          ContentItem?     @relation("ContentVersions", fields: [parentId], references: [id], onDelete: SetNull)
   children        ContentItem[]    @relation("ContentVersions")
+  series          Series?          @relation(fields: [seriesId], references: [id], onDelete: SetNull)
   storyboards     Storyboard[]
   scheduledPosts  ScheduledPost[]
   aiServiceUsage  AiServiceUsage[]
   affiliateClicks AffiliateClick[]
   workflowJobs    WorkflowJob[]
   assetRegistryEntries AssetRegistryEntry[]
-  sequenceItems   SequenceItem[]
+  episodes        Episode[]
   experimentVariants ExperimentVariant[]
   suggestionLogs  SuggestionLog[]
 
@@ -426,6 +443,7 @@ model ContentItem {
   @@index([status])
   @@index([contentType])
   @@index([languageFamilyId])
+  @@index([seriesId])
   @@map("content_items")
 }
 
@@ -1028,52 +1046,86 @@ model AssetRegistryEntry {
   provenance    Json     @default("{}") @db.JsonB
   contentId     String?  @map("content_id") @db.Uuid
   shotId        String?  @map("shot_id") @db.Uuid
-  sequenceId    String?  @map("sequence_id") @db.Uuid
+  seriesId      String?  @map("series_id") @db.Uuid
+  avatarId      String?  @map("avatar_id") @db.Uuid
   metadata      Json     @default("{}") @db.JsonB
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   content       ContentItem?       @relation(fields: [contentId], references: [id], onDelete: SetNull)
   shot          StoryboardShot?    @relation(fields: [shotId], references: [id], onDelete: SetNull)
-  sequence      Sequence?          @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  series        Series?            @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  avatar        Avatar?            @relation(fields: [avatarId], references: [id], onDelete: SetNull)
   parentAsset   AssetRegistryEntry? @relation("AssetVersions", fields: [parentAssetId], references: [id], onDelete: SetNull)
   childAssets   AssetRegistryEntry[] @relation("AssetVersions")
 
   @@index([contentId])
   @@index([shotId])
+  @@index([avatarId])
   @@index([type])
   @@index([storageKey])
   @@map("asset_registry_entries")
 }
 
-model Sequence {
-  id          String   @id @default(uuid()) @db.Uuid
-  channelId   String   @map("channel_id") @db.Uuid
-  name        String   @db.VarChar(255)
-  description String?
-  status      String   @default("draft") @db.VarChar(20) // draft, active, archived
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+model Series {
+  id              String   @id @default(uuid()) @db.Uuid
+  channelId       String   @map("channel_id") @db.Uuid
+  name            String   @db.VarChar(255)
+  description     String?
+  status          String   @default("draft") @db.VarChar(20) // draft, active, archived
+  sortOrder       Int      @default(0) @map("sort_order")
 
-  channel Channel              @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  items   SequenceItem[]
-  assets  AssetRegistryEntry[]
+  // Series-specific fields
+  coverImageUrl   String?  @map("cover_image_url")
+  targetAudience  String?  @map("target_audience")
+  tags            String[] @default([])
+  defaultPresetIds Json    @default("[]") @map("default_preset_ids") @db.JsonB
+  defaultRecipeId String?  @map("default_recipe_id") @db.VarChar(100)
+  bibleOverrides  Json     @default("{}") @map("bible_overrides") @db.JsonB
+  postingCadence  Json     @default("{}") @map("posting_cadence") @db.JsonB
+  youtubePlaylistId String? @map("youtube_playlist_id") @db.VarChar(100)
+  baseSeed        Int?     @map("base_seed")
+
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  channel        Channel              @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  episodes       Episode[]
+  seriesAvatars  SeriesAvatar[]
+  contentItems   ContentItem[]
+  assets         AssetRegistryEntry[]
 
   @@index([channelId])
-  @@map("sequences")
+  @@map("series")
 }
 
-model SequenceItem {
-  sequenceId String @map("sequence_id") @db.Uuid
-  contentId  String @map("content_id") @db.Uuid
-  position   Int
+model Episode {
+  id            String    @id @default(uuid()) @db.Uuid
+  seriesId      String    @map("series_id") @db.Uuid
+  contentId     String    @map("content_id") @db.Uuid
+  position      Int
+  episodeNumber Int       @map("episode_number")
+  title         String?   @db.VarChar(500)
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz
 
-  sequence Sequence    @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  content  ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  series  Series      @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  content ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
-  @@id([sequenceId, contentId])
-  @@index([sequenceId, position])
-  @@map("sequence_items")
+  @@unique([seriesId, episodeNumber])
+  @@index([seriesId, position])
+  @@map("episodes")
+}
+
+model SeriesAvatar {
+  seriesId  String  @map("series_id") @db.Uuid
+  avatarId  String  @map("avatar_id") @db.Uuid
+  isPrimary Boolean @default(false) @map("is_primary")
+  role      String? @db.VarChar(50) // main_character, supporting, narrator, antagonist
+
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  avatar Avatar @relation(fields: [avatarId], references: [id], onDelete: Cascade)
+
+  @@id([seriesId, avatarId])
+  @@map("series_avatars")
 }
 
 // ============================================================
@@ -1155,4 +1207,34 @@ model SuggestionLog {
   @@index([channelId])
   @@index([presetId])
   @@map("suggestion_logs")
+}
+
+// ============================================================
+// ACCOUNT LIFECYCLE PIPELINE
+// ============================================================
+
+model AccountLifecycle {
+  id               String    @id @default(uuid()) @db.Uuid
+  emailAccountId   String    @unique @map("email_account_id") @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  targetPlatforms  String[]  @default([]) @map("target_platforms")
+  avatarId         String?   @map("avatar_id") @db.Uuid
+  autoSeasoning    Boolean   @default(true) @map("auto_seasoning")
+  autoPosting      Boolean   @default(false) @map("auto_posting")
+  status           String    @default("pending") @db.VarChar(30) // pending, discovering, planning, signing_up, setting_profile, enrolling, active, completed, failed
+  discoveryResults Json      @default("{}") @map("discovery_results") @db.JsonB
+  cohortId         String?   @map("cohort_id") @db.Uuid
+  currentStep      String?   @map("current_step") @db.VarChar(50)
+  error            String?
+  startedAt        DateTime? @map("started_at") @db.Timestamptz
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  emailAccount EmailAccount @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("account_lifecycles")
 }

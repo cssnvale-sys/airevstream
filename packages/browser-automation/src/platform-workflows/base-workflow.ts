@@ -3,7 +3,9 @@ import type { Logger } from '@airevstream/shared';
 import { createLogger } from '@airevstream/shared';
 import type {
   AccountCredentials,
+  DiscoveryResult,
   HumanBehaviorConfig,
+  ProfileAssetsConfig,
   StepResult,
   WarmingConfig,
   WarmingSessionResult,
@@ -75,6 +77,18 @@ export abstract class BasePlatformWorkflow {
    * Returns health status and a list of any detected issues.
    */
   abstract checkAccountHealth(): Promise<{ healthy: boolean; issues: string[] }>;
+
+  /**
+   * Discover whether an email already has an account on this platform.
+   * Uses login probe — navigates to login, enters email, checks platform response.
+   */
+  abstract discoverAccount(credentials: AccountCredentials): Promise<DiscoveryResult>;
+
+  /**
+   * Upload profile image, banner, and set display name/bio after account creation.
+   * Platform workflows that don't support this should return success with no-op.
+   */
+  abstract setProfileAssets(config: ProfileAssetsConfig): Promise<WorkflowResult>;
 
   // ─── Shared Helpers ───
 

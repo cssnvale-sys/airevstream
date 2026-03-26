@@ -1,14 +1,14 @@
-import { createWorker, getQueue, addJob, type PostingScheduleJob, type PostingPublishJob } from '@airevstream/queue';
+import { createWorker, getQueue, addJob, type PostingScheduleJob, type PostingPublishJob, type SeriesPlaylistSyncJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { decrypt } from '@airevstream/crypto';
-import { getConfig, createLogger } from '@airevstream/shared';
+import { getConfig, createLogger, type ActivityLock } from '@airevstream/shared';
 import { getPresignedUrl } from '@airevstream/storage';
 import type { Job } from 'bullmq';
 import { getAdapter, type PostContent, type PlatformCredentials } from './platform-adapters.js';
 
 const logger = createLogger('worker:posting');
 
-async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob>) {
+async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob | SeriesPlaylistSyncJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing posting job');
 
   if (job.name === 'posting:check-scheduled') {
@@ -20,8 +20,48 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     return handleSchedule(data);
   }
 
+  if (job.name === 'posting:playlist-sync') {
+    const data = job.data as SeriesPlaylistSyncJob;
+    return handlePlaylistSync(data);
+  }
+
   const { scheduledPostId, contentId, channelId, platform } = job.data as PostingPublishJob;
   const db = getDb();
+
+  // Activity lock check (D112) — posting has time-sensitive priority
+  const scheduledPostForLock = await db.scheduledPost.findUnique({
+    where: { id: scheduledPostId },
+    select: { channel: { select: { socialAccount: { select: { id: true, metadata: true } } } } },
+  });
+  if (scheduledPostForLock?.channel?.socialAccount) {
+    const socialId = scheduledPostForLock.channel.socialAccount.id;
+    const meta = scheduledPostForLock.channel.socialAccount.metadata as Record<string, unknown> | null;
+    const lock = meta?.activityLock as ActivityLock | undefined;
+    if (lock?.lockedAt && lock?.expiresAt && new Date(lock.expiresAt).getTime() > Date.now()) {
+      if (lock.type === 'warming') {
+        const timeLeft = new Date(lock.expiresAt).getTime() - Date.now();
+        if (timeLeft < 5 * 60 * 1000) {
+          // Warming lock expiring soon (<5 min) — short retry
+          logger.info({ socialAccountId: socialId, timeLeftMs: timeLeft }, 'Warming lock expiring soon — short retry');
+          throw new Error('Activity lock held by warming — retry shortly');
+        }
+        // Warming lock long — posting breaks it (time-sensitive priority)
+        logger.info({ socialAccountId: socialId }, 'Breaking warming lock for time-sensitive posting');
+      }
+    }
+    // Acquire posting lock (30 min TTL)
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
+    await db.socialAccount.update({
+      where: { id: socialId },
+      data: {
+        metadata: {
+          ...(meta ?? {}),
+          activityLock: { type: 'posting', lockedAt: now.toISOString(), expiresAt: expiresAt.toISOString(), jobId: String(job.id) },
+        } as any,
+      },
+    });
+  }
 
   // Get the scheduled post record with related data
   const scheduledPost = await db.scheduledPost.findUnique({
@@ -135,6 +175,17 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
         data: { lastPostAt: postedAt },
       }),
     ]);
+
+    // Release activity lock
+    if (scheduledPostForLock?.channel?.socialAccount) {
+      const socialId = scheduledPostForLock.channel.socialAccount.id;
+      const currentSocial = await db.socialAccount.findUnique({ where: { id: socialId } });
+      if (currentSocial) {
+        const curMeta = (typeof currentSocial.metadata === 'object' && currentSocial.metadata !== null ? currentSocial.metadata : {}) as Record<string, unknown>;
+        const { activityLock: _, ...restMeta } = curMeta;
+        await db.socialAccount.update({ where: { id: socialId }, data: { metadata: restMeta as any } });
+      }
+    }
 
     logger.info({
       contentId,
@@ -256,6 +307,12 @@ async function handleSchedule(data: PostingScheduleJob) {
 
   logger.info({ scheduledPostId: post.id, scheduledAt: data.scheduledAt }, 'Post scheduled');
   return { scheduledPostId: post.id, status: 'scheduled' };
+}
+
+async function handlePlaylistSync(data: SeriesPlaylistSyncJob) {
+  // Stub: YouTube playlist sync will be implemented when YouTube Data API integration is ready
+  logger.info({ seriesId: data.seriesId, playlistId: data.youtubePlaylistId }, 'Playlist sync requested (stub)');
+  return { status: 'stub', seriesId: data.seriesId };
 }
 
 export function startPostingWorker() {

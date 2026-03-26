@@ -1,5 +1,7 @@
 import type {
   AccountCredentials,
+  DiscoveryResult,
+  ProfileAssetsConfig,
   WarmingConfig,
   WarmingSessionResult,
   WarmingActivity,
@@ -536,5 +538,19 @@ export class TikTokWorkflow extends BasePlatformWorkflow {
     } catch {
       return false;
     }
+  }
+
+  // ─── Discovery (D064 stub) ───
+
+  async discoverAccount(credentials: AccountCredentials): Promise<DiscoveryResult> {
+    this.logger.info({ email: credentials.email, platform: credentials.platform }, 'Discovery not yet implemented — returning unknown');
+    return { exists: 'unknown', needsHuman: true, humanTaskDescription: `${credentials.platform} discovery not yet implemented. Check manually.` };
+  }
+
+  // ─── Profile Setup (D064 stub) ───
+
+  async setProfileAssets(config: ProfileAssetsConfig): Promise<WorkflowResult> {
+    this.logger.info({ platform: 'tiktok' }, 'Profile asset setup not yet implemented — returning success');
+    return this.buildResult(true);
   }
 }

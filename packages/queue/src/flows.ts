@@ -80,6 +80,8 @@ export interface CinemaPipelineParams {
   overrides?: Record<string, unknown>;
   /** Duration in seconds */
   duration?: number;
+  /** Series ID for series-aware content creation */
+  seriesId?: string;
 }
 
 /**
@@ -333,6 +335,40 @@ export async function startSeasoningPipeline(params: SeasoningPipelineParams) {
   const failed = results.filter((r) => r.status === 'rejected').length;
 
   return { totalJobs: jobs.length, succeeded, failed };
+}
+
+// ─── Account Lifecycle Pipeline ───
+
+export interface AccountLifecyclePipelineParams {
+  emailAccountId: string;
+  tenantId: string;
+  targetPlatforms: string[];
+  avatarId?: string;
+  autoSeasoning?: boolean;
+  autoPosting?: boolean;
+}
+
+/**
+ * Start an account lifecycle pipeline for an email account.
+ * Unlike cinema pipeline, this uses a worker-chained saga (D110) —
+ * the init handler chains subsequent jobs based on runtime discovery results.
+ */
+export async function startAccountLifecyclePipeline(params: AccountLifecyclePipelineParams) {
+  const { addJob } = await import('./index.js');
+
+  const job = await addJob('lifecycle', 'lifecycle:init', {
+    emailAccountId: params.emailAccountId,
+    tenantId: params.tenantId,
+    targetPlatforms: params.targetPlatforms,
+    avatarId: params.avatarId,
+    autoSeasoning: params.autoSeasoning,
+    autoPosting: params.autoPosting,
+  }, {
+    attempts: 2,
+    backoff: { type: 'exponential', delay: 10000 },
+  });
+
+  return { jobId: job.id };
 }
 
 export async function closeFlowProducer(): Promise<void> {

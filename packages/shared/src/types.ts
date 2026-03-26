@@ -35,7 +35,7 @@ export interface WarmingSessionResult {
 }
 
 // ─── Email Account Types ───
-export type EmailAccountStatus = 'active' | 'disabled' | 'flagged' | 'pending';
+export type EmailAccountStatus = 'active' | 'disabled' | 'flagged' | 'pending' | 'provisioning';
 export type EmailAccountTier = 'tier1' | 'tier2' | 'tier3';
 
 // ─── Social Account Types ───
@@ -171,9 +171,16 @@ export type JobType =
   | 'production:qc-gate'
   | 'production:mix-audio'
   | 'production:repair-shot'
+  | 'production:asset-generate'
   | 'content:viral-score'
   | 'posting:schedule'
-  | 'posting:publish';
+  | 'posting:publish'
+  | 'lifecycle:init'
+  | 'lifecycle:discover'
+  | 'lifecycle:plan'
+  | 'lifecycle:signup'
+  | 'lifecycle:set-profile'
+  | 'lifecycle:enroll';
 
 // ─── API Response Types ───
 export interface ApiResponse<T = unknown> {
@@ -523,27 +530,179 @@ export interface AssetRegistryEntry {
   provenance?: Record<string, unknown>;
   contentId?: string;
   shotId?: string;
-  sequenceId?: string;
+  seriesId?: string;
+  avatarId?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
 }
 
-// ─── Sequence ───
-export interface Sequence {
+// ─── Avatar Types ───
+export type AvatarImageSlot = 'face' | 'waist' | 'body_front' | 'body_back';
+
+export interface AvatarImageRef {
+  bucket: string;
+  key: string;
+}
+
+export interface AvatarImages {
+  face?: AvatarImageRef;
+  waist?: AvatarImageRef;
+  body_front?: AvatarImageRef;
+  body_back?: AvatarImageRef;
+}
+
+export interface Avatar {
   id: string;
-  channelId: string;
+  tenantId: string;
   name: string;
-  description?: string;
-  status: 'draft' | 'active' | 'archived';
-  sortOrder: number;
+  description: Record<string, unknown>;
+  traitLock: Record<string, unknown>;
+  images: AvatarImages;
+  voiceProfiles: Record<string, unknown>;
+  generationHistory: Array<Record<string, unknown>>;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface SequenceItem {
-  sequenceId: string;
+// ─── Scenery Types ───
+export type SceneryCategory = 'city' | 'nature' | 'studio' | 'fantasy' | 'interior' | 'abstract';
+
+export interface SceneryAsset {
+  id: string;
+  tenantId: string;
+  name: string;
+  category?: SceneryCategory | string;
+  imageUrl: string;
+  prompt?: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Branding Types ───
+export interface BrandingPackage {
+  id: string;
+  channelId: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  colors: Record<string, string>;
+  fonts: Record<string, string>;
+  templates: Array<Record<string, unknown>>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Upload Types ───
+export interface PresignedPutResponse {
+  url: string;
+  bucket: string;
+  key: string;
+  expiresIn: number;
+}
+
+export interface UploadedAssetRef {
+  bucket: string;
+  key: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+// ─── Series ───
+export type SeriesStatus = 'draft' | 'active' | 'archived';
+
+export interface PostingCadenceConfig {
+  dayOfWeek?: number[];
+  time?: string;
+  timezone?: string;
+}
+
+export interface Series {
+  id: string;
+  channelId: string;
+  name: string;
+  description?: string;
+  status: SeriesStatus;
+  sortOrder: number;
+  coverImageUrl?: string;
+  targetAudience?: string;
+  tags: string[];
+  defaultPresetIds: string[];
+  defaultRecipeId?: string;
+  bibleOverrides: Record<string, unknown>;
+  postingCadence: PostingCadenceConfig;
+  youtubePlaylistId?: string;
+  baseSeed?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Episode {
+  id: string;
+  seriesId: string;
   contentId: string;
   position: number;
+  episodeNumber: number;
+  title?: string;
+  publishedAt?: string;
+}
+
+export interface SeriesAvatar {
+  seriesId: string;
+  avatarId: string;
+  isPrimary: boolean;
+  role?: string;
+}
+
+// ─── Account Lifecycle Types ───
+export type AccountLifecycleStatus =
+  | 'pending'
+  | 'discovering'
+  | 'planning'
+  | 'signing_up'
+  | 'setting_profile'
+  | 'enrolling'
+  | 'active'
+  | 'completed'
+  | 'failed';
+
+export interface PlatformDiscoveryResult {
+  exists: boolean | 'unknown';
+  accountInfo?: {
+    username?: string;
+    profileUrl?: string;
+    platformUserId?: string;
+    channelId?: string;
+  };
+  needsHuman?: boolean;
+  humanTaskDescription?: string;
+  error?: string;
+}
+
+export interface AccountLifecycle {
+  id: string;
+  emailAccountId: string;
+  tenantId: string;
+  targetPlatforms: string[];
+  avatarId?: string;
+  autoSeasoning: boolean;
+  autoPosting: boolean;
+  status: AccountLifecycleStatus;
+  discoveryResults: Record<string, PlatformDiscoveryResult>;
+  cohortId?: string;
+  currentStep?: string;
+  error?: string;
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ActivityLock {
+  type: 'warming' | 'posting';
+  lockedAt: string;
+  expiresAt: string;
+  jobId: string;
 }
 
 // ─── Timestamped Script ───

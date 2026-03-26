@@ -18,6 +18,8 @@ export type {
   ProxyHealth,
   ProxyPoolStats,
   ManagedContext,
+  DiscoveryResult,
+  ProfileAssetsConfig,
 } from './types.js';
 
 export { type Platform } from './types.js';

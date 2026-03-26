@@ -98,6 +98,28 @@ export interface WorkflowResult {
 // ─── Warming Types (re-exported from @airevstream/shared to break circular dependency) ───
 export type { WarmingActivity, WarmingConfig, WarmingActivityResult, WarmingSessionResult } from '@airevstream/shared';
 
+// ─── Account Discovery ───
+export interface DiscoveryResult {
+  exists: boolean | 'unknown';
+  accountInfo?: {
+    username?: string;
+    profileUrl?: string;
+    platformUserId?: string;
+    channelId?: string;
+  };
+  needsHuman?: boolean;
+  humanTaskDescription?: string;
+  error?: string;
+}
+
+// ─── Profile Setup ───
+export interface ProfileAssetsConfig {
+  profileImagePath?: string;
+  bannerImagePath?: string;
+  displayName?: string;
+  bio?: string;
+}
+
 // ─── Proxy Verification ───
 export interface ProxyVerificationResult {
   success: boolean;

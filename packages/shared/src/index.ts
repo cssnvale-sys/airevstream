@@ -28,6 +28,7 @@ export type { QualityRegressionTest, RegressionResult, VMAFCompareOptions, VMAFC
 // e.g. import { runQualityRegression } from '@airevstream/shared/dist/quality-regression.js'
 export type { ChannelProfile, TopicSuggestion } from './channel-suggestions.js';
 export * from './av-sync-validator.js';
+export * from './series-bible-resolver.js';
 export * from './seasoning-types.js';
 export * from './seasoning-config.js';
 export * from './seasoning-orchestrator.js';

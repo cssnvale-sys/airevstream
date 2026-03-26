@@ -14,6 +14,7 @@ import type {
   ProductionGenerateShotsJob,
   ProductionQCGateJob,
   ProductionMixAudioJob,
+  ProductionAssetGenerateJob,
   ExportVariant,
 } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
@@ -1725,6 +1726,103 @@ async function handleRepairShot(data: ProductionRepairShotJob): Promise<void> {
   }
 }
 
+// ─── Asset Generation Handler ───
+
+const ASSET_TYPE_BUCKET_MAP: Record<string, string> = {
+  avatar: BUCKETS.AVATARS,
+  scenery: BUCKETS.SCENERY,
+  branding: BUCKETS.BRANDING,
+};
+
+async function handleAssetGenerate(data: ProductionAssetGenerateJob): Promise<void> {
+  const db = getDb();
+  const { tenantId, assetType, sourceModelId, workflowType, prompt, params, slot } = data;
+
+  logger.info({ assetType, sourceModelId, workflowType }, 'Processing asset generation job');
+
+  const bucket = ASSET_TYPE_BUCKET_MAP[assetType] ?? BUCKETS.PRODUCTION;
+
+  const healthy = await comfyClient.isHealthy();
+  if (!healthy) {
+    logger.warn({ assetType, sourceModelId }, 'ComfyUI not available for asset generation');
+    return;
+  }
+
+  await ensureBucket(bucket);
+
+  // Load and compose workflow template
+  const templateName = WORKFLOW_TEMPLATE_MAP[workflowType] ?? 'thumbnail-generation';
+  const templateParams: Record<string, string | number> = { positive_prompt: prompt };
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      if (typeof v === 'string' || typeof v === 'number') {
+        templateParams[k] = v;
+      }
+    }
+  }
+
+  const workflow = await renderTemplate(templateName, templateParams);
+
+  // Generate via ComfyUI
+  const promptId = await comfyClient.queuePrompt(workflow as ComfyUIWorkflow);
+  await comfyClient.waitForCompletion(promptId);
+  const outputImages = await comfyClient.getOutputImages(promptId);
+
+  if (outputImages.length === 0) {
+    logger.error({ assetType, sourceModelId }, 'ComfyUI returned no images for asset generation');
+    return;
+  }
+
+  // Download the first output image
+  const img = outputImages[0];
+  const imageData = await comfyClient.downloadImage(img.filename, img.subfolder, img.type);
+
+  // Upload to storage
+  const slotName = slot ?? 'primary';
+  const storageKey = `${tenantId}/${assetType}/${sourceModelId}/${slotName}/${Date.now()}.png`;
+  await uploadBuffer(bucket, storageKey, imageData, 'image/png');
+  logger.info({ bucket, storageKey }, 'Asset uploaded to storage');
+
+  // Register in asset registry
+  await registerAsset({
+    type: 'image',
+    storageKey: `${bucket}/${storageKey}`,
+    fileSize: imageData.length,
+    mimeType: 'image/png',
+    generatedBy: 'comfyui',
+    metadata: { assetType, workflowType, sourceModelId },
+  });
+
+  // Update source model based on asset type
+  const storageRef = { bucket, key: storageKey };
+
+  if (assetType === 'avatar') {
+    const avatar = await db.avatar.findUnique({ where: { id: sourceModelId }, select: { images: true } });
+    const images = (avatar?.images as Record<string, unknown>) ?? {};
+    images[slotName] = storageRef;
+    await db.avatar.update({
+      where: { id: sourceModelId },
+      data: { images: images as any },
+    });
+    logger.info({ sourceModelId, slot: slotName }, 'Avatar image slot updated');
+  } else if (assetType === 'scenery') {
+    await db.sceneryAsset.update({
+      where: { id: sourceModelId },
+      data: { imageUrl: storageKey },
+    });
+    logger.info({ sourceModelId }, 'SceneryAsset imageUrl updated');
+  } else if (assetType === 'branding') {
+    const field = (slotName === 'banner' || workflowType === 'banner') ? 'bannerUrl' : 'logoUrl';
+    await db.brandingPackage.update({
+      where: { id: sourceModelId },
+      data: { [field]: storageKey },
+    });
+    logger.info({ sourceModelId, field }, 'BrandingPackage URL updated');
+  }
+
+  logger.info({ assetType, sourceModelId, storageKey }, 'Asset generation complete');
+}
+
 // ─── Worker Setup ───
 
 type ProductionJob =
@@ -1735,7 +1833,8 @@ type ProductionJob =
   | ProductionGenerateShotsJob
   | ProductionQCGateJob
   | ProductionMixAudioJob
-  | ProductionRepairShotJob;
+  | ProductionRepairShotJob
+  | ProductionAssetGenerateJob;
 
 export function startProductionWorker() {
   const worker = createWorker<'production'>(
@@ -1767,6 +1866,9 @@ export function startProductionWorker() {
           break;
         case 'production:repair-shot':
           await handleRepairShot(job.data as ProductionRepairShotJob);
+          break;
+        case 'production:asset-generate':
+          await handleAssetGenerate(job.data as ProductionAssetGenerateJob);
           break;
         default:
           logger.warn({ jobName: job.name }, 'Unknown production job type');

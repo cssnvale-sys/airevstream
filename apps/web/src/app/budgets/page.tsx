@@ -7,6 +7,7 @@ import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { Plus, Trash2, Wallet, AlertTriangle, Pause, Play } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -56,6 +57,7 @@ export default function BudgetsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
 
   const budgets: Budget[] = data?.data ?? [];
@@ -78,6 +80,7 @@ export default function BudgetsPage() {
       category: form.category || null,
     };
 
+    setSaving(true);
     try {
       if (editingId) {
         await apiPatch(`/budgets/${editingId}`, payload);
@@ -93,6 +96,8 @@ export default function BudgetsPage() {
     } catch (err) {
       console.error('Failed to save budget:', err);
       toast.error('Failed to save budget');
+    } finally {
+      setSaving(false);
     }
   }, [form, editingId, mutate]);
 
@@ -227,9 +232,15 @@ export default function BudgetsPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 mt-4">
-            <button onClick={handleSave} className="btn-primary">
+            <LoadingButton
+              onClick={handleSave}
+              loading={saving}
+              loadingText={editingId ? 'Updating...' : 'Creating...'}
+              disabled={!form.name || !form.limitAmount}
+              className="btn-primary"
+            >
               {editingId ? 'Update' : 'Create'}
-            </button>
+            </LoadingButton>
             <button
               onClick={() => { setShowForm(false); setEditingId(null); setForm(INITIAL_FORM); }}
               className="btn-secondary"

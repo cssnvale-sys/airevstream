@@ -17,12 +17,14 @@ const config: Config = {
         text: {
           primary: 'rgb(var(--text-primary) / <alpha-value>)',
           secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
+          tertiary: 'rgb(var(--text-tertiary) / <alpha-value>)',
         },
         accent: {
           blue: 'rgb(var(--accent-blue) / <alpha-value>)',
           green: 'rgb(var(--accent-green) / <alpha-value>)',
           amber: 'rgb(var(--accent-amber) / <alpha-value>)',
           red: 'rgb(var(--accent-red) / <alpha-value>)',
+          orange: 'rgb(var(--accent-orange) / <alpha-value>)',
           purple: 'rgb(var(--accent-purple) / <alpha-value>)',
         },
         status: {

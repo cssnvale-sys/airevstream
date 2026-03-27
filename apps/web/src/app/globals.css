@@ -10,10 +10,12 @@
     --border: 226 228 232;
     --text-primary: 10 10 11;
     --text-secondary: 107 107 116;
+    --text-tertiary: 160 160 168;
     --accent-blue: 37 99 235;
     --accent-green: 22 163 74;
     --accent-amber: 217 119 6;
     --accent-red: 220 38 38;
+    --accent-orange: 234 88 12;
     --accent-purple: 147 51 234;
   }
 
@@ -24,10 +26,12 @@
     --border: 42 42 45;
     --text-primary: 240 240 242;
     --text-secondary: 154 154 160;
+    --text-tertiary: 100 100 108;
     --accent-blue: 59 130 246;
     --accent-green: 34 197 94;
     --accent-amber: 245 158 11;
     --accent-red: 239 68 68;
+    --accent-orange: 249 115 22;
     --accent-purple: 168 85 247;
   }
 
@@ -42,23 +46,23 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-accent-blue hover:brightness-110 text-white font-medium py-2 px-4 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-accent-blue hover:brightness-110 text-white font-medium py-2 px-4 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary;
   }
 
   .btn-secondary {
-    @apply bg-bg-tertiary hover:brightness-110 text-text-primary font-medium py-2 px-4 rounded-md transition-all border border-border;
+    @apply bg-bg-tertiary hover:brightness-110 text-text-primary font-medium py-2 px-4 rounded-md transition-all border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary;
   }
 
   .btn-danger {
-    @apply bg-accent-red hover:brightness-110 text-white font-medium py-2 px-4 rounded-md transition-all;
+    @apply bg-accent-red hover:brightness-110 text-white font-medium py-2 px-4 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-red/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary;
   }
 
   .btn-success {
-    @apply bg-accent-green hover:brightness-110 text-white font-medium py-2 px-4 rounded-md transition-all;
+    @apply bg-accent-green hover:brightness-110 text-white font-medium py-2 px-4 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-bg-tertiary text-text-secondary font-medium py-2 px-4 rounded-md transition-all;
+    @apply bg-transparent hover:bg-bg-tertiary text-text-secondary font-medium py-2 px-4 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary;
   }
 
   .btn-sm {
@@ -66,7 +70,7 @@
   }
 
   .btn-icon {
-    @apply p-2 rounded-md hover:bg-bg-tertiary text-text-secondary transition-colors;
+    @apply p-2 rounded-md hover:bg-bg-tertiary text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50;
   }
 
   .input {

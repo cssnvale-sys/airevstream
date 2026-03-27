@@ -280,6 +280,7 @@ export default function StudioPage() {
                 onClick={() => setViewMode('editor')}
                 className={cn('p-1.5', viewMode === 'editor' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
                 title="Editor view"
+                aria-label="Editor view"
               >
                 <List size={14} />
               </button>
@@ -287,6 +288,7 @@ export default function StudioPage() {
                 onClick={() => setViewMode('table')}
                 className={cn('p-1.5', viewMode === 'table' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
                 title="Table view"
+                aria-label="Table view"
               >
                 <Table2 size={14} />
               </button>
@@ -347,6 +349,7 @@ export default function StudioPage() {
                     disabled={reviewActing === shot.id || shot.status === 'approved'}
                     className="p-2 rounded text-accent-green hover:bg-accent-green/10 disabled:opacity-30"
                     title="Approve shot"
+                    aria-label="Approve shot"
                   >
                     <Check size={14} />
                   </button>
@@ -355,6 +358,7 @@ export default function StudioPage() {
                     disabled={reviewActing === shot.id || shot.status === 'failed'}
                     className="p-2 rounded text-accent-red hover:bg-accent-red/10 disabled:opacity-30"
                     title="Reject shot"
+                    aria-label="Reject shot"
                   >
                     <X size={14} />
                   </button>
@@ -363,6 +367,7 @@ export default function StudioPage() {
                     disabled={reviewActing === shot.id || shot.status === 'generating'}
                     className="p-2 rounded text-accent-blue hover:bg-accent-blue/10 disabled:opacity-30"
                     title="Regenerate shot"
+                    aria-label="Regenerate shot"
                   >
                     <RotateCcw size={14} />
                   </button>

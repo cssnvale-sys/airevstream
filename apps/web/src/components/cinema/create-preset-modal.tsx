@@ -204,6 +204,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
                   className="w-full bg-bg-secondary text-text-primary border border-border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-accent-blue outline-none"
                   maxLength={255}
                   disabled={state === 'saving'}
+                  placeholder="My Custom Preset"
                 />
               </div>
 
@@ -222,6 +223,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
                   type="text"
                   value={editedDescription}
                   onChange={(e) => setEditedDescription(e.target.value)}
+                  placeholder="Describe the look and feel"
                   className="w-full bg-bg-secondary text-text-primary border border-border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-accent-blue outline-none"
                   maxLength={500}
                   disabled={state === 'saving'}

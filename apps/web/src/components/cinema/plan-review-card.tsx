@@ -118,7 +118,7 @@ export function PlanReviewCard({ plan, onRevise, onRegenerate, regenerating }: P
             setDirty(false);
           }}
           disabled={regenerating}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 disabled:opacity-50"
         >
           {regenerating ? (
             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

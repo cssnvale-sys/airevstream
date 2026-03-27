@@ -207,6 +207,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
               <span className="text-text-secondary font-medium">Issues ({allIssues.length})</span>
               {allIssues.length > highIssues.length && (
                 <button
+                  type="button"
                   onClick={() => setShowAllIssues(v => !v)}
                   className="text-accent-blue hover:text-accent-blue/80 flex items-center gap-0.5"
                 >

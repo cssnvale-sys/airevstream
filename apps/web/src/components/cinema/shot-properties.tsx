@@ -154,6 +154,7 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
                 />
               </div>
               <button
+                type="button"
                 onClick={() => update('seed', Math.floor(Math.random() * 2147483647))}
                 className="px-2.5 py-1.5 text-xs bg-bg-tertiary border border-border rounded-md text-text-secondary hover:text-text-primary hover:bg-border transition-colors"
                 title="Re-roll seed"
@@ -424,6 +425,7 @@ function CollapsibleSection({ title, defaultOpen, children }: { title: string; d
   return (
     <div className="border border-border rounded-md overflow-hidden">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-3 py-2 bg-bg-tertiary hover:bg-border text-sm font-medium text-text-primary transition-colors"
       >

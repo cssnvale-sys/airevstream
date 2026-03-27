@@ -121,6 +121,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-text-primary">Presets</span>
             <button
+              type="button"
               onClick={() => setShowCreateModal(true)}
               className="text-[10px] px-2 py-0.5 rounded border border-accent-blue/30 text-accent-blue hover:bg-accent-blue/10 transition-colors"
             >
@@ -175,6 +176,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
               <div className="text-center py-6">
                 <p className="text-xs text-text-tertiary mb-2">No custom presets yet</p>
                 <button
+                  type="button"
                   onClick={() => setShowCreateModal(true)}
                   className="text-xs text-accent-blue hover:text-accent-blue/80 transition-colors"
                 >
@@ -233,6 +235,7 @@ function PresetCard({
   return (
     <div className="relative group">
       <button
+        type="button"
         onClick={() => onApply(preset.overrides)}
         className="w-full text-left p-2 rounded border border-border hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-colors"
       >
@@ -271,6 +274,7 @@ function PresetCard({
 function RecipeCard({ recipe, onApply, mode }: { recipe: Recipe; onApply: (recipe: Recipe) => void; mode?: string }) {
   return (
     <button
+      type="button"
       onClick={() => onApply(recipe)}
       className="w-full text-left p-2 rounded border border-border hover:border-accent-purple/50 hover:bg-accent-purple/5 transition-colors"
     >

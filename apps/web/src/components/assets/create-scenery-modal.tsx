@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
@@ -29,6 +29,20 @@ export function CreateSceneryModal({ open, onClose, onCreated }: CreateSceneryMo
   const [category, setCategory] = useState('');
   const [imageUpload, setImageUpload] = useState<UploadResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !submitting) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => nameRef.current?.focus(), 50);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
+  }, [open, submitting, onClose]);
 
   const resetForm = useCallback(() => {
     setName('');
@@ -104,6 +118,7 @@ export function CreateSceneryModal({ open, onClose, onCreated }: CreateSceneryMo
               Name <span className="text-accent-red">*</span>
             </label>
             <input
+              ref={nameRef}
               id="scenery-name"
               type="text"
               value={name}

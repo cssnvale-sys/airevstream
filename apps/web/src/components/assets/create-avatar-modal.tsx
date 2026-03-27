@@ -24,9 +24,16 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
 
   useEffect(() => {
     if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !submitting) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
     const timer = setTimeout(() => nameRef.current?.focus(), 50);
-    return () => clearTimeout(timer);
-  }, [open]);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
+  }, [open, submitting, onClose]);
 
   const resetForm = useCallback(() => {
     setName('');

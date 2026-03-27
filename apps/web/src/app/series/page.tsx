@@ -105,7 +105,7 @@ export default function SeriesPage() {
         </div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" aria-label="Series list">
             <thead>
               <tr className="border-b border-border text-left text-caption text-text-secondary">
                 <th scope="col" className="px-4 py-3 font-medium">Name</th>

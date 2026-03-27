@@ -64,7 +64,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-body">
+      <table className="w-full text-body" aria-label="Seasoning enrollments">
         <thead>
           <tr className="border-b border-border text-text-secondary text-caption">
             <th scope="col" className="text-left py-2 px-3 font-medium">Email</th>

@@ -37,7 +37,7 @@ function formatTimecode(seconds: number | null): string {
 export function ShotTable({ shots, selectedShotId, onSelectShot }: ShotTableProps) {
   return (
     <div className="border border-border rounded-lg overflow-hidden">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" aria-label="Storyboard shots">
         <thead>
           <tr className="bg-bg-tertiary border-b border-border">
             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-10">#</th>

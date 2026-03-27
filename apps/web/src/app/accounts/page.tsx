@@ -1112,7 +1112,7 @@ export default function AccountsPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" aria-label="Email accounts">
                 <thead>
                   <tr className="border-b border-border text-text-secondary text-left">
                     <th scope="col" className="px-4 py-3 w-10">

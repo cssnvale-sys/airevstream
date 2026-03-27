@@ -118,7 +118,7 @@ export default function ChannelsPage() {
         </div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full text-body">
+          <table className="w-full text-body" aria-label="Channels list">
             <thead>
               <tr className="border-b border-border">
                 <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Name</th>

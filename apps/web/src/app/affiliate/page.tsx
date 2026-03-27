@@ -545,7 +545,7 @@ function ProductsTab({
 
       {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
+        <table aria-label="Affiliate products" className="w-full text-sm">
           <thead>
             <tr className="bg-bg-tertiary text-text-secondary text-left">
               <th scope="col" className="px-4 py-3 font-medium w-10" />
@@ -834,7 +834,7 @@ function LinksTab({
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
+        <table aria-label="Affiliate links" className="w-full text-sm">
           <thead>
             <tr className="bg-bg-tertiary text-text-secondary text-left">
               <th scope="col" className="px-4 py-3 font-medium">Original URL</th>
@@ -987,7 +987,7 @@ function PerformanceTab({
           Product x Channel Matrix
         </h3>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
+          <table aria-label="Product channel matrix" className="w-full text-sm">
             <thead>
               <tr className="bg-bg-tertiary text-text-secondary text-left">
                 <th scope="col" className="px-4 py-3 font-medium">Product</th>
@@ -1779,7 +1779,7 @@ function StorefrontsTab({
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
+        <table aria-label="Affiliate data" className="w-full text-sm">
           <thead>
             <tr className="bg-bg-tertiary text-text-secondary text-left">
               <th scope="col" className="px-4 py-3 font-medium">Name</th>

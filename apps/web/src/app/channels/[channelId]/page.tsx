@@ -246,7 +246,7 @@ export default function ChannelDetailPage() {
         {content.length > 0 ? (
           <div className="card overflow-x-auto">
             <h3 className="text-card-title text-text-primary p-4 pb-2">Top Content by Viral Score</h3>
-            <table className="w-full text-body">
+            <table className="w-full text-body" aria-label="Channel content">
               <thead>
                 <tr className="border-b border-border">
                   <th scope="col" className="text-left py-2 px-4 text-text-secondary font-medium">Title</th>

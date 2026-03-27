@@ -353,7 +353,7 @@ export default function AnalyticsPage() {
         <div className="card">
           <h3 className="text-card-title text-text-primary mb-4">Revenue by Channel (Top 5)</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-body">
+            <table aria-label="Revenue by channel" className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
                   <th scope="col" className="text-left py-2 text-text-secondary font-medium">Channel</th>
@@ -380,7 +380,7 @@ export default function AnalyticsPage() {
         <div className="card">
           <h3 className="text-card-title text-text-primary mb-4">Revenue by Product (Top 5)</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-body">
+            <table aria-label="Revenue by product" className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
                   <th scope="col" className="text-left py-2 text-text-secondary font-medium">Product</th>
@@ -614,7 +614,7 @@ export default function AnalyticsPage() {
       <div className="card">
         <h3 className="text-card-title text-text-primary mb-4">Cost Summary</h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-body">
+          <table aria-label="Cost summary" className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
                 <th scope="col" className="text-left py-2 text-text-secondary font-medium">Category</th>
@@ -760,7 +760,7 @@ export default function AnalyticsPage() {
           <div className="card">
             <h3 className="text-card-title text-text-primary mb-4">Recent Completions</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-body">
+              <table aria-label="Recent experiment completions" className="w-full text-body">
                 <thead>
                   <tr className="border-b border-border">
                     <th scope="col" className="text-left py-2 text-text-secondary font-medium">Name</th>
@@ -839,7 +839,7 @@ export default function AnalyticsPage() {
                 <div className="card mt-4">
                   <h3 className="text-card-title text-text-primary mb-4">Recent Suggestions</h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-body">
+                    <table aria-label="Recent suggestions" className="w-full text-body">
                       <thead>
                         <tr className="border-b border-border">
                           <th scope="col" className="text-left py-2 text-text-secondary font-medium">Preset</th>

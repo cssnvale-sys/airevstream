@@ -88,7 +88,7 @@ export function EpisodeTable({ seriesId }: Props) {
         </div>
       ) : (
         <div className="card overflow-hidden">
-          <table className="w-full">
+          <table className="w-full" aria-label="Episodes">
             <thead className="sticky top-0 z-10 bg-bg-primary">
               <tr className="border-b border-border text-left text-caption text-text-secondary">
                 <th scope="col" className="px-3 py-2 font-medium w-10">#</th>

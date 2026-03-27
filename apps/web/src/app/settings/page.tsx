@@ -1396,7 +1396,7 @@ function ProxiesTab() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="Services and proxies">
               <thead>
                 <tr className="border-b border-border text-left text-text-secondary">
                   <th scope="col" className="py-2 px-3 font-medium">Name</th>

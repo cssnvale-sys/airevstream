@@ -507,7 +507,7 @@ export default function SystemPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="Error logs">
               <thead className="sticky top-0 z-10 bg-bg-primary">
                 <tr className="border-b border-border text-text-secondary text-left">
                   <th scope="col" className="py-2 px-3 font-medium">Severity</th>

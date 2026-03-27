@@ -504,6 +504,7 @@ function AiServicesTab() {
                 <label htmlFor="settings-ai-service-endpoint" className="block text-xs text-text-secondary mb-1">Endpoint</label>
                 <input
                   id="settings-ai-service-endpoint"
+                  autoComplete="url"
                   value={newService.endpoint}
                   onChange={(e) => setNewService({ ...newService, endpoint: e.target.value })}
                   className="input w-full"
@@ -749,6 +750,7 @@ function NotificationsTab() {
               <label htmlFor="settings-notifications-webhook-url" className="block text-xs text-text-secondary mb-1">Webhook URL</label>
               <input
                 id="settings-notifications-webhook-url"
+                autoComplete="url"
                 value={ch.config.webhookUrl ?? ''}
                 onChange={(e) => updateConfig(idx, 'webhookUrl', e.target.value)}
                 className="input w-full"
@@ -1384,6 +1386,7 @@ function ProxiesTab() {
                   <input
                     id="settings-proxy-password"
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     value={newProxy.password}
                     onChange={(e) => setNewProxy({ ...newProxy, password: e.target.value })}
                     className="input w-full pr-10"

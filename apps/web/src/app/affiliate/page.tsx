@@ -1244,6 +1244,7 @@ function AddProductModal({
           <input
             id="affiliate-create-url"
             type="url"
+            autoComplete="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="input w-full"
@@ -1677,6 +1678,7 @@ function CreateLinkModal({
           <input
             id="affiliate-link-short-url"
             type="url"
+            autoComplete="url"
             value={shortUrl}
             onChange={(e) => setShortUrl(e.target.value)}
             className="input w-full"

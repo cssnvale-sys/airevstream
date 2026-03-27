@@ -2,6 +2,13 @@ import { createLogger } from '@airevstream/shared';
 
 const logger = createLogger('platform-adapters');
 
+/** Polling interval (ms) for TikTok upload processing status */
+const TIKTOK_POLL_INTERVAL_MS = 5_000;
+/** Wait time (ms) for Instagram media container readiness */
+const INSTAGRAM_CONTAINER_WAIT_MS = 10_000;
+/** Wait time (ms) for Instagram image container readiness */
+const INSTAGRAM_IMAGE_WAIT_MS = 5_000;
+
 export interface PostContent {
   title: string;
   description: string;
@@ -208,7 +215,7 @@ export class TikTokAdapter extends BasePlatformAdapter {
       let status = 'PROCESSING_UPLOAD';
       let attempts = 0;
       while (status === 'PROCESSING_UPLOAD' && attempts < 30) {
-        await new Promise(r => setTimeout(r, 5000));
+        await new Promise(r => setTimeout(r, TIKTOK_POLL_INTERVAL_MS));
         const statusRes = await fetch(`${this.API_BASE}/post/publish/status/fetch/`, {
           method: 'POST',
           headers: {
@@ -295,7 +302,7 @@ export class InstagramAdapter extends BasePlatformAdapter {
     const containerId = containerData.id;
 
     // Step 2: Wait for container to be ready
-    await new Promise(r => setTimeout(r, 10_000));
+    await new Promise(r => setTimeout(r, INSTAGRAM_CONTAINER_WAIT_MS));
 
     // Step 3: Publish the container
     const publishRes = await fetch(`${this.API_BASE}/${userId}/media_publish`, {
@@ -343,7 +350,7 @@ export class InstagramAdapter extends BasePlatformAdapter {
     }
 
     const containerData = await createRes.json() as { id: string };
-    await new Promise(r => setTimeout(r, 5_000));
+    await new Promise(r => setTimeout(r, INSTAGRAM_IMAGE_WAIT_MS));
 
     const publishRes = await fetch(`${this.API_BASE}/${userId}/media_publish`, {
       method: 'POST',

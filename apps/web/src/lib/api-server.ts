@@ -53,6 +53,11 @@ export function validationError(message: string) {
   return error('VALIDATION_ERROR', message, 400);
 }
 
+/** Format Zod validation errors into a consistent message string. */
+export function formatZodErrors(errors: { path: (string | number)[]; message: string }[]): string {
+  return errors.map((e) => e.path.length > 0 ? `${e.path.join('.')}: ${e.message}` : e.message).join(', ');
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function isUUID(value: string): boolean {

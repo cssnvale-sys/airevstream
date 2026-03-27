@@ -108,7 +108,7 @@ export function CreateSceneryModal({ open, onClose, onCreated }: CreateSceneryMo
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary focus:outline-none focus:ring-1 focus:ring-accent-blue"
+              className="input w-full"
               placeholder="e.g. Tokyo Night Skyline"
               required
               disabled={submitting}
@@ -124,7 +124,7 @@ export function CreateSceneryModal({ open, onClose, onCreated }: CreateSceneryMo
               id="scenery-category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary focus:outline-none focus:ring-1 focus:ring-accent-blue"
+              className="input w-full"
               disabled={submitting}
             >
               <option value="">Select a category...</option>

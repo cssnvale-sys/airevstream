@@ -116,7 +116,7 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary focus:outline-none focus:ring-1 focus:ring-accent-blue"
+              className="input w-full"
               placeholder="e.g. Alex the Tech Reviewer"
               required
               disabled={submitting}
@@ -133,7 +133,7 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary focus:outline-none focus:ring-1 focus:ring-accent-blue resize-none"
+              className="input w-full resize-none"
               placeholder="Physical description, personality traits, style notes..."
               disabled={submitting}
             />

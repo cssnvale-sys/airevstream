@@ -148,7 +148,7 @@ export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary text-sm focus:outline-none focus:ring-1 focus:ring-accent-blue"
+            className="input w-full pl-9 text-sm"
             placeholder={`Search ${type === 'avatar' ? 'avatars' : 'scenery'}...`}
           />
         </div>

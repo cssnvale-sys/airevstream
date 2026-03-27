@@ -198,7 +198,7 @@ export function BrandingEditor({ channelId, branding, onUpdated }: BrandingEdito
               type="text"
               value={fonts.heading ?? ''}
               onChange={(e) => handleFontChange('heading', e.target.value)}
-              className="w-full px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary text-sm focus:outline-none focus:ring-1 focus:ring-accent-blue"
+              className="input w-full text-sm"
               placeholder="e.g. Inter, Montserrat"
               disabled={saving}
             />
@@ -212,7 +212,7 @@ export function BrandingEditor({ channelId, branding, onUpdated }: BrandingEdito
               type="text"
               value={fonts.body ?? ''}
               onChange={(e) => handleFontChange('body', e.target.value)}
-              className="w-full px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary text-sm focus:outline-none focus:ring-1 focus:ring-accent-blue"
+              className="input w-full text-sm"
               placeholder="e.g. Open Sans, Roboto"
               disabled={saving}
             />

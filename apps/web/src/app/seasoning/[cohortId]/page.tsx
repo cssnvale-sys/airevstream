@@ -137,7 +137,7 @@ export default function CohortDetailPage() {
             value={enrollIds}
             onChange={(e) => setEnrollIds(e.target.value)}
             placeholder="Paste email account UUIDs (one per line or comma-separated)"
-            className="w-full h-24 px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary text-caption font-mono focus:outline-none focus:ring-1 focus:ring-accent-blue"
+            className="input w-full h-24 text-caption font-mono"
           />
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowEnroll(false)} className="btn-ghost btn-sm">

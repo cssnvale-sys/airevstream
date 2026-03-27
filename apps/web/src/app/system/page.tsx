@@ -38,12 +38,21 @@ import { EmptyState } from '@/components/ui/empty-state';
 // Types
 // ---------------------------------------------------------------------------
 
+interface InfraCheck {
+  name: string;
+  status: 'up' | 'down' | 'unknown';
+  latencyMs: number;
+  lastChecked: string;
+  error?: string;
+}
+
 interface HealthData {
   status: string;
   services: { total: number; healthy: number; statuses?: Record<string, number> };
   metrics?: Record<string, { value: number; unit: string; timestamp: string } | null>;
   alerts?: { open: Record<string, number> };
   queues?: { activeJobs: number; pendingPosts: number };
+  infrastructure?: Record<string, InfraCheck>;
 }
 
 interface MetricsData {
@@ -198,13 +207,14 @@ function progressBarColor(pct: number): string {
 // Known services (fallback when API doesn't return them)
 // ---------------------------------------------------------------------------
 
-const DEFAULT_SERVICES: ServiceDisplay[] = [
-  { name: 'PostgreSQL', status: 'unknown', connectionInfo: 'localhost:5432' },
+const DEFAULT_SERVICES: Array<ServiceDisplay & { infraKey?: string }> = [
+  { name: 'PostgreSQL', status: 'unknown', connectionInfo: 'localhost:5432', infraKey: 'database' },
   { name: 'Next.js Web', status: 'unknown', connectionInfo: 'localhost:3000' },
   { name: 'Workflow Engine', status: 'unknown', connectionInfo: 'localhost:3001' },
-  { name: 'Ollama', status: 'unknown', connectionInfo: 'localhost:11434' },
-  { name: 'BullMQ Workers', status: 'unknown', connectionInfo: 'Redis 6379' },
-  { name: 'MinIO', status: 'unknown', connectionInfo: 'localhost:9000' },
+  { name: 'Ollama', status: 'unknown', connectionInfo: 'localhost:11434', infraKey: 'ollama' },
+  { name: 'Redis', status: 'unknown', connectionInfo: 'localhost:6379', infraKey: 'redis' },
+  { name: 'MinIO', status: 'unknown', connectionInfo: 'localhost:9000', infraKey: 'minio' },
+  { name: 'ComfyUI', status: 'unknown', connectionInfo: 'localhost:8188', infraKey: 'comfyui' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -242,11 +252,23 @@ export default function SystemPage() {
   const workflows = [...(activeWorkflowsRes?.data ?? []), ...(queuedWorkflowsRes?.data ?? [])];
   const errors = (failedWorkflowsRes?.data ?? []).filter((w) => w.error);
 
-  // Build service display from health counts + defaults
-  const services: ServiceDisplay[] = DEFAULT_SERVICES.map((svc) => ({
-    ...svc,
-    status: health ? (health.services.healthy === health.services.total ? 'healthy' : 'degraded') : 'unknown',
-  }));
+  // Build service display from infrastructure checks + defaults
+  const infra = health?.infrastructure;
+  const services: ServiceDisplay[] = DEFAULT_SERVICES.map((svc) => {
+    if (svc.infraKey && infra?.[svc.infraKey]) {
+      const check = infra[svc.infraKey];
+      return {
+        ...svc,
+        status: check.status === 'up' ? 'healthy' : check.status === 'down' ? 'degraded' : 'unknown',
+        connectionInfo: check.latencyMs > 0 ? `${svc.connectionInfo} (${check.latencyMs}ms)` : svc.connectionInfo,
+      };
+    }
+    // Next.js/Workflow Engine: infer from health response availability
+    return {
+      ...svc,
+      status: health ? 'healthy' : 'unknown',
+    };
+  });
 
   const overallStatus = health?.status ?? 'unknown';
 

@@ -1,17 +1,15 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { createConnection } from 'net';
 
 export const dynamic = 'force-dynamic';
 
+type ServiceCheck = { name: string; status: 'up' | 'down' | 'unknown'; latencyMs: number; lastChecked: string; error?: string };
+
 /**
- * Check an external service with a timeout.
- * Returns { status: 'up' | 'down' | 'unknown', latencyMs, lastChecked, error? }
+ * Check an external HTTP service with a timeout.
  */
-async function checkService(
-  name: string,
-  url: string,
-  timeoutMs = 5000,
-): Promise<{ name: string; status: 'up' | 'down' | 'unknown'; latencyMs: number; lastChecked: string; error?: string }> {
+async function checkService(name: string, url: string, timeoutMs = 5000): Promise<ServiceCheck> {
   const lastChecked = new Date().toISOString();
   if (!url) return { name, status: 'unknown', latencyMs: 0, lastChecked, error: 'URL not configured' };
 
@@ -25,6 +23,39 @@ async function checkService(
   } catch (err) {
     console.error(`Health check failed for ${name}:`, err);
     return { name, status: 'down', latencyMs: Date.now() - start, lastChecked, error: 'Connection failed' };
+  }
+}
+
+/**
+ * Check Redis connectivity via raw RESP PING command over TCP.
+ */
+async function checkRedis(timeoutMs = 3000): Promise<ServiceCheck> {
+  const lastChecked = new Date().toISOString();
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  const start = Date.now();
+
+  try {
+    const parsed = new URL(redisUrl);
+    const host = parsed.hostname || 'localhost';
+    const port = Number(parsed.port) || 6379;
+
+    const pong = await new Promise<string>((resolve, reject) => {
+      const socket = createConnection({ host, port }, () => {
+        socket.write('*1\r\n$4\r\nPING\r\n');
+      });
+      socket.setTimeout(timeoutMs);
+      socket.on('data', (data) => {
+        socket.destroy();
+        resolve(data.toString().trim());
+      });
+      socket.on('timeout', () => { socket.destroy(); reject(new Error('Timeout')); });
+      socket.on('error', (err) => { socket.destroy(); reject(err); });
+    });
+
+    return { name: 'redis', status: pong.includes('PONG') ? 'up' : 'down', latencyMs: Date.now() - start, lastChecked };
+  } catch (err) {
+    console.error('Health check failed for redis:', err);
+    return { name: 'redis', status: 'down', latencyMs: Date.now() - start, lastChecked, error: 'Connection failed' };
   }
 }
 
@@ -62,7 +93,7 @@ export async function GET(req: NextRequest) {
     const minioPort = process.env.MINIO_PORT || '9000';
     const minioUrl = `http://${minioEndpoint}:${minioPort}/minio/health/live`;
 
-    const [allMetrics, serviceStatuses, alertCounts, activeJobs, pendingPosts, ollamaCheck, comfyuiCheck, minioCheck] = await Promise.all([
+    const [allMetrics, serviceStatuses, alertCounts, activeJobs, pendingPosts, ollamaCheck, comfyuiCheck, minioCheck, redisCheck] = await Promise.all([
       ctx.db.systemMetric.findMany({
         where: { metricType: { in: metricTypes } },
         orderBy: { createdAt: 'desc' },
@@ -94,6 +125,7 @@ export async function GET(req: NextRequest) {
       checkService('ollama', `${ollamaUrl}/api/tags`, 3000),
       checkService('comfyui', `${comfyuiUrl}/system_stats`, 3000),
       checkService('minio', minioUrl, 3000),
+      checkRedis(3000),
     ]);
 
     // Group metrics by type and take the latest per type
@@ -109,7 +141,7 @@ export async function GET(req: NextRequest) {
     const healthyServices = serviceStatuses.find((s) => s.status === 'active')?._count.id ?? 0;
 
     // Determine overall status: healthy if DB + all infra up, degraded if partial, unhealthy if DB down
-    const infraChecks = [ollamaCheck, comfyuiCheck, minioCheck];
+    const infraChecks = [ollamaCheck, comfyuiCheck, minioCheck, redisCheck];
     const infraDown = infraChecks.filter(c => c.status === 'down').length;
     let overallStatus: string;
     if (totalServices === 0 && infraDown === infraChecks.length) {
@@ -133,6 +165,7 @@ export async function GET(req: NextRequest) {
         ollama: ollamaCheck,
         comfyui: comfyuiCheck,
         minio: minioCheck,
+        redis: redisCheck,
         database: { name: 'postgresql', status: 'up', lastChecked: new Date().toISOString(), latencyMs: 0 },
       },
       alerts: {

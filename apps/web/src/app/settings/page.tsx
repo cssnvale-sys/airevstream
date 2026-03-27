@@ -230,8 +230,9 @@ function GeneralTab() {
   return (
     <div className="space-y-6 max-w-lg">
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">System Name</label>
+        <label htmlFor="settings-system-name" className="block text-sm font-medium text-text-secondary mb-1.5">System Name</label>
         <input
+          id="settings-system-name"
           value={form.systemName}
           onChange={(e) => updateForm({ systemName: e.target.value })}
           className="input w-full"
@@ -240,8 +241,9 @@ function GeneralTab() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">Timezone</label>
+        <label htmlFor="settings-timezone" className="block text-sm font-medium text-text-secondary mb-1.5">Timezone</label>
         <select
+          id="settings-timezone"
           value={form.timezone}
           onChange={(e) => updateForm({ timezone: e.target.value })}
           className="input w-full"
@@ -255,8 +257,9 @@ function GeneralTab() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1.5">Default Language</label>
+        <label htmlFor="settings-default-language" className="block text-sm font-medium text-text-secondary mb-1.5">Default Language</label>
         <select
+          id="settings-default-language"
           value={form.defaultLanguage}
           onChange={(e) => updateForm({ defaultLanguage: e.target.value })}
           className="input w-full"
@@ -466,8 +469,9 @@ function AiServicesTab() {
             <h4 className="text-sm font-medium text-text-primary mb-3">New AI Service</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Name</label>
+                <label htmlFor="settings-ai-service-name" className="block text-xs text-text-secondary mb-1">Name</label>
                 <input
+                  id="settings-ai-service-name"
                   value={newService.name}
                   onChange={(e) => setNewService({ ...newService, name: e.target.value })}
                   className="input w-full"
@@ -475,8 +479,9 @@ function AiServicesTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Type</label>
+                <label htmlFor="settings-ai-service-type" className="block text-xs text-text-secondary mb-1">Type</label>
                 <select
+                  id="settings-ai-service-type"
                   value={newService.type}
                   onChange={(e) => setNewService({ ...newService, type: e.target.value })}
                   className="input w-full"
@@ -488,8 +493,9 @@ function AiServicesTab() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Endpoint</label>
+                <label htmlFor="settings-ai-service-endpoint" className="block text-xs text-text-secondary mb-1">Endpoint</label>
                 <input
+                  id="settings-ai-service-endpoint"
                   value={newService.endpoint}
                   onChange={(e) => setNewService({ ...newService, endpoint: e.target.value })}
                   className="input w-full"
@@ -714,8 +720,9 @@ function NotificationsTab() {
 
           {ch.enabled && ch.type === 'email' && (
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Email Address</label>
+              <label htmlFor="settings-notifications-email-address" className="block text-xs text-text-secondary mb-1">Email Address</label>
               <input
+                id="settings-notifications-email-address"
                 value={ch.config.address ?? ''}
                 onChange={(e) => updateConfig(idx, 'address', e.target.value)}
                 className="input w-full"
@@ -728,8 +735,9 @@ function NotificationsTab() {
 
           {ch.enabled && ch.type === 'slack' && (
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Webhook URL</label>
+              <label htmlFor="settings-notifications-webhook-url" className="block text-xs text-text-secondary mb-1">Webhook URL</label>
               <input
+                id="settings-notifications-webhook-url"
                 value={ch.config.webhookUrl ?? ''}
                 onChange={(e) => updateConfig(idx, 'webhookUrl', e.target.value)}
                 className="input w-full"
@@ -944,8 +952,9 @@ function SecurityTab() {
         {/* Create new key */}
         <div className="flex items-end gap-2 mb-4 max-w-md">
           <div className="flex-1">
-            <label className="block text-xs text-text-secondary mb-1">Key Name</label>
+            <label htmlFor="settings-api-key-name" className="block text-xs text-text-secondary mb-1">Key Name</label>
             <input
+              id="settings-api-key-name"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
               className="input w-full"
@@ -1298,8 +1307,9 @@ function ProxiesTab() {
             <h4 className="text-sm font-medium text-text-primary mb-3">New Proxy</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Name</label>
+                <label htmlFor="settings-proxy-name" className="block text-xs text-text-secondary mb-1">Name</label>
                 <input
+                  id="settings-proxy-name"
                   value={newProxy.name}
                   onChange={(e) => setNewProxy({ ...newProxy, name: e.target.value })}
                   className="input w-full"
@@ -1307,8 +1317,9 @@ function ProxiesTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Type</label>
+                <label htmlFor="settings-proxy-type" className="block text-xs text-text-secondary mb-1">Type</label>
                 <select
+                  id="settings-proxy-type"
                   value={newProxy.type}
                   onChange={(e) => setNewProxy({ ...newProxy, type: e.target.value as 'http' | 'socks5' | 'residential' })}
                   className="input w-full"
@@ -1319,8 +1330,9 @@ function ProxiesTab() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Host</label>
+                <label htmlFor="settings-proxy-host" className="block text-xs text-text-secondary mb-1">Host</label>
                 <input
+                  id="settings-proxy-host"
                   value={newProxy.host}
                   onChange={(e) => setNewProxy({ ...newProxy, host: e.target.value })}
                   className="input w-full"
@@ -1328,8 +1340,9 @@ function ProxiesTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Port</label>
+                <label htmlFor="settings-proxy-port" className="block text-xs text-text-secondary mb-1">Port</label>
                 <input
+                  id="settings-proxy-port"
                   value={newProxy.port}
                   onChange={(e) => setNewProxy({ ...newProxy, port: e.target.value })}
                   className="input w-full"
@@ -1340,8 +1353,9 @@ function ProxiesTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Username (optional)</label>
+                <label htmlFor="settings-proxy-username" className="block text-xs text-text-secondary mb-1">Username (optional)</label>
                 <input
+                  id="settings-proxy-username"
                   value={newProxy.username}
                   onChange={(e) => setNewProxy({ ...newProxy, username: e.target.value })}
                   className="input w-full"
@@ -1349,9 +1363,10 @@ function ProxiesTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-text-secondary mb-1">Password (optional)</label>
+                <label htmlFor="settings-proxy-password" className="block text-xs text-text-secondary mb-1">Password (optional)</label>
                 <div className="relative">
                   <input
+                    id="settings-proxy-password"
                     type={showPassword ? 'text' : 'password'}
                     value={newProxy.password}
                     onChange={(e) => setNewProxy({ ...newProxy, password: e.target.value })}
@@ -1577,8 +1592,9 @@ function DataTab() {
           Configure how long resolved alerts, old metrics, and completed jobs are retained before automatic cleanup.
         </p>
         <div className="max-w-sm">
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">Auto-cleanup Period</label>
+          <label htmlFor="settings-auto-cleanup-period" className="block text-sm font-medium text-text-secondary mb-1.5">Auto-cleanup Period</label>
           <select
+            id="settings-auto-cleanup-period"
             value={retentionDays}
             onChange={(e) => setRetentionDays(Number(e.target.value))}
             className="input w-full"

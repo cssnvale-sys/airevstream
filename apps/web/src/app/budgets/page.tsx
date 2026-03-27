@@ -180,8 +180,9 @@ export default function BudgetsPage() {
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-caption text-text-secondary mb-1.5">Name</label>
+              <label htmlFor="budget-name" className="block text-caption text-text-secondary mb-1.5">Name</label>
               <input
+                id="budget-name"
                 value={form.name}
                 onChange={(e) => updateField('name', e.target.value)}
                 placeholder="e.g., Monthly AI Spend"
@@ -189,8 +190,9 @@ export default function BudgetsPage() {
               />
             </div>
             <div>
-              <label className="block text-caption text-text-secondary mb-1.5">Period</label>
+              <label htmlFor="budget-period" className="block text-caption text-text-secondary mb-1.5">Period</label>
               <select
+                id="budget-period"
                 value={form.budgetType}
                 onChange={(e) => updateField('budgetType', e.target.value as BudgetType)}
                 className="input w-full"
@@ -201,8 +203,9 @@ export default function BudgetsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-caption text-text-secondary mb-1.5">Limit ($)</label>
+              <label htmlFor="budget-limit" className="block text-caption text-text-secondary mb-1.5">Limit ($)</label>
               <input
+                id="budget-limit"
                 type="number"
                 value={form.limitAmount}
                 onChange={(e) => updateField('limitAmount', e.target.value)}
@@ -213,8 +216,9 @@ export default function BudgetsPage() {
               />
             </div>
             <div>
-              <label className="block text-caption text-text-secondary mb-1.5">Alert at (%)</label>
+              <label htmlFor="budget-alert" className="block text-caption text-text-secondary mb-1.5">Alert at (%)</label>
               <input
+                id="budget-alert"
                 type="number"
                 value={form.alertThreshold}
                 onChange={(e) => updateField('alertThreshold', e.target.value)}
@@ -225,8 +229,9 @@ export default function BudgetsPage() {
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-caption text-text-secondary mb-1.5">Category (optional)</label>
+              <label htmlFor="budget-category" className="block text-caption text-text-secondary mb-1.5">Category (optional)</label>
               <select
+                id="budget-category"
                 value={form.category}
                 onChange={(e) => updateField('category', e.target.value)}
                 className="input w-full"
@@ -301,6 +306,7 @@ export default function BudgetsPage() {
                       onClick={() => handleToggleStatus(budget)}
                       className="p-1.5 text-text-tertiary hover:text-text-primary transition-colors"
                       title={budget.status === 'active' ? 'Pause' : 'Resume'}
+                      aria-label={budget.status === 'active' ? 'Pause budget' : 'Resume budget'}
                     >
                       {budget.status === 'active' ? <Pause size={14} /> : <Play size={14} />}
                     </button>
@@ -313,6 +319,7 @@ export default function BudgetsPage() {
                     <button
                       onClick={() => setDeleteTarget(budget)}
                       className="p-1.5 text-text-tertiary hover:text-accent-red transition-colors"
+                      aria-label="Delete budget"
                     >
                       <Trash2 size={14} />
                     </button>

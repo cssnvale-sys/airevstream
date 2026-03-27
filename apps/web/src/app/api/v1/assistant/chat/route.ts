@@ -6,11 +6,15 @@ import { z } from 'zod';
 import { chat, createServiceRegistry } from '@airevstream/ai-client';
 import type { ChatMessage } from '@airevstream/ai-client';
 
+const CHAT_CONTEXT_LIMIT = 50;
+const KB_SEARCH_LIMIT = 3;
+const CHAT_MESSAGE_MAX_CHARS = 10_000;
+
 export const dynamic = 'force-dynamic';
 
 const ChatSchema = z.object({
   conversationId: z.string().uuid().optional().nullable(),
-  message: z.string().min(1).max(10000),
+  message: z.string().min(1).max(CHAT_MESSAGE_MAX_CHARS),
   contextPage: z.string().max(100).optional().nullable(),
 });
 
@@ -90,7 +94,7 @@ export async function POST(req: NextRequest) {
       ctx.db.conversationMessage.findMany({
         where: { conversationId: conversation.id },
         orderBy: { createdAt: 'asc' },
-        take: 50, // Limit context window
+        take: CHAT_CONTEXT_LIMIT, // Limit context window
       }),
       // Build the system context block
       buildSystemContext(ctx, contextPage, message.trim()),
@@ -422,7 +426,7 @@ async function getRelevantKnowledge(
       OR: orConditions,
     },
     orderBy: { relevanceScore: 'desc' },
-    take: 3,
+    take: KB_SEARCH_LIMIT,
     select: {
       domain: true,
       title: true,

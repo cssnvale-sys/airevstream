@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
+const SEARCH_RESULTS_PER_TYPE = 5;
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
           ],
         },
         select: { id: true, title: true, contentType: true, status: true },
-        take: 5,
+        take: SEARCH_RESULTS_PER_TYPE,
         orderBy: { updatedAt: 'desc' },
       }),
       ctx.db.channel.findMany({
@@ -42,7 +44,7 @@ export async function GET(req: NextRequest) {
           name: { contains: q, mode: 'insensitive' },
         },
         select: { id: true, name: true, socialAccount: { select: { platform: true } } },
-        take: 5,
+        take: SEARCH_RESULTS_PER_TYPE,
         orderBy: { name: 'asc' },
       }),
       ctx.db.socialAccount.findMany({
@@ -51,7 +53,7 @@ export async function GET(req: NextRequest) {
           username: { contains: q, mode: 'insensitive' },
         },
         select: { id: true, username: true, platform: true },
-        take: 5,
+        take: SEARCH_RESULTS_PER_TYPE,
         orderBy: { username: 'asc' },
       }),
     ]);

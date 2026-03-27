@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+const VERSIONS_LIST_LIMIT = 100;
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
@@ -64,7 +66,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         updatedAt: true,
       },
       orderBy: { version: 'asc' },
-      take: 100,
+      take: VERSIONS_LIST_LIMIT,
     });
 
     const converted = versions.map(v => ({

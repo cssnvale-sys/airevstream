@@ -1,6 +1,8 @@
 import { authenticateAny, success, error, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+const CALENDAR_MAX_ITEMS = 1000;
+
 export const dynamic = 'force-dynamic';
 
 /**
@@ -89,7 +91,7 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: { scheduledAt: 'asc' },
-      take: 1000,
+      take: CALENDAR_MAX_ITEMS,
     });
 
     return success(events);

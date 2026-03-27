@@ -4,6 +4,8 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import type { ApiContext } from '@/lib/api-server';
 import type { SystemEvent, AlertSeverity, WorkflowStatus, ContentStatus } from '@/lib/event-types';
 
+const SSE_HEARTBEAT_INTERVAL_MS = 30_000;
+
 export const dynamic = 'force-dynamic';
 
 const encoder = new TextEncoder();
@@ -203,7 +205,7 @@ export async function GET(req: NextRequest) {
           // Stream closed by client — clean up heartbeat
           clearInterval(heartbeatInterval);
         }
-      }, 30_000);
+      }, SSE_HEARTBEAT_INTERVAL_MS);
 
       // Poll all event types in parallel every 10 seconds
       const eventInterval = setInterval(async () => {

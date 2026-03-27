@@ -101,7 +101,7 @@ export const KNOWN_MISSING_TENANT_SCOPE = new Set([
 export const KNOWN_SILENT_CATCHES = new Set([
   'ai-services/health-check/route.ts:39',   // intentional: URL validation returns true on parse error
   'ai-services/health-check/route.ts:104',  // intentional: ping service returns status
-  'events/stream/route.ts:202',             // intentional: stream closed by client, clean up heartbeat
+  'events/stream/route.ts:204',             // intentional: stream closed by client, clean up heartbeat
   'content/[id]/reject/route.ts:35',        // intentional: empty body acceptable, feedback is optional
 ]);
 

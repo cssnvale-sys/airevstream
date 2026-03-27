@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
 import { matchTrends } from '@airevstream/shared';
 
+const TRENDING_DEFAULT_LIMIT = 20;
+const TRENDING_MAX_LIMIT = 50;
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
@@ -12,7 +15,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const platform = searchParams.get('platform') ?? undefined;
-    const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 50);
+    const limit = Math.min(parseInt(searchParams.get('limit') ?? String(TRENDING_DEFAULT_LIMIT), 10), TRENDING_MAX_LIMIT);
 
     // Fetch trending topics from knowledge base
     const entries = await ctx.db.knowledgeBaseEntry.findMany({

@@ -5,6 +5,9 @@ import { scoreViralPotential } from '@airevstream/shared';
 import type { ViralScoringInput } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+const TRENDING_ENTRIES_LIMIT = 20;
+const VIRAL_SCORE_CACHE_AGE_MS = 3_600_000;
+
 export const dynamic = 'force-dynamic';
 
 const ViralScoreQuerySchema = z.object({
@@ -60,7 +63,7 @@ export async function GET(req: NextRequest) {
     // Return cached score if less than 1 hour old
     if (cachedScore != null && cachedAt) {
       const age = Date.now() - new Date(cachedAt).getTime();
-      if (age < 3600000) {
+      if (age < VIRAL_SCORE_CACHE_AGE_MS) {
         return success({
           contentId,
           overall: cachedScore,
@@ -78,7 +81,7 @@ export async function GET(req: NextRequest) {
     const trendEntries = await ctx.db.knowledgeBaseEntry.findMany({
       where: { category: 'trends', tenantId: ctx.tenantId },
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: TRENDING_ENTRIES_LIMIT,
       select: { title: true },
     });
 

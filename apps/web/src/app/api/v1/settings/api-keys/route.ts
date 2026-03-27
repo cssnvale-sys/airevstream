@@ -5,6 +5,8 @@ import { authenticate, success, error, validationError, formatZodErrors, forbidd
 import { sha256 } from '@airevstream/crypto';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+const API_KEYS_LIST_LIMIT = 100;
+
 export const dynamic = 'force-dynamic';
 
 const CreateApiKeySchema = z.object({
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
     const keys = await ctx.db.apiKey.findMany({
       where: { tenantId: ctx.tenantId },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      take: API_KEYS_LIST_LIMIT,
       select: {
         id: true,
         name: true,

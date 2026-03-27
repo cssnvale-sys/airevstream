@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+const CINEMA_BIBLES_LIMIT = 100;
+
 export const dynamic = 'force-dynamic';
 
 const CreateCinemaBibleSchema = z.object({
@@ -29,7 +31,7 @@ export async function GET(req: NextRequest) {
     const bibles = await ctx.db.cinemaBible.findMany({
       where: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } },
       orderBy: { updatedAt: 'desc' },
-      take: 100,
+      take: CINEMA_BIBLES_LIMIT,
       include: {
         channel: {
           select: {

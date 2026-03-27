@@ -51,8 +51,8 @@
 | Step | Feature | Status | Notes |
 |------|---------|--------|-------|
 | 5.1 | AI Service Registry | Done | Multi-provider with fallback chains, circuit breaker, health checks, cost tracking |
-| 5.2 | ComfyUI workflows | Done | 4 SDXL workflow templates: thumbnail, scenery, avatar, storyboard-frame |
-| 5.3 | Remotion compositions | Done | 3 compositions: ShortFormVideo (9:16), LongFormVideo (16:9), ThumbnailRenderer (still). H.I.C.C. beat system, Ken Burns, transitions, audio viz |
+| 5.2 | ComfyUI workflows | Done | 8 SDXL workflow templates + 1 upscale (BSRGAN 2x). 4 general + 4 shot-class + 1 upscale |
+| 5.3 | Remotion compositions | Done | 6 compositions: ShortFormVideo (9:16), LongFormVideo (16:9), CinemaVideo (24fps), ThumbnailRenderer (still), SquareSocial (1:1), UltrawideCinema (21:9). 11 transitions, 11 text animations |
 | 5.4 | Full-text search | Done | PostgreSQL GIN indexes on content, knowledge base, accounts, channels, alerts, conversations |
 | 5.5 | Channel families | Done | API for family CRUD + grouping language-variant channels |
 | 5.6 | Account stats | Done | Platform coverage, distribution, tier breakdown, health averages |

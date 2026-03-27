@@ -7,9 +7,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **19 new presets + 4 recipes** (Session 47): 8 visual (Neon Synthwave, Documentary Newsreel, etc.), 4 camera (Macro Insert, Dutch Angle, etc.), 4 audio (Lo-Fi Chill, Tech/Science, etc.), 3 output (4K Ultra, Mobile Stories, Square Instagram). 4 new recipe bundles. Total: 81 presets, 22 recipes.
+- **2 new Remotion compositions** (Session 47): SquareSocial (1080x1080, 30fps) and UltrawideCinema (2560x1080, 24fps with letterbox bars). 6 new transitions (wipe-left/right/up/down, glitch, iris). 3 new text animations (shimmer, bounce, glitch).
+- **3 new shot classes** (Session 47): Macro_Insert, Dutch_Angle, Crane_Reveal with full workflow registry entries and tier defaults.
+- **BSRGAN 2x upscale workflow** (Session 47): ComfyUI workflow for quality enhancement.
+- **2 new export variants** (Session 47): 4K UHD and Mobile Stories (total: 6 variants).
+- **4 new audit tests** (Session 47): force-dynamic coverage, error-boundaries coverage, complexity-fields unit tests.
+- **Loading states** (Session 47): Auth pages (login, register, forgot-password, reset-password), content segment.
+- **Error boundaries** (Session 47): Auth segment, content segment.
+- **Accessibility** (Session 47): Skip-to-content link, password requirements aria-describedby.
+- **LoadingButton component** (Session 47): Reusable loading state wrapper for mutation buttons.
+- **toast.promise()** (Session 47): Async operation feedback with loading→success/error states.
+- **4 keyboard shortcuts** (Session 47): D→Dashboard, S→Settings, P→Approvals, Y→System.
+- **Agent prompt enhancements** (Session 47): Platform-specific pacing (director), hook variants (psychology), cinematographer references (lookdev).
 - **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
 
 ### Fixed
+- **15 API routes missing force-dynamic** (Session 47): Analytics, auth, calendar, events/stream, suggestions/stats, system/metrics routes now export force-dynamic.
+- **22 inline button styles** (Session 47): Replaced with utility classes (btn-primary, btn-secondary, btn-ghost) across 10 components.
+- **Health check expansion** (Session 47): Infrastructure checks for Ollama, ComfyUI, MinIO with degraded status support.
+- **Request ID tracing** (Session 47): x-request-id UUID in middleware, propagated to all responses.
+- **Worker stalled handlers** (Session 47): Added to all 9 worker instances for better job monitoring.
+- **Empty states** (Session 47): Dashboard (approvals, workflows, activity) and calendar now use EmptyState component.
 - **Next.js build errors** (Session 46): Added `export const dynamic = 'force-dynamic'` to 83 non-parameterized API routes to prevent misleading error log lines during `next build` static rendering probes (D129)
 - **CRITICAL: Tenant scoping violations** (Session 46): ~15 missing guards across activity, assets, usage, jobs, knowledge base, assistant actions, product analytics, avatar assignment, scenery assets, approvals
 - **CRITICAL: PM2 worker script paths** (Session 46): All 6 worker entries had wrong paths (would crash on `pm2 start`), 2 workers missing from config

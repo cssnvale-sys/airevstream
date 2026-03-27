@@ -4,6 +4,72 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 47 — Autonomous Iterative Improvement (10 Iterations)
+
+**Date**: 2026-03-27
+**Focus**: Deep iterative improvement across UX, production capabilities, resilience, test coverage, and UI consistency. 10 iterations executed autonomously.
+
+### Iteration 1: Critical UX Foundations
+- 7 new files: auth loading skeletons (login, register, forgot-password, reset-password), auth error boundary, content error boundary + loading
+- Skip-to-content accessibility link in root layout, `id="main-content"` on AppLayout `<main>`
+- Dashboard empty states upgraded to EmptyState component (approvals, workflows, activity)
+- Calendar empty state with CTA to create content
+
+### Iteration 2: Production Capability Expansion (+19 presets, +4 recipes)
+- 8 new visual presets (Neon Synthwave, Documentary Newsreel, Pastel Illustration, Underwater Dreamy, Horror Atmospheric, Anime Cel-Shaded, Nordic Minimal, Desert Cinematic)
+- 4 new camera presets (Macro Insert, Dutch Angle, Crane Reveal, Whip Pan)
+- 4 new audio presets (Lo-Fi Chill, Tech/Science, ASMR Nature, Hip-Hop Beat)
+- 3 new output presets (4K Ultra, Mobile Stories, Square Instagram)
+- 4 new recipes (ASMR Nature, Tech Review, Horror Short, Anime Highlight)
+- Total presets: 62→81, recipes: 18→22
+
+### Iteration 3: Resilience & Error Handling
+- Health check enhanced with Ollama, ComfyUI, MinIO infrastructure checks (degraded status support)
+- Request ID (x-request-id UUID) tracing in middleware, propagated to all responses
+- Stalled event handlers added to all 9 worker instances across 8 files
+
+### Iteration 4: Form UX & Interaction Polish
+- LoadingButton component created
+- toast.promise() method added for async operation feedback
+- 4 new keyboard shortcuts (D→Dashboard, S→Settings, P→Approvals, Y→System)
+- Password requirements live checklist with aria-describedby on register page
+
+### Iteration 5: Deep Audit Checkpoint
+- 14/14 build, 27/27 test tasks, 33/33 audit — 0 regressions
+
+### Iteration 6: Remotion Composition Expansion
+- 2 new compositions: SquareSocial (1080x1080, 30fps) and UltrawideCinema (2560x1080, 24fps with letterbox)
+- 6 new transitions: wipe-left/right/up/down, glitch, iris
+- 3 new text animations: shimmer, bounce, glitch
+- Composition registry: 4→6 entries
+
+### Iteration 7: Test Coverage Expansion
+- force-dynamic.audit.test.ts (2 tests) — catches missing force-dynamic exports
+- error-boundaries.audit.test.ts (2 tests) — catches missing error.tsx files
+- complexity-fields.test.ts (7 tests) — isVisible logic, FIELD_VISIBILITY validation
+- Fixed 15 API routes missing force-dynamic export
+- Audit tests: 33→37
+
+### Iteration 8: UI Polish & Consistency
+- Replaced 22 inline-styled buttons with utility classes (btn-primary, btn-secondary, btn-ghost, btn-sm)
+- 10 components updated: 3 modals, 3 cinema components, 4 pages
+
+### Iteration 9: Advanced Features
+- 3 new shot classes (Macro_Insert, Dutch_Angle, Crane_Reveal) with full tier defaults
+- BSRGAN 2x upscale ComfyUI workflow
+- Director prompt: platform-specific pacing rules (TikTok/YouTube/Instagram)
+- Psychology prompt: 3-variant hook generation (Curiosity Gap, Pattern Interrupt, Social Proof)
+- LookDev prompt: cinematographer reference styles (Deakins, Lubezki, Young, van Hoytema)
+- Export variants: 4→6 (added 4K UHD, Mobile Stories)
+
+### Iteration 10: Final Audit + Tracking Files
+- Final verification: 14/14 build, 27/27 test tasks, 37/37 audit, 0 regressions
+- All tracking files updated
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 9.
+
+---
+
 ## Session 46 — Pre-Deployment Full System Audit (8 Waves, 30 Agents)
 
 **Date**: 2026-03-26

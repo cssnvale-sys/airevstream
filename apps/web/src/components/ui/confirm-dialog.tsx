@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Info, Trash2, X } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -48,23 +48,7 @@ export function ConfirmDialog({
   onCancel,
   loading = false,
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const cancelRef = useRef<HTMLButtonElement>(null);
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !loading) onCancel();
-    },
-    [onCancel, loading],
-  );
-
-  useEffect(() => {
-    if (open) {
-      document.addEventListener('keydown', handleKeyDown);
-      cancelRef.current?.focus();
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [open, handleKeyDown]);
+  const trapRef = useFocusTrap(open, { onEscape: onCancel, disabled: loading });
 
   if (!open) return null;
 
@@ -80,7 +64,7 @@ export function ConfirmDialog({
       aria-labelledby="confirm-dialog-title"
     >
       <div
-        ref={dialogRef}
+        ref={trapRef}
         className="card w-full max-w-sm mx-4"
         onClick={(e) => e.stopPropagation()}
       >
@@ -110,7 +94,6 @@ export function ConfirmDialog({
         <div className="flex gap-2 justify-end">
           <button
             type="button"
-            ref={cancelRef}
             onClick={onCancel}
             disabled={loading}
             className="btn-secondary text-sm"

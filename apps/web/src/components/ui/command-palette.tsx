@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApi } from '@/hooks/use-api';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { cn } from '@/lib/utils';
 import {
   Search, FileText, Film, Image, Video, Mic, ImageIcon, Radio, Users, X,
@@ -55,8 +56,8 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const trapRef = useFocusTrap(open, { onEscape: () => setOpen(false) });
 
   const debouncedQuery = useDebounce(query, 200);
   const { data } = useApi<SearchResults>(
@@ -102,20 +103,16 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Focus input when opened
+  // Reset state when opened
   useEffect(() => {
     if (!open) return;
     setQuery('');
     setSelectedIndex(0);
-    const timer = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => clearTimeout(timer);
   }, [open]);
 
-  // Keyboard navigation inside palette
+  // Keyboard navigation inside palette (Escape handled by useFocusTrap)
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setOpen(false);
-    } else if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex((i) => Math.min(i + 1, flatResults.length - 1));
     } else if (e.key === 'ArrowUp') {
@@ -137,6 +134,7 @@ export function CommandPalette() {
       onClick={() => setOpen(false)}
     >
       <div
+        ref={trapRef}
         className="w-full max-w-lg mx-4 bg-bg-secondary border border-border rounded-xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
@@ -145,7 +143,6 @@ export function CommandPalette() {
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search size={18} className="text-text-secondary shrink-0" />
           <input
-            ref={inputRef}
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
             placeholder="Search content, channels, accounts..."

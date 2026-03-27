@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { FileUpload } from '@/components/ui/file-upload';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { BUCKETS } from '@airevstream/shared';
@@ -20,20 +21,7 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
   const [description, setDescription] = useState('');
   const [faceUpload, setFaceUpload] = useState<UploadResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const nameRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitting) onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    const timer = setTimeout(() => nameRef.current?.focus(), 50);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(timer);
-    };
-  }, [open, submitting, onClose]);
+  const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: submitting });
 
   const resetForm = useCallback(() => {
     setName('');
@@ -95,6 +83,7 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
       aria-labelledby="create-avatar-title"
     >
       <div
+        ref={trapRef}
         className="card w-full max-w-lg mx-4"
         onClick={(e) => e.stopPropagation()}
       >
@@ -121,7 +110,6 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
               Name <span className="text-accent-red">*</span>
             </label>
             <input
-              ref={nameRef}
               id="avatar-name"
               type="text"
               value={name}

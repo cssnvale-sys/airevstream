@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useGeneratePreset, savePreset } from '@/hooks/use-user-presets';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { LoadingButton } from '@/components/ui/loading-button';
 import type { Preset, PresetFamily } from '@airevstream/shared';
 
@@ -48,22 +49,22 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
   const [editedDescription, setEditedDescription] = useState('');
   const [showOverrides, setShowOverrides] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   const { generate, isGenerating, error: genError, reset: resetGen } = useGeneratePreset();
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    const timer = setTimeout(() => descriptionRef.current?.focus(), 50);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(timer);
-    };
-  }, [open]);
+  const handleClose = useCallback(() => {
+    setDescription('');
+    setState('idle');
+    setPreview(null);
+    setEditedName('');
+    setEditedDescription('');
+    setShowOverrides(false);
+    setSaveError(null);
+    resetGen();
+    onClose();
+  }, [resetGen, onClose]);
+
+  const trapRef = useFocusTrap(open, { onEscape: handleClose, disabled: state === 'generating' || state === 'saving' });
 
   if (!open) return null;
 
@@ -113,21 +114,9 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
     }
   };
 
-  const handleClose = () => {
-    setDescription('');
-    setState('idle');
-    setPreview(null);
-    setEditedName('');
-    setEditedDescription('');
-    setShowOverrides(false);
-    setSaveError(null);
-    resetGen();
-    onClose();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
+      <div ref={trapRef} className="bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h2 className="text-sm font-semibold text-text-primary">Create a Preset</h2>
@@ -149,7 +138,6 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
             </label>
             <textarea
               id="preset-description"
-              ref={descriptionRef}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. warm sunset look with soft focus and film grain"

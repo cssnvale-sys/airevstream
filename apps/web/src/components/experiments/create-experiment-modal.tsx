@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { LoadingButton } from '@/components/ui/loading-button';
 
 interface CreateExperimentModalProps {
@@ -31,7 +32,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
     { id: crypto.randomUUID(), label: 'Variant B', trafficPercent: 50 },
   ]);
   const [submitting, setSubmitting] = useState(false);
-  const nameRef = useRef<HTMLInputElement>(null);
+  const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: submitting });
 
   const addVariant = () => {
     if (variants.length >= 10) return;
@@ -104,25 +105,13 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
     }
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitting) onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    const timer = setTimeout(() => nameRef.current?.focus(), 50);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(timer);
-    };
-  }, [open, submitting, onClose]);
-
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60" onClick={() => !submitting && onClose()} aria-hidden="true" />
-      <form noValidate onSubmit={handleSubmit} className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div ref={trapRef} className="relative w-full max-w-lg">
+        <form noValidate onSubmit={handleSubmit} className="bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">New Experiment</h2>
           <button type="button" onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-secondary" aria-label="Close">
@@ -136,7 +125,6 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
             <label htmlFor="experiment-name" className="block text-sm text-text-secondary mb-1">Name</label>
             <input
               id="experiment-name"
-              ref={nameRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -270,7 +258,8 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
             Create Experiment
           </LoadingButton>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

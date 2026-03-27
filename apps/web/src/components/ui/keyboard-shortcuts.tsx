@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 interface Shortcut {
   keys: string[];
@@ -50,19 +50,7 @@ interface KeyboardShortcutsModalProps {
 }
 
 export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModalProps) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    },
-    [onClose],
-  );
-
-  useEffect(() => {
-    if (open) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [open, handleKeyDown]);
+  const trapRef = useFocusTrap(open, { onEscape: onClose });
 
   if (!open) return null;
 
@@ -75,6 +63,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
       aria-label="Keyboard shortcuts"
     >
       <div
+        ref={trapRef}
         className="card w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >

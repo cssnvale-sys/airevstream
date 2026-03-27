@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { LoadingButton } from '@/components/ui/loading-button';
 
 interface CreateCohortModalProps {
@@ -20,15 +21,7 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
   const [name, setName] = useState('');
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitting) onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, submitting, onClose]);
+  const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: submitting });
 
   if (!open) return null;
 
@@ -54,7 +47,7 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true">
-      <div className="bg-bg-secondary border border-border rounded-lg w-full max-w-md p-6">
+      <div ref={trapRef} className="bg-bg-secondary border border-border rounded-lg w-full max-w-md p-6">
         <h2 className="text-h3 text-text-primary mb-4">New Seasoning Cohort</h2>
         <form noValidate onSubmit={handleSubmit} className="space-y-4">
           <div>

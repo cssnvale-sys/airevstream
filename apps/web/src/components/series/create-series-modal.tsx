@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { useApi } from '@/hooks/use-api';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { LoadingButton } from '@/components/ui/loading-button';
 
 interface Props {
@@ -26,20 +27,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
   const [targetAudience, setTargetAudience] = useState('');
   const [tags, setTags] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const nameRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitting) onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    const timer = setTimeout(() => nameRef.current?.focus(), 50);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(timer);
-    };
-  }, [open, submitting, onClose]);
+  const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: submitting });
 
   const { data: channelsData } = useApi<ChannelOption[]>('/channels?limit=100');
   const channels = channelsData?.data ?? [];
@@ -77,7 +65,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60" onClick={() => !submitting && onClose()} aria-hidden="true" />
-      <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
+      <div ref={trapRef} className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Create Series</h2>
           <button type="button" onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded" aria-label="Close">
@@ -104,7 +92,6 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
             <label htmlFor="series-name" className="block text-sm font-medium text-text-primary mb-1">Name</label>
             <input
               id="series-name"
-              ref={nameRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

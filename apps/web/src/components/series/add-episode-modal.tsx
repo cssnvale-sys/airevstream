@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Search } from 'lucide-react';
 import { apiPost, useApi } from '@/hooks/use-api';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/components/ui/loading-button';
 
@@ -27,15 +28,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   const [title, setTitle] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !submitting) onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, submitting, onClose]);
+  const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: submitting });
 
   const { data: contentData } = useApi<ContentOption[]>(
     open ? `/content?limit=50${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ''}` : null,
@@ -71,7 +64,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60" onClick={() => !submitting && onClose()} aria-hidden="true" />
-      <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
+      <div ref={trapRef} className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Add Episode</h2>
           <button type="button" onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors" aria-label="Close">

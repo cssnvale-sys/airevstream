@@ -77,7 +77,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
       <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Create Series</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+          <button type="button" onClick={onClose} className="text-text-secondary hover:text-text-primary">
             <X size={18} />
           </button>
         </div>

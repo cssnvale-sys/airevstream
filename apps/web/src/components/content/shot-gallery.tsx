@@ -75,7 +75,13 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
 
   return (
     <div className="card p-3">
-      <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpanded(!expanded)}>
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(!expanded); } }}
+      >
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded bg-accent-purple/10 flex items-center justify-center text-accent-purple text-xs font-bold">
             {shot.shotNumber}

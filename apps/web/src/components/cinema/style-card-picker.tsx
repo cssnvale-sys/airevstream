@@ -24,7 +24,7 @@ export function StyleCardPicker({ onApply, selectedId }: StyleCardPickerProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-text-secondary mb-2">Visual Style</label>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {presets.map((preset) => (
           <button
             key={preset.id}

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const SecuritySettingsSchema = z.object({
   sessionTimeout: z.number().int().min(300).max(86400).optional(),
   maxLoginAttempts: z.number().int().min(1).max(20).optional(),

@@ -5,6 +5,8 @@ import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const CreateAiServiceSchema = z.object({
   name: z.string().min(1).max(200),
   provider: z.string().min(1).max(100),

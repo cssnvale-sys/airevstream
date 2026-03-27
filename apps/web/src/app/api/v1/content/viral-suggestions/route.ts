@@ -5,6 +5,8 @@ import { scoreViralPotential, suggestPresetVariantForChannel } from '@airevstrea
 import type { ViralScoringInput, ChannelContext } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const SuggestionsSchema = z.object({
   contentId: z.string().uuid(),
   currentPresets: z.array(z.string()).optional(),

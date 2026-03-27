@@ -4,6 +4,8 @@ import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const CreateLinkSchema = z.object({
   productId: z.string().uuid(),
   shortUrl: z.string().url().max(500).optional().nullable(),

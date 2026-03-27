@@ -4,6 +4,8 @@ import { authenticate, success, error, paginated, parseQuery, validationError, f
 import type { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const createEntrySchema = z.object({
   domain: z.enum(['platform_ops', 'civitai', 'remotion', 'huggingface', 'comfyui', 'video_production']),
   category: z.string().max(100).optional().nullable(),

@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const createStorefrontSchema = z.object({
   channelId: z.string().uuid('channelId must be a valid UUID'),
   name: z.string().min(1, 'name is required').max(255),

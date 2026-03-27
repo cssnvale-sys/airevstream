@@ -9,6 +9,8 @@ import {
 } from '@airevstream/shared';
 import type { AgentRole } from '@airevstream/shared';
 
+export const dynamic = 'force-dynamic';
+
 // GET: List all agents and their configurations
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);

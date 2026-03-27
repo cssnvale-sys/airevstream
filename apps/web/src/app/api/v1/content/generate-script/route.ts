@@ -4,6 +4,8 @@ import { authenticate, success, error, validationError, notFound, forbidden } fr
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const GenerateScriptSchema = z.object({
   channelId: z.string().uuid(),
   topic: z.string().min(1).max(1000),

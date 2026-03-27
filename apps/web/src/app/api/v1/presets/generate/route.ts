@@ -5,6 +5,8 @@ import { generateText, createServiceRegistry } from '@airevstream/ai-client';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { PRESET_GENERATION_SYSTEM_PROMPT, validateAndNormalizeAiPreset } from '@airevstream/shared';
 
+export const dynamic = 'force-dynamic';
+
 const GeneratePresetSchema = z.object({
   description: z.string().min(3).max(500),
 });

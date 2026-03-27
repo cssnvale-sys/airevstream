@@ -1,6 +1,8 @@
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/affiliate/clicks
  * Click analytics filterable by product, channel, date range.

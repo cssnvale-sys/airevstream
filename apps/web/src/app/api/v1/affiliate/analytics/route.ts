@@ -2,6 +2,8 @@ import { authenticate, success, error, validationError } from '@/lib/api-server'
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const querySchema = z.object({
   period: z.enum(['7d', '30d', '90d']).optional().default('30d'),
   channelId: z.string().uuid().optional(),

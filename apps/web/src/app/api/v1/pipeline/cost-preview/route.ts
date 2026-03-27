@@ -3,6 +3,8 @@ import { authenticate, success, error } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { estimateFromResolvedConfig } from '@airevstream/shared';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);

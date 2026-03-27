@@ -4,6 +4,8 @@ import { authenticate, success, error, validationError, forbidden } from '@/lib/
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 
+export const dynamic = 'force-dynamic';
+
 const GenerateContentSchema = z.object({
   channelId: z.string().uuid(),
   title: z.string().max(500).optional().nullable(),

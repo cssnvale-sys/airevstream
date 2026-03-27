@@ -1,6 +1,8 @@
 import { authenticate, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/affiliate/revenue
  * Revenue dashboard data: totals, by channel, by product, trends.

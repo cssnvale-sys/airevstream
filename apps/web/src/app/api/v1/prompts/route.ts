@@ -4,6 +4,8 @@ import { authenticate, success, error, paginated, parseQuery, validationError, f
 import type { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const createPromptSchema = z.object({
   name: z.string().min(1).max(255),
   category: z.string().min(1).max(50),

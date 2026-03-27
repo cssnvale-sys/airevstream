@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const CreateCinemaBibleSchema = z.object({
   channelId: z.string().uuid(),
   lookBible: z.record(z.unknown()).optional().default({}),

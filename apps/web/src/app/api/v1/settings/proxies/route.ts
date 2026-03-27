@@ -4,6 +4,8 @@ import { authenticate, success, error, validationError, requireAdmin } from '@/l
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { randomUUID } from 'node:crypto';
 
+export const dynamic = 'force-dynamic';
+
 const ProxySchema = z.object({
   name: z.string().min(1).max(100),
   type: z.enum(['http', 'socks5', 'residential']),

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const FallbackChainSchema = z.object({
   ordering: z.array(z.object({
     serviceId: z.string().uuid(),

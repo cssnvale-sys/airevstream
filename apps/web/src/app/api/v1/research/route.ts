@@ -4,6 +4,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const ResearchBodySchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('trends'),

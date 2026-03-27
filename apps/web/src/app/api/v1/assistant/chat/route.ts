@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { chat, createServiceRegistry } from '@airevstream/ai-client';
 import type { ChatMessage } from '@airevstream/ai-client';
 
+export const dynamic = 'force-dynamic';
+
 const ChatSchema = z.object({
   conversationId: z.string().uuid().optional().nullable(),
   message: z.string().min(1).max(10000),

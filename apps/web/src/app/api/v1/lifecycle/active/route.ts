@@ -1,6 +1,8 @@
 import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/lifecycle/active
  * List all active lifecycles for the tenant

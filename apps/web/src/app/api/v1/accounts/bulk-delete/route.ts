@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const BulkDeleteSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(100),
 });

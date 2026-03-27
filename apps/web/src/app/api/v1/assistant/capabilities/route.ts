@@ -1,6 +1,8 @@
 import { authenticate, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/assistant/capabilities
  * List system capabilities (static config of available actions the assistant can perform).

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const RetentionSchema = z.object({
   retentionDays: z.number().int().refine((v) => [30, 60, 90, 180].includes(v), {
     message: 'Retention days must be 30, 60, 90, or 180',

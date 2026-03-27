@@ -3,6 +3,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const CreateCohortSchema = z.object({
   name: z.string().min(1).max(255),
   platforms: z.array(z.enum(['youtube', 'tiktok', 'instagram', 'facebook'])).min(1),

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const SuggestionEntrySchema = z.object({
   presetId: z.string().min(1).max(100),
   dimension: z.string().min(1).max(30),

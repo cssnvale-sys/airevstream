@@ -4,6 +4,8 @@ import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const ctx = await authenticateAny(req, 'read');

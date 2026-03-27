@@ -5,6 +5,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { getPresignedPutUrl, ensureBucket } from '@airevstream/storage';
 import { BUCKETS } from '@airevstream/shared';
 
+export const dynamic = 'force-dynamic';
+
 const ALLOWED_BUCKETS = [BUCKETS.AVATARS, BUCKETS.SCENERY, BUCKETS.BRANDING];
 
 /**

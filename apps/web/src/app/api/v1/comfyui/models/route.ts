@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
 import { ComfyUIClient } from '@airevstream/shared';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/comfyui/models
  * List available ComfyUI models (checkpoints, LoRAs, ControlNets).

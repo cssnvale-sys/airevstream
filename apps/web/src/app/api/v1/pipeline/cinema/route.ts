@@ -4,6 +4,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { startCinemaPipeline } from '@airevstream/queue';
 import type { CinemaPipelineParams } from '@airevstream/queue';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const ctx = await authenticate(req);

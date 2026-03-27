@@ -5,6 +5,8 @@ import { authenticate, success, error, validationError, getJwtSecret } from '@/l
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { hashPassword, verifyPassword } from '@/lib/password';
 
+export const dynamic = 'force-dynamic';
+
 const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'currentPassword is required').max(256),
   newPassword: z.string().min(8, 'New password must be at least 8 characters').max(256),

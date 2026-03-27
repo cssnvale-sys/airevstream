@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/budgets/check
  * Check all active budgets and return any that have exceeded their alert threshold.

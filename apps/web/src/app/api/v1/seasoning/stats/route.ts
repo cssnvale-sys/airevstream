@@ -1,6 +1,8 @@
 import { authenticate, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/seasoning/stats
  * Dashboard stats for the seasoning pipeline

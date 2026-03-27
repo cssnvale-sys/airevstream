@@ -1,6 +1,8 @@
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/system/workflows
  * Active workflows (paginated WorkflowJob list, filterable by status, jobType).

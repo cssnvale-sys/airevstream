@@ -4,6 +4,8 @@ import { randomBytes, createHash } from 'node:crypto';
 import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const createApiKeySchema = z.object({
   name: z.string().min(1).max(255),
   scopes: z.array(z.string()).default(['read']),

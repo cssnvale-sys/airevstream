@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
 
+export const dynamic = 'force-dynamic';
+
 type UsageMetric = {
   metric: string;
   current: number;

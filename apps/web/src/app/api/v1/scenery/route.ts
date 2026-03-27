@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const createScenerySchema = z.object({
   name: z.string().min(1).max(255),
   category: z.string().max(50).optional().nullable(),

@@ -4,6 +4,8 @@ import type { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/schedule
  * List scheduled posts with pagination, status, platform filters.

@@ -5,6 +5,8 @@ import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const AccountEntrySchema = z.object({
   email: z.string().email(),
   password: z.string().min(1).max(256),

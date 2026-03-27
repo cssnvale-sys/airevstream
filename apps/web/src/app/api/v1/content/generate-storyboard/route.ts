@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const GenerateStoryboardSchema = z.object({
   script: z.string().min(1).max(50000),
   channelId: z.string().uuid().optional().nullable(),

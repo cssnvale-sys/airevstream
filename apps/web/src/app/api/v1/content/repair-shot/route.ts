@@ -4,6 +4,8 @@ import { authenticate, success, error, validationError, notFound, forbidden } fr
 import { addJob } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const RepairShotSchema = z.object({
   shotId: z.string().min(1).max(100),
   storyboardId: z.string().min(1).max(100),

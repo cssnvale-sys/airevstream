@@ -2,6 +2,8 @@ import { authenticate, success, error, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /** Block SSRF by rejecting URLs targeting private/loopback addresses */
 function isPrivateUrl(urlStr: string): boolean {
   try {
@@ -36,7 +38,8 @@ function isPrivateUrl(urlStr: string): boolean {
       return true;
     }
     return false;
-  } catch {
+  } catch (err) {
+    console.error('isPrivateUrl: malformed URL, treating as private:', err);
     return true;
   }
 }
@@ -103,6 +106,7 @@ export async function POST(req: NextRequest) {
           healthy = res.ok;
         } catch (fetchErr) {
           clearTimeout(timeout);
+          console.error('Health check fetch failed for', healthUrl, fetchErr);
           errorMsg = fetchErr instanceof Error && fetchErr.name === 'AbortError' ? 'Timeout (5s)' : 'Connection failed';
           healthy = false;
         }

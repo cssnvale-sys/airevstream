@@ -5,6 +5,8 @@ import { authenticate, success, error, validationError, requireAdmin } from '@/l
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { hashPassword } from '@/lib/password';
 
+export const dynamic = 'force-dynamic';
+
 const inviteUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(255).optional(),

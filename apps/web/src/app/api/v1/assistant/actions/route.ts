@@ -5,6 +5,8 @@ import type { ApiContext } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 // ---------------------------------------------------------------------------
 // Tier definitions
 // ---------------------------------------------------------------------------

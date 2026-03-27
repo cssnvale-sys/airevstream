@@ -5,6 +5,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { FAMILY_OVERRIDE_KEYS, generatePresetId } from '@airevstream/shared';
 import type { PresetFamily } from '@airevstream/shared';
 
+export const dynamic = 'force-dynamic';
+
 const VALID_FAMILIES = [
   'visual', 'camera', 'audio', 'edit', 'output',
   'project', 'character', 'story', 'dialogue', 'continuity',

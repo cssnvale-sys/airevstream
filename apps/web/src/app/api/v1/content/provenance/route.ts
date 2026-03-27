@@ -5,6 +5,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { generateC2PAManifest } from '@airevstream/shared';
 import type { ProvenanceRecord } from '@airevstream/shared';
 
+export const dynamic = 'force-dynamic';
+
 const ProvenanceQuerySchema = z.object({
   contentId: z.string().min(1).max(100),
 });

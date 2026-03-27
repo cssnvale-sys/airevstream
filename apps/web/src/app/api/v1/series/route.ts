@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { authenticate, success, paginated, error, validationError, parseQuery, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 // Tenant scoping for Series: channel → socialAccount → emailAccount → tenantId
 function tenantFilter(tenantId: string) {
   return { channel: { socialAccount: { emailAccount: { tenantId } } } };

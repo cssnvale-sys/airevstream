@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { authenticate, success, error, parseQuery, paginated, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const CreateFamilySchema = z.object({
   channelIds: z.array(z.string().uuid()).min(2, 'At least 2 channel IDs required').max(50),
 });

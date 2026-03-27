@@ -5,6 +5,8 @@ import { authenticate, success, error, validationError, forbidden } from '@/lib/
 import { sha256 } from '@airevstream/crypto';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const CreateApiKeySchema = z.object({
   name: z.string().min(1).max(100),
   scopes: z.array(z.enum(['read', 'write', 'admin'])).optional(),

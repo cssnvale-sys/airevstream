@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/assets
  * List asset registry entries with optional filters.

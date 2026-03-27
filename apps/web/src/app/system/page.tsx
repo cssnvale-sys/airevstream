@@ -28,9 +28,11 @@ import {
   AlertCircle,
   Info,
   CheckCircle2,
+  GitBranch,
   BellOff,
   RefreshCw,
 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -400,7 +402,11 @@ export default function SystemPage() {
             ))}
           </div>
         ) : workflows.length === 0 ? (
-          <p className="text-text-secondary text-sm py-4 text-center">No running workflows</p>
+          <EmptyState
+            icon={GitBranch}
+            title="No running workflows"
+            description="Active and queued workflows will appear here."
+          />
         ) : (
           <div className="space-y-2">
             {workflows.map((wf) => {
@@ -472,10 +478,11 @@ export default function SystemPage() {
             ))}
           </div>
         ) : errors.length === 0 ? (
-          <div className="flex items-center justify-center gap-2 py-6 text-accent-green">
-            <CheckCircle2 size={16} />
-            <span className="text-sm">No recent errors</span>
-          </div>
+          <EmptyState
+            icon={CheckCircle2}
+            title="No recent errors"
+            description="System errors will appear here when detected."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -531,10 +538,11 @@ export default function SystemPage() {
             ))}
           </div>
         ) : alerts.length === 0 ? (
-          <div className="card flex items-center justify-center gap-2 py-6 text-accent-green">
-            <CheckCircle2 size={16} />
-            <span className="text-sm">No active alerts</span>
-          </div>
+          <EmptyState
+            icon={CheckCircle2}
+            title="No active alerts"
+            description="System alerts will appear here when triggered."
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {alerts.map((alert) => (

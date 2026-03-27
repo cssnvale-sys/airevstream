@@ -11,12 +11,11 @@
     "audit": "vitest run src/__tests__/audit"
   },
   "dependencies": {
+    "@airevstream/ai-client": "*",
+    "@airevstream/crypto": "*",
     "@airevstream/db": "*",
     "@airevstream/queue": "*",
-    "@airevstream/crypto": "*",
     "@airevstream/shared": "*",
-    "@airevstream/ai-client": "*",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "jose": "^6.0.11",

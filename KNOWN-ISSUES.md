@@ -27,11 +27,9 @@ Tracked bugs, limitations, and technical debt.
 ### KI-080: ~~ColorGradeSpec Missing filmGrain/vignette Fields~~ — FIXED (Session 46)
 **Status**: Fixed — Same as KI-083. Fields added to `ColorGradeSpec`, `toColorGrade()` updated, `FinishingOutput.postProcess` merged in render path.
 
-### KI-081: Duplicate ContinuityLocks Type Definition
+### KI-081: ~~Duplicate ContinuityLocks Type Definition~~ — FIXED
 **Severity**: Low
-**Status**: Open (Session 45 — flagged, not fixed)
-**Context**: `ContinuityLocks` is defined in both `packages/shared/src/types.ts` and `packages/shared/src/presets/schema.ts`. The two definitions may drift over time.
-**Action**: Remove the duplicate and re-export from a single canonical location.
+**Status**: Fixed — Removed duplicate `type ContinuityLocks` and `type ContinuityLockLevel` from `presets/schema.ts`. Canonical types remain in `types.ts`. Zod schemas (`ContinuityLocksSchema`, `ContinuityLockLevelSchema`) kept in `schema.ts` for runtime validation.
 
 ### KI-073: ~~Suggestion Log Migration Not Yet Applied~~ — FIXED (Session 40)
 **Severity**: Medium
@@ -72,11 +70,11 @@ The SimpleCreateWizard generates plans using the existing content generation pip
 
 ### KI-066: Unused Dependencies (3 packages)
 **Severity**: Low
-**Status**: Open (Session 27 Audit — ISSUE_012/013/014)
-- `class-variance-authority` in apps/web (never imported)
-- `@fastify/websocket` in services/ai-assistant (never imported)
-- `playwright-extra` + `puppeteer-extra-plugin-stealth` in packages/browser-automation (stealth done inline)
-**Action**: `npm uninstall` each from respective workspace.
+**Status**: Fixed
+- `class-variance-authority` removed from apps/web
+- `@fastify/websocket` removed from services/ai-assistant
+- `playwright-extra` + `puppeteer-extra-plugin-stealth` removed from packages/browser-automation
+All four packages confirmed to have zero imports before removal.
 
 ### KI-067: @types/bcrypt Version Mismatch
 **Severity**: Low

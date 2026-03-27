@@ -18,6 +18,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { PlatformSelect } from '@/components/accounts/platform-select';
 import { AvatarAssignPicker } from '@/components/accounts/avatar-assign-picker';
 import { LifecycleStatusPanel } from '@/components/accounts/lifecycle-status-panel';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -329,14 +330,15 @@ function AddEmailModal({
               <button onClick={() => setStep(targetPlatforms.length > 0 ? 3 : 2)} className="btn-secondary flex items-center gap-1.5">
                 <ArrowLeft size={16} /> Back
               </button>
-              <button
+              <LoadingButton
                 onClick={handleSubmit}
-                disabled={submitting}
+                loading={submitting}
+                loadingText="Creating..."
                 className="btn-primary flex-1 flex items-center justify-center gap-1.5"
               >
                 <Rocket size={16} />
-                {submitting ? 'Creating...' : targetPlatforms.length > 0 ? 'Create & Start Pipeline' : 'Create Account'}
-              </button>
+                {targetPlatforms.length > 0 ? 'Create & Start Pipeline' : 'Create Account'}
+              </LoadingButton>
             </div>
           </div>
         )}
@@ -426,9 +428,9 @@ function BulkImportModal({
             </p>
           )}
           <div className="flex gap-2 pt-2">
-            <button type="submit" disabled={submitting} className="btn-primary flex-1">
-              {submitting ? 'Importing...' : 'Import'}
-            </button>
+            <LoadingButton type="submit" loading={submitting} loadingText="Importing..." className="btn-primary flex-1">
+              Import
+            </LoadingButton>
             <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
           </div>
         </form>

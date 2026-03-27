@@ -522,10 +522,11 @@ export function SimpleCreateWizard() {
         {/* Advanced-gated controls */}
         {isVisible(FIELD_VISIBILITY.create.shotCount, mode) && (
           <div>
-            <label className="block text-caption text-text-secondary mb-1.5">
+            <label htmlFor="wizard-shot-count" className="block text-caption text-text-secondary mb-1.5">
               Shot Count <span className="text-text-tertiary">({form.directives.targetShotCount ?? 6})</span>
             </label>
             <input
+              id="wizard-shot-count"
               type="range"
               min={3}
               max={9}
@@ -576,10 +577,11 @@ export function SimpleCreateWizard() {
 
         {isVisible(FIELD_VISIBILITY.create.shotLength, mode) && (
           <div>
-            <label className="block text-caption text-text-secondary mb-1.5">
+            <label htmlFor="wizard-shot-length" className="block text-caption text-text-secondary mb-1.5">
               Avg Shot Length <span className="text-text-tertiary">({form.directives.avgShotLengthSec ?? 4}s)</span>
             </label>
             <input
+              id="wizard-shot-length"
               type="range"
               min={2}
               max={10}

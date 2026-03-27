@@ -163,15 +163,18 @@ export function BrandingEditor({ channelId, branding, onUpdated }: BrandingEdito
           {(['primary', 'secondary', 'accent'] as const).map((colorKey) => (
             <div key={colorKey} className="flex items-center gap-2">
               <input
+                id={`brand-color-${colorKey}`}
                 type="color"
                 value={colors[colorKey] ?? '#000000'}
                 onChange={(e) => handleColorChange(colorKey, e.target.value)}
                 className="w-8 h-8 rounded border border-border cursor-pointer bg-transparent"
                 disabled={saving}
+                aria-label={`${colorKey.charAt(0).toUpperCase() + colorKey.slice(1)} color picker`}
               />
               <div className="flex-1 min-w-0">
-                <span className="text-xs text-text-secondary capitalize">{colorKey}</span>
+                <label htmlFor={`brand-color-hex-${colorKey}`} className="text-xs text-text-secondary capitalize">{colorKey}</label>
                 <input
+                  id={`brand-color-hex-${colorKey}`}
                   type="text"
                   value={colors[colorKey] ?? ''}
                   onChange={(e) => handleColorChange(colorKey, e.target.value)}

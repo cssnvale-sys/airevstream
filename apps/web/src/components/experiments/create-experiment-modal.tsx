@@ -231,6 +231,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
                     onChange={(e) => updateVariantLabel(i, e.target.value)}
                     className="input flex-1"
                     placeholder="Variant label"
+                    aria-label={`Variant ${i + 1} label`}
                   />
                   <input
                     type="number"
@@ -239,6 +240,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
                     value={v.trafficPercent}
                     onChange={(e) => updateVariantTraffic(i, Number(e.target.value))}
                     className="input w-20 text-center"
+                    aria-label={`Variant ${i + 1} traffic weight`}
                   />
                   <span className="text-text-tertiary text-sm">%</span>
                   <button

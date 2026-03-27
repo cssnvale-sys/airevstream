@@ -521,8 +521,9 @@ export default function CreatePage() {
         </div>
       ) : (
         <div>
-          <label className="block text-caption text-text-secondary mb-1.5">Channel</label>
+          <label htmlFor="create-channel" className="block text-caption text-text-secondary mb-1.5">Channel</label>
           <select
+            id="create-channel"
             value={formData.channelId}
             onChange={(e) => update('channelId', e.target.value)}
             className="input w-full max-w-md"
@@ -632,8 +633,9 @@ export default function CreatePage() {
         {/* Left column */}
         <div className="space-y-4">
           <div>
-            <label className="block text-caption text-text-secondary mb-1.5">Topic / Concept</label>
+            <label htmlFor="create-topic" className="block text-caption text-text-secondary mb-1.5">Topic / Concept</label>
             <input
+              id="create-topic"
               type="text"
               value={formData.topic}
               onChange={(e) => update('topic', e.target.value)}
@@ -646,8 +648,9 @@ export default function CreatePage() {
           </div>
 
           <div>
-            <label className="block text-caption text-text-secondary mb-1.5">Content Type</label>
+            <label htmlFor="create-content-type" className="block text-caption text-text-secondary mb-1.5">Content Type</label>
             <select
+              id="create-content-type"
               value={formData.contentType}
               onChange={(e) => update('contentType', e.target.value as ContentType)}
               className="input w-full"
@@ -661,8 +664,9 @@ export default function CreatePage() {
           </div>
 
           <div>
-            <label className="block text-caption text-text-secondary mb-1.5">Duration</label>
+            <label htmlFor="create-duration" className="block text-caption text-text-secondary mb-1.5">Duration</label>
             <select
+              id="create-duration"
               value={formData.duration}
               onChange={(e) => update('duration', e.target.value)}
               className="input w-full"
@@ -713,10 +717,11 @@ export default function CreatePage() {
           <h3 className="text-card-title text-text-primary mb-4">Pipeline Directives</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-caption text-text-secondary mb-1.5">
+              <label htmlFor="create-shot-count" className="block text-caption text-text-secondary mb-1.5">
                 Shot Count <span className="text-text-tertiary">({directives.targetShotCount ?? 6})</span>
               </label>
               <input
+                id="create-shot-count"
                 type="range"
                 min={3}
                 max={9}
@@ -757,10 +762,11 @@ export default function CreatePage() {
             </div>
 
             <div>
-              <label className="block text-caption text-text-secondary mb-1.5">
+              <label htmlFor="create-shot-length" className="block text-caption text-text-secondary mb-1.5">
                 Avg Shot Length <span className="text-text-tertiary">({directives.avgShotLengthSec ?? 4}s)</span>
               </label>
               <input
+                id="create-shot-length"
                 type="range"
                 min={2}
                 max={10}
@@ -799,8 +805,9 @@ export default function CreatePage() {
           {formData.affiliateEnabled && (
             <div className="space-y-4">
               <div>
-                <label className="block text-caption text-text-secondary mb-1.5">Product</label>
+                <label htmlFor="create-affiliate-product" className="block text-caption text-text-secondary mb-1.5">Product</label>
                 <select
+                  id="create-affiliate-product"
                   value={formData.affiliateProductId}
                   onChange={(e) => update('affiliateProductId', e.target.value)}
                   className="input w-full"
@@ -970,6 +977,8 @@ export default function CreatePage() {
         </div>
       ) : (
         <textarea
+          id="create-script"
+          aria-label="Script"
           value={formData.script}
           onChange={(e) => update('script', e.target.value)}
           className="input w-full font-mono text-body"

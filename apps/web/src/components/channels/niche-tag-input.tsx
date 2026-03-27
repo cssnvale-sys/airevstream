@@ -54,6 +54,7 @@ export function NicheTagInput({ value, onChange, maxTags = 10 }: NicheTagInputPr
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={value.length === 0 ? 'Type a niche and press Enter...' : ''}
+        aria-label="Add niche tag"
         className="flex-1 min-w-[120px] bg-transparent outline-none text-text-primary placeholder:text-text-tertiary text-body"
         disabled={value.length >= maxTags}
       />

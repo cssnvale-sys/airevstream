@@ -115,8 +115,9 @@ function CreateAvatarModal({
             <X size={20} />
           </button>
         </div>
-        <label className="block text-sm text-text-secondary mb-1">Name</label>
+        <label htmlFor="avatar-name" className="block text-sm text-text-secondary mb-1">Name</label>
         <input
+          id="avatar-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -204,8 +205,9 @@ function CreateSceneryModal({
           </button>
         </div>
 
-        <label className="block text-sm text-text-secondary mb-1">Name</label>
+        <label htmlFor="scenery-name" className="block text-sm text-text-secondary mb-1">Name</label>
         <input
+          id="scenery-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -214,8 +216,9 @@ function CreateSceneryModal({
           autoFocus
         />
 
-        <label className="block text-sm text-text-secondary mb-1">Category</label>
+        <label htmlFor="scenery-category" className="block text-sm text-text-secondary mb-1">Category</label>
         <select
+          id="scenery-category"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className="input w-full mb-3"
@@ -228,8 +231,9 @@ function CreateSceneryModal({
           ))}
         </select>
 
-        <label className="block text-sm text-text-secondary mb-1">Image URL or MinIO Key</label>
+        <label htmlFor="scenery-image-url" className="block text-sm text-text-secondary mb-1">Image URL or MinIO Key</label>
         <input
+          id="scenery-image-url"
           type="text"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
@@ -551,6 +555,7 @@ export default function AssetsPage() {
             placeholder={`Search ${activeTab}...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            aria-label={`Search ${activeTab}`}
             className="input w-full pl-9"
           />
         </div>

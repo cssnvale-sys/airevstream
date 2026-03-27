@@ -136,62 +136,67 @@ async function handleEvaluate(data: ExperimentEvaluateJob) {
 }
 
 async function handleRecordMetric(data: ExperimentRecordMetricJob) {
-  const db = getDb();
+  try {
+    const db = getDb();
 
-  const variant = await db.experimentVariant.findUnique({
-    where: { id: data.variantId },
-    include: { experiment: { select: { tenantId: true, status: true } } },
-  });
+    const variant = await db.experimentVariant.findUnique({
+      where: { id: data.variantId },
+      include: { experiment: { select: { tenantId: true, status: true } } },
+    });
 
-  if (!variant) {
-    logger.warn({ variantId: data.variantId }, 'Variant not found');
-    return;
-  }
-
-  // Verify tenant ownership
-  if (variant.experiment.tenantId !== data.tenantId) {
-    logger.warn({ variantId: data.variantId, expectedTenant: data.tenantId, actualTenant: variant.experiment.tenantId }, 'Tenant mismatch on record-metric');
-    return;
-  }
-
-  // Only accept metrics for running experiments
-  if (variant.experiment.status !== 'running') {
-    logger.info({ variantId: data.variantId, status: variant.experiment.status }, 'Experiment not running, skipping metric record');
-    return;
-  }
-
-  // Increment the appropriate metric
-  const updateData: Record<string, unknown> = {};
-  switch (data.metric) {
-    case 'impressions':
-      updateData.impressions = { increment: Math.round(data.value) };
-      break;
-    case 'clicks':
-      updateData.clicks = { increment: Math.round(data.value) };
-      break;
-    case 'engagementRate':
-      updateData.engagementRate = data.value;
-      break;
-    case 'completionRate':
-      updateData.completionRate = data.value;
-      break;
-    case 'shareRate':
-      updateData.shareRate = data.value;
-      break;
-    case 'viralScore':
-      updateData.viralScore = Math.round(data.value);
-      break;
-    default:
-      logger.warn({ metric: data.metric }, 'Unknown metric type');
+    if (!variant) {
+      logger.warn({ variantId: data.variantId }, 'Variant not found');
       return;
+    }
+
+    // Verify tenant ownership
+    if (variant.experiment.tenantId !== data.tenantId) {
+      logger.warn({ variantId: data.variantId, expectedTenant: data.tenantId, actualTenant: variant.experiment.tenantId }, 'Tenant mismatch on record-metric');
+      return;
+    }
+
+    // Only accept metrics for running experiments
+    if (variant.experiment.status !== 'running') {
+      logger.info({ variantId: data.variantId, status: variant.experiment.status }, 'Experiment not running, skipping metric record');
+      return;
+    }
+
+    // Increment the appropriate metric
+    const updateData: Record<string, unknown> = {};
+    switch (data.metric) {
+      case 'impressions':
+        updateData.impressions = { increment: Math.round(data.value) };
+        break;
+      case 'clicks':
+        updateData.clicks = { increment: Math.round(data.value) };
+        break;
+      case 'engagementRate':
+        updateData.engagementRate = data.value;
+        break;
+      case 'completionRate':
+        updateData.completionRate = data.value;
+        break;
+      case 'shareRate':
+        updateData.shareRate = data.value;
+        break;
+      case 'viralScore':
+        updateData.viralScore = Math.round(data.value);
+        break;
+      default:
+        logger.warn({ metric: data.metric }, 'Unknown metric type');
+        return;
+    }
+
+    await db.experimentVariant.update({
+      where: { id: data.variantId },
+      data: updateData,
+    });
+
+    logger.info({ variantId: data.variantId, metric: data.metric, value: data.value }, 'Metric recorded');
+  } catch (err) {
+    logger.error({ err, variantId: data.variantId, metric: data.metric }, 'Failed to record experiment metric');
+    throw err;
   }
-
-  await db.experimentVariant.update({
-    where: { id: data.variantId },
-    data: updateData,
-  });
-
-  logger.info({ variantId: data.variantId, metric: data.metric, value: data.value }, 'Metric recorded');
 }
 
 export function startExperimentWorker() {

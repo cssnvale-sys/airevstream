@@ -88,70 +88,75 @@ async function processLifecycleJob(job: Job) {
 // ═══════════════════════════════════════════════════════════════════
 
 async function handleInit(data: LifecycleInitJob) {
-  const db = getDb();
+  try {
+    const db = getDb();
 
-  // Check if lifecycle already exists
-  const existing = await db.accountLifecycle.findUnique({
-    where: { emailAccountId: data.emailAccountId },
-  });
-  if (existing && existing.status !== 'failed') {
-    logger.warn({ emailAccountId: data.emailAccountId, status: existing.status }, 'Lifecycle already exists');
-    return { lifecycleId: existing.id, status: existing.status };
-  }
-
-  // Create or update lifecycle record
-  const lifecycle = existing
-    ? await db.accountLifecycle.update({
-        where: { id: existing.id },
-        data: {
-          status: 'discovering',
-          targetPlatforms: data.targetPlatforms,
-          avatarId: data.avatarId ?? null,
-          autoSeasoning: data.autoSeasoning ?? true,
-          autoPosting: data.autoPosting ?? false,
-          error: null,
-          startedAt: new Date(),
-          completedAt: null,
-          discoveryResults: {},
-        },
-      })
-    : await db.accountLifecycle.create({
-        data: {
-          emailAccountId: data.emailAccountId,
-          tenantId: data.tenantId,
-          targetPlatforms: data.targetPlatforms,
-          avatarId: data.avatarId ?? null,
-          autoSeasoning: data.autoSeasoning ?? true,
-          autoPosting: data.autoPosting ?? false,
-          status: 'discovering',
-          startedAt: new Date(),
-        },
-      });
-
-  // Update email account status
-  await db.emailAccount.update({
-    where: { id: data.emailAccountId },
-    data: { status: 'provisioning' },
-  });
-
-  // Queue discovery jobs with stagger
-  const queue = getQueue('lifecycle');
-  for (let i = 0; i < data.targetPlatforms.length; i++) {
-    const delay = i * (30000 + Math.floor(Math.random() * 60000)); // 30-90s stagger
-    await queue.add('lifecycle:discover', {
-      lifecycleId: lifecycle.id,
-      emailAccountId: data.emailAccountId,
-      platform: data.targetPlatforms[i],
-      tenantId: data.tenantId,
-    } as any, {
-      delay,
-      attempts: 2,
-      backoff: { type: 'exponential', delay: 15000 },
+    // Check if lifecycle already exists
+    const existing = await db.accountLifecycle.findUnique({
+      where: { emailAccountId: data.emailAccountId },
     });
-  }
+    if (existing && existing.status !== 'failed') {
+      logger.warn({ emailAccountId: data.emailAccountId, status: existing.status }, 'Lifecycle already exists');
+      return { lifecycleId: existing.id, status: existing.status };
+    }
 
-  logger.info({ lifecycleId: lifecycle.id, platforms: data.targetPlatforms }, 'Lifecycle init — discovery jobs queued');
-  return { lifecycleId: lifecycle.id, status: 'discovering' };
+    // Create or update lifecycle record
+    const lifecycle = existing
+      ? await db.accountLifecycle.update({
+          where: { id: existing.id },
+          data: {
+            status: 'discovering',
+            targetPlatforms: data.targetPlatforms,
+            avatarId: data.avatarId ?? null,
+            autoSeasoning: data.autoSeasoning ?? true,
+            autoPosting: data.autoPosting ?? false,
+            error: null,
+            startedAt: new Date(),
+            completedAt: null,
+            discoveryResults: {},
+          },
+        })
+      : await db.accountLifecycle.create({
+          data: {
+            emailAccountId: data.emailAccountId,
+            tenantId: data.tenantId,
+            targetPlatforms: data.targetPlatforms,
+            avatarId: data.avatarId ?? null,
+            autoSeasoning: data.autoSeasoning ?? true,
+            autoPosting: data.autoPosting ?? false,
+            status: 'discovering',
+            startedAt: new Date(),
+          },
+        });
+
+    // Update email account status
+    await db.emailAccount.update({
+      where: { id: data.emailAccountId },
+      data: { status: 'provisioning' },
+    });
+
+    // Queue discovery jobs with stagger
+    const queue = getQueue('lifecycle');
+    for (let i = 0; i < data.targetPlatforms.length; i++) {
+      const delay = i * (30000 + Math.floor(Math.random() * 60000)); // 30-90s stagger
+      await queue.add('lifecycle:discover', {
+        lifecycleId: lifecycle.id,
+        emailAccountId: data.emailAccountId,
+        platform: data.targetPlatforms[i],
+        tenantId: data.tenantId,
+      } as any, {
+        delay,
+        attempts: 2,
+        backoff: { type: 'exponential', delay: 15000 },
+      });
+    }
+
+    logger.info({ lifecycleId: lifecycle.id, platforms: data.targetPlatforms }, 'Lifecycle init — discovery jobs queued');
+    return { lifecycleId: lifecycle.id, status: 'discovering' };
+  } catch (err) {
+    logger.error({ err, emailAccountId: data.emailAccountId }, 'Failed to initialize lifecycle');
+    throw err;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -251,90 +256,95 @@ async function handleDiscover(data: LifecycleDiscoverJob) {
 // ═══════════════════════════════════════════════════════════════════
 
 async function handlePlan(data: LifecyclePlanJob) {
-  const db = getDb();
+  try {
+    const db = getDb();
 
-  const lifecycle = await db.accountLifecycle.findUnique({ where: { id: data.lifecycleId } });
-  if (!lifecycle) return;
+    const lifecycle = await db.accountLifecycle.findUnique({ where: { id: data.lifecycleId } });
+    if (!lifecycle) return;
 
-  await db.accountLifecycle.update({
-    where: { id: data.lifecycleId },
-    data: { status: 'planning', currentStep: 'planning' },
-  });
+    await db.accountLifecycle.update({
+      where: { id: data.lifecycleId },
+      data: { status: 'planning', currentStep: 'planning' },
+    });
 
-  const results = (lifecycle.discoveryResults ?? {}) as Record<string, { exists: boolean | 'unknown'; accountInfo?: Record<string, unknown>; needsHuman?: boolean }>;
-  const signupsNeeded: string[] = [];
-  const existingPlatforms: string[] = [];
+    const results = (lifecycle.discoveryResults ?? {}) as Record<string, { exists: boolean | 'unknown'; accountInfo?: Record<string, unknown>; needsHuman?: boolean }>;
+    const signupsNeeded: string[] = [];
+    const existingPlatforms: string[] = [];
 
-  for (const platform of lifecycle.targetPlatforms) {
-    const result = results[platform];
-    if (!result) continue;
+    for (const platform of lifecycle.targetPlatforms) {
+      const result = results[platform];
+      if (!result) continue;
 
-    if (result.exists === true) {
-      existingPlatforms.push(platform);
+      if (result.exists === true) {
+        existingPlatforms.push(platform);
 
-      // Check if social account already exists
-      const existingSocial = await db.socialAccount.findUnique({
-        where: { emailAccountId_platform: { emailAccountId: data.emailAccountId, platform } },
-      });
+        // Check if social account already exists
+        const existingSocial = await db.socialAccount.findUnique({
+          where: { emailAccountId_platform: { emailAccountId: data.emailAccountId, platform } },
+        });
 
-      if (!existingSocial) {
-        // Create social account for discovered existing accounts
-        await db.socialAccount.create({
+        if (!existingSocial) {
+          // Create social account for discovered existing accounts
+          await db.socialAccount.create({
+            data: {
+              emailAccountId: data.emailAccountId,
+              platform,
+              status: 'active',
+              username: result.accountInfo?.username as string ?? undefined,
+            },
+          });
+        }
+      } else if (result.exists === false) {
+        signupsNeeded.push(platform);
+      } else if (result.needsHuman) {
+        // Create a workflow job for manual investigation
+        await db.workflowJob.create({
           data: {
-            emailAccountId: data.emailAccountId,
-            platform,
-            status: 'active',
-            username: result.accountInfo?.username as string ?? undefined,
+            jobType: 'account_creation',
+            priority: 5,
+            status: 'running',
+            needsHuman: true,
+            humanTaskDesc: `Check if ${platform} account exists for this email (automated discovery inconclusive)`,
+            params: { emailAccountId: data.emailAccountId, platform, lifecycleId: data.lifecycleId },
           },
         });
       }
-    } else if (result.exists === false) {
-      signupsNeeded.push(platform);
-    } else if (result.needsHuman) {
-      // Create a workflow job for manual investigation
-      await db.workflowJob.create({
-        data: {
-          jobType: 'account_creation',
-          priority: 5,
-          status: 'running',
-          needsHuman: true,
-          humanTaskDesc: `Check if ${platform} account exists for this email (automated discovery inconclusive)`,
-          params: { emailAccountId: data.emailAccountId, platform, lifecycleId: data.lifecycleId },
-        },
+    }
+
+    // Queue signups
+    if (signupsNeeded.length > 0) {
+      await db.accountLifecycle.update({
+        where: { id: data.lifecycleId },
+        data: { status: 'signing_up', currentStep: `signup:${signupsNeeded[0]}` },
       });
+
+      const queue = getQueue('lifecycle');
+      for (let i = 0; i < signupsNeeded.length; i++) {
+        const delay = i * (60000 + Math.floor(Math.random() * 120000)); // 1-3 min stagger
+        await queue.add('lifecycle:signup', {
+          lifecycleId: data.lifecycleId,
+          emailAccountId: data.emailAccountId,
+          platform: signupsNeeded[i],
+          tenantId: data.tenantId,
+          avatarId: lifecycle.avatarId ?? undefined,
+        } as any, { delay, attempts: 2, backoff: { type: 'exponential', delay: 30000 } });
+      }
+    } else {
+      // No signups needed — skip to enroll
+      await queueEnrollIfReady(data.lifecycleId, data.emailAccountId, data.tenantId);
     }
+
+    logger.info({
+      lifecycleId: data.lifecycleId,
+      existing: existingPlatforms,
+      signupsNeeded,
+    }, 'Plan completed');
+
+    return { existing: existingPlatforms, signupsNeeded };
+  } catch (err) {
+    logger.error({ err, lifecycleId: data.lifecycleId }, 'Failed to plan lifecycle');
+    throw err;
   }
-
-  // Queue signups
-  if (signupsNeeded.length > 0) {
-    await db.accountLifecycle.update({
-      where: { id: data.lifecycleId },
-      data: { status: 'signing_up', currentStep: `signup:${signupsNeeded[0]}` },
-    });
-
-    const queue = getQueue('lifecycle');
-    for (let i = 0; i < signupsNeeded.length; i++) {
-      const delay = i * (60000 + Math.floor(Math.random() * 120000)); // 1-3 min stagger
-      await queue.add('lifecycle:signup', {
-        lifecycleId: data.lifecycleId,
-        emailAccountId: data.emailAccountId,
-        platform: signupsNeeded[i],
-        tenantId: data.tenantId,
-        avatarId: lifecycle.avatarId ?? undefined,
-      } as any, { delay, attempts: 2, backoff: { type: 'exponential', delay: 30000 } });
-    }
-  } else {
-    // No signups needed — skip to enroll
-    await queueEnrollIfReady(data.lifecycleId, data.emailAccountId, data.tenantId);
-  }
-
-  logger.info({
-    lifecycleId: data.lifecycleId,
-    existing: existingPlatforms,
-    signupsNeeded,
-  }, 'Plan completed');
-
-  return { existing: existingPlatforms, signupsNeeded };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -538,69 +548,74 @@ async function handleSetProfile(data: LifecycleSetProfileJob) {
 // ═══════════════════════════════════════════════════════════════════
 
 async function handleEnroll(data: LifecycleEnrollJob) {
-  const db = getDb();
+  try {
+    const db = getDb();
 
-  const lifecycle = await db.accountLifecycle.findUnique({ where: { id: data.lifecycleId } });
-  if (!lifecycle) return;
+    const lifecycle = await db.accountLifecycle.findUnique({ where: { id: data.lifecycleId } });
+    if (!lifecycle) return;
 
-  if (!lifecycle.autoSeasoning) {
-    // Skip seasoning — mark as completed
+    if (!lifecycle.autoSeasoning) {
+      // Skip seasoning — mark as completed
+      await db.accountLifecycle.update({
+        where: { id: data.lifecycleId },
+        data: { status: 'completed', completedAt: new Date(), currentStep: 'completed' },
+      });
+      await db.emailAccount.update({
+        where: { id: data.emailAccountId },
+        data: { status: 'active' },
+      });
+      logger.info({ lifecycleId: data.lifecycleId }, 'Lifecycle completed (auto-seasoning disabled)');
+      return { status: 'completed' };
+    }
+
     await db.accountLifecycle.update({
       where: { id: data.lifecycleId },
-      data: { status: 'completed', completedAt: new Date(), currentStep: 'completed' },
+      data: { status: 'enrolling', currentStep: 'enrolling' },
     });
+
+    // Auto-create cohort
+    const emailAccount = await db.emailAccount.findUnique({ where: { id: data.emailAccountId } });
+    const dateStr = new Date().toISOString().split('T')[0];
+    const cohort = await db.seasoningCohort.create({
+      data: {
+        tenantId: data.tenantId,
+        name: `Auto: ${emailAccount?.email ?? data.emailAccountId} (${dateStr})`,
+        platforms: data.platforms,
+        status: 'active',
+        startedAt: new Date(),
+      },
+    });
+
+    // Start seasoning pipeline for new social accounts
+    await startSeasoningPipeline({
+      cohortId: cohort.id,
+      tenantId: data.tenantId,
+      emailAccountIds: [data.emailAccountId],
+      platforms: data.platforms,
+      staggerMinutes: { min: 1, max: 5 },
+    });
+
+    // Update lifecycle
+    await db.accountLifecycle.update({
+      where: { id: data.lifecycleId },
+      data: {
+        status: 'active',
+        cohortId: cohort.id,
+        currentStep: 'seasoning',
+      },
+    });
+
     await db.emailAccount.update({
       where: { id: data.emailAccountId },
       data: { status: 'active' },
     });
-    logger.info({ lifecycleId: data.lifecycleId }, 'Lifecycle completed (auto-seasoning disabled)');
-    return { status: 'completed' };
+
+    logger.info({ lifecycleId: data.lifecycleId, cohortId: cohort.id, platforms: data.platforms }, 'Seasoning enrollment started');
+    return { status: 'active', cohortId: cohort.id };
+  } catch (err) {
+    logger.error({ err, lifecycleId: data.lifecycleId }, 'Failed to enroll lifecycle');
+    throw err;
   }
-
-  await db.accountLifecycle.update({
-    where: { id: data.lifecycleId },
-    data: { status: 'enrolling', currentStep: 'enrolling' },
-  });
-
-  // Auto-create cohort
-  const emailAccount = await db.emailAccount.findUnique({ where: { id: data.emailAccountId } });
-  const dateStr = new Date().toISOString().split('T')[0];
-  const cohort = await db.seasoningCohort.create({
-    data: {
-      tenantId: data.tenantId,
-      name: `Auto: ${emailAccount?.email ?? data.emailAccountId} (${dateStr})`,
-      platforms: data.platforms,
-      status: 'active',
-      startedAt: new Date(),
-    },
-  });
-
-  // Start seasoning pipeline for new social accounts
-  await startSeasoningPipeline({
-    cohortId: cohort.id,
-    tenantId: data.tenantId,
-    emailAccountIds: [data.emailAccountId],
-    platforms: data.platforms,
-    staggerMinutes: { min: 1, max: 5 },
-  });
-
-  // Update lifecycle
-  await db.accountLifecycle.update({
-    where: { id: data.lifecycleId },
-    data: {
-      status: 'active',
-      cohortId: cohort.id,
-      currentStep: 'seasoning',
-    },
-  });
-
-  await db.emailAccount.update({
-    where: { id: data.emailAccountId },
-    data: { status: 'active' },
-  });
-
-  logger.info({ lifecycleId: data.lifecycleId, cohortId: cohort.id, platforms: data.platforms }, 'Seasoning enrollment started');
-  return { status: 'active', cohortId: cohort.id };
 }
 
 // ═══════════════════════════════════════════════════════════════════

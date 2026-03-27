@@ -913,138 +913,148 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
 }
 
 async function handleSeasoningCheckDue() {
-  const db = getDb();
-  const now = new Date();
+  try {
+    const db = getDb();
+    const now = new Date();
 
-  // Find enrollments due for their next session
-  const dueEnrollments = await db.seasoningEnrollment.findMany({
-    where: {
-      nextScheduledAt: { lte: now },
-      status: { in: ['phase_1', 'phase_2', 'phase_3', 'phase_4'] },
-    },
-    include: { cohort: true },
-    take: 20, // Process in batches
-  });
-
-  if (dueEnrollments.length === 0) {
-    logger.debug('No seasoning enrollments due');
-    return { processed: 0 };
-  }
-
-  logger.info({ count: dueEnrollments.length }, 'Processing due seasoning enrollments');
-  const queue = getQueue('seasoning');
-
-  for (let i = 0; i < dueEnrollments.length; i++) {
-    const enrollment = dueEnrollments[i];
-    if (!enrollment.socialAccountId) continue;
-
-    // Stagger jobs with random delays to avoid burst
-    const staggerMs = i * (30 + Math.floor(Math.random() * 60)) * 1000; // 30-90s between jobs
-
-    await queue.add('seasoning:warm', {
-      enrollmentId: enrollment.id,
-      socialAccountId: enrollment.socialAccountId,
-      platform: enrollment.platform,
-      phase: enrollment.currentPhase ?? 'phase_1',
-      tenantId: enrollment.cohort.tenantId,
-    } as any, {
-      delay: staggerMs,
-      attempts: 2,
-      backoff: { type: 'exponential', delay: 30000 },
+    // Find enrollments due for their next session
+    const dueEnrollments = await db.seasoningEnrollment.findMany({
+      where: {
+        nextScheduledAt: { lte: now },
+        status: { in: ['phase_1', 'phase_2', 'phase_3', 'phase_4'] },
+      },
+      include: { cohort: true },
+      take: 20, // Process in batches
     });
+
+    if (dueEnrollments.length === 0) {
+      logger.debug('No seasoning enrollments due');
+      return { processed: 0 };
+    }
+
+    logger.info({ count: dueEnrollments.length }, 'Processing due seasoning enrollments');
+    const queue = getQueue('seasoning');
+
+    for (let i = 0; i < dueEnrollments.length; i++) {
+      const enrollment = dueEnrollments[i];
+      if (!enrollment.socialAccountId) continue;
+
+      // Stagger jobs with random delays to avoid burst
+      const staggerMs = i * (30 + Math.floor(Math.random() * 60)) * 1000; // 30-90s between jobs
+
+      await queue.add('seasoning:warm', {
+        enrollmentId: enrollment.id,
+        socialAccountId: enrollment.socialAccountId,
+        platform: enrollment.platform,
+        phase: enrollment.currentPhase ?? 'phase_1',
+        tenantId: enrollment.cohort.tenantId,
+      } as any, {
+        delay: staggerMs,
+        attempts: 2,
+        backoff: { type: 'exponential', delay: 30000 },
+      });
+    }
+
+    // Also check for enrollments that have been 'seasoned' and ready for graduation
+    const seasonedEnrollments = await db.seasoningEnrollment.findMany({
+      where: { status: 'seasoned' },
+      take: 10,
+    });
+
+    for (const enrollment of seasonedEnrollments) {
+      if (!enrollment.socialAccountId) continue;
+      await queue.add('seasoning:graduate', {
+        enrollmentId: enrollment.id,
+        socialAccountId: enrollment.socialAccountId,
+      } as any);
+    }
+
+    return { processed: dueEnrollments.length, graduated: seasonedEnrollments.length };
+  } catch (err) {
+    logger.error({ err }, 'Failed to check due seasoning enrollments');
+    throw err;
   }
-
-  // Also check for enrollments that have been 'seasoned' and ready for graduation
-  const seasonedEnrollments = await db.seasoningEnrollment.findMany({
-    where: { status: 'seasoned' },
-    take: 10,
-  });
-
-  for (const enrollment of seasonedEnrollments) {
-    if (!enrollment.socialAccountId) continue;
-    await queue.add('seasoning:graduate', {
-      enrollmentId: enrollment.id,
-      socialAccountId: enrollment.socialAccountId,
-    } as any);
-  }
-
-  return { processed: dueEnrollments.length, graduated: seasonedEnrollments.length };
 }
 
 async function handleSeasoningGraduate(data: SeasoningGraduateJob) {
-  const db = getDb();
+  try {
+    const db = getDb();
 
-  const enrollment = await db.seasoningEnrollment.findUnique({
-    where: { id: data.enrollmentId },
-    include: { cohort: true },
-  });
-
-  if (!enrollment) {
-    logger.warn({ enrollmentId: data.enrollmentId }, 'Enrollment not found for graduation');
-    return;
-  }
-
-  // Transition to graduated
-  await db.seasoningEnrollment.update({
-    where: { id: data.enrollmentId },
-    data: {
-      status: 'graduated',
-      nextScheduledAt: null,
-    },
-  });
-
-  // Mark social account as fully active
-  if (data.socialAccountId) {
-    await db.socialAccount.update({
-      where: { id: data.socialAccountId },
-      data: { status: 'active' },
+    const enrollment = await db.seasoningEnrollment.findUnique({
+      where: { id: data.enrollmentId },
+      include: { cohort: true },
     });
-  }
 
-  // Update cohort completion count
-  await db.seasoningCohort.update({
-    where: { id: enrollment.cohortId },
-    data: { completedAccounts: { increment: 1 } },
-  });
+    if (!enrollment) {
+      logger.warn({ enrollmentId: data.enrollmentId }, 'Enrollment not found for graduation');
+      return;
+    }
 
-  // Check if entire cohort is done
-  const remaining = await db.seasoningEnrollment.count({
-    where: {
-      cohortId: enrollment.cohortId,
-      status: { notIn: ['graduated', 'failed'] },
-    },
-  });
+    // Transition to graduated
+    await db.seasoningEnrollment.update({
+      where: { id: data.enrollmentId },
+      data: {
+        status: 'graduated',
+        nextScheduledAt: null,
+      },
+    });
 
-  if (remaining === 0) {
+    // Mark social account as fully active
+    if (data.socialAccountId) {
+      await db.socialAccount.update({
+        where: { id: data.socialAccountId },
+        data: { status: 'active' },
+      });
+    }
+
+    // Update cohort completion count
     await db.seasoningCohort.update({
       where: { id: enrollment.cohortId },
-      data: { status: 'completed', completedAt: new Date() },
+      data: { completedAccounts: { increment: 1 } },
     });
-    logger.info({ cohortId: enrollment.cohortId }, 'Seasoning cohort fully completed');
-  }
 
-  // Post-graduation hook: check AccountLifecycle for auto-posting (D112)
-  if (data.socialAccountId) {
-    const social = await db.socialAccount.findUnique({
-      where: { id: data.socialAccountId },
-      select: { emailAccountId: true },
+    // Check if entire cohort is done
+    const remaining = await db.seasoningEnrollment.count({
+      where: {
+        cohortId: enrollment.cohortId,
+        status: { notIn: ['graduated', 'failed'] },
+      },
     });
-    if (social) {
-      const lifecycle = await db.accountLifecycle.findUnique({
-        where: { emailAccountId: social.emailAccountId },
+
+    if (remaining === 0) {
+      await db.seasoningCohort.update({
+        where: { id: enrollment.cohortId },
+        data: { status: 'completed', completedAt: new Date() },
       });
-      if (lifecycle?.autoPosting) {
-        await db.accountLifecycle.update({
-          where: { id: lifecycle.id },
-          data: { status: 'completed', completedAt: new Date(), currentStep: 'completed' },
+      logger.info({ cohortId: enrollment.cohortId }, 'Seasoning cohort fully completed');
+    }
+
+    // Post-graduation hook: check AccountLifecycle for auto-posting (D112)
+    if (data.socialAccountId) {
+      const social = await db.socialAccount.findUnique({
+        where: { id: data.socialAccountId },
+        select: { emailAccountId: true },
+      });
+      if (social) {
+        const lifecycle = await db.accountLifecycle.findUnique({
+          where: { emailAccountId: social.emailAccountId },
         });
-        logger.info({ lifecycleId: lifecycle.id }, 'Lifecycle completed — auto-posting enabled');
+        if (lifecycle?.autoPosting) {
+          await db.accountLifecycle.update({
+            where: { id: lifecycle.id },
+            data: { status: 'completed', completedAt: new Date(), currentStep: 'completed' },
+          });
+          logger.info({ lifecycleId: lifecycle.id }, 'Lifecycle completed — auto-posting enabled');
+        }
       }
     }
-  }
 
-  logger.info({ enrollmentId: data.enrollmentId, socialAccountId: data.socialAccountId }, 'Account graduated from seasoning');
-  return { status: 'graduated' };
+    logger.info({ enrollmentId: data.enrollmentId, socialAccountId: data.socialAccountId }, 'Account graduated from seasoning');
+    return { status: 'graduated' };
+  } catch (err) {
+    logger.error({ err, enrollmentId: data.enrollmentId, socialAccountId: data.socialAccountId }, 'Failed to graduate enrollment');
+    throw err;
+  }
 }
 
 export function startAccountWorker() {

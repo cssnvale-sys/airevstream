@@ -88,7 +88,15 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 20**: Form validation — autoComplete attributes on all auth forms (email, current-password, new-password, name), minLength={8} on login password, stable key fix in channel-viral-dashboard topic suggestions.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 20 (9 original + 11 continuation).
+**Iteration 21**: Settings LoadingButton — 7 remaining manual Loader2 patterns converted (test/add AI services, change password, generate API key, add/test proxy, export CSV). Removed Loader2 import.
+
+**Iteration 22**: Approvals/content/workflows LoadingButton — 8 buttons (approve/reject, approve/publish/repurpose/distribute, complete in HITL, retry in workflows).
+
+**Iteration 23**: Final LoadingButton sweep — quality recalculate (2), export variants, studio approve-all, create page pipeline start. LoadingButton adoption now 100% complete.
+
+**Iteration 24**: Disabled button opacity + input placeholders — plan-review-card regenerate button, preset name/description inputs. KI-058 marked fixed (upscale workflow added).
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 27 (9 original + 18 continuation).
 
 ---
 

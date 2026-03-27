@@ -23,7 +23,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
 
 ### Fixed
-- **LoadingButton mass adoption** (Session 47): 35 buttons across 22 files converted from manual loading patterns to LoadingButton component for consistent UX.
+- **LoadingButton 100% adoption** (Session 47): 55+ buttons across 30+ files converted from manual Loader2 patterns to LoadingButton component. All mutation buttons in the codebase now use consistent loading UX.
 - **Search debounce** (Session 47): Added useDebounce(300ms) to affiliate, assets, add-episode-modal, and asset-picker-modal search inputs.
 - **Table overflow** (Session 47): Added overflow-x-auto to 9 tables across analytics, channels, experiments, series pages.
 - **Theme token consistency** (Session 47): Replaced hardcoded hex colors with design system tokens in timeline and cost-preview-panel.

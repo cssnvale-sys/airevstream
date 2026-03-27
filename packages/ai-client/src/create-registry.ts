@@ -1,5 +1,8 @@
 import { ServiceRegistry } from './registry.js';
 import type { ServiceRecord } from './types.js';
+import { createLogger } from '@airevstream/shared';
+
+const logger = createLogger('ai-client:registry');
 
 /**
  * Creates a ServiceRegistry instance wired to Prisma and crypto.
@@ -81,7 +84,7 @@ export function createServiceRegistry(
           },
         });
       } catch (err) {
-        console.error('AI service usage logging failed:', err);
+        logger.error({ err }, 'AI service usage logging failed');
       }
     },
 
@@ -92,7 +95,7 @@ export function createServiceRegistry(
           data: updates,
         });
       } catch (err) {
-        console.error('AI service stats update failed:', err);
+        logger.error({ err }, 'AI service stats update failed');
       }
     },
 

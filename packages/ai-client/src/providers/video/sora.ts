@@ -1,4 +1,7 @@
+import { createLogger } from '@airevstream/shared';
 import type { VideoProvider, VideoGenRequest, VideoGenResult, VideoJobStatus } from './types.js';
+
+const logger = createLogger('ai-client:sora');
 
 /**
  * OpenAI Sora Video Provider
@@ -127,7 +130,7 @@ export class SoraProvider implements VideoProvider {
       });
       return res.ok;
     } catch (err) {
-      console.debug(`[Sora] Health check failed: ${err instanceof Error ? err.message : String(err)}`);
+      logger.debug({ error: err instanceof Error ? err.message : String(err) }, 'Health check failed');
       return false;
     }
   }

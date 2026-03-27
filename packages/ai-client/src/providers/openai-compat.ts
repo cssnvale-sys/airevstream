@@ -1,4 +1,7 @@
+import { createLogger } from '@airevstream/shared';
 import type { AiProvider, TextRequest, ChatRequest, TextResponse, StreamChunk, HealthCheckResult, ChatMessage } from '../types.js';
+
+const logger = createLogger('ai-client:openai-compat');
 
 /**
  * OpenAI-compatible provider. Works with OpenAI, Anthropic (via proxy),
@@ -147,7 +150,7 @@ export class OpenAICompatProvider implements AiProvider {
           }
         } catch (parseErr) {
           // Malformed SSE chunk — skip but log for debugging
-          console.debug(`[OpenAICompat] Skipping malformed SSE chunk: ${data.substring(0, 80)}`);
+          logger.debug({ chunk: data.substring(0, 80) }, 'Skipping malformed SSE chunk');
         }
       }
     }

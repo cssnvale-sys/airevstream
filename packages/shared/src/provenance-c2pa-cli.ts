@@ -13,6 +13,9 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { writeFile, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('provenance-c2pa');
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { C2PAManifest, C2PAExecFn, C2PAEmbedOptions, C2PAEmbedResult, C2PAVerifyResult } from './provenance.js';
@@ -34,7 +37,7 @@ export async function isC2PAToolAvailable(execFn?: C2PAExecFn): Promise<boolean>
     const { stdout } = await exec('c2patool', ['--version']);
     return stdout.includes('c2patool');
   } catch (err) {
-    console.warn('[C2PA] c2patool not available:', err instanceof Error ? err.message : String(err));
+    logger.warn({ error: err instanceof Error ? err.message : String(err) }, 'c2patool not available');
     return false;
   }
 }

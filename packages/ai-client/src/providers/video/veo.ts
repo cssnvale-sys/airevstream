@@ -1,4 +1,7 @@
+import { createLogger } from '@airevstream/shared';
 import type { VideoProvider, VideoGenRequest, VideoGenResult, VideoJobStatus } from './types.js';
+
+const logger = createLogger('ai-client:veo');
 
 /**
  * Google Veo Video Provider
@@ -128,7 +131,7 @@ export class VeoProvider implements VideoProvider {
       );
       return res.ok;
     } catch (err) {
-      console.debug(`[Veo] Health check failed: ${err instanceof Error ? err.message : String(err)}`);
+      logger.debug({ error: err instanceof Error ? err.message : String(err) }, 'Health check failed');
       return false;
     }
   }

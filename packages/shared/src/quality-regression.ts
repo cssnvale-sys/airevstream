@@ -9,6 +9,9 @@
  */
 
 // Node imports are dynamic to avoid webpack issues in Next.js client bundle
+import { createLogger } from './logger.js';
+
+const logger = createLogger('quality-regression');
 
 // ─── Types ───
 
@@ -95,7 +98,7 @@ export async function isVMAFAvailable(execFn?: ExecFn): Promise<boolean> {
     const { stdout } = await exec('ffmpeg', ['-filters']);
     return stdout.includes('libvmaf');
   } catch (err) {
-    console.warn('[VMAF] ffmpeg with libvmaf not available:', err instanceof Error ? err.message : String(err));
+    logger.warn({ error: err instanceof Error ? err.message : String(err) }, 'ffmpeg with libvmaf not available');
     return false;
   }
 }

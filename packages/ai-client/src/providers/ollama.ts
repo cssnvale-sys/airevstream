@@ -1,5 +1,8 @@
 import { Ollama } from 'ollama';
+import { createLogger } from '@airevstream/shared';
 import type { AiProvider, TextRequest, ChatRequest, TextResponse, StreamChunk, HealthCheckResult } from '../types.js';
+
+const logger = createLogger('ai-client:ollama');
 
 const DEFAULT_MODEL = 'qwen3:8b';
 
@@ -139,7 +142,7 @@ export class OllamaProvider implements AiProvider {
       const models = await this.listModels(endpoint);
       return models.some((m) => m.name === name || m.name.startsWith(name + ':'));
     } catch (err) {
-      console.debug(`[Ollama] isModelAvailable check failed for "${name}": ${err instanceof Error ? err.message : String(err)}`);
+      logger.debug({ model: name, error: err instanceof Error ? err.message : String(err) }, 'isModelAvailable check failed');
       return false;
     }
   }

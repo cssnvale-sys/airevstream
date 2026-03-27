@@ -1,4 +1,7 @@
+import { createLogger } from '@airevstream/shared';
 import type { VideoProvider, VideoGenRequest, VideoGenResult, VideoJobStatus } from './types.js';
+
+const logger = createLogger('ai-client:comfyui-video');
 
 /**
  * ComfyUI Video Provider
@@ -102,7 +105,7 @@ export class ComfyUIVideoProvider implements VideoProvider {
       });
       return res.ok;
     } catch (err) {
-      console.debug(`[ComfyUIVideo] Health check failed: ${err instanceof Error ? err.message : String(err)}`);
+      logger.debug({ error: err instanceof Error ? err.message : String(err) }, 'Health check failed');
       return false;
     }
   }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
 import { apiPost, useApi } from '@/hooks/use-api';
+import { useDebounce } from '@/hooks/use-debounce';
 import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/components/ui/loading-button';
 
@@ -22,6 +23,7 @@ interface ContentOption {
 
 export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [title, setTitle] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -36,7 +38,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   }, [open, submitting, onClose]);
 
   const { data: contentData } = useApi<ContentOption[]>(
-    open ? `/content?limit=50${search ? `&search=${encodeURIComponent(search)}` : ''}` : null,
+    open ? `/content?limit=50${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ''}` : null,
   );
   const contentItems = contentData?.data ?? [];
 

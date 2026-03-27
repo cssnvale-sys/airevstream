@@ -352,53 +352,57 @@ export default function AnalyticsPage() {
         {/* Revenue by Channel */}
         <div className="card">
           <h3 className="text-card-title text-text-primary mb-4">Revenue by Channel (Top 5)</h3>
-          <table className="w-full text-body">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 text-text-secondary font-medium">Channel</th>
-                <th className="text-right py-2 text-text-secondary font-medium">Revenue</th>
-                <th className="text-right py-2 text-text-secondary font-medium">Content</th>
-              </tr>
-            </thead>
-            <tbody>
-              {revenueByChannel.slice(0, 5).map((row) => (
-                <tr key={row.channel} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
-                  <td className="py-2.5 text-text-primary">{row.channel}</td>
-                  <td className="py-2.5 text-right text-accent-green font-medium">
-                    {formatCurrency(row.revenue)}
-                  </td>
-                  <td className="py-2.5 text-right text-text-secondary">{row.contentCount}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-body">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 text-text-secondary font-medium">Channel</th>
+                  <th className="text-right py-2 text-text-secondary font-medium">Revenue</th>
+                  <th className="text-right py-2 text-text-secondary font-medium">Content</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {revenueByChannel.slice(0, 5).map((row) => (
+                  <tr key={row.channel} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
+                    <td className="py-2.5 text-text-primary">{row.channel}</td>
+                    <td className="py-2.5 text-right text-accent-green font-medium">
+                      {formatCurrency(row.revenue)}
+                    </td>
+                    <td className="py-2.5 text-right text-text-secondary">{row.contentCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Revenue by Product */}
         <div className="card">
           <h3 className="text-card-title text-text-primary mb-4">Revenue by Product (Top 5)</h3>
-          <table className="w-full text-body">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 text-text-secondary font-medium">Product</th>
-                <th className="text-right py-2 text-text-secondary font-medium">Revenue</th>
-                <th className="text-right py-2 text-text-secondary font-medium">Clicks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {revenueByProduct.slice(0, 5).map((row) => (
-                <tr key={row.product} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
-                  <td className="py-2.5 text-text-primary">{row.product}</td>
-                  <td className="py-2.5 text-right text-accent-green font-medium">
-                    {formatCurrency(row.revenue)}
-                  </td>
-                  <td className="py-2.5 text-right text-text-secondary">
-                    {formatNumber(row.clicks)}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-body">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 text-text-secondary font-medium">Product</th>
+                  <th className="text-right py-2 text-text-secondary font-medium">Revenue</th>
+                  <th className="text-right py-2 text-text-secondary font-medium">Clicks</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {revenueByProduct.slice(0, 5).map((row) => (
+                  <tr key={row.product} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
+                    <td className="py-2.5 text-text-primary">{row.product}</td>
+                    <td className="py-2.5 text-right text-accent-green font-medium">
+                      {formatCurrency(row.revenue)}
+                    </td>
+                    <td className="py-2.5 text-right text-text-secondary">
+                      {formatNumber(row.clicks)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -609,39 +613,41 @@ export default function AnalyticsPage() {
       {/* Total cost summary */}
       <div className="card">
         <h3 className="text-card-title text-text-primary mb-4">Cost Summary</h3>
-        <table className="w-full text-body">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left py-2 text-text-secondary font-medium">Category</th>
-              <th className="text-right py-2 text-text-secondary font-medium">Amount</th>
-              <th className="text-right py-2 text-text-secondary font-medium">% of Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {costByService.map((item) => {
-              const total = costByService.reduce((sum, i) => sum + i.cost, 0);
-              const pct = total > 0 ? ((item.cost / total) * 100).toFixed(1) : '0.0';
-              return (
-                <tr key={item.service} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
-                  <td className="py-2.5 text-text-primary">{item.service}</td>
-                  <td className="py-2.5 text-right text-accent-amber font-medium">
-                    {formatCurrency(item.cost)}
-                  </td>
-                  <td className="py-2.5 text-right text-text-secondary">{pct}%</td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr className="border-t border-border">
-              <td className="py-2.5 text-text-primary font-semibold">Total</td>
-              <td className="py-2.5 text-right text-accent-amber font-semibold">
-                {formatCurrency(costByService.reduce((sum, i) => sum + i.cost, 0))}
-              </td>
-              <td className="py-2.5 text-right text-text-secondary">100%</td>
-            </tr>
-          </tfoot>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-body">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-2 text-text-secondary font-medium">Category</th>
+                <th className="text-right py-2 text-text-secondary font-medium">Amount</th>
+                <th className="text-right py-2 text-text-secondary font-medium">% of Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {costByService.map((item) => {
+                const total = costByService.reduce((sum, i) => sum + i.cost, 0);
+                const pct = total > 0 ? ((item.cost / total) * 100).toFixed(1) : '0.0';
+                return (
+                  <tr key={item.service} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
+                    <td className="py-2.5 text-text-primary">{item.service}</td>
+                    <td className="py-2.5 text-right text-accent-amber font-medium">
+                      {formatCurrency(item.cost)}
+                    </td>
+                    <td className="py-2.5 text-right text-text-secondary">{pct}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-border">
+                <td className="py-2.5 text-text-primary font-semibold">Total</td>
+                <td className="py-2.5 text-right text-accent-amber font-semibold">
+                  {formatCurrency(costByService.reduce((sum, i) => sum + i.cost, 0))}
+                </td>
+                <td className="py-2.5 text-right text-text-secondary">100%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -753,34 +759,36 @@ export default function AnalyticsPage() {
         {completedExps.length > 0 && (
           <div className="card">
             <h3 className="text-card-title text-text-primary mb-4">Recent Completions</h3>
-            <table className="w-full text-body">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 text-text-secondary font-medium">Name</th>
-                  <th className="text-left py-2 text-text-secondary font-medium">Metric</th>
-                  <th className="text-right py-2 text-text-secondary font-medium">Significance</th>
-                  <th className="text-center py-2 text-text-secondary font-medium">Winner</th>
-                </tr>
-              </thead>
-              <tbody>
-                {completedExps.slice(0, 10).map((exp) => (
-                  <tr key={exp.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
-                    <td className="py-2.5 text-text-primary">{exp.name}</td>
-                    <td className="py-2.5 text-text-secondary capitalize">{exp.primaryMetric}</td>
-                    <td className="py-2.5 text-right font-mono text-text-secondary">
-                      {exp.significance != null ? `p=${exp.significance.toFixed(4)}` : '-'}
-                    </td>
-                    <td className="py-2.5 text-center">
-                      {exp.winnerId ? (
-                        <Trophy size={14} className="text-accent-green inline" />
-                      ) : (
-                        <span className="text-text-tertiary">-</span>
-                      )}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-body">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 text-text-secondary font-medium">Name</th>
+                    <th className="text-left py-2 text-text-secondary font-medium">Metric</th>
+                    <th className="text-right py-2 text-text-secondary font-medium">Significance</th>
+                    <th className="text-center py-2 text-text-secondary font-medium">Winner</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {completedExps.slice(0, 10).map((exp) => (
+                    <tr key={exp.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
+                      <td className="py-2.5 text-text-primary">{exp.name}</td>
+                      <td className="py-2.5 text-text-secondary capitalize">{exp.primaryMetric}</td>
+                      <td className="py-2.5 text-right font-mono text-text-secondary">
+                        {exp.significance != null ? `p=${exp.significance.toFixed(4)}` : '-'}
+                      </td>
+                      <td className="py-2.5 text-center">
+                        {exp.winnerId ? (
+                          <Trophy size={14} className="text-accent-green inline" />
+                        ) : (
+                          <span className="text-text-tertiary">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -830,37 +838,39 @@ export default function AnalyticsPage() {
               {sugStats.recent.length > 0 && (
                 <div className="card mt-4">
                   <h3 className="text-card-title text-text-primary mb-4">Recent Suggestions</h3>
-                  <table className="w-full text-body">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-2 text-text-secondary font-medium">Preset</th>
-                        <th className="text-left py-2 text-text-secondary font-medium">Dimension</th>
-                        <th className="text-left py-2 text-text-secondary font-medium">Content</th>
-                        <th className="text-left py-2 text-text-secondary font-medium">Outcome</th>
-                        <th className="text-right py-2 text-text-secondary font-medium">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sugStats.recent.map((log) => (
-                        <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
-                          <td className="py-2 text-text-primary font-mono text-caption">{log.presetId}</td>
-                          <td className="py-2 text-text-secondary capitalize">{log.dimension}</td>
-                          <td className="py-2 text-text-secondary truncate max-w-[150px]">{log.content?.title ?? '-'}</td>
-                          <td className="py-2">
-                            <span className={cn(
-                              'px-2 py-0.5 rounded-full text-caption font-medium capitalize',
-                              log.outcome === 'accepted' ? 'bg-accent-green/10 text-accent-green' :
-                              log.outcome === 'rejected' ? 'bg-accent-red/10 text-accent-red' :
-                              'bg-bg-tertiary text-text-secondary',
-                            )}>
-                              {log.outcome}
-                            </span>
-                          </td>
-                          <td className="py-2 text-right text-text-tertiary">{new Date(log.createdAt).toLocaleDateString()}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-body">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2 text-text-secondary font-medium">Preset</th>
+                          <th className="text-left py-2 text-text-secondary font-medium">Dimension</th>
+                          <th className="text-left py-2 text-text-secondary font-medium">Content</th>
+                          <th className="text-left py-2 text-text-secondary font-medium">Outcome</th>
+                          <th className="text-right py-2 text-text-secondary font-medium">Date</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {sugStats.recent.map((log) => (
+                          <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
+                            <td className="py-2 text-text-primary font-mono text-caption">{log.presetId}</td>
+                            <td className="py-2 text-text-secondary capitalize">{log.dimension}</td>
+                            <td className="py-2 text-text-secondary truncate max-w-[150px]">{log.content?.title ?? '-'}</td>
+                            <td className="py-2">
+                              <span className={cn(
+                                'px-2 py-0.5 rounded-full text-caption font-medium capitalize',
+                                log.outcome === 'accepted' ? 'bg-accent-green/10 text-accent-green' :
+                                log.outcome === 'rejected' ? 'bg-accent-red/10 text-accent-red' :
+                                'bg-bg-tertiary text-text-secondary',
+                              )}>
+                                {log.outcome}
+                              </span>
+                            </td>
+                            <td className="py-2 text-right text-text-tertiary">{new Date(log.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useGeneratePreset, savePreset } from '@/hooks/use-user-presets';
 import { LoadingButton } from '@/components/ui/loading-button';
@@ -50,6 +50,15 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const { generate, isGenerating, error: genError, reset: resetGen } = useGeneratePreset();
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
 
   if (!open) return null;
 

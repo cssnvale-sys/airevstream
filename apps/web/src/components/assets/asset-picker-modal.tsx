@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { X, Search, User, ImageIcon } from 'lucide-react';
 import { useAvatars, useSceneryAssets } from '@/hooks/use-assets';
 import { usePresignedUrl } from '@/hooks/use-presigned-url';
+import { useDebounce } from '@/hooks/use-debounce';
 import { BUCKETS } from '@airevstream/shared';
 import { cn } from '@/lib/utils';
 
@@ -74,6 +75,16 @@ function SceneryPickerItem({ scenery, onSelect }: { scenery: SceneryItem; onSele
 
 export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [] }: AssetPickerModalProps) {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   const { data: avatarData } = useAvatars<AvatarItem[]>(type === 'avatar' ? 'limit=100' : undefined);
   const { data: sceneryData } = useSceneryAssets<SceneryItem[]>(type === 'scenery' ? 'limit=100' : undefined);
@@ -86,10 +97,10 @@ export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [
     const excludeSet = new Set(excludeIds);
     return (items as Array<{ id: string; name: string }>).filter((item) => {
       if (excludeSet.has(item.id)) return false;
-      if (search && !item.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (debouncedSearch && !item.name.toLowerCase().includes(debouncedSearch.toLowerCase())) return false;
       return true;
     });
-  }, [items, excludeIds, search]);
+  }, [items, excludeIds, debouncedSearch]);
 
   if (!open) return null;
 

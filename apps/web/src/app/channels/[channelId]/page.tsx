@@ -244,7 +244,7 @@ export default function ChannelDetailPage() {
         </div>
 
         {content.length > 0 ? (
-          <div className="card overflow-hidden">
+          <div className="card overflow-x-auto">
             <h3 className="text-card-title text-text-primary p-4 pb-2">Top Content by Viral Score</h3>
             <table className="w-full text-body">
               <thead>

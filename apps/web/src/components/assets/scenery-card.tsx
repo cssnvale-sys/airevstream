@@ -23,8 +23,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   nature: 'bg-accent-green/10 text-accent-green',
   studio: 'bg-accent-purple/10 text-accent-purple',
   fantasy: 'bg-accent-orange/10 text-accent-orange',
-  interior: 'bg-yellow-500/10 text-yellow-500',
-  abstract: 'bg-pink-500/10 text-pink-500',
+  interior: 'bg-accent-amber/10 text-accent-amber',
+  abstract: 'bg-accent-purple/10 text-accent-purple',
 };
 
 export function SceneryCard({ scenery, onDelete }: SceneryCardProps) {

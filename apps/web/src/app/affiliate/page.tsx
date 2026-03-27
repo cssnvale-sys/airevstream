@@ -1200,14 +1200,14 @@ function AddProductModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
-          <div className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
+          <div className="text-sm text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
             {errorMsg}
           </div>
         )}
 
         <div>
           <label className="block text-sm text-text-secondary mb-1">
-            Name <span className="text-red-400">*</span>
+            Name <span className="text-accent-red">*</span>
           </label>
           <input
             type="text"
@@ -1221,7 +1221,7 @@ function AddProductModal({
 
         <div>
           <label className="block text-sm text-text-secondary mb-1">
-            URL <span className="text-red-400">*</span>
+            URL <span className="text-accent-red">*</span>
           </label>
           <input
             type="url"
@@ -1369,7 +1369,7 @@ function ProductDetailModal({
       {product && (
         <div className="space-y-4">
           {errorMsg && (
-            <div className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
+            <div className="text-sm text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
               {errorMsg}
             </div>
           )}
@@ -1616,14 +1616,14 @@ function CreateLinkModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
-          <div className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
+          <div className="text-sm text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
             {errorMsg}
           </div>
         )}
 
         <div>
           <label className="block text-sm text-text-secondary mb-1">
-            Product <span className="text-red-400">*</span>
+            Product <span className="text-accent-red">*</span>
           </label>
           <select
             value={productId}
@@ -1982,14 +1982,14 @@ function CreateStorefrontModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
-          <div className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
+          <div className="text-sm text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
             {errorMsg}
           </div>
         )}
 
         <div>
           <label className="block text-sm text-text-secondary mb-1">
-            Channel <span className="text-red-400">*</span>
+            Channel <span className="text-accent-red">*</span>
           </label>
           <select
             value={channelId}
@@ -2009,7 +2009,7 @@ function CreateStorefrontModal({
 
         <div>
           <label className="block text-sm text-text-secondary mb-1">
-            Name <span className="text-red-400">*</span>
+            Name <span className="text-accent-red">*</span>
           </label>
           <input
             type="text"
@@ -2023,7 +2023,7 @@ function CreateStorefrontModal({
 
         <div>
           <label className="block text-sm text-text-secondary mb-1">
-            Slug <span className="text-red-400">*</span>
+            Slug <span className="text-accent-red">*</span>
           </label>
           <input
             type="text"

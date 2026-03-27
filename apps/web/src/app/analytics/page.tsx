@@ -159,20 +159,20 @@ const EMPTY_AUDIENCE: AudienceDataPoint[] = [];
 // ---------------------------------------------------------------------------
 
 const CHART_COLORS = {
-  blue: '#3b82f6',    // accent-blue (dark mode)
-  green: '#22c55e',   // accent-green
-  amber: '#f59e0b',   // accent-amber
-  red: '#ef4444',     // accent-red
-  purple: '#a855f7',  // accent-purple
-  grid: '#2a2a2d',    // border
-  text: '#9a9aa0',    // text-secondary
+  blue: 'rgb(var(--accent-blue))',    // accent-blue (dark mode)
+  green: 'rgb(var(--accent-green))',   // accent-green
+  amber: 'rgb(var(--accent-amber))',   // accent-amber
+  red: 'rgb(var(--accent-red))',     // accent-red
+  purple: 'rgb(var(--accent-purple))',  // accent-purple
+  grid: 'rgb(var(--border))',    // border
+  text: 'rgb(var(--text-secondary))',    // text-secondary
 };
 
 const tooltipStyle = {
-  backgroundColor: '#141416',
-  border: '1px solid #2a2a2d',
+  backgroundColor: 'rgb(var(--bg-secondary))',
+  border: '1px solid rgb(var(--border))',
   borderRadius: '8px',
-  color: '#f0f0f2',
+  color: 'rgb(var(--text-primary))',
   fontSize: '12px',
 };
 

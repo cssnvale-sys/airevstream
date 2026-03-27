@@ -52,7 +52,6 @@ const CHAIN_SCOPED_MODELS = new Set([
 /** Patterns indicating tenant scoping is applied */
 const TENANT_SCOPE_PATTERNS = [
   /tenantId:\s*ctx\.tenantId/,
-  /tenantId:\s*ctx\.tenantId/,
   /emailAccount:\s*\{\s*tenantId/,
   /emailAccount\s*:\s*\{[^}]*tenantId/,
   /socialAccount\s*:\s*\{[^}]*emailAccount/,

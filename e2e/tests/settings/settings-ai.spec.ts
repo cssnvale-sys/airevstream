@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ADMIN, AI_SERVICES } from '../../fixtures/test-data';
+import { AI_SERVICES } from '../../fixtures/test-data';
 import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Settings — AI Services tab', () => {

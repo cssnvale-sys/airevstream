@@ -16,33 +16,6 @@ import {
   modelToAccessor,
 } from './audit-helpers';
 
-/** Well-known Decimal field names across all models */
-const KNOWN_DECIMAL_FIELDS = [
-  'qualityScore',
-  'successRate',
-  'avgQualityScore',
-  'durationSec',
-  'cost',
-  'revenue',
-  'totalRevenue',
-  'commissionRate',
-  'trustScore',
-  'gateWindowHrs',
-  'avgOutcomeScore',
-  'limitAmount',
-  'currentSpend',
-  'alertThreshold',
-  'performanceScore',
-  'startSec',
-  'endSec',
-  'totalDurationSec',
-  'generationCost',
-  'approvalGateWindowHrs',
-  'avgScore',
-  'relevanceScore',
-  'value', // SystemMetric.value
-];
-
 describe('Bug Class 6: Decimal fields not wrapped with Number()', () => {
   const routes = findApiRouteFiles();
   const schema = readPrismaSchema();

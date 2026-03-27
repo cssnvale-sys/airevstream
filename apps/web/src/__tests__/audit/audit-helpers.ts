@@ -90,8 +90,6 @@ export const KNOWN_MISSING_TENANT_SCOPE = new Set([
   // Legitimate: API key routes scope via key's tenant
   'api-keys/route.ts',
   'api-keys/[id]/route.ts',
-  // Legitimate: subscription routes check tenantId via comparison
-  'subscriptions/[id]/route.ts',
   // Fixed in Session 17: affiliate analytics tenant scoping
   'ai-services/usage/route.ts',             // admin-only, acceptable
 ]);
@@ -101,7 +99,10 @@ export const KNOWN_MISSING_TENANT_SCOPE = new Set([
  * Format: "relativePath:lineNumber"
  */
 export const KNOWN_SILENT_CATCHES = new Set([
+  'ai-services/health-check/route.ts:39',   // intentional: URL validation returns true on parse error
   'ai-services/health-check/route.ts:104',  // intentional: ping service returns status
+  'events/stream/route.ts:200',             // intentional: stream closed by client, clean up heartbeat
+  'content/[id]/reject/route.ts:35',        // intentional: empty body acceptable, feedback is optional
 ]);
 
 // ──────────────────────────────────────────────────────────
@@ -388,7 +389,8 @@ export function extractBraceBlock(content: string, startIndex: number): string |
  */
 export function extractCatchBlocks(content: string): Array<{ body: string; lineNumber: number }> {
   const blocks: Array<{ body: string; lineNumber: number }> = [];
-  const catchRe = /\bcatch\s*\([^)]*\)\s*\{/g;
+  // Match both `catch (err) {` and modern `catch {` (no parens)
+  const catchRe = /\bcatch\s*(?:\([^)]*\)\s*)?\{/g;
   let match: RegExpExecArray | null;
 
   while ((match = catchRe.exec(content)) !== null) {

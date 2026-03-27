@@ -21,4 +21,6 @@ services/production-pipeline/src/*.js
 services/production-pipeline/src/*.js.map
 services/production-pipeline/src/*.d.ts
 services/production-pipeline/src/*.d.ts.map
+# Remotion render output
+remotion/out/
 .claude/worktrees/

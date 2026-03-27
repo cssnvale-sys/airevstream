@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { CONTENT, CHANNEL } from '../../fixtures/test-data';
 import { waitForToast, waitForDataLoad, resetContentStatus } from '../../helpers/wait.helper';
-import { apiPost, apiPut } from '../../helpers/api.helper';
+import { apiPut } from '../../helpers/api.helper';
 
 test.describe('Content approval flow', () => {
   test('approvals page shows seed pending_approval item', async ({ page }) => {

@@ -54,7 +54,7 @@ module.exports = {
     {
       name: 'worker-content',
       cwd: '.',
-      script: 'dist/workers/content.worker.js',
+      script: 'workers/dist/content.worker.js',
       ...COMMON_PM2,
       max_memory_restart: '256M',
       error_file: './logs/worker-content-error.log',
@@ -63,7 +63,7 @@ module.exports = {
     {
       name: 'worker-account',
       cwd: '.',
-      script: 'dist/workers/account.worker.js',
+      script: 'workers/dist/account.worker.js',
       ...COMMON_PM2,
       max_memory_restart: '512M',
       error_file: './logs/worker-account-error.log',
@@ -72,7 +72,7 @@ module.exports = {
     {
       name: 'worker-posting',
       cwd: '.',
-      script: 'dist/workers/posting.worker.js',
+      script: 'workers/dist/posting.worker.js',
       ...COMMON_PM2,
       max_memory_restart: '256M',
       error_file: './logs/worker-posting-error.log',
@@ -81,7 +81,7 @@ module.exports = {
     {
       name: 'worker-research',
       cwd: '.',
-      script: 'dist/workers/research.worker.js',
+      script: 'workers/dist/research.worker.js',
       ...COMMON_PM2,
       max_memory_restart: '256M',
       error_file: './logs/worker-research-error.log',
@@ -90,7 +90,7 @@ module.exports = {
     {
       name: 'worker-maintenance',
       cwd: '.',
-      script: 'dist/workers/maintenance.worker.js',
+      script: 'workers/dist/maintenance.worker.js',
       ...COMMON_PM2,
       max_memory_restart: '128M',
       error_file: './logs/worker-maintenance-error.log',
@@ -99,11 +99,29 @@ module.exports = {
     {
       name: 'worker-production',
       cwd: '.',
-      script: 'dist/workers/production.worker.js',
+      script: 'workers/dist/production.worker.js',
       ...COMMON_PM2,
       max_memory_restart: '512M',
       error_file: './logs/worker-production-error.log',
       out_file: './logs/worker-production-out.log',
+    },
+    {
+      name: 'worker-experiment',
+      cwd: '.',
+      script: 'workers/dist/experiment.worker.js',
+      ...COMMON_PM2,
+      max_memory_restart: '256M',
+      error_file: './logs/worker-experiment-error.log',
+      out_file: './logs/worker-experiment-out.log',
+    },
+    {
+      name: 'worker-lifecycle',
+      cwd: '.',
+      script: 'workers/dist/lifecycle.worker.js',
+      ...COMMON_PM2,
+      max_memory_restart: '256M',
+      error_file: './logs/worker-lifecycle-error.log',
+      out_file: './logs/worker-lifecycle-out.log',
     },
   ],
 };

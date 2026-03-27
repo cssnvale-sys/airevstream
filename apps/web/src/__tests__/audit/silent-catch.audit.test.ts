@@ -13,8 +13,8 @@ import { findApiRouteFiles, extractCatchBlocks, KNOWN_SILENT_CATCHES } from './a
 
 /** Patterns that indicate the catch block is NOT silent */
 const VALID_CATCH_PATTERNS = [
-  /console\.(error|warn|log)\b/,
-  /log\.(error|warn|info)\b/,
+  /console\.(error|warn|log|info|debug)\b/,
+  /log\.(error|warn|info|debug)\b/,
   /\bthrow\b/,
   /\breturn\s+error\b/,     // return error(...) in route handlers
   /\breturn\s+notFound\b/,

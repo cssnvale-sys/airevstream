@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { ADMIN } from '../../fixtures/test-data';
 import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Settings — Security tab', () => {

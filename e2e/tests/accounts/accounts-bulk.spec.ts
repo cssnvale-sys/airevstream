@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { E2E_PREFIX, testEmail } from '../../fixtures/test-data';
+import { testEmail } from '../../fixtures/test-data';
 import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Accounts bulk operations', () => {

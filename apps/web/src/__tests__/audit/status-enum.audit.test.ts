@@ -18,7 +18,6 @@ import {
   findApiRouteFiles,
   readPrismaSchema,
   extractStatusEnums,
-  type StatusEnum,
 } from './audit-helpers';
 
 /**

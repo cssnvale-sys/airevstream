@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
+import { waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Workflows list page', () => {
   test.beforeEach(async ({ page }) => {

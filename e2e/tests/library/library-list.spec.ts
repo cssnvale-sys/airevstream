@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { CONTENT, CHANNEL } from '../../fixtures/test-data';
-import { waitForToast, waitForDataLoad } from '../../helpers/wait.helper';
-import { apiPost } from '../../helpers/api.helper';
+import { CONTENT } from '../../fixtures/test-data';
+import { waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Library page — list, filters, and pagination', () => {
   test.beforeEach(async ({ page }) => {

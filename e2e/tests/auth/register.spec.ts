@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { ADMIN, testEmail } from '../../fixtures/test-data';
-import { waitForToast, waitForNav } from '../../helpers/wait.helper';
+import { waitForNav } from '../../helpers/wait.helper';
 
 async function waitForHydration(page: Page) {
   await page.waitForFunction(() => {

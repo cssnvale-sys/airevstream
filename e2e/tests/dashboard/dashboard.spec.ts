@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CONTENT, CHANNEL } from '../../fixtures/test-data';
+import { CONTENT } from '../../fixtures/test-data';
 import { waitForDataLoad } from '../../helpers/wait.helper';
 
 test.describe('Dashboard page', () => {

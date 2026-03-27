@@ -23,6 +23,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
 
 ### Fixed
+- **Bible-editor accessibility** (Session 48): 31 aria-labels, 15 htmlFor/id pairs, tab ARIA roles on FieldGroup component.
+- **ARIA tab roles codebase-wide** (Session 48): All 10 tabbed interfaces now have role="tablist"/role="tab"/aria-selected (series, workflows, assets, preset-picker, bible-editor added).
+- **Button type safety** (Session 48): 5 buttons in create-preset-modal now have type="button" to prevent accidental form submission.
+- **Calendar status dots** (Session 48): Month-view dots now have aria-label (was color-only status indication).
+- **Breadcrumbs home link** (Session 48): aria-label="Home" on icon-only navigation link.
+- **Zod error formatting** (Session 48): New formatZodErrors() helper standardizes validation error messages across 63 API routes (was 5 different inline patterns).
+- **Worker batch size constants** (Session 48): POSTING_BATCH_SIZE, TRENDS_PAGE_SIZE, ENROLLMENT_BATCH_SIZE, GRADUATION_SAMPLE_SIZE replace hardcoded values.
+- **Platform adapter constants** (Session 48): TIKTOK_POLL_INTERVAL_MS, INSTAGRAM_CONTAINER_WAIT_MS, INSTAGRAM_IMAGE_WAIT_MS, HEALTH_CHECK_TIMEOUT_MS named constants.
 - **Progress bar ARIA roles** (Session 47): All 8 progress bars now have role="progressbar" with aria-valuenow/min/max/label (pipeline, workflows, file-upload, system, quality-breakdown, create wizards, seasoning).
 - **Stable React keys** (Session 47): 4 mutable list components fixed: experiment variants (crypto.randomUUID), pipeline steps (step.name), keyframe URLs, LoRA composite keys.
 - **Unbounded query safety** (Session 47): Added take limits to system/metrics and cinema-bible findMany queries.

@@ -23,6 +23,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
 
 ### Fixed
+- **Progress bar ARIA roles** (Session 47): All 8 progress bars now have role="progressbar" with aria-valuenow/min/max/label (pipeline, workflows, file-upload, system, quality-breakdown, create wizards, seasoning).
+- **Stable React keys** (Session 47): 4 mutable list components fixed: experiment variants (crypto.randomUUID), pipeline steps (step.name), keyframe URLs, LoRA composite keys.
+- **Unbounded query safety** (Session 47): Added take limits to system/metrics and cinema-bible findMany queries.
+- **Budget delete loading** (Session 47): ConfirmDialog now shows loading state during budget deletion.
 - **Table aria-labels** (Session 47): All 19 data tables across 12 files now have descriptive aria-label attributes for screen readers.
 - **Modal close button focus rings** (Session 47): 7 modal close buttons now show focus-visible ring for keyboard navigation.
 - **Form autocomplete** (Session 47): 3 more inputs (settings email, accounts email/password) given autocomplete attributes.

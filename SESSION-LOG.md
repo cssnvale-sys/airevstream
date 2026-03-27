@@ -198,7 +198,17 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 75**: Experiment modal form + backdrop a11y — Wrapped experiment modal in `<form>` element for Enter-key submission. Added aria-hidden="true" to 4 modal backdrop divs. Added type="button" to variant add/remove buttons.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~88 total. Design tokens complete, WCAG accessibility comprehensive, consistent date formatting, all loading/disabled states, all error messages specific, all tables labeled, all modals keyboard-navigable.
+**Iteration 76**: Stable React keys — Replaced index keys with stable keys in 4 mutable list components (experiment variants use crypto.randomUUID, pipeline steps use name, keyframes use URL, loras use composite key).
+
+**Iteration 77**: Unbounded query safety — Added `take` limits to system/metrics (capped by type count × limit) and cinema-bible (take: 100) findMany calls.
+
+**Iteration 78**: Budget delete loading — Added deleting state + loading prop to budget delete ConfirmDialog.
+
+**Iteration 79**: Progress bar semantics — Added role="progressbar" with aria-valuenow/min/max/label to 4 progress bars (pipeline, workflows, file-upload, system).
+
+**Iteration 80**: More progress bars — Added role="progressbar" to quality-breakdown score bars, create wizard, simple-create wizard, and seasoning cohort completion bars.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~94 total. All progress bars have ARIA roles, all tables labeled, all modals keyboard-navigable, all delete operations have loading feedback.
 
 ---
 

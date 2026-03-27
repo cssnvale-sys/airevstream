@@ -42,6 +42,8 @@ async function loadBrowserAutomation() {
 }
 
 const logger = createLogger('worker:account');
+const ENROLLMENT_BATCH_SIZE = 20;
+const GRADUATION_SAMPLE_SIZE = 10;
 
 // Shared instances (initialized lazily)
 let browserManager: InstanceType<typeof import('@airevstream/browser-automation').BrowserContextManager> | null = null;
@@ -934,7 +936,7 @@ async function handleSeasoningCheckDue() {
         status: { in: ['phase_1', 'phase_2', 'phase_3', 'phase_4'] },
       },
       include: { cohort: true },
-      take: 20, // Process in batches
+      take: ENROLLMENT_BATCH_SIZE,
     });
 
     if (dueEnrollments.length === 0) {
@@ -968,7 +970,7 @@ async function handleSeasoningCheckDue() {
     // Also check for enrollments that have been 'seasoned' and ready for graduation
     const seasonedEnrollments = await db.seasoningEnrollment.findMany({
       where: { status: 'seasoned' },
-      take: 10,
+      take: GRADUATION_SAMPLE_SIZE,
     });
 
     for (const enrollment of seasonedEnrollments) {

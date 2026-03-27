@@ -118,10 +118,12 @@ export function BibleEditor({ bible, onSave }: BibleEditorProps) {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border">
+      <div role="tablist" className="flex border-b border-border">
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
               activeTab === tab.id
@@ -187,6 +189,7 @@ function LoraListEditor({
           <div className="flex items-center gap-2">
             {availableLoras.length > 0 ? (
               <select
+                aria-label={`Select LoRA model ${i + 1}`}
                 value={lora.name}
                 onChange={(e) => updateLora(i, { name: e.target.value })}
                 className="flex-1 bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
@@ -198,6 +201,7 @@ function LoraListEditor({
               </select>
             ) : (
               <input
+                aria-label={`LoRA model name ${i + 1}`}
                 type="text"
                 value={lora.name}
                 onChange={(e) => updateLora(i, { name: e.target.value })}
@@ -206,6 +210,7 @@ function LoraListEditor({
               />
             )}
             <button
+              aria-label={`Remove LoRA ${i + 1}`}
               onClick={() => removeLora(i)}
               className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
             >
@@ -242,6 +247,7 @@ function LoraListEditor({
           </div>
           <div>
             <input
+              aria-label={`Trigger words for LoRA ${i + 1}`}
               type="text"
               value={(lora.triggerWords ?? []).join(', ')}
               onChange={(e) => updateLora(i, { triggerWords: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
@@ -300,10 +306,11 @@ function ColorPipelineEditor({
           return (
             <div key={field.key}>
               <div className="flex justify-between text-xs text-text-tertiary">
-                <span>{field.label}</span>
+                <label htmlFor={`bible-color-${field.key}`}>{field.label}</label>
                 <span>{val}</span>
               </div>
               <input
+                id={`bible-color-${field.key}`}
                 type="range"
                 min={field.min}
                 max={field.max}
@@ -358,6 +365,7 @@ function KeyValueEditor({
       {pairs.map(([key, value]) => (
         <div key={key} className="flex gap-2">
           <input
+            aria-label="Entry key"
             type="text"
             value={key}
             onChange={(e) => updatePair(key, e.target.value, value)}
@@ -365,6 +373,7 @@ function KeyValueEditor({
             className="w-1/3 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
           />
           <input
+            aria-label="Entry value"
             type="text"
             value={value}
             onChange={(e) => updatePair(key, key, e.target.value)}
@@ -372,6 +381,7 @@ function KeyValueEditor({
             className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
           />
           <button
+            aria-label={`Remove entry ${key}`}
             onClick={() => removePair(key)}
             className="text-accent-red hover:text-accent-red/80 text-sm px-2"
           >
@@ -396,24 +406,27 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
 
   return (
     <div className="space-y-4">
-      <FieldGroup label="Logline">
+      <FieldGroup label="Logline" htmlFor="bible-logline">
         <textarea
+          id="bible-logline"
           value={(data.logline as string) ?? ''}
           onChange={(e) => update('logline', e.target.value)}
           placeholder="One-line summary of the project's visual and narrative identity"
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[60px] focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Global Style">
+      <FieldGroup label="Global Style" htmlFor="bible-global-style">
         <textarea
+          id="bible-global-style"
           value={(data.globalStyle as string) ?? ''}
           onChange={(e) => update('globalStyle', e.target.value)}
           placeholder="e.g., cinematic, moody lighting, film grain, anamorphic lens flare"
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[80px] focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Negative Prompt">
+      <FieldGroup label="Negative Prompt" htmlFor="bible-negative-prompt">
         <textarea
+          id="bible-negative-prompt"
           value={(data.negativePrompt as string) ?? ''}
           onChange={(e) => update('negativePrompt', e.target.value)}
           placeholder="e.g., worst quality, low quality, blurry, deformed"
@@ -421,8 +434,9 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
         />
       </FieldGroup>
       <div className="grid grid-cols-2 gap-4">
-        <FieldGroup label="Lighting">
+        <FieldGroup label="Lighting" htmlFor="bible-lighting">
           <input
+            id="bible-lighting"
             type="text"
             value={(data.lighting as string) ?? ''}
             onChange={(e) => update('lighting', e.target.value)}
@@ -430,8 +444,9 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
             className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
           />
         </FieldGroup>
-        <FieldGroup label="Grain">
+        <FieldGroup label="Grain" htmlFor="bible-grain">
           <input
+            id="bible-grain"
             type="text"
             value={(data.grain as string) ?? ''}
             onChange={(e) => update('grain', e.target.value)}
@@ -440,8 +455,9 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
           />
         </FieldGroup>
       </div>
-      <FieldGroup label="Aspect Ratio">
+      <FieldGroup label="Aspect Ratio" htmlFor="bible-aspect-ratio">
         <select
+          id="bible-aspect-ratio"
           value={(data.aspectRatio as string) ?? '16:9'}
           onChange={(e) => update('aspectRatio', e.target.value)}
           className="bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
@@ -465,6 +481,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
           {lensKit.map((lens, i) => (
             <div key={i} className="flex gap-2">
               <input
+                aria-label={`Lens specification ${i + 1}`}
                 type="text"
                 value={lens}
                 onChange={(e) => {
@@ -476,6 +493,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                aria-label={`Remove lens ${i + 1}`}
                 onClick={() => update('lensKit', lensKit.filter((_, idx) => idx !== i))}
                 className="text-accent-red hover:text-accent-red/80 text-sm px-2"
               >
@@ -506,6 +524,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
           {((data.styleRefs as string[]) ?? []).map((ref, i) => (
             <div key={i} className="flex gap-2">
               <input
+                aria-label={`Style reference ${i + 1}`}
                 type="text"
                 value={ref}
                 onChange={(e) => {
@@ -517,6 +536,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                aria-label={`Remove style reference ${i + 1}`}
                 onClick={() => update('styleRefs', ((data.styleRefs as string[]) ?? []).filter((_, idx) => idx !== i))}
                 className="text-accent-red hover:text-accent-red/80 text-sm px-2"
               >
@@ -561,8 +581,9 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
 
   return (
     <div className="space-y-4">
-      <FieldGroup label="Voice ID">
+      <FieldGroup label="Voice ID" htmlFor="bible-voice-id">
         <input
+          id="bible-voice-id"
           type="text"
           value={(data.voiceId as string) ?? ''}
           onChange={(e) => update('voiceId', e.target.value)}
@@ -570,8 +591,9 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Face Reference (MinIO key)">
+      <FieldGroup label="Face Reference (MinIO key)" htmlFor="bible-face-ref">
         <input
+          id="bible-face-ref"
           type="text"
           value={(data.faceRef as string) ?? ''}
           onChange={(e) => update('faceRef', e.target.value)}
@@ -584,6 +606,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
           {wardrobe.map((item, i) => (
             <div key={i} className="flex gap-2">
               <input
+                aria-label={`Wardrobe item ${i + 1}`}
                 type="text"
                 value={item}
                 onChange={(e) => {
@@ -594,6 +617,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                aria-label={`Remove wardrobe item ${i + 1}`}
                 onClick={() => update('wardrobe', wardrobe.filter((_, idx) => idx !== i))}
                 className="text-accent-red hover:text-accent-red/80 text-sm px-2"
               >
@@ -609,8 +633,9 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
           </button>
         </div>
       </FieldGroup>
-      <FieldGroup label="Never Change List">
+      <FieldGroup label="Never Change List" htmlFor="bible-never-change-list">
         <textarea
+          id="bible-never-change-list"
           value={((data.neverChangeList as string[]) ?? []).join('\n')}
           onChange={(e) => update('neverChangeList', e.target.value.split('\n').filter(Boolean))}
           placeholder="One item per line -- aspects that must never change between shots"
@@ -625,6 +650,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
             <div key={charKey} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
               <div className="flex items-center gap-2">
                 <input
+                  aria-label={`Character name for LoRA ${charKey}`}
                   type="text"
                   value={charKey}
                   onChange={(e) => updateCharacterLora(charKey, e.target.value, lora)}
@@ -633,6 +659,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                 />
                 {availableLoras.length > 0 ? (
                   <select
+                    aria-label={`Select LoRA for character ${charKey}`}
                     value={lora.name}
                     onChange={(e) => updateCharacterLora(charKey, charKey, { ...lora, name: e.target.value })}
                     className="flex-1 bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
@@ -644,6 +671,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                   </select>
                 ) : (
                   <input
+                    aria-label={`LoRA model name for character ${charKey}`}
                     type="text"
                     value={lora.name}
                     onChange={(e) => updateCharacterLora(charKey, charKey, { ...lora, name: e.target.value })}
@@ -652,6 +680,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                   />
                 )}
                 <button
+                  aria-label={`Remove character LoRA ${charKey}`}
                   onClick={() => removeCharacterLora(charKey)}
                   className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
                 >
@@ -683,6 +712,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                 </div>
               </div>
               <input
+                aria-label={`Trigger words for character ${charKey}`}
                 type="text"
                 value={(lora.triggerWords ?? []).join(', ')}
                 onChange={(e) => updateCharacterLora(charKey, charKey, { ...lora, triggerWords: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
@@ -725,24 +755,27 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
 
   return (
     <div className="space-y-4">
-      <FieldGroup label="Location Motifs">
+      <FieldGroup label="Location Motifs" htmlFor="bible-location-motifs">
         <textarea
+          id="bible-location-motifs"
           value={((data.locationMotifs as string[]) ?? []).join('\n')}
           onChange={(e) => update('locationMotifs', e.target.value.split('\n').filter(Boolean))}
           placeholder="One location per line -- recurring locations in your content"
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[80px] focus:ring-1 focus:ring-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Weather Options">
+      <FieldGroup label="Weather Options" htmlFor="bible-weather">
         <textarea
+          id="bible-weather"
           value={((data.weather as string[]) ?? []).join('\n')}
           onChange={(e) => update('weather', e.target.value.split('\n').filter(Boolean))}
           placeholder="One per line -- e.g., overcast, golden hour, foggy morning"
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[80px] focus:ring-1 focus:ring-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Depth Map Reference (MinIO key)">
+      <FieldGroup label="Depth Map Reference (MinIO key)" htmlFor="bible-depth-map">
         <input
+          id="bible-depth-map"
           type="text"
           value={(data.depthMapRef as string) ?? ''}
           onChange={(e) => update('depthMapRef', e.target.value)}
@@ -768,6 +801,7 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
             <div key={envKey} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
               <div className="flex items-center gap-2">
                 <input
+                  aria-label={`Environment name for LoRA ${envKey}`}
                   type="text"
                   value={envKey}
                   onChange={(e) => updateEnvLora(envKey, e.target.value, lora)}
@@ -776,6 +810,7 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
                 />
                 {availableLoras.length > 0 ? (
                   <select
+                    aria-label={`Select LoRA for environment ${envKey}`}
                     value={lora.name}
                     onChange={(e) => updateEnvLora(envKey, envKey, { ...lora, name: e.target.value })}
                     className="flex-1 bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
@@ -787,6 +822,7 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
                   </select>
                 ) : (
                   <input
+                    aria-label={`LoRA model name for environment ${envKey}`}
                     type="text"
                     value={lora.name}
                     onChange={(e) => updateEnvLora(envKey, envKey, { ...lora, name: e.target.value })}
@@ -795,6 +831,7 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
                   />
                 )}
                 <button
+                  aria-label={`Remove environment LoRA ${envKey}`}
                   onClick={() => removeEnvLora(envKey)}
                   className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
                 >
@@ -839,8 +876,9 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
 
   return (
     <div className="space-y-4">
-      <FieldGroup label="Quality Tokens">
+      <FieldGroup label="Quality Tokens" htmlFor="bible-quality-tokens">
         <input
+          id="bible-quality-tokens"
           type="text"
           value={(data.qualityTokens as string) ?? ''}
           onChange={(e) => update('qualityTokens', e.target.value)}
@@ -848,8 +886,9 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Style Tokens">
+      <FieldGroup label="Style Tokens" htmlFor="bible-style-tokens">
         <input
+          id="bible-style-tokens"
           type="text"
           value={(data.styleTokens as string) ?? ''}
           onChange={(e) => update('styleTokens', e.target.value)}
@@ -857,8 +896,9 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Avoid Tokens (added to negative prompt)">
+      <FieldGroup label="Avoid Tokens (added to negative prompt)" htmlFor="bible-avoid-tokens">
         <input
+          id="bible-avoid-tokens"
           type="text"
           value={(data.avoidTokens as string) ?? ''}
           onChange={(e) => update('avoidTokens', e.target.value)}
@@ -866,16 +906,18 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue focus:border-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Global Style Prompt">
+      <FieldGroup label="Global Style Prompt" htmlFor="bible-global-style-prompt">
         <textarea
+          id="bible-global-style-prompt"
           value={(data.globalStyle as string) ?? ''}
           onChange={(e) => update('globalStyle', e.target.value)}
           placeholder="Global style applied to all shots. This gets prepended to every prompt."
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[100px] focus:ring-1 focus:ring-accent-blue outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="Negative Block">
+      <FieldGroup label="Negative Block" htmlFor="bible-negative-block">
         <textarea
+          id="bible-negative-block"
           value={(data.negativeBlock as string) ?? ''}
           onChange={(e) => update('negativeBlock', e.target.value)}
           placeholder="Negative prompt block applied to all generations"
@@ -887,6 +929,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
           {Object.entries((data.slotRules as Record<string, string[]>) ?? {}).map(([slot, values]) => (
             <div key={slot} className="flex gap-2">
               <input
+                aria-label={`Slot name ${slot}`}
                 type="text"
                 value={slot}
                 onChange={(e) => {
@@ -900,6 +943,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                 className="w-1/3 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <input
+                aria-label={`Allowed values for slot ${slot}`}
                 type="text"
                 value={(values ?? []).join(', ')}
                 onChange={(e) => {
@@ -911,6 +955,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                aria-label={`Remove slot ${slot}`}
                 onClick={() => {
                   const rules = { ...((data.slotRules as Record<string, string[]>) ?? {}) };
                   delete rules[slot];
@@ -940,6 +985,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
             <div key={charKey} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
               <div className="flex items-center justify-between">
                 <input
+                  aria-label={`Character block name ${charKey}`}
                   type="text"
                   value={charKey}
                   onChange={(e) => {
@@ -953,6 +999,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                   className="bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm font-medium focus:ring-1 focus:ring-accent-blue outline-none"
                 />
                 <button
+                  aria-label={`Remove character block ${charKey}`}
                   onClick={() => {
                     const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
                     delete pcb[charKey];
@@ -964,6 +1011,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                 </button>
               </div>
               <textarea
+                aria-label={`Prompt blocks for character ${charKey}`}
                 value={(blocks ?? []).join('\n')}
                 onChange={(e) => {
                   const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
@@ -993,6 +1041,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
             <div key={envKey} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
               <div className="flex items-center justify-between">
                 <input
+                  aria-label={`Environment block name ${envKey}`}
                   type="text"
                   value={envKey}
                   onChange={(e) => {
@@ -1006,6 +1055,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                   className="bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm font-medium focus:ring-1 focus:ring-accent-blue outline-none"
                 />
                 <button
+                  aria-label={`Remove environment block ${envKey}`}
                   onClick={() => {
                     const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
                     delete peb[envKey];
@@ -1017,6 +1067,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                 </button>
               </div>
               <textarea
+                aria-label={`Prompt blocks for environment ${envKey}`}
                 value={(blocks ?? []).join('\n')}
                 onChange={(e) => {
                   const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
@@ -1046,10 +1097,10 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
 
 // --- Shared Components ---
 
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function FieldGroup({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-text-secondary mb-1.5">{label}</label>
+      <label htmlFor={htmlFor} className="block text-sm font-medium text-text-secondary mb-1.5">{label}</label>
       {children}
     </div>
   );

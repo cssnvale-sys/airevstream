@@ -7,6 +7,7 @@ import type { Job } from 'bullmq';
 import { getAdapter, type PostContent, type PlatformCredentials } from './platform-adapters.js';
 
 const logger = createLogger('worker:posting');
+const POSTING_BATCH_SIZE = 100;
 
 async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob | SeriesPlaylistSyncJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing posting job');
@@ -251,7 +252,7 @@ async function checkScheduledPosts() {
         content: true,
         channel: { include: { socialAccount: true } },
       },
-      take: 100,
+      take: POSTING_BATCH_SIZE,
     });
 
     if (duePosts.length === 0) {

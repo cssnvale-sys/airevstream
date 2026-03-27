@@ -14,6 +14,7 @@ function getRegistry() {
 }
 
 const logger = createLogger('worker:content');
+const TRENDS_PAGE_SIZE = 20;
 
 async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob | ContentViralScoreJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing content job');
@@ -458,7 +459,7 @@ async function handleViralScore(data: ContentViralScoreJob) {
     const trendEntries = await db.knowledgeBaseEntry.findMany({
       where: { category: 'trends' },
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: TRENDS_PAGE_SIZE,
       select: { title: true, relevanceScore: true },
     });
 

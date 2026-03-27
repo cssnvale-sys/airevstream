@@ -972,7 +972,7 @@ export default function AccountsPage() {
     } else {
       setSelectedIds(new Set(filteredAccounts.map((a) => a.id)));
     }
-  }, [selectedIds.size, filteredAccounts]);
+  }, [selectedIds, filteredAccounts]);
 
   const handleRefresh = useCallback(() => {
     mutate();

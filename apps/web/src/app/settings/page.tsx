@@ -38,6 +38,13 @@ import { LoadingButton } from '@/components/ui/loading-button';
 import { getToken } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Duration (ms) to show save/copy feedback indicator before resetting */
+const FEEDBACK_RESET_MS = 2000;
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -205,7 +212,7 @@ function GeneralTab() {
       setSaved(true);
       setDirty(false);
       toast.success('Settings saved');
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), FEEDBACK_RESET_MS);
     } catch (err) {
       console.error('Failed to save general settings:', err);
       toast.error('Failed to save settings');
@@ -675,7 +682,7 @@ function NotificationsTab() {
       await apiPut('/settings/notifications', { channels });
       setSaved(true);
       toast.success('Notification settings saved');
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), FEEDBACK_RESET_MS);
     } catch (err) {
       console.error('Failed to save notification settings:', err);
       toast.error('Failed to save notification settings');
@@ -854,7 +861,7 @@ function SecurityTab() {
     if (newKeyValue) {
       navigator.clipboard.writeText(newKeyValue);
       setCopiedKey(true);
-      setTimeout(() => setCopiedKey(false), 2000);
+      setTimeout(() => setCopiedKey(false), FEEDBACK_RESET_MS);
     }
   };
 
@@ -1081,7 +1088,7 @@ function AppearanceTab() {
       await apiPut('/settings/appearance', { theme, sidebarPosition });
       setSaved(true);
       toast.success('Appearance settings saved');
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), FEEDBACK_RESET_MS);
     } catch (err) {
       console.error('Failed to save appearance settings:', err);
       toast.error('Failed to save appearance settings');
@@ -1503,7 +1510,7 @@ function DataTab() {
       await apiPut('/settings/data/retention', { retentionDays });
       setSaved(true);
       toast.success('Retention settings saved');
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), FEEDBACK_RESET_MS);
     } catch (err) {
       console.error('Failed to save retention settings:', err);
       toast.error('Failed to save retention settings');

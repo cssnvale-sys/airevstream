@@ -25,7 +25,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **Bible-editor accessibility** (Session 48): 31 aria-labels, 15 htmlFor/id pairs, tab ARIA roles on FieldGroup component.
 - **ARIA tab roles codebase-wide** (Session 48): All 10 tabbed interfaces now have role="tablist"/role="tab"/aria-selected (series, workflows, assets, preset-picker, bible-editor added).
-- **Button type safety** (Session 48): 5 buttons in create-preset-modal now have type="button" to prevent accidental form submission.
+- **Button type safety complete** (Session 48): Every `<button>` in the codebase now has explicit type= attribute. ~320 buttons fixed across 64+ files including error boundaries, cinema components, pages, UI primitives, and modals. LoadingButton component defaults type="button".
+- **Modal Escape handlers** (Session 48): create-avatar-modal and create-scenery-modal now dismiss on Escape. create-scenery-modal gains auto-focus on name input.
+- **Dead code removal** (Session 48): 4 unused type guard functions removed from event-types.ts (isAlertEvent, isWorkflowUpdateEvent, isContentStatusEvent, isSystemMetricEvent).
 - **Calendar status dots** (Session 48): Month-view dots now have aria-label (was color-only status indication).
 - **Breadcrumbs home link** (Session 48): aria-label="Home" on icon-only navigation link.
 - **Zod error formatting** (Session 48): New formatZodErrors() helper standardizes validation error messages across 63 API routes (was 5 different inline patterns).

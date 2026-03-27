@@ -25,6 +25,27 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 - Updated data-shape audit test with 5 known false positives (regex detected .map() removal)
 - Platform adapters: TIKTOK_POLL_INTERVAL_MS, INSTAGRAM_CONTAINER_WAIT_MS, INSTAGRAM_IMAGE_WAIT_MS, HEALTH_CHECK_TIMEOUT_MS constants
 
+### Iteration 105: Modal Escape Handlers + Focus Management
+- create-avatar-modal: added Escape key handler
+- create-scenery-modal: added Escape handler, nameRef auto-focus, ref on name input
+- 11 buttons missing type="button" fixed in shot-properties, viral-score-panel, intake-screen, preset-picker
+
+### Iteration 106: LoadingButton Default + Dead Code Removal
+- LoadingButton defaults type="button" (prevents accidental form submission)
+- Removed 4 dead type guard functions from event-types.ts (exported but never imported)
+- ~100 buttons across 8 files fixed via parallel agents (accounts, settings, affiliate, assets, content, studio, create, simple-create-wizard)
+
+### Iteration 107: type="button" Batch Fix (7 pages)
+- 55 buttons across workflows, calendar, approvals, library, system, budgets, bible-editor
+
+### Iteration 108: type="button" Batch Fix (9 pages)
+- 19 buttons across dashboard, experiments, channels, seasoning, series, analytics, channel detail, seasoning detail
+
+### Iteration 109: type="button" Final Sweep (64 files)
+- 34 error boundary reset buttons across all error.tsx files
+- 49 buttons across 30 component/page files (cinema, notifications, assets, UI primitives)
+- **Result: 0 buttons without explicit type= remain in entire codebase**
+
 ### Verification
 - Build: 14/14 ✓
 - Tests: 27/27 tasks ✓

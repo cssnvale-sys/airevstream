@@ -24,6 +24,7 @@ export function LoadingButton({
       type={type}
       className={cn(className)}
       disabled={disabled || loading}
+      aria-busy={loading}
       {...props}
     >
       {loading ? (

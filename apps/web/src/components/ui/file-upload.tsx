@@ -213,7 +213,7 @@ export function FileUpload({
       </div>
 
       {displayError && (
-        <div className="mt-2 flex items-center gap-1.5 text-sm text-accent-red">
+        <div role="alert" className="mt-2 flex items-center gap-1.5 text-sm text-accent-red">
           <X className="h-4 w-4 flex-shrink-0" />
           <span>{displayError}</span>
         </div>

@@ -63,7 +63,7 @@ export function PipelineProgress({ contentId, simplifiedLabels }: PipelineProgre
       </div>
 
       {/* Steps */}
-      <div className="space-y-2">
+      <div className="space-y-2" aria-live="polite">
         {steps.map((step) => (
           <div key={step.name} className="flex items-center gap-3 text-sm">
             <span className="w-5 text-center">

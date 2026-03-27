@@ -23,7 +23,6 @@ import {
   PanelLeft,
   PanelRight,
   ArrowDownUp,
-  Loader2,
   Zap,
   Globe,
   Database,
@@ -439,14 +438,16 @@ function AiServicesTab() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-text-primary">Registered Services</h3>
           <div className="flex items-center gap-2">
-            <button
+            <LoadingButton
+              loading={testingId !== null}
+              loadingText="Testing..."
               onClick={handleTestServices}
-              disabled={testingId !== null || services.length === 0}
+              disabled={services.length === 0}
               className="btn-secondary btn-sm flex items-center gap-1"
             >
-              {testingId ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+              <Zap size={14} />
               Test All
-            </button>
+            </LoadingButton>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
               className="btn-primary btn-sm flex items-center gap-1"
@@ -493,14 +494,16 @@ function AiServicesTab() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <LoadingButton
+                loading={adding}
+                loadingText="Adding..."
                 onClick={handleAddService}
-                disabled={adding || !newService.name || !newService.endpoint}
+                disabled={!newService.name || !newService.endpoint}
                 className="btn-primary btn-sm flex items-center gap-1"
               >
-                {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                <Plus size={14} />
                 Add
-              </button>
+              </LoadingButton>
               <button onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm">
                 Cancel
               </button>
@@ -904,14 +907,15 @@ function SecurityTab() {
             </p>
           )}
 
-          <button
+          <LoadingButton
             type="submit"
-            disabled={passwordSaving}
+            loading={passwordSaving}
+            loadingText="Saving..."
             className="btn-primary flex items-center gap-2"
           >
-            {passwordSaving ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
+            <Shield size={16} />
             Change Password
-          </button>
+          </LoadingButton>
         </form>
       </div>
 
@@ -930,14 +934,16 @@ function SecurityTab() {
               placeholder="My integration"
             />
           </div>
-          <button
+          <LoadingButton
+            loading={creatingKey}
+            loadingText="Generating..."
             onClick={handleCreateKey}
-            disabled={creatingKey || !newKeyName.trim()}
+            disabled={!newKeyName.trim()}
             className="btn-primary btn-sm flex items-center gap-1"
           >
-            {creatingKey ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            <Plus size={14} />
             Generate
-          </button>
+          </LoadingButton>
         </div>
 
         {/* Newly created key banner */}
@@ -1340,14 +1346,16 @@ function ProxiesTab() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <LoadingButton
+                loading={adding}
+                loadingText="Adding..."
                 onClick={handleAddProxy}
-                disabled={adding || !newProxy.name || !newProxy.host || !newProxy.port}
+                disabled={!newProxy.name || !newProxy.host || !newProxy.port}
                 className="btn-primary btn-sm flex items-center gap-1"
               >
-                {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                <Plus size={14} />
                 Add
-              </button>
+              </LoadingButton>
               <button onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm">
                 Cancel
               </button>
@@ -1393,19 +1401,17 @@ function ProxiesTab() {
                     </td>
                     <td className="py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <button
+                        <LoadingButton
+                          loading={testingId === proxy.id}
+                          loadingText="Testing..."
                           onClick={() => handleTestProxy(proxy.id)}
-                          disabled={testingId !== null}
+                          disabled={testingId !== null && testingId !== proxy.id}
                           className="btn-secondary btn-sm flex items-center gap-1"
                           title="Test connection"
                         >
-                          {testingId === proxy.id ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
-                            <Activity size={12} />
-                          )}
+                          <Activity size={12} />
                           Test
-                        </button>
+                        </LoadingButton>
                         <button
                           onClick={() => setDeleteTarget(proxy.id)}
                           className="text-text-secondary hover:text-accent-red transition-colors p-1.5"
@@ -1524,18 +1530,16 @@ function DataTab() {
                 <div className="text-sm font-medium text-text-primary">{opt.label}</div>
                 <p className="text-xs text-text-secondary mt-0.5">{opt.description}</p>
               </div>
-              <button
+              <LoadingButton
+                loading={exporting === opt.type}
+                loadingText="Exporting..."
                 onClick={() => handleExport(opt.type)}
-                disabled={exporting !== null}
+                disabled={exporting !== null && exporting !== opt.type}
                 className="btn-secondary btn-sm flex items-center gap-1 shrink-0"
               >
-                {exporting === opt.type ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Download size={14} />
-                )}
+                <Download size={14} />
                 Export CSV
-              </button>
+              </LoadingButton>
             </div>
           ))}
         </div>

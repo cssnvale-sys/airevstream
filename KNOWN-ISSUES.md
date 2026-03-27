@@ -162,11 +162,9 @@ The library page's AI model filter applies client-side after pagination, so it o
 The content detail "Schedule" button redirects to `/calendar?schedule={id}` but the calendar page doesn't read this query param to auto-open a scheduling dialog.
 **Action**: Read `schedule` search param in calendar page and open the schedule creation form pre-populated with the content ID.
 
-### KI-058: Empty ComfyUI Workflow Subdirectories — Partially Fixed (Session 24)
+### KI-058: ~~Empty ComfyUI Workflow Subdirectories~~ — FIXED (Session 47)
 **Severity**: Low
-**Status**: Partially Fixed (Session 24)
-`comfyui-workflows/character/`, `environment/`, `style/` now have workflow templates (dialogue-closeup, insert-hands, establishing-wide, action-tracking). `upscale/` remains empty.
-**Action**: Add upscale workflow template to `comfyui-workflows/upscale/` if needed.
+**Status**: Fixed — `upscale/bsrgan-2x.json` added (4-node BSRGAN 2x upscale workflow). All subdirectories now have templates.
 
 ### KI-062: Seasoning Pipeline Untested Against Real Platforms
 **Severity**: Medium

@@ -27,8 +27,8 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
   const [confidenceLevel, setConfidenceLevel] = useState(0.95);
   const [minSampleSize, setMinSampleSize] = useState(100);
   const [variants, setVariants] = useState([
-    { label: 'Control', trafficPercent: 50 },
-    { label: 'Variant B', trafficPercent: 50 },
+    { id: crypto.randomUUID(), label: 'Control', trafficPercent: 50 },
+    { id: crypto.randomUUID(), label: 'Variant B', trafficPercent: 50 },
   ]);
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -39,6 +39,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
     const evenSplit = Math.floor(100 / count);
     const remainder = 100 - evenSplit * count;
     const updated = Array.from({ length: count }, (_, i) => ({
+      id: i < variants.length ? variants[i].id : crypto.randomUUID(),
       label: i < variants.length ? variants[i].label : `Variant ${String.fromCharCode(65 + i)}`,
       trafficPercent: evenSplit + (i < remainder ? 1 : 0),
     }));
@@ -91,8 +92,8 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
       setConfidenceLevel(0.95);
       setMinSampleSize(100);
       setVariants([
-        { label: 'Control', trafficPercent: 50 },
-        { label: 'Variant B', trafficPercent: 50 },
+        { id: crypto.randomUUID(), label: 'Control', trafficPercent: 50 },
+        { id: crypto.randomUUID(), label: 'Variant B', trafficPercent: 50 },
       ]);
       onCreated();
     } catch (err) {
@@ -216,7 +217,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
             </div>
             <div className="space-y-2">
               {variants.map((v, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div key={v.id} className="flex items-center gap-2">
                   <input
                     type="text"
                     value={v.label}

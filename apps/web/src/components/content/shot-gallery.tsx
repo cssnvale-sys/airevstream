@@ -125,8 +125,8 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
           )}
           {shot.keyframeUrls && shot.keyframeUrls.length > 0 && (
             <div className="flex gap-2 mt-2">
-              {shot.keyframeUrls.map((url, i) => (
-                <KeyframeImage key={i} url={url} />
+              {shot.keyframeUrls.map((url) => (
+                <KeyframeImage key={url} url={url} />
               ))}
             </div>
           )}

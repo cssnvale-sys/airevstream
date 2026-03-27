@@ -57,8 +57,8 @@ export function PipelineProgress({ contentId, simplifiedLabels }: PipelineProgre
 
       {/* Steps */}
       <div className="space-y-2">
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-center gap-3 text-sm">
+        {steps.map((step) => (
+          <div key={step.name} className="flex items-center gap-3 text-sm">
             <span className="w-5 text-center">
               {STATUS_ICONS[step.status] ?? STATUS_ICONS.pending}
             </span>

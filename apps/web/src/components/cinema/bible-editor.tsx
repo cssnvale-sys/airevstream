@@ -181,7 +181,7 @@ function LoraListEditor({
   return (
     <div className="space-y-3">
       {loras.map((lora, i) => (
-        <div key={i} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
+        <div key={`${lora.name}-${i}`} className="p-3 bg-bg-tertiary rounded-md border border-border space-y-2">
           <div className="flex items-center gap-2">
             {availableLoras.length > 0 ? (
               <select

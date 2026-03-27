@@ -95,16 +95,16 @@ export function useChannel<T = unknown>(id: string | null) {
   return useApi<T>(id ? `/channels/${id}` : null);
 }
 
-export function useContent<T = unknown>(params?: string) {
-  return useApi<T>(`/content${params ? `?${params}` : ''}`);
+export function useContent<T = unknown>(params?: string, config?: SWRConfiguration) {
+  return useApi<T>(`/content${params ? `?${params}` : ''}`, config);
 }
 
-export function useApprovals<T = unknown>(params?: string) {
-  return useApi<T>(`/approvals${params ? `?${params}` : ''}`);
+export function useApprovals<T = unknown>(params?: string, config?: SWRConfiguration) {
+  return useApi<T>(`/approvals${params ? `?${params}` : ''}`, config);
 }
 
-export function useCalendar<T = unknown>(params?: string) {
-  return useApi<T>(`/calendar${params ? `?${params}` : ''}`);
+export function useCalendar<T = unknown>(params?: string, config?: SWRConfiguration) {
+  return useApi<T>(`/calendar${params ? `?${params}` : ''}`, config);
 }
 
 export function useAffiliateProducts<T = unknown>(params?: string) {
@@ -123,12 +123,12 @@ export function useSystemMetrics<T = unknown>() {
   return useApi<T>('/system/metrics', { refreshInterval: 15000 });
 }
 
-export function useAlerts<T = unknown>(params?: string) {
-  return useApi<T>(`/system/alerts${params ? `?${params}` : ''}`);
+export function useAlerts<T = unknown>(params?: string, config?: SWRConfiguration) {
+  return useApi<T>(`/system/alerts${params ? `?${params}` : ''}`, { refreshInterval: 30000, ...config });
 }
 
-export function useWorkflows<T = unknown>(params?: string) {
-  return useApi<T>(`/system/workflows${params ? `?${params}` : ''}`);
+export function useWorkflows<T = unknown>(params?: string, config?: SWRConfiguration) {
+  return useApi<T>(`/system/workflows${params ? `?${params}` : ''}`, config);
 }
 
 export function useAnalytics<T = unknown>(type: string, params?: string) {

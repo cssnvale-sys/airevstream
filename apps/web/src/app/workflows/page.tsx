@@ -44,7 +44,7 @@ export default function WorkflowsPage() {
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
   // HITL tasks
-  const { data: hitlRes, isLoading: hitlLoading, mutate: hitlMutate } = useApi<HitlTask[]>('/workflows/hitl?limit=50');
+  const { data: hitlRes, isLoading: hitlLoading, mutate: hitlMutate } = useApi<HitlTask[]>('/workflows/hitl?limit=50', { refreshInterval: 10000 });
   const hitlTasks = hitlRes?.data ?? [];
 
   // Build query params
@@ -55,7 +55,7 @@ export default function WorkflowsPage() {
     return parts.join('&');
   }, [statusFilter, jobTypeFilter, page]);
 
-  const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows<WorkflowJob[]>(queryParams);
+  const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows<WorkflowJob[]>(queryParams, { refreshInterval: 10000 });
 
   const jobs = jobsRes?.data ?? [];
   const meta = jobsRes?.meta;

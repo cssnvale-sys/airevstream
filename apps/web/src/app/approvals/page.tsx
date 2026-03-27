@@ -71,7 +71,7 @@ export default function ApprovalsPage() {
     return parts.join('&');
   }, [page, typeFilter]);
 
-  const { data: approvalsRes, isLoading, error: fetchError, mutate } = useApi<ApprovalItem[]>(`/approvals?${queryParams}`);
+  const { data: approvalsRes, isLoading, error: fetchError, mutate } = useApi<ApprovalItem[]>(`/approvals?${queryParams}`, { refreshInterval: 30000 });
   const { data: trustRes } = useApi<TrustScore[]>(trustOpen ? '/approvals/trust-scores' : null);
   const trustScores = trustRes?.data ?? [];
   const items = approvalsRes?.data ?? [];

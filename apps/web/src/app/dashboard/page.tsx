@@ -180,9 +180,9 @@ function activityIcon(type: string) {
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
-  const { data: approvalsRes, isLoading: approvalsLoading, error: approvalsError, mutate: mutateApprovals } = useApprovals<ApprovalItem[]>('status=pending_approval&limit=5');
+  const { data: approvalsRes, isLoading: approvalsLoading, error: approvalsError, mutate: mutateApprovals } = useApprovals<ApprovalItem[]>('status=pending_approval&limit=5', { refreshInterval: 30000 });
   const { data: contentRes, isLoading: contentLoading, error: contentError } = useContent<ContentItem[]>('limit=100');
-  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError } = useWorkflows<WorkflowItem[]>();
+  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError } = useWorkflows<WorkflowItem[]>(undefined, { refreshInterval: 15000 });
   const { data: healthRes, isLoading: healthLoading, error: healthError } = useSystemHealth<HealthData>();
   const { data: metricsRes, isLoading: metricsLoading, error: metricsError } = useSystemMetrics<MetricsData>();
   const { data: activityRes, isLoading: activityLoading, error: activityError } = useApi<ActivityItem[]>('/activity?limit=10');

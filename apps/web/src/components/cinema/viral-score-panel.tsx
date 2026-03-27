@@ -215,8 +215,8 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
                 </button>
               )}
             </div>
-            {visibleIssues.map((issue, i) => (
-              <div key={i} className="text-accent-orange">
+            {visibleIssues.map((issue) => (
+              <div key={`${issue.dimension}-${issue.severity}-${issue.message}`} className="text-accent-orange">
                 <span className="text-[10px] text-text-tertiary capitalize">[{issue.severity}]</span> {issue.message}
                 {issue.suggestion && (
                   <div className="text-text-tertiary mt-0.5">{issue.suggestion}</div>

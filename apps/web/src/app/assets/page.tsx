@@ -488,12 +488,11 @@ export default function AssetsPage() {
   const sceneryTotal = sceneryResponse?.meta?.total ?? 0;
   const sceneryTotalPages = sceneryResponse?.meta?.pages ?? 1;
 
-  // Reset page when search changes
-  function handleSearchChange(value: string) {
-    setSearch(value);
+  // Reset page when debounced search changes (avoids jarring resets on every keystroke)
+  useEffect(() => {
     setAvatarPage(1);
     setSceneryPage(1);
-  }
+  }, [debouncedSearch]);
 
   return (
     <AppLayout>
@@ -549,7 +548,7 @@ export default function AssetsPage() {
             type="text"
             placeholder={`Search ${activeTab}...`}
             value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="input w-full pl-9"
           />
         </div>

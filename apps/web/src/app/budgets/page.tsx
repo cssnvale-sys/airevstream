@@ -59,6 +59,7 @@ export default function BudgetsPage() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const budgets: Budget[] = data?.data ?? [];
 
@@ -115,6 +116,7 @@ export default function BudgetsPage() {
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
+    setDeleting(true);
     try {
       await apiDelete(`/budgets/${deleteTarget.id}`);
       toast.success('Budget deleted');
@@ -123,6 +125,8 @@ export default function BudgetsPage() {
     } catch (err) {
       console.error('Failed to delete budget:', err);
       toast.error('Failed to delete budget');
+    } finally {
+      setDeleting(false);
     }
   }, [deleteTarget, mutate]);
 
@@ -352,6 +356,7 @@ export default function BudgetsPage() {
         message={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
         variant="danger"
         confirmLabel="Delete"
+        loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

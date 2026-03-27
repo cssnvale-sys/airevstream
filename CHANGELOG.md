@@ -82,7 +82,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Worker progress reporting** (Session 47): job.updateProgress() added to 6 long-running handlers (18+ checkpoints): generate-image, render-video, generate-shots, qc-gate, lifecycle:signup, lifecycle:set-profile, warm, seasoning:warm.
 - **Pagination type="button"** (Session 47): 3 pagination buttons + niche-tag-input remove button given explicit type="button".
 - **Navigation Link conversion** (Session 47): Simple-create-wizard "Open in Studio" button converted to Next.js Link for proper accessibility and prefetching.
-- **htmlFor label associations** (Session 47): 18 form inputs linked to labels via htmlFor/id across create-series, add-episode, create-experiment, and simple-create-wizard.
+- **htmlFor label associations** (Session 47): 70+ form inputs linked to labels via htmlFor/id across create-series, add-episode, create-experiment, simple-create-wizard, budgets, settings (16 fields), affiliate (17 fields), accounts (4 fields), content detail (2 fields), bible-editor (7 dynamic fields), shot-properties (20+ via helpers), create-preset-modal, series-avatar-manager, asset detail, settings cinema-bible.
+- **Icon button aria-labels** (Session 47): 18 icon-only buttons given aria-label across accounts (close/sync/health/warm), affiliate (close/edit/delete), settings (remove/delete), assets (delete x3), library (grid/list), experiments (remove variant), quality-breakdown (recalculate).
 - **Number input constraints** (Session 47): Budget limit input min/step attributes for numeric validation.
 - **Transition polish** (Session 47): transition-colors added to 5 close/zoom/select buttons for smooth hover states.
 - **Sonner import migration** (Session 47): 3 components migrated from direct 'sonner' to '@/lib/toast' wrapper. Toast wrapper extended with optional ExternalToast options.

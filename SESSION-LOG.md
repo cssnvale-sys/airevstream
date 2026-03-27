@@ -220,7 +220,15 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 87**: htmlFor label associations — Added htmlFor/id pairs to 18 form inputs across 4 components (create-series 5, add-episode 3, create-experiment 5, simple-create-wizard 5).
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~100 total.
+**Iteration 88**: Budgets + settings htmlFor — 5 label pairs on budgets page + 2 icon-button aria-labels (pause/play, delete). 16 label pairs on settings page (system, AI services, notifications, security, proxies, data sections).
+
+**Iteration 89**: Affiliate + accounts + content htmlFor — 17 label pairs on affiliate page (channel, products, links, storefronts), 4 on accounts (email, password, tier, JSON), 2 on content detail (format, schedule).
+
+**Iteration 90**: Cinema components htmlFor — bible-editor (7 pairs with dynamic LoRA IDs), shot-properties (20+ via helper functions), create-preset-modal (3), series-avatar-manager (2), asset detail (1), settings cinema-bible (1).
+
+**Iteration 91**: Icon-only button aria-labels — 18 buttons across 8 files (accounts close/sync/health/warm, affiliate close/edit/delete, settings remove/delete, assets delete x3, library grid/list, experiments remove variant, quality recalculate).
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~105 total. Nearly complete WCAG label coverage — all form inputs linked to labels, all icon-only buttons have aria-label.
 
 ---
 

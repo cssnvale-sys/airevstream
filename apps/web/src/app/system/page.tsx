@@ -486,7 +486,7 @@ export default function SystemPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-bg-primary">
                 <tr className="border-b border-border text-text-secondary text-left">
                   <th className="pb-2 pr-3 font-medium">Severity</th>
                   <th className="pb-2 pr-3 font-medium">Job Type</th>

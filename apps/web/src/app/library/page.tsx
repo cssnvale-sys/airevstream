@@ -550,7 +550,7 @@ export default function LibraryPage() {
         /* List View */
         <div className="card overflow-x-auto p-0">
           {/* Table Header */}
-          <div className="flex items-center gap-4 px-4 py-2.5 border-b border-border text-xs text-text-secondary font-medium min-w-[700px]">
+          <div className="sticky top-0 z-10 bg-bg-primary flex items-center gap-4 px-4 py-2.5 border-b border-border text-xs text-text-secondary font-medium min-w-[700px]">
             <span className="w-14 flex-shrink-0">Thumb</span>
             <span className="flex-1">Title</span>
             <span className="w-20 flex-shrink-0">Type</span>

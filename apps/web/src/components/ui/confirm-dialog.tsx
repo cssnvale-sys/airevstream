@@ -98,6 +98,7 @@ export function ConfirmDialog({
             <p className="text-sm text-text-secondary mt-1">{message}</p>
           </div>
           <button
+            type="button"
             onClick={onCancel}
             disabled={loading}
             aria-label="Close dialog"
@@ -108,6 +109,7 @@ export function ConfirmDialog({
         </div>
         <div className="flex gap-2 justify-end">
           <button
+            type="button"
             ref={cancelRef}
             onClick={onCancel}
             disabled={loading}
@@ -116,6 +118,7 @@ export function ConfirmDialog({
             {cancelLabel}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={loading}
             className={cn(config.confirmClass, 'text-sm')}

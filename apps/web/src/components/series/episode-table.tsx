@@ -62,7 +62,7 @@ export function EpisodeTable({ seriesId }: Props) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-card-title text-text-primary">Episodes ({episodes.length})</h3>
-        <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2 text-sm">
+        <button type="button" onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2 text-sm">
           <Plus size={14} />
           Add Episode
         </button>
@@ -77,7 +77,7 @@ export function EpisodeTable({ seriesId }: Props) {
       ) : episodes.length === 0 ? (
         <div className="card text-center py-8">
           <p className="text-text-secondary mb-3">No episodes yet. Add content items as episodes.</p>
-          <button onClick={() => setShowAdd(true)} className="btn-primary text-sm inline-flex items-center gap-2">
+          <button type="button" onClick={() => setShowAdd(true)} className="btn-primary text-sm inline-flex items-center gap-2">
             <Plus size={14} />
             Add First Episode
           </button>
@@ -85,7 +85,7 @@ export function EpisodeTable({ seriesId }: Props) {
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-bg-primary">
               <tr className="border-b border-border text-left text-caption text-text-secondary">
                 <th className="px-3 py-2 font-medium w-10">#</th>
                 <th className="px-3 py-2 font-medium">Title</th>
@@ -122,6 +122,7 @@ export function EpisodeTable({ seriesId }: Props) {
                   </td>
                   <td className="px-3 py-2">
                     <button
+                      type="button"
                       onClick={() => setDeleteId(ep.id)}
                       className="text-text-secondary hover:text-accent-red transition-colors"
                       title="Remove episode"

@@ -281,6 +281,7 @@ function ContentRow({ item, onDelete }: { item: ContentItem; onDelete?: (id: str
         {/* Delete */}
         {onDelete && ['draft', 'archived', 'failed'].includes(item.status) && (
           <button
+            type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(item.id); }}
             className="text-text-secondary hover:text-accent-red transition-colors p-1 flex-shrink-0"
             aria-label={`Delete ${item.title ?? 'content'}`}
@@ -401,6 +402,7 @@ export default function LibraryPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => setShowFilters((v) => !v)}
             className={cn('btn-secondary flex items-center gap-2', showFilters && 'ring-1 ring-accent-blue')}
           >
@@ -408,6 +410,7 @@ export default function LibraryPage() {
           </button>
           <div className="flex items-center bg-bg-secondary border border-border rounded-lg overflow-hidden">
             <button
+              type="button"
               onClick={() => setViewMode('grid')}
               className={cn(
                 'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
@@ -419,6 +422,7 @@ export default function LibraryPage() {
               <LayoutGrid size={16} />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('list')}
               className={cn(
                 'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
@@ -526,7 +530,7 @@ export default function LibraryPage() {
               />
             </div>
             {hasActiveFilters && (
-              <button onClick={clearFilters} className="text-xs text-text-secondary hover:text-text-primary underline">
+              <button type="button" onClick={clearFilters} className="text-xs text-text-secondary hover:text-text-primary underline">
                 Clear all
               </button>
             )}
@@ -540,7 +544,7 @@ export default function LibraryPage() {
       ) : error ? (
         <div className="card text-center py-12 text-accent-red">
           <p>Failed to load content.</p>
-          <button onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
+          <button type="button" onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
         </div>
       ) : items.length === 0 ? (
         <div className="card">

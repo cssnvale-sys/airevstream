@@ -121,6 +121,7 @@ export function BibleEditor({ bible, onSave }: BibleEditorProps) {
       <div role="tablist" className="flex border-b border-border">
         {TABS.map((tab) => (
           <button
+            type="button"
             key={tab.id}
             role="tab"
             aria-selected={activeTab === tab.id}
@@ -210,6 +211,7 @@ function LoraListEditor({
               />
             )}
             <button
+              type="button"
               aria-label={`Remove LoRA ${i + 1}`}
               onClick={() => removeLora(i)}
               className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
@@ -258,6 +260,7 @@ function LoraListEditor({
         </div>
       ))}
       <button
+        type="button"
         onClick={addLora}
         className="text-accent-blue text-sm hover:underline"
       >
@@ -381,6 +384,7 @@ function KeyValueEditor({
             className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
           />
           <button
+            type="button"
             aria-label={`Remove entry ${key}`}
             onClick={() => removePair(key)}
             className="text-accent-red hover:text-accent-red/80 text-sm px-2"
@@ -493,6 +497,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                type="button"
                 aria-label={`Remove lens ${i + 1}`}
                 onClick={() => update('lensKit', lensKit.filter((_, idx) => idx !== i))}
                 className="text-accent-red hover:text-accent-red/80 text-sm px-2"
@@ -502,6 +507,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
             </div>
           ))}
           <button
+            type="button"
             onClick={() => update('lensKit', [...lensKit, ''])}
             className="text-accent-blue text-sm hover:underline"
           >
@@ -536,6 +542,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                type="button"
                 aria-label={`Remove style reference ${i + 1}`}
                 onClick={() => update('styleRefs', ((data.styleRefs as string[]) ?? []).filter((_, idx) => idx !== i))}
                 className="text-accent-red hover:text-accent-red/80 text-sm px-2"
@@ -545,6 +552,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
             </div>
           ))}
           <button
+            type="button"
             onClick={() => update('styleRefs', [...((data.styleRefs as string[]) ?? []), ''])}
             className="text-accent-blue text-sm hover:underline"
           >
@@ -617,6 +625,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                type="button"
                 aria-label={`Remove wardrobe item ${i + 1}`}
                 onClick={() => update('wardrobe', wardrobe.filter((_, idx) => idx !== i))}
                 className="text-accent-red hover:text-accent-red/80 text-sm px-2"
@@ -626,6 +635,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
             </div>
           ))}
           <button
+            type="button"
             onClick={() => update('wardrobe', [...wardrobe, ''])}
             className="text-accent-blue text-sm hover:underline"
           >
@@ -680,6 +690,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                   />
                 )}
                 <button
+                  type="button"
                   aria-label={`Remove character LoRA ${charKey}`}
                   onClick={() => removeCharacterLora(charKey)}
                   className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
@@ -831,6 +842,7 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
                   />
                 )}
                 <button
+                  type="button"
                   aria-label={`Remove environment LoRA ${envKey}`}
                   onClick={() => removeEnvLora(envKey)}
                   className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
@@ -955,6 +967,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                 className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
               />
               <button
+                type="button"
                 aria-label={`Remove slot ${slot}`}
                 onClick={() => {
                   const rules = { ...((data.slotRules as Record<string, string[]>) ?? {}) };
@@ -968,6 +981,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
             </div>
           ))}
           <button
+            type="button"
             onClick={() => {
               const rules = { ...((data.slotRules as Record<string, string[]>) ?? {}) };
               rules[`slot_${Object.keys(rules).length + 1}`] = [];
@@ -999,6 +1013,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                   className="bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm font-medium focus:ring-1 focus:ring-accent-blue outline-none"
                 />
                 <button
+                  type="button"
                   aria-label={`Remove character block ${charKey}`}
                   onClick={() => {
                     const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
@@ -1024,6 +1039,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
             </div>
           ))}
           <button
+            type="button"
             onClick={() => {
               const pcb = { ...((data.perCharacterBlocks as Record<string, string[]>) ?? {}) };
               pcb[`character_${Object.keys(pcb).length + 1}`] = [];
@@ -1055,6 +1071,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                   className="bg-bg-secondary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm font-medium focus:ring-1 focus:ring-accent-blue outline-none"
                 />
                 <button
+                  type="button"
                   aria-label={`Remove environment block ${envKey}`}
                   onClick={() => {
                     const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
@@ -1080,6 +1097,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
             </div>
           ))}
           <button
+            type="button"
             onClick={() => {
               const peb = { ...((data.perEnvironmentBlocks as Record<string, string[]>) ?? {}) };
               peb[`environment_${Object.keys(peb).length + 1}`] = [];

@@ -410,6 +410,7 @@ export default function CalendarPage() {
       // Month view: colored dot
       return (
         <button
+          type="button"
           key={item.id}
           draggable
           onDragStart={(e) => handleDragStart(e, item)}
@@ -431,6 +432,7 @@ export default function CalendarPage() {
 
     return (
       <button
+        type="button"
         key={item.id}
         draggable
         onDragStart={(e) => handleDragStart(e, item)}
@@ -487,13 +489,13 @@ export default function CalendarPage() {
         <div className="flex items-center gap-3">
           {/* Navigation */}
           <div className="flex items-center gap-1">
-            <button onClick={goToPrev} className="btn-icon" aria-label={navAriaLabel.prev}>
+            <button type="button" onClick={goToPrev} className="btn-icon" aria-label={navAriaLabel.prev}>
               <ChevronLeft size={18} />
             </button>
-            <button onClick={goToToday} className="btn-secondary btn-sm">
+            <button type="button" onClick={goToToday} className="btn-secondary btn-sm">
               Today
             </button>
-            <button onClick={goToNext} className="btn-icon" aria-label={navAriaLabel.next}>
+            <button type="button" onClick={goToNext} className="btn-icon" aria-label={navAriaLabel.next}>
               <ChevronRight size={18} />
             </button>
           </div>
@@ -502,6 +504,7 @@ export default function CalendarPage() {
           <div className="flex rounded-md border border-border overflow-hidden">
             {(['day', 'week', 'month'] as ViewMode[]).map((mode) => (
               <button
+                type="button"
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={cn(
@@ -705,6 +708,7 @@ export default function CalendarPage() {
                   >
                     {/* Date number — click to switch to day view */}
                     <button
+                      type="button"
                       onClick={() => switchToDay(day)}
                       className={cn(
                         'text-sm font-medium mb-1 hover:text-accent-blue transition-colors',

@@ -181,6 +181,7 @@ export default function ApprovalsPage() {
               Approve All
             </LoadingButton>
             <button
+              type="button"
               onClick={() => setBulkRejectOpen(true)}
               disabled={bulkActing}
               className="btn-danger btn-sm flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
@@ -189,6 +190,7 @@ export default function ApprovalsPage() {
               Reject All
             </button>
             <button
+              type="button"
               onClick={() => setSelectedIds(new Set())}
               disabled={bulkActing}
               className="btn-secondary btn-sm ml-auto focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
@@ -201,7 +203,7 @@ export default function ApprovalsPage() {
         {fetchError ? (
           <div className="rounded-lg border border-accent-red/30 bg-accent-red/10 p-6 text-center">
             <p className="text-accent-red mb-3">Failed to load approvals</p>
-            <button onClick={() => mutate()} className="btn-secondary btn-sm">Retry</button>
+            <button type="button" onClick={() => mutate()} className="btn-secondary btn-sm">Retry</button>
           </div>
         ) : isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -284,6 +286,7 @@ export default function ApprovalsPage() {
                         Approve
                       </LoadingButton>
                       <button
+                        type="button"
                         onClick={() => setRejectTarget(item.id)}
                         disabled={acting === item.id}
                         className="btn-secondary flex items-center gap-1.5 text-sm px-3 py-1.5 text-accent-red focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
@@ -305,6 +308,7 @@ export default function ApprovalsPage() {
                 </p>
                 <div className="flex items-center gap-1">
                   <button
+                    type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
                     className="btn-icon focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
@@ -313,6 +317,7 @@ export default function ApprovalsPage() {
                     <ChevronLeft size={16} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     className="btn-icon focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
@@ -329,6 +334,7 @@ export default function ApprovalsPage() {
         {/* Trust Scores */}
         <div className="mt-6">
           <button
+            type="button"
             onClick={() => setTrustOpen((v) => !v)}
             className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none rounded px-2 py-1"
           >

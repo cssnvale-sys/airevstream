@@ -165,6 +165,7 @@ export default function BudgetsPage() {
           <p className="text-text-secondary mt-1">Manage spending limits for AI services.</p>
         </div>
         <button
+          type="button"
           onClick={() => { setShowForm(true); setEditingId(null); setForm(INITIAL_FORM); }}
           className="btn-primary flex items-center gap-2"
         >
@@ -253,6 +254,7 @@ export default function BudgetsPage() {
               {editingId ? 'Update' : 'Create'}
             </LoadingButton>
             <button
+              type="button"
               onClick={() => { setShowForm(false); setEditingId(null); setForm(INITIAL_FORM); }}
               className="btn-secondary"
             >
@@ -303,6 +305,7 @@ export default function BudgetsPage() {
                       <AlertTriangle size={14} className="text-accent-amber" />
                     )}
                     <button
+                      type="button"
                       onClick={() => handleToggleStatus(budget)}
                       className="p-1.5 text-text-tertiary hover:text-text-primary transition-colors"
                       title={budget.status === 'active' ? 'Pause' : 'Resume'}
@@ -311,12 +314,14 @@ export default function BudgetsPage() {
                       {budget.status === 'active' ? <Pause size={14} /> : <Play size={14} />}
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleEdit(budget)}
                       className="text-xs text-text-secondary hover:text-text-primary"
                     >
                       Edit
                     </button>
                     <button
+                      type="button"
                       onClick={() => setDeleteTarget(budget)}
                       className="p-1.5 text-text-tertiary hover:text-accent-red transition-colors"
                       aria-label="Delete budget"

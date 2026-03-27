@@ -92,7 +92,7 @@ export default function WorkflowsPage() {
         {fetchError && (
           <div className="mb-4 rounded-lg border border-accent-red/30 bg-accent-red/10 px-4 py-3 text-sm text-accent-red flex items-center justify-between">
             <span>Failed to load workflow data.</span>
-            <button onClick={() => mutate()} className="btn-secondary btn-sm ml-4">Retry</button>
+            <button type="button" onClick={() => mutate()} className="btn-secondary btn-sm ml-4">Retry</button>
           </div>
         )}
         <div className="flex items-center justify-between mb-6">
@@ -118,6 +118,7 @@ export default function WorkflowsPage() {
 
             {/* Refresh button */}
             <button
+              type="button"
               onClick={() => activeTab === 'jobs' ? mutate() : hitlMutate()}
               className="btn-icon"
               title="Refresh"
@@ -131,6 +132,7 @@ export default function WorkflowsPage() {
         {/* Tab switcher */}
         <div role="tablist" className="flex gap-2 mb-4">
           <button
+            type="button"
             role="tab"
             aria-selected={activeTab === 'jobs'}
             onClick={() => setActiveTab('jobs')}
@@ -142,6 +144,7 @@ export default function WorkflowsPage() {
             All Jobs
           </button>
           <button
+            type="button"
             role="tab"
             aria-selected={activeTab === 'hitl'}
             onClick={() => setActiveTab('hitl')}
@@ -185,6 +188,7 @@ export default function WorkflowsPage() {
         <div className="flex gap-2 mb-6">
           {STATUS_FILTERS.map((s) => (
             <button
+              type="button"
               key={s}
               onClick={() => updateStatusFilter(s)}
               className={cn(
@@ -273,6 +277,7 @@ export default function WorkflowsPage() {
                 </p>
                 <div className="flex items-center gap-1">
                   <button
+                    type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
                     className="btn-icon"
@@ -281,6 +286,7 @@ export default function WorkflowsPage() {
                     <ChevronLeft size={16} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     className="btn-icon"

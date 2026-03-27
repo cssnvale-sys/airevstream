@@ -301,8 +301,9 @@ export function SimpleCreateWizard() {
       {/* Channel selector — only show if multiple channels */}
       {channels.length > 1 && (
         <div>
-          <label className="block text-caption text-text-secondary mb-1.5">Channel</label>
+          <label htmlFor="wizard-channel" className="block text-caption text-text-secondary mb-1.5">Channel</label>
           <select
+            id="wizard-channel"
             value={form.channelId}
             onChange={(e) => update('channelId', e.target.value)}
             className="input w-full max-w-sm"
@@ -325,8 +326,9 @@ export function SimpleCreateWizard() {
       {/* Series selector (optional) */}
       {effectiveChannelId && channelSeriesList.length > 0 && (
         <div>
-          <label className="block text-caption text-text-secondary mb-1.5">Series (optional)</label>
+          <label htmlFor="wizard-series" className="block text-caption text-text-secondary mb-1.5">Series (optional)</label>
           <select
+            id="wizard-series"
             value={form.seriesId}
             onChange={(e) => update('seriesId', e.target.value)}
             className="input w-full max-w-sm"
@@ -371,8 +373,9 @@ export function SimpleCreateWizard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
         <div className="md:col-span-2">
-          <label className="block text-caption text-text-secondary mb-1.5">Topic</label>
+          <label htmlFor="wizard-topic" className="block text-caption text-text-secondary mb-1.5">Topic</label>
           <input
+            id="wizard-topic"
             type="text"
             value={form.topic}
             onChange={(e) => update('topic', e.target.value)}
@@ -385,8 +388,9 @@ export function SimpleCreateWizard() {
         </div>
 
         <div>
-          <label className="block text-caption text-text-secondary mb-1.5">Character (optional)</label>
+          <label htmlFor="wizard-character" className="block text-caption text-text-secondary mb-1.5">Character (optional)</label>
           <input
+            id="wizard-character"
             type="text"
             value={form.characterDescription}
             onChange={(e) => update('characterDescription', e.target.value)}
@@ -417,8 +421,9 @@ export function SimpleCreateWizard() {
         </div>
 
         <div>
-          <label className="block text-caption text-text-secondary mb-1.5">Setting (optional)</label>
+          <label htmlFor="wizard-setting" className="block text-caption text-text-secondary mb-1.5">Setting (optional)</label>
           <input
+            id="wizard-setting"
             type="text"
             value={form.setting}
             onChange={(e) => update('setting', e.target.value)}

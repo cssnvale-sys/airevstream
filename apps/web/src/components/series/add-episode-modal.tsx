@@ -80,10 +80,11 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
         </div>
         <form noValidate onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Search Content</label>
+            <label htmlFor="episode-search" className="block text-sm font-medium text-text-primary mb-1">Search Content</label>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
               <input
+                id="episode-search"
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -93,8 +94,9 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Select Content</label>
+            <label htmlFor="episode-content-select" className="block text-sm font-medium text-text-primary mb-1">Select Content</label>
             <select
+              id="episode-content-select"
               value={selectedContentId}
               onChange={(e) => setSelectedContentId(e.target.value)}
               className="input w-full"
@@ -109,8 +111,9 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Episode Title (optional)</label>
+            <label htmlFor="episode-title" className="block text-sm font-medium text-text-primary mb-1">Episode Title (optional)</label>
             <input
+              id="episode-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}

@@ -133,8 +133,9 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
         <div className="p-4 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm text-text-secondary mb-1">Name</label>
+            <label htmlFor="experiment-name" className="block text-sm text-text-secondary mb-1">Name</label>
             <input
+              id="experiment-name"
               ref={nameRef}
               type="text"
               value={name}
@@ -146,8 +147,9 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
           {/* Hypothesis */}
           <div>
-            <label className="block text-sm text-text-secondary mb-1">Hypothesis</label>
+            <label htmlFor="experiment-hypothesis" className="block text-sm text-text-secondary mb-1">Hypothesis</label>
             <textarea
+              id="experiment-hypothesis"
               value={hypothesis}
               onChange={(e) => setHypothesis(e.target.value)}
               placeholder="e.g. Question hooks will increase engagement by 20%"
@@ -158,8 +160,8 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
           {/* Primary Metric */}
           <div>
-            <label className="block text-sm text-text-secondary mb-1">Primary Metric</label>
-            <select value={primaryMetric} onChange={(e) => setPrimaryMetric(e.target.value)} className="input w-full">
+            <label htmlFor="experiment-primary-metric" className="block text-sm text-text-secondary mb-1">Primary Metric</label>
+            <select id="experiment-primary-metric" value={primaryMetric} onChange={(e) => setPrimaryMetric(e.target.value)} className="input w-full">
               {METRIC_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
@@ -168,10 +170,11 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
           {/* Confidence Level */}
           <div>
-            <label className="block text-sm text-text-secondary mb-1">
+            <label htmlFor="experiment-confidence-level" className="block text-sm text-text-secondary mb-1">
               Confidence Level: {(confidenceLevel * 100).toFixed(0)}%
             </label>
             <input
+              id="experiment-confidence-level"
               type="range"
               min={0.80}
               max={0.99}
@@ -188,8 +191,9 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
           {/* Min Sample Size */}
           <div>
-            <label className="block text-sm text-text-secondary mb-1">Min Sample Size per Variant</label>
+            <label htmlFor="experiment-min-sample-size" className="block text-sm text-text-secondary mb-1">Min Sample Size per Variant</label>
             <input
+              id="experiment-min-sample-size"
               type="number"
               min={10}
               max={100000}

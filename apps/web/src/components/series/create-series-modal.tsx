@@ -86,8 +86,9 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
         </div>
         <form noValidate onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Channel</label>
+            <label htmlFor="series-channel" className="block text-sm font-medium text-text-primary mb-1">Channel</label>
             <select
+              id="series-channel"
               value={channelId}
               onChange={(e) => setChannelId(e.target.value)}
               className="input w-full"
@@ -100,8 +101,9 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Name</label>
+            <label htmlFor="series-name" className="block text-sm font-medium text-text-primary mb-1">Name</label>
             <input
+              id="series-name"
               ref={nameRef}
               type="text"
               value={name}
@@ -112,8 +114,9 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Description</label>
+            <label htmlFor="series-description" className="block text-sm font-medium text-text-primary mb-1">Description</label>
             <textarea
+              id="series-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="input w-full"
@@ -122,8 +125,9 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Target Audience</label>
+            <label htmlFor="series-target-audience" className="block text-sm font-medium text-text-primary mb-1">Target Audience</label>
             <input
+              id="series-target-audience"
               type="text"
               value={targetAudience}
               onChange={(e) => setTargetAudience(e.target.value)}
@@ -132,8 +136,9 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Tags (comma separated)</label>
+            <label htmlFor="series-tags" className="block text-sm font-medium text-text-primary mb-1">Tags (comma separated)</label>
             <input
+              id="series-tags"
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}

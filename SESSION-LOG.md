@@ -3425,3 +3425,73 @@ Implemented all 34 identified system gaps across 7 phases using parallel agents.
 - `turbo build`: 14 packages ✓
 - `turbo test`: 507+ unit tests ✓ (27 tasks)
 - `npm run audit`: 33 audit tests ✓ (0 violations)
+
+---
+
+## Session 47 (continued) — Iterations 92-96
+
+### Iteration 92: Double-Submit Prevention + Export Error Handling
+- Studio page: Render and Generate Storyboard buttons disabled during pipeline execution (`disabled={!!activeJobId}`)
+- Export variants: Per-variant try/catch with accurate queued/failed count reporting
+
+### Iteration 93: Magic Number Extraction + Stale Closure Fix
+- Settings page: `FEEDBACK_RESET_MS = 2000` constant replacing 5 setTimeout calls
+- Health check route: `HEALTH_CHECK_TIMEOUT_MS = 5_000` constant
+- Platform adapters: `TIKTOK_POLL_INTERVAL_MS`, `INSTAGRAM_CONTAINER_WAIT_MS`, `INSTAGRAM_IMAGE_WAIT_MS`
+- Accounts page: Fixed stale closure in `toggleSelectAll` (deps included full `selectedIds` object)
+
+### Iteration 94: Dead Imports + Constant Consolidation
+- Removed 4 dead imports: AlertTriangle, BUCKETS, cn (×2)
+- Added `PRESIGNED_URL_TTL_SECONDS = 3600` to shared constants, replaced 5 hardcoded values
+- `qc-scoring.ts` and `production.worker.ts` now use `QUALITY_THRESHOLDS` constant
+- Fixed `windowMs: 60000` → `60 * 1000` in media and search routes
+
+### Iteration 95: Form Accessibility (25+ inputs)
+- Create page: 7 htmlFor/id pairs + aria-label on script textarea
+- Simple-create-wizard: 2 range sliders htmlFor/id
+- Experiment variant inputs: dynamic aria-labels in loop
+- Niche-tag-input, branding-editor (per-color-key), assets page
+
+### Iteration 96: Poll Interval Constants + Logger Migration
+- `POLL_INTERVALS` (FAST: 3s, STANDARD: 15s, SLOW: 30s) replacing 8+ hardcoded refreshInterval values
+- `COMFYUI_POLL_INTERVAL_MS` replacing hardcoded 2000ms in both ComfyUI clients
+- `console.warn` → pino logger in comfyui-client.ts and comfyui-composer.ts
+- Updated comfyui-composer-slots test to mock pino logger
+
+### Files Changed (Iterations 92-96)
+- `apps/web/src/app/studio/[contentId]/page.tsx` — double-submit prevention
+- `apps/web/src/components/cinema/export-variants.tsx` — per-variant error handling
+- `apps/web/src/app/settings/page.tsx` — FEEDBACK_RESET_MS constant
+- `apps/web/src/app/api/v1/ai-services/health-check/route.ts` — timeout constant
+- `workers/src/platform-adapters.ts` — poll interval constants
+- `apps/web/src/app/accounts/page.tsx` — stale closure fix
+- `apps/web/src/components/workflows/hitl-task-card.tsx` — dead import removal
+- `apps/web/src/components/assets/avatar-card.tsx` — dead import removal
+- `apps/web/src/components/assets/generation-status.tsx` — dead import removal
+- `apps/web/src/app/assets/[assetId]/page.tsx` — dead import removal
+- `packages/shared/src/constants.ts` — PRESIGNED_URL_TTL_SECONDS, POLL_INTERVALS, COMFYUI_POLL_INTERVAL_MS
+- `packages/shared/src/qc-scoring.ts` — use QUALITY_THRESHOLDS constant
+- `workers/src/production.worker.ts` — use QUALITY_THRESHOLDS constant
+- `workers/src/posting.worker.ts` — use PRESIGNED_URL_TTL_SECONDS
+- `services/production-pipeline/src/routes/asset.ts` — use PRESIGNED_URL_TTL_SECONDS
+- `apps/web/src/app/api/v1/media/[...path]/route.ts` — PRESIGNED_URL_TTL_SECONDS + windowMs fix
+- `apps/web/src/app/api/v1/upload/presigned-put/route.ts` — PRESIGNED_URL_TTL_SECONDS
+- `apps/web/src/app/api/v1/search/route.ts` — windowMs fix
+- `apps/web/src/app/create/page.tsx` — 7 htmlFor/id + aria-label
+- `apps/web/src/components/cinema/simple-create-wizard.tsx` — 2 slider htmlFor/id
+- `apps/web/src/components/experiments/create-experiment-modal.tsx` — variant aria-labels
+- `apps/web/src/components/channels/niche-tag-input.tsx` — aria-label
+- `apps/web/src/components/assets/branding-editor.tsx` — color picker ids
+- `apps/web/src/app/assets/page.tsx` — search aria-label, modal htmlFor/id
+- `packages/shared/src/comfyui-client.ts` — pino logger + poll constant
+- `packages/shared/src/comfyui-composer.ts` — pino logger
+- `services/production-pipeline/src/comfyui-client.ts` — poll constant
+- `apps/web/src/hooks/use-api.ts` — POLL_INTERVALS
+- `apps/web/src/components/cinema/pipeline-progress.tsx` — POLL_INTERVALS
+- `apps/web/src/app/workflows/page.tsx` — POLL_INTERVALS
+- `apps/web/src/app/dashboard/page.tsx` — POLL_INTERVALS
+
+### Verification
+- `turbo build`: 14/14 ✓
+- `turbo test`: 27/27 tasks ✓
+- `npm run audit`: 37/37 ✓

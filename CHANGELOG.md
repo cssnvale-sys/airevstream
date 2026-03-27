@@ -96,6 +96,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Request ID tracing** (Session 47): x-request-id UUID in middleware, propagated to all responses.
 - **Worker stalled handlers** (Session 47): Added to all 9 worker instances for better job monitoring.
 - **Empty states** (Session 47): Dashboard (approvals, workflows, activity) and calendar now use EmptyState component.
+- **Double-submit prevention** (Session 47): Studio render/generate buttons disabled during pipeline execution.
+- **Export variant error handling** (Session 47): Per-variant try/catch with accurate queued/failed count reporting.
+- **Magic number extraction** (Session 47): FEEDBACK_RESET_MS in settings, HEALTH_CHECK_TIMEOUT_MS in health-check route, TIKTOK/INSTAGRAM poll constants in platform-adapters. Stale closure fix in accounts toggleSelectAll.
+- **Dead imports** (Session 47): Removed 4 unused imports (AlertTriangle, BUCKETS, cn×2).
+- **Quality threshold consolidation** (Session 47): qc-scoring.ts and production.worker.ts now reference QUALITY_THRESHOLDS constant instead of hardcoded 85/60/30.
+- **Presigned URL TTL constant** (Session 47): PRESIGNED_URL_TTL_SECONDS replaces 5 hardcoded 3600 values across workers, services, and API routes.
+- **windowMs consistency** (Session 47): 2 routes using `60000` changed to `60 * 1000` for consistency with all other rate limit configs.
+- **htmlFor/id accessibility** (Session 47 cont.): 25+ more form inputs linked to labels in create page (7), simple-create-wizard (2), experiment variant inputs, niche-tag-input, branding-editor (per-color-key dynamic IDs), assets page (search, avatar name, scenery name/category/image-url).
+- **POLL_INTERVALS constant** (Session 47): FAST (3s), STANDARD (15s), SLOW (30s) replacing 8+ hardcoded refreshInterval values across use-api, pipeline-progress, workflows, dashboard.
+- **COMFYUI_POLL_INTERVAL_MS** (Session 47): Named constant replacing hardcoded 2000ms in both ComfyUI client implementations.
+- **Pino logger migration** (Session 47): console.warn in comfyui-client.ts and comfyui-composer.ts replaced with structured pino logger calls.
 - **Next.js build errors** (Session 46): Added `export const dynamic = 'force-dynamic'` to 83 non-parameterized API routes to prevent misleading error log lines during `next build` static rendering probes (D129)
 - **CRITICAL: Tenant scoping violations** (Session 46): ~15 missing guards across activity, assets, usage, jobs, knowledge base, assistant actions, product analytics, avatar assignment, scenery assets, approvals
 - **CRITICAL: PM2 worker script paths** (Session 46): All 6 worker entries had wrong paths (would crash on `pm2 start`), 2 workers missing from config

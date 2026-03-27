@@ -20,6 +20,7 @@ import {
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { QualityBadge } from '@/components/ui/quality-badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Link from 'next/link';
 
 function formatCountdown(createdAt: string, gateWindowHrs: number | null): { text: string; urgency: 'normal' | 'amber' | 'red' } | null {
@@ -190,6 +191,7 @@ export default function DashboardPage() {
   const fetchError = approvalsError || contentError || workflowsError || healthError || metricsError || activityError || revenueError || accountStatsError;
 
   const [actionInFlight, setActionInFlight] = useState<string | null>(null);
+  const [rejectId, setRejectId] = useState<string | null>(null);
 
   // Derived data
   const approvals = approvalsRes?.data ?? [];
@@ -256,7 +258,7 @@ export default function DashboardPage() {
         {approvalsLoading ? (
           <SkeletonCard />
         ) : (
-          <div className="card">
+          <Link href="/approvals" className="card block hover:border-accent-purple/30 transition-colors">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-secondary">Pending Approvals</p>
@@ -268,13 +270,13 @@ export default function DashboardPage() {
                 <ClipboardCheck size={20} className="text-accent-purple" />
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         {contentLoading ? (
           <SkeletonCard />
         ) : (
-          <div className="card">
+          <Link href="/content?status=posted" className="card block hover:border-accent-green/30 transition-colors">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-secondary">Posted Today</p>
@@ -284,7 +286,7 @@ export default function DashboardPage() {
                 <Send size={20} className="text-accent-green" />
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         {healthLoading ? (
@@ -353,7 +355,7 @@ export default function DashboardPage() {
               return (
                 <div key={item.id} className="flex items-center gap-3 py-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">{item.title ?? item.channel?.name ?? 'No channel'}</p>
+                    <Link href={`/content/${item.id}`} className="text-sm font-medium text-text-primary truncate hover:text-accent-blue hover:underline block">{item.title ?? item.channel?.name ?? 'No channel'}</Link>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={cn('badge text-xs', statusColor(item.status))}>{item.contentType}</span>
                       {item.qualityScore != null && (
@@ -383,7 +385,7 @@ export default function DashboardPage() {
                     </button>
                     <button
                       disabled={actionInFlight === item.id}
-                      onClick={() => handleApproval(item.id, 'reject')}
+                      onClick={() => setRejectId(item.id)}
                       className="btn-danger btn-sm flex items-center gap-1"
                       aria-label="Reject"
                     >
@@ -578,6 +580,16 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={rejectId !== null}
+        title="Reject Content"
+        message="Are you sure you want to reject this content? Visit the content detail page to provide a rejection reason."
+        confirmLabel="Reject"
+        variant="danger"
+        onConfirm={() => { if (rejectId) { handleApproval(rejectId, 'reject'); } setRejectId(null); }}
+        onCancel={() => setRejectId(null)}
+        loading={actionInFlight !== null}
+      />
     </AppLayout>
   );
 }

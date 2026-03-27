@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost, apiPut } from '@/hooks/use-api';
 import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
@@ -122,10 +122,13 @@ export default function ContentDetailPage() {
   const { data, isLoading, error, mutate } = useApi<ContentDetail>(`/content/${id}`);
   const item = data?.data;
 
-  const [acting, setActing] = useState(false);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+  const acting = activeAction !== null;
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [repurposeOpen, setRepurposeOpen] = useState(false);
   const [repurposeFormat, setRepurposeFormat] = useState<'short' | 'reel' | 'story'>('short');
@@ -135,8 +138,20 @@ export default function ContentDetailPage() {
   const { data: channelsData } = useApi<{ id: string; name: string; socialAccount: { platform: string } | null }[]>('/channels?limit=100');
   const channels = channelsData?.data ?? [];
 
+  // Close More menu on outside click
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [moreMenuOpen]);
+
   const handleAction = async (action: 'approve' | 'reject' | 'schedule' | 'archive' | 'publish' | 'rescore') => {
-    setActing(true);
+    setActiveAction(action);
     try {
       if (action === 'approve') {
         await apiPost(`/content/${id}/approve`);
@@ -164,7 +179,7 @@ export default function ContentDetailPage() {
       console.error(`Failed to ${action} content:`, err);
       toast.error(`Failed to ${action} content`);
     } finally {
-      setActing(false);
+      setActiveAction(null);
     }
   };
 
@@ -224,8 +239,8 @@ export default function ContentDetailPage() {
             {(item.status === 'pending_approval' || item.status === 'generated') && (
               <>
                 <button onClick={() => handleAction('approve')} disabled={acting} className="btn-primary flex items-center gap-1.5">
-                  {acting ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  Approve
+                  {activeAction === 'approve' ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  {activeAction === 'approve' ? 'Approving...' : 'Approve'}
                 </button>
                 <button onClick={() => setRejectOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5 text-accent-red">
                   <X size={14} /> Reject
@@ -237,9 +252,9 @@ export default function ContentDetailPage() {
                 <button onClick={() => handleAction('schedule')} disabled={acting} className="btn-primary flex items-center gap-1.5">
                   <Send size={14} /> Schedule
                 </button>
-                <button onClick={() => handleAction('publish')} disabled={acting} className="btn-secondary flex items-center gap-1.5">
-                  {acting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  Publish Now
+                <button onClick={() => setPublishOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5">
+                  {activeAction === 'publish' ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                  {activeAction === 'publish' ? 'Publishing...' : 'Publish Now'}
                 </button>
               </>
             )}
@@ -251,7 +266,7 @@ export default function ContentDetailPage() {
               const hasArchive = !['archived', 'failed'].includes(item.status);
               if (!hasRescore && !hasRepurpose && !hasDistribute && !hasArchive) return null;
               return (
-                <div className="relative">
+                <div className="relative" ref={moreMenuRef}>
                   <button
                     onClick={() => setMoreMenuOpen(v => !v)}
                     disabled={acting}
@@ -614,7 +629,7 @@ export default function ContentDetailPage() {
                 <button onClick={() => setRepurposeOpen(false)} className="btn-secondary text-sm">Cancel</button>
                 <button
                   onClick={async () => {
-                    setActing(true);
+                    setActiveAction('repurpose');
                     try {
                       const res = await apiPost<{ success: boolean; data: { id: string } }>(`/content/${id}/repurpose`, {
                         targetFormat: repurposeFormat,
@@ -627,7 +642,7 @@ export default function ContentDetailPage() {
                       console.error('Failed to repurpose content:', err);
                       toast.error('Failed to repurpose content');
                     } finally {
-                      setActing(false);
+                      setActiveAction(null);
                     }
                   }}
                   disabled={acting}
@@ -694,7 +709,7 @@ export default function ContentDetailPage() {
                       toast.error('Select at least one channel');
                       return;
                     }
-                    setActing(true);
+                    setActiveAction('distribute');
                     try {
                       await apiPost(`/content/${id}/distribute`, {
                         channelIds: selectedChannels,
@@ -709,7 +724,7 @@ export default function ContentDetailPage() {
                       console.error('Failed to distribute content:', err);
                       toast.error('Failed to distribute content');
                     } finally {
-                      setActing(false);
+                      setActiveAction(null);
                     }
                   }}
                   disabled={acting || selectedChannels.length === 0}
@@ -731,6 +746,16 @@ export default function ContentDetailPage() {
         variant="warning"
         onConfirm={() => { setArchiveOpen(false); handleAction('archive'); }}
         onCancel={() => setArchiveOpen(false)}
+        loading={acting}
+      />
+      <ConfirmDialog
+        open={publishOpen}
+        title="Publish Content"
+        message="This will publish the content to all configured platforms. This action cannot be undone."
+        confirmLabel="Publish"
+        variant="warning"
+        onConfirm={() => { setPublishOpen(false); handleAction('publish'); }}
+        onCancel={() => setPublishOpen(false)}
         loading={acting}
       />
     </AppLayout>

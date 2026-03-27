@@ -5,6 +5,7 @@ import { X, Send, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getToken } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
+import { toast } from '@/lib/toast';
 
 type Message = {
   id: string;
@@ -49,6 +50,7 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
         };
         setMessages((prev) => [...prev, aiMsg]);
       } else {
+        toast.error('AI request failed');
         setMessages((prev) => [...prev, {
           id: crypto.randomUUID(),
           role: 'assistant',
@@ -57,6 +59,7 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
       }
     } catch (err) {
       console.error('AI chat failed:', err);
+      toast.error('AI request failed');
       setMessages((prev) => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',

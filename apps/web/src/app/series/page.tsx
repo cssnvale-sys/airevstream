@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useSeries } from '@/hooks/use-series';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
 };
 
 export default function SeriesPage() {
+  const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const { data: rawData, isLoading, mutate } = useSeries<SeriesRow[]>();
 
@@ -150,7 +152,7 @@ export default function SeriesPage() {
         </div>
       )}
 
-      <CreateSeriesModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={() => mutate()} />
+      <CreateSeriesModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={(id) => { mutate(); if (id) router.push(`/series/${id}`); }} />
     </AppLayout>
   );
 }

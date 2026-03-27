@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { ArrowLeft, Play, Square, Trophy, FlaskConical, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useState } from 'react';
 
 interface VariantData {
   id: string;
@@ -52,6 +54,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
   const { data: experimentData, isLoading, mutate } = useExperiment<ExperimentData>(experimentId);
 
   const exp = experimentData?.data;
+  const [stopOpen, setStopOpen] = useState(false);
 
   const handleStart = async () => {
     try {
@@ -157,7 +160,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
             </button>
           )}
           {(exp.status === 'running' || exp.status === 'evaluating') && (
-            <button onClick={handleStop} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
+            <button onClick={() => setStopOpen(true)} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
               <Square size={16} />
               Stop
             </button>
@@ -271,6 +274,15 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
           );
         })}
       </div>
+      <ConfirmDialog
+        open={stopOpen}
+        title="Stop Experiment"
+        message="This will stop the experiment and finalize results with current data. This cannot be resumed."
+        confirmLabel="Stop Experiment"
+        variant="danger"
+        onConfirm={() => { setStopOpen(false); handleStop(); }}
+        onCancel={() => setStopOpen(false)}
+      />
     </AppLayout>
   );
 }

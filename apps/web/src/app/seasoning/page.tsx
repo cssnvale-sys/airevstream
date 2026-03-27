@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useCohorts, useSeasoningStats } from '@/hooks/use-seasoning';
 import { apiPost } from '@/hooks/use-api';
@@ -34,6 +35,7 @@ interface Stats {
 }
 
 export default function SeasoningPage() {
+  const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const { data: cohortsRes, isLoading: cohortsLoading, error: cohortsError, mutate: mutateCohorts } = useCohorts<CohortRow[]>();
   const { data: statsRes, isLoading: statsLoading, error: statsError } = useSeasoningStats<Stats>();
@@ -45,9 +47,10 @@ export default function SeasoningPage() {
 
   const handleCreate = async (data: { name: string; platforms: string[] }) => {
     try {
-      await apiPost('/seasoning/cohorts', data);
+      const res = await apiPost<{ success: boolean; data: { id: string } }>('/seasoning/cohorts', data);
       toast.success('Cohort created');
       mutateCohorts();
+      if (res.data?.id) router.push(`/seasoning/${res.data.id}`);
     } catch (err) {
       console.error('Failed to create cohort:', err);
       toast.error('Failed to create cohort');

@@ -138,7 +138,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
               <select
                 value={selectedAvatarId}
                 onChange={(e) => setSelectedAvatarId(e.target.value)}
-                className="input-field w-full text-sm"
+                className="input w-full text-sm"
               >
                 <option value="">Select...</option>
                 {availableAvatars.map((a) => (
@@ -151,7 +151,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="input-field w-full text-sm"
+                className="input w-full text-sm"
               >
                 <option value="">None</option>
                 {ROLES.map((r) => (

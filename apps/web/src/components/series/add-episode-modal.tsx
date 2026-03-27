@@ -70,7 +70,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={() => !submitting && onClose()} />
+      <div className="absolute inset-0 bg-black/60" onClick={() => !submitting && onClose()} />
       <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4" role="dialog" aria-modal="true">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Add Episode</h2>
@@ -87,7 +87,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input-field w-full pl-9"
+                className="input w-full pl-9"
                 placeholder="Search by title..."
               />
             </div>
@@ -97,7 +97,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
             <select
               value={selectedContentId}
               onChange={(e) => setSelectedContentId(e.target.value)}
-              className="input-field w-full"
+              className="input w-full"
               required
             >
               <option value="">Choose content...</option>
@@ -114,7 +114,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="input-field w-full"
+              className="input w-full"
               placeholder="Override title for this episode"
             />
           </div>

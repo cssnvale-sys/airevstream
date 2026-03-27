@@ -73,7 +73,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-black/50" onClick={() => !submitting && onClose()} />
+      <div className="absolute inset-0 bg-black/60" onClick={() => !submitting && onClose()} />
       <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Create Series</h2>
@@ -87,7 +87,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
             <select
               value={channelId}
               onChange={(e) => setChannelId(e.target.value)}
-              className="input-field w-full"
+              className="input w-full"
               required
             >
               <option value="">Select a channel...</option>
@@ -103,7 +103,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="input-field w-full"
+              className="input w-full"
               placeholder="e.g., Ancient Rome"
               required
             />
@@ -113,7 +113,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input-field w-full"
+              className="input w-full"
               rows={2}
               placeholder="What is this series about?"
             />
@@ -124,7 +124,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
               type="text"
               value={targetAudience}
               onChange={(e) => setTargetAudience(e.target.value)}
-              className="input-field w-full"
+              className="input w-full"
               placeholder="e.g., History enthusiasts, ages 18-35"
             />
           </div>
@@ -134,7 +134,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="input-field w-full"
+              className="input w-full"
               placeholder="e.g., history, ancient, rome"
             />
           </div>

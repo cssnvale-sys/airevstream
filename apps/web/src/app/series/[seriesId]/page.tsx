@@ -114,7 +114,7 @@ export default function SeriesDetailPage() {
             onChange={(e) => handleStatusChange(e.target.value)}
             disabled={updatingStatus}
             aria-label="Series status"
-            className="input-field text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="input text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>

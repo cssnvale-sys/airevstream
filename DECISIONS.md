@@ -626,6 +626,16 @@
 **Decision**: All PM2 worker entries use script paths relative to project root: `workers/dist/<name>.worker.js`. Do not use `dist/workers/` (wrong directory) or set `cwd` to the workers directory (inconsistent with services).
 **Rationale**: All 6 original PM2 worker entries had `script: 'dist/workers/<name>.worker.js'` which resolves to `<root>/dist/workers/` — a directory that doesn't exist. The compiled output is at `workers/dist/`. Additionally, 2 workers added in later sessions (experiment, lifecycle) were never added to PM2. This would have caused all workers to crash on `pm2 start` in production.
 
+## D127: Unified qualityTier Naming Convention
+**Date**: 2026-03-26
+**Decision**: Use `qualityTier` (not `qualityPreset`) as the canonical field name for the quality level (`'draft' | 'standard' | 'cinema'`) across all packages, queue job interfaces, API routes, workers, and frontend components.
+**Rationale**: The codebase had a split naming convention — shared/types used `qualityTier` while queue/API/workers used `qualityPreset`, requiring implicit casts at boundaries. Unifying to `qualityTier` matches the workflow-registry's `QualityTier` export and the `AssemblyManifest.qualityTier` field. 15 files updated in a single coordinated rename.
+
+## D128: SoundOutput→AudioLayerSpec Mapping via toAudioLayerSpec()
+**Date**: 2026-03-26
+**Decision**: Map sound agent output layers to `AudioLayerSpec` using a `toAudioLayerSpec()` helper in the production worker, setting `source: 'generate'` and mapping the agent's descriptive `source` string to the `text` field.
+**Rationale**: The sound agent outputs creative direction (`{ source: "ambient forest sounds", volume: 0.3, description: "..." }`) which is semantically a generation request, not a file reference or TTS command. The `'generate'` source type signals the mix handler to synthesize or search for matching audio. This preserves the agent's creative intent while conforming to the `AudioLayerSpec` contract.
+
 ## D126: Catch Regex Completeness in Audit Tests
 **Date**: 2026-03-26
 **Decision**: The `extractCatchBlocks()` regex in audit-helpers.ts must match both `catch(err) {` and modern `catch {` (paren-less) syntax.

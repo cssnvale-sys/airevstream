@@ -6,29 +6,17 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
-### KI-082: SoundOutput Layer Shape Incompatible with AudioLayerSpec
-**Severity**: Medium
-**Status**: Open (Session 46 — integration tracing)
-**Context**: `SoundOutput.audioLayers[].bg/mg/fg` returns `{ source: string; volume: number; description: string }` but `AudioLayerSpec` expects `{ source?: 'tts'|'file'|'generate'; text?; fileKey?; ... }`. The production worker casts with `as` but the sound agent's audio direction is lost at the mix stage — layers without `fileKey` or `text` are silently skipped.
-**Action**: Either update the sound agent to output `AudioLayerSpec`-compatible fields, or add a mapping layer in the production worker.
+### KI-082: ~~SoundOutput Layer Shape Incompatible with AudioLayerSpec~~ — FIXED (Session 46)
+**Status**: Fixed — Added `toAudioLayerSpec()` mapping function in production worker. Sound agent's descriptive `source` string maps to `text` field with `source: 'generate'`.
 
-### KI-083: Film Grain/Vignette Lost in Assembly Pipeline
-**Severity**: Medium
-**Status**: Open (Session 46 — integration tracing)
-**Context**: `ColorGradeSpec` lacks `filmGrain`/`vignette` fields. `toColorGrade()` only copies 8 fields from the spec. Additionally, `FinishingOutput.postProcess` (which has filmGrain/vignette) is never merged into the render color grade. These post-processing effects never reach Remotion.
-**Action**: Add filmGrain/vignette to `ColorGradeSpec` and merge `FinishingOutput.postProcess` in the production worker render path.
+### KI-083: ~~Film Grain/Vignette Lost in Assembly Pipeline~~ — FIXED (Session 46)
+**Status**: Fixed — Added `filmGrain`/`vignette` to `ColorGradeSpec`, updated `toColorGrade()`, and merged `FinishingOutput.postProcess` into render color grade in production worker.
 
-### KI-084: qualityTier vs qualityPreset Naming Inconsistency
-**Severity**: Low
-**Status**: Open (Session 46 — integration tracing)
-**Context**: Assembly manifest, workflow-registry, cost-estimator use `qualityTier`. Pipeline params, cinema API route, production worker use `qualityPreset`. Worker must cast between them. No runtime impact but cognitive overhead.
-**Action**: Unify to a single name across all boundaries.
+### KI-084: ~~qualityTier vs qualityPreset Naming Inconsistency~~ — FIXED (Session 46)
+**Status**: Fixed — Renamed `qualityPreset` to `qualityTier` across all 15 files (packages, queue, workers, API routes, frontend components).
 
-### KI-085: runPreGenQC Hardcodes Cinema Tier for Cost Estimation
-**Severity**: Low
-**Status**: Open (Session 46 — integration tracing)
-**Context**: `pre-generation-qc.ts` always calls `estimatePipelineCost({ qualityTier: 'cinema' })` regardless of actual tier. Budget checks may reject jobs that fit within lower-tier budgets.
-**Action**: Pass actual quality tier through to the QC function.
+### KI-085: ~~runPreGenQC Hardcodes Cinema Tier for Cost Estimation~~ — FIXED (Session 46)
+**Status**: Fixed — `runPreGenQC()` now accepts a `qualityTier` parameter (default `'standard'`). Cinema route passes the actual requested tier.
 
 ### KI-079: Fastify Service Routes Lack Tenant Scoping
 **Severity**: High
@@ -36,11 +24,8 @@ Tracked bugs, limitations, and technical debt.
 **Context**: 3 Fastify service route groups (account, content, workflow in `services/workflow-engine/`) lack tenant scoping. These routes resolve the authenticated user but do not filter queries by tenantId. Requires an architectural decision on a `resolveTenantId` pattern for Fastify services (different from the Next.js `authenticate()` pattern).
 **Action**: Design a Fastify tenant scoping middleware or plugin, then audit all service routes.
 
-### KI-080: ColorGradeSpec Missing filmGrain/vignette Fields
-**Severity**: Low
-**Status**: Open (Session 45 — flagged, not fixed)
-**Context**: `ColorGradeSpec` in `packages/shared/src/types.ts` is missing `filmGrain` and `vignette` fields that are referenced in some cinema pipeline code paths. This is a cross-file integration gap — the type definition and usage sites are out of sync.
-**Action**: Add the missing fields to `ColorGradeSpec` and verify all consumers.
+### KI-080: ~~ColorGradeSpec Missing filmGrain/vignette Fields~~ — FIXED (Session 46)
+**Status**: Fixed — Same as KI-083. Fields added to `ColorGradeSpec`, `toColorGrade()` updated, `FinishingOutput.postProcess` merged in render path.
 
 ### KI-081: Duplicate ContinuityLocks Type Definition
 **Severity**: Low

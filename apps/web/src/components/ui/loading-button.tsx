@@ -16,10 +16,12 @@ export function LoadingButton({
   children,
   className,
   disabled,
+  type = 'button',
   ...props
 }: LoadingButtonProps) {
   return (
     <button
+      type={type}
       className={cn(className)}
       disabled={disabled || loading}
       {...props}

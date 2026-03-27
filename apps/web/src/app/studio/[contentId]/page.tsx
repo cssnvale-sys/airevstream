@@ -277,6 +277,7 @@ export default function StudioPage() {
           {isVisible('advanced', mode) && (
             <div className="flex items-center border border-border rounded-md">
               <button
+                type="button"
                 onClick={() => setViewMode('editor')}
                 className={cn('p-1.5', viewMode === 'editor' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
                 title="Editor view"
@@ -285,6 +286,7 @@ export default function StudioPage() {
                 <List size={14} />
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('table')}
                 className={cn('p-1.5', viewMode === 'table' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
                 title="Table view"
@@ -295,6 +297,7 @@ export default function StudioPage() {
             </div>
           )}
           <button
+            type="button"
             onClick={handleGenerateAll}
             disabled={!!activeJobId}
             className="btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -346,6 +349,7 @@ export default function StudioPage() {
                 </div>
                 <div className="flex items-center gap-0.5">
                   <button
+                    type="button"
                     onClick={() => handleShotAction(shot.id, 'approve')}
                     disabled={reviewActing === shot.id || shot.status === 'approved'}
                     className="p-2 rounded text-accent-green hover:bg-accent-green/10 disabled:opacity-30"
@@ -355,6 +359,7 @@ export default function StudioPage() {
                     <Check size={14} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleShotAction(shot.id, 'reject')}
                     disabled={reviewActing === shot.id || shot.status === 'failed'}
                     className="p-2 rounded text-accent-red hover:bg-accent-red/10 disabled:opacity-30"
@@ -364,6 +369,7 @@ export default function StudioPage() {
                     <X size={14} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleShotAction(shot.id, 'regenerate')}
                     disabled={reviewActing === shot.id || shot.status === 'generating'}
                     className="p-2 rounded text-accent-blue hover:bg-accent-blue/10 disabled:opacity-30"
@@ -393,12 +399,14 @@ export default function StudioPage() {
               <span className="text-xs text-text-secondary">Shot {selectedShot.shotNumber} Preview</span>
               <div className="flex items-center border border-border rounded-md">
                 <button
+                  type="button"
                   onClick={() => setPreviewMode('keyframe')}
                   className={cn('px-2 py-1 text-xs flex items-center gap-1', previewMode === 'keyframe' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary')}
                 >
                   <ImageIcon size={12} /> Keyframe
                 </button>
                 <button
+                  type="button"
                   onClick={() => setPreviewMode('video')}
                   disabled={!hasVideo}
                   className={cn('px-2 py-1 text-xs flex items-center gap-1', previewMode === 'video' ? 'bg-bg-tertiary text-text-primary' : 'text-text-tertiary hover:text-text-secondary', !hasVideo && 'opacity-40 cursor-not-allowed')}
@@ -448,6 +456,7 @@ export default function StudioPage() {
                 <div className="text-center">
                   <p className="text-text-secondary">No storyboard yet</p>
                   <button
+                    type="button"
                     onClick={handleGenerateAll}
                     disabled={!!activeJobId}
                     className="btn-primary mt-3 disabled:opacity-50 disabled:cursor-not-allowed"

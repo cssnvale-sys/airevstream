@@ -209,7 +209,7 @@ export default function ContentDetailPage() {
       <AppLayout>
         <div className="max-w-6xl mx-auto text-center py-20">
           <p className="text-accent-red mb-3">Content not found or failed to load.</p>
-          <button onClick={() => router.back()} className="btn-secondary">Go Back</button>
+          <button type="button" onClick={() => router.back()} className="btn-secondary">Go Back</button>
         </div>
       </AppLayout>
     );
@@ -223,7 +223,7 @@ export default function ContentDetailPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.back()} className="btn-secondary p-2" aria-label="Go back">
+          <button type="button" onClick={() => router.back()} className="btn-secondary p-2" aria-label="Go back">
             <ArrowLeft size={16} />
           </button>
           <div className="flex-1 min-w-0">
@@ -243,14 +243,14 @@ export default function ContentDetailPage() {
                   <Check size={14} />
                   Approve
                 </LoadingButton>
-                <button onClick={() => setRejectOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5 text-accent-red">
+                <button type="button" onClick={() => setRejectOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5 text-accent-red">
                   <X size={14} /> Reject
                 </button>
               </>
             )}
             {item.status === 'approved' && (
               <>
-                <button onClick={() => handleAction('schedule')} disabled={acting} className="btn-primary flex items-center gap-1.5">
+                <button type="button" onClick={() => handleAction('schedule')} disabled={acting} className="btn-primary flex items-center gap-1.5">
                   <Send size={14} /> Schedule
                 </button>
                 <LoadingButton onClick={() => setPublishOpen(true)} loading={activeAction === 'publish'} disabled={acting} loadingText="Publishing..." className="btn-secondary flex items-center gap-1.5">
@@ -269,6 +269,7 @@ export default function ContentDetailPage() {
               return (
                 <div className="relative" ref={moreMenuRef}>
                   <button
+                    type="button"
                     onClick={() => setMoreMenuOpen(v => !v)}
                     disabled={acting}
                     className="btn-secondary flex items-center gap-1.5"
@@ -278,22 +279,22 @@ export default function ContentDetailPage() {
                   {moreMenuOpen && (
                     <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-border bg-bg-secondary shadow-lg z-20 py-1">
                       {hasRescore && (
-                        <button onClick={() => { handleAction('rescore'); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                        <button type="button" onClick={() => { handleAction('rescore'); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
                           <BarChart3 size={14} /> Rescore
                         </button>
                       )}
                       {hasRepurpose && (
-                        <button onClick={() => { setRepurposeOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                        <button type="button" onClick={() => { setRepurposeOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
                           <Copy size={14} /> Repurpose
                         </button>
                       )}
                       {hasDistribute && (
-                        <button onClick={() => { setDistributeOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                        <button type="button" onClick={() => { setDistributeOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
                           <Share2 size={14} /> Distribute
                         </button>
                       )}
                       {hasArchive && (
-                        <button onClick={() => { setArchiveOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
+                        <button type="button" onClick={() => { setArchiveOpen(true); setMoreMenuOpen(false); }} disabled={acting} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-tertiary">
                           <Archive size={14} /> Archive
                         </button>
                       )}
@@ -462,6 +463,7 @@ export default function ContentDetailPage() {
                 <div className="space-y-2">
                   {item.children.map((child) => (
                     <button
+                      type="button"
                       key={child.id}
                       onClick={() => router.push(`/content/${child.id}`)}
                       className="flex items-center justify-between w-full py-2 px-3 rounded hover:bg-bg-tertiary transition-colors"
@@ -584,6 +586,7 @@ export default function ContentDetailPage() {
               />
               <div className="flex gap-2 justify-end">
                 <button
+                  type="button"
                   onClick={() => { setRejectOpen(false); setRejectReason(''); }}
                   disabled={acting}
                   className="btn-secondary text-sm"
@@ -591,6 +594,7 @@ export default function ContentDetailPage() {
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleAction('reject')}
                   disabled={acting || !rejectReason.trim()}
                   className="btn-primary text-sm"
@@ -628,7 +632,7 @@ export default function ContentDetailPage() {
                 </div>
               </div>
               <div className="flex gap-2 justify-end mt-4">
-                <button onClick={() => setRepurposeOpen(false)} className="btn-secondary text-sm">Cancel</button>
+                <button type="button" onClick={() => setRepurposeOpen(false)} className="btn-secondary text-sm">Cancel</button>
                 <LoadingButton
                   onClick={async () => {
                     setActiveAction('repurpose');
@@ -705,7 +709,7 @@ export default function ContentDetailPage() {
                 </div>
               </div>
               <div className="flex gap-2 justify-end mt-4">
-                <button onClick={() => { setDistributeOpen(false); setSelectedChannels([]); setDistributeSchedule(''); }} className="btn-secondary text-sm">Cancel</button>
+                <button type="button" onClick={() => { setDistributeOpen(false); setSelectedChannels([]); setDistributeSchedule(''); }} className="btn-secondary text-sm">Cancel</button>
                 <LoadingButton
                   onClick={async () => {
                     if (selectedChannels.length === 0) {

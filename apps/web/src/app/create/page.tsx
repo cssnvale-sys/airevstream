@@ -472,6 +472,7 @@ export default function CreatePage() {
         return (
           <div key={step.num} className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => navigateToStep(step.num)}
               disabled={step.num > currentStep && !canGoNext()}
               className={cn(
@@ -940,6 +941,7 @@ export default function CreatePage() {
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={generateScript}
             disabled={generating}
             className="btn-secondary btn-sm flex items-center gap-1.5"
@@ -997,6 +999,7 @@ export default function CreatePage() {
           <p className="text-text-secondary text-caption">Visual breakdown of each shot.</p>
         </div>
         <button
+          type="button"
           onClick={generateStoryboard}
           disabled={generating}
           className="btn-secondary btn-sm flex items-center gap-1.5"
@@ -1146,7 +1149,7 @@ export default function CreatePage() {
         </div>
 
         {!generating && (
-          <button onClick={startGeneration} className="btn-primary flex items-center gap-2">
+          <button type="button" onClick={startGeneration} className="btn-primary flex items-center gap-2">
             <Play size={16} />
             Restart Generation
           </button>
@@ -1302,12 +1305,14 @@ export default function CreatePage() {
               : 'Approve & Schedule'}
         </LoadingButton>
         <button
+          type="button"
           onClick={() => setCurrentStep(3)}
           className="btn-secondary"
         >
           Reject & Edit Script
         </button>
         <button
+          type="button"
           onClick={() => {
             setFormData((prev) => ({ ...prev, shots: [], shotStatuses: {} }));
             setCurrentStep(4);
@@ -1363,6 +1368,7 @@ export default function CreatePage() {
           {currentStep < 6 && (
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
               <button
+                type="button"
                 onClick={goBack}
                 disabled={currentStep === 1}
                 className="btn-secondary flex items-center gap-2"
@@ -1371,6 +1377,7 @@ export default function CreatePage() {
                 Back
               </button>
               <button
+                type="button"
                 onClick={handleNext}
                 disabled={!canGoNext() || generating}
                 className="btn-primary flex items-center gap-2"

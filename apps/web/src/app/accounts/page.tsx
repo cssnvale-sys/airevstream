@@ -199,7 +199,7 @@ function AddEmailModal({
       <div className="card w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">{stepTitles[step - 1]}</h2>
-          <button onClick={handleClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
+          <button type="button" onClick={handleClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -256,6 +256,7 @@ function AddEmailModal({
             </div>
             <div className="flex gap-2 pt-2">
               <button
+                type="button"
                 onClick={() => setStep(2)}
                 disabled={!email.trim() || !password.trim() || password.length < 8}
                 className="btn-primary flex-1 flex items-center justify-center gap-1.5"
@@ -275,10 +276,11 @@ function AddEmailModal({
             </p>
             <PlatformSelect selected={targetPlatforms} onChange={setTargetPlatforms} />
             <div className="flex gap-2 pt-2">
-              <button onClick={() => setStep(1)} className="btn-secondary flex items-center gap-1.5">
+              <button type="button" onClick={() => setStep(1)} className="btn-secondary flex items-center gap-1.5">
                 <ArrowLeft size={16} /> Back
               </button>
               <button
+                type="button"
                 onClick={() => setStep(targetPlatforms.length > 0 ? 3 : 4)}
                 className="btn-primary flex-1 flex items-center justify-center gap-1.5"
               >
@@ -296,10 +298,11 @@ function AddEmailModal({
             </p>
             <AvatarAssignPicker selectedId={avatarId} onChange={setAvatarId} />
             <div className="flex gap-2 pt-2">
-              <button onClick={() => setStep(2)} className="btn-secondary flex items-center gap-1.5">
+              <button type="button" onClick={() => setStep(2)} className="btn-secondary flex items-center gap-1.5">
                 <ArrowLeft size={16} /> Back
               </button>
               <button
+                type="button"
                 onClick={() => setStep(4)}
                 className="btn-primary flex-1 flex items-center justify-center gap-1.5"
               >
@@ -342,7 +345,7 @@ function AddEmailModal({
             )}
             {error && <p className="text-sm text-accent-red">{error}</p>}
             <div className="flex gap-2 pt-2">
-              <button onClick={() => setStep(targetPlatforms.length > 0 ? 3 : 2)} className="btn-secondary flex items-center gap-1.5">
+              <button type="button" onClick={() => setStep(targetPlatforms.length > 0 ? 3 : 2)} className="btn-secondary flex items-center gap-1.5">
                 <ArrowLeft size={16} /> Back
               </button>
               <LoadingButton
@@ -425,7 +428,7 @@ function BulkImportModal({
       <div className="card w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-text-primary">Bulk Import Accounts</h2>
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
+          <button type="button" onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -520,6 +523,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
   return (
     <div className="flex items-center gap-1">
       <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); handleAction('sync'); }}
         disabled={acting !== null}
         title="Sync"
@@ -529,6 +533,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
         <RefreshCw size={12} className={acting === 'sync' ? 'animate-spin' : ''} />
       </button>
       <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); handleAction('health-check'); }}
         disabled={acting !== null}
         title="Health Check"
@@ -539,6 +544,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
       </button>
       <div className="relative">
         <button
+          type="button"
           onClick={(e) => { e.stopPropagation(); setWarmPopoverOpen((v) => !v); }}
           disabled={acting !== null}
           title="Warm Up"
@@ -576,6 +582,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={handleStartWarm}
                   disabled={acting === 'warm'}
                   className="btn-primary btn-sm flex-1 text-xs"
@@ -583,6 +590,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
                   {acting === 'warm' ? 'Starting...' : 'Start Warm-up'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setWarmPopoverOpen(false)}
                   className="btn-secondary btn-sm text-xs"
                 >
@@ -632,7 +640,7 @@ function DetailPanel({
         <h3 className="font-semibold text-text-primary truncate">
           {isLoading ? 'Loading...' : account?.email ?? 'Account Detail'}
         </h3>
-        <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
+        <button type="button" onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
           <X size={18} />
         </button>
       </div>
@@ -641,6 +649,7 @@ function DetailPanel({
       <div className="flex border-b border-border">
         {tabs.map((t) => (
           <button
+            type="button"
             key={t.key}
             role="tab"
             aria-selected={tab === t.key}
@@ -1024,10 +1033,10 @@ export default function AccountsPage() {
           <p className="text-text-secondary text-sm mt-1">Manage email accounts and connected socials</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowImport(true)} className="btn-secondary flex items-center gap-2">
+          <button type="button" onClick={() => setShowImport(true)} className="btn-secondary flex items-center gap-2">
             <Upload size={14} /> Import
           </button>
-          <button onClick={() => setShowAddEmail(true)} className="btn-primary flex items-center gap-2">
+          <button type="button" onClick={() => setShowAddEmail(true)} className="btn-primary flex items-center gap-2">
             <Plus size={14} /> Add Email
           </button>
         </div>
@@ -1090,16 +1099,18 @@ export default function AccountsPage() {
             {selectedIds.size} selected
           </span>
           <div className="flex-1" />
-          <button onClick={handleBulkExport} className="btn-secondary btn-sm flex items-center gap-1.5">
+          <button type="button" onClick={handleBulkExport} className="btn-secondary btn-sm flex items-center gap-1.5">
             <Upload size={14} /> Export CSV
           </button>
           <button
+            type="button"
             onClick={() => setShowBulkDelete(true)}
             className="btn-danger btn-sm flex items-center gap-1.5"
           >
             <Trash2 size={14} /> Delete Selected
           </button>
           <button
+            type="button"
             onClick={() => setSelectedIds(new Set())}
             className="text-text-secondary hover:text-text-primary text-sm"
           >
@@ -1115,7 +1126,7 @@ export default function AccountsPage() {
         ) : error ? (
           <div className="text-center py-12 text-accent-red">
             <p>Failed to load accounts.</p>
-            <button onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
+            <button type="button" onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
           </div>
         ) : filteredAccounts.length === 0 ? (
           <AccountsEmptyState onAddEmail={() => setShowAddEmail(true)} />

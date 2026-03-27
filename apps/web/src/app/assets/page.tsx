@@ -111,7 +111,7 @@ function CreateAvatarModal({
       <div className="bg-bg-secondary border border-border rounded-xl w-full max-w-md p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">New Character</h2>
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary">
+          <button type="button" onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary">
             <X size={20} />
           </button>
         </div>
@@ -129,10 +129,11 @@ function CreateAvatarModal({
           }}
         />
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="btn-secondary text-sm">
+          <button type="button" onClick={onClose} className="btn-secondary text-sm">
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleCreate}
             disabled={!name.trim() || saving}
             className="btn-primary text-sm disabled:opacity-50"
@@ -200,7 +201,7 @@ function CreateSceneryModal({
       <div className="bg-bg-secondary border border-border rounded-xl w-full max-w-md p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">New Background</h2>
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary">
+          <button type="button" onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary">
             <X size={20} />
           </button>
         </div>
@@ -245,10 +246,11 @@ function CreateSceneryModal({
         />
 
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="btn-secondary text-sm">
+          <button type="button" onClick={onClose} className="btn-secondary text-sm">
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleCreate}
             disabled={!name.trim() || !imageUrl.trim() || saving}
             className="btn-primary text-sm disabled:opacity-50"
@@ -337,6 +339,7 @@ function AvatarCard({
           </p>
         </div>
         <button
+          type="button"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteOpen(true); }}
           disabled={deleting}
           className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all p-1 rounded"
@@ -423,6 +426,7 @@ function SceneryCard({
           </div>
         </div>
         <button
+          type="button"
           onClick={() => setDeleteOpen(true)}
           disabled={deleting}
           className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all p-1 rounded"
@@ -514,13 +518,13 @@ export default function AssetsPage() {
 
         {/* Create button for active tab */}
         {activeTab === 'characters' && (
-          <button onClick={() => setShowCreateAvatar(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
+          <button type="button" onClick={() => setShowCreateAvatar(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
             <Plus size={16} />
             New Character
           </button>
         )}
         {activeTab === 'backgrounds' && (
-          <button onClick={() => setShowCreateScenery(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
+          <button type="button" onClick={() => setShowCreateScenery(true)} className="btn-primary inline-flex items-center gap-2 text-sm">
             <Plus size={16} />
             New Background
           </button>
@@ -531,6 +535,7 @@ export default function AssetsPage() {
       <div role="tablist" className="flex items-center gap-1 border-b border-border mb-4">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
+            type="button"
             key={key}
             role="tab"
             aria-selected={activeTab === key}
@@ -594,7 +599,7 @@ export default function AssetsPage() {
                 {search ? 'No characters match your search.' : 'Create your first character to use in productions.'}
               </p>
               {!search && (
-                <button onClick={() => setShowCreateAvatar(true)} className="btn-primary text-sm inline-flex items-center gap-2">
+                <button type="button" onClick={() => setShowCreateAvatar(true)} className="btn-primary text-sm inline-flex items-center gap-2">
                   <Plus size={16} />
                   New Character
                 </button>
@@ -614,6 +619,7 @@ export default function AssetsPage() {
                   </span>
                   <div className="flex gap-1">
                     <button
+                      type="button"
                       onClick={() => setAvatarPage((p) => Math.max(1, p - 1))}
                       disabled={avatarPage === 1}
                       className="btn-secondary text-caption px-2 py-1 disabled:opacity-50"
@@ -624,6 +630,7 @@ export default function AssetsPage() {
                       {avatarPage} / {avatarTotalPages}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setAvatarPage((p) => Math.min(avatarTotalPages, p + 1))}
                       disabled={avatarPage === avatarTotalPages}
                       className="btn-secondary text-caption px-2 py-1 disabled:opacity-50"
@@ -654,7 +661,7 @@ export default function AssetsPage() {
                   : 'Add backgrounds for use in your video productions.'}
               </p>
               {!search && sceneryCategory === 'all' && (
-                <button onClick={() => setShowCreateScenery(true)} className="btn-primary text-sm inline-flex items-center gap-2">
+                <button type="button" onClick={() => setShowCreateScenery(true)} className="btn-primary text-sm inline-flex items-center gap-2">
                   <Plus size={16} />
                   New Background
                 </button>
@@ -674,6 +681,7 @@ export default function AssetsPage() {
                   </span>
                   <div className="flex gap-1">
                     <button
+                      type="button"
                       onClick={() => setSceneryPage((p) => Math.max(1, p - 1))}
                       disabled={sceneryPage === 1}
                       className="btn-secondary text-caption px-2 py-1 disabled:opacity-50"
@@ -684,6 +692,7 @@ export default function AssetsPage() {
                       {sceneryPage} / {sceneryTotalPages}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setSceneryPage((p) => Math.min(sceneryTotalPages, p + 1))}
                       disabled={sceneryPage === sceneryTotalPages}
                       className="btn-secondary text-caption px-2 py-1 disabled:opacity-50"

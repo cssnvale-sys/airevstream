@@ -463,6 +463,7 @@ function AiServicesTab() {
               Test All
             </LoadingButton>
             <button
+              type="button"
               onClick={() => setShowAddForm(!showAddForm)}
               className="btn-primary btn-sm flex items-center gap-1"
             >
@@ -521,7 +522,7 @@ function AiServicesTab() {
                 <Plus size={14} />
                 Add
               </LoadingButton>
-              <button onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm">
+              <button type="button" onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm">
                 Cancel
               </button>
             </div>
@@ -564,6 +565,7 @@ function AiServicesTab() {
                   {svc.status}
                 </span>
                 <button
+                  type="button"
                   onClick={() => handleDeleteService(svc.id)}
                   disabled={deletingServiceId === svc.id}
                   className={cn('text-text-secondary hover:text-accent-red transition-colors p-1', deletingServiceId === svc.id && 'opacity-50 cursor-not-allowed')}
@@ -708,6 +710,7 @@ function NotificationsTab() {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-text-primary capitalize">{ch.type}</span>
             <button
+              type="button"
               role="switch"
               aria-checked={ch.enabled}
               aria-label={`${ch.type} notifications`}
@@ -991,12 +994,13 @@ function SecurityTab() {
               <code className="flex-1 text-xs bg-bg-tertiary rounded px-3 py-2 font-mono text-text-primary break-all">
                 {newKeyValue}
               </code>
-              <button onClick={handleCopyKey} className="btn-ghost btn-sm flex items-center gap-1 shrink-0">
+              <button type="button" onClick={handleCopyKey} className="btn-ghost btn-sm flex items-center gap-1 shrink-0">
                 {copiedKey ? <Check size={14} className="text-accent-green" /> : <Copy size={14} />}
                 {copiedKey ? 'Copied' : 'Copy'}
               </button>
             </div>
             <button
+              type="button"
               onClick={() => setNewKeyValue(null)}
               className="text-xs text-text-secondary hover:text-text-primary mt-2"
             >
@@ -1042,6 +1046,7 @@ function SecurityTab() {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setRevokeTarget(key.id)}
                   disabled={key.status === 'revoked' || revokingKeyId === key.id}
                   className={cn('btn-danger btn-sm flex items-center gap-1', (key.status === 'revoked' || revokingKeyId === key.id) && 'opacity-50 cursor-not-allowed')}
@@ -1132,6 +1137,7 @@ function AppearanceTab() {
             const selected = theme === opt.value;
             return (
               <button
+                type="button"
                 key={opt.value}
                 onClick={() => setTheme(opt.value)}
                 className={cn(
@@ -1158,6 +1164,7 @@ function AppearanceTab() {
             const selected = sidebarPosition === opt.value;
             return (
               <button
+                type="button"
                 key={opt.value}
                 onClick={() => setSidebarPosition(opt.value)}
                 className={cn(
@@ -1303,6 +1310,7 @@ function ProxiesTab() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-text-primary">Configured Proxies</h3>
           <button
+            type="button"
             onClick={() => setShowAddForm(!showAddForm)}
             className="btn-primary btn-sm flex items-center gap-1"
           >
@@ -1402,7 +1410,7 @@ function ProxiesTab() {
                 <Plus size={14} />
                 Add
               </LoadingButton>
-              <button onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm">
+              <button type="button" onClick={() => setShowAddForm(false)} className="btn-secondary btn-sm">
                 Cancel
               </button>
             </div>
@@ -1459,6 +1467,7 @@ function ProxiesTab() {
                           Test
                         </LoadingButton>
                         <button
+                          type="button"
                           onClick={() => setDeleteTarget(proxy.id)}
                           disabled={deletingProxyId === proxy.id}
                           className={cn('text-text-secondary hover:text-accent-red transition-colors p-1.5', deletingProxyId === proxy.id && 'opacity-50 cursor-not-allowed')}
@@ -1672,6 +1681,7 @@ export default function SettingsPage() {
           const isActive = activeTab === tab.id;
           return (
             <button
+              type="button"
               key={tab.id}
               role="tab"
               aria-selected={isActive}

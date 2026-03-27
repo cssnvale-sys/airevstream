@@ -88,20 +88,3 @@ export type ConnectionEvent = {
   };
 };
 
-// ─── Type Guards ───
-
-export function isAlertEvent(event: SystemEvent): event is AlertEvent {
-  return event.type === 'alert';
-}
-
-export function isWorkflowUpdateEvent(event: SystemEvent): event is WorkflowUpdateEvent {
-  return event.type === 'workflow-update';
-}
-
-export function isContentStatusEvent(event: SystemEvent): event is ContentStatusEvent {
-  return event.type === 'content-status';
-}
-
-export function isSystemMetricEvent(event: SystemEvent): event is SystemMetricEvent {
-  return event.type === 'system-metric';
-}

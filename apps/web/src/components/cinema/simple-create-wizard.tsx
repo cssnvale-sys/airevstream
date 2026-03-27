@@ -737,6 +737,7 @@ export function SimpleCreateWizard() {
           return (
             <div key={s.num} className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => {
                   if (s.num < step) goToStep(s.num);
                 }}
@@ -779,6 +780,7 @@ export function SimpleCreateWizard() {
       {step > 1 && step < 4 && (
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
           <button
+            type="button"
             onClick={goBack}
             className="btn-secondary flex items-center gap-2"
           >
@@ -786,6 +788,7 @@ export function SimpleCreateWizard() {
             Back
           </button>
           <button
+            type="button"
             onClick={goNext}
             disabled={!canGoNext() || generating}
             className="btn-primary flex items-center gap-2"

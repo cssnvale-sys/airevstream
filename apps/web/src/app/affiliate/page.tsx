@@ -217,7 +217,7 @@ function Modal({
       <div className="relative bg-bg-secondary border border-border rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-          <button onClick={onClose} aria-label="Close" className="btn-ghost p-1">
+          <button type="button" onClick={onClose} aria-label="Close" className="btn-ghost p-1">
             <X size={18} />
           </button>
         </div>
@@ -324,6 +324,7 @@ export default function AffiliatePage() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowAddProduct(true)}
           className="btn-primary flex items-center gap-2"
         >
@@ -335,6 +336,7 @@ export default function AffiliatePage() {
       <div role="tablist" className="flex gap-1 mb-6 border-b border-border">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
+            type="button"
             key={key}
             role="tab"
             aria-selected={activeTab === key}
@@ -742,6 +744,7 @@ function ChannelPoolsTab({
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleRemove(product.id)}
                       disabled={removingId === product.id}
                       className="btn-danger btn-sm flex items-center gap-1"
@@ -788,6 +791,7 @@ function ChannelPoolsTab({
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleAdd(product.id)}
                       disabled={addingId === product.id}
                       className="btn-primary btn-sm flex items-center gap-1"
@@ -829,7 +833,7 @@ function LinksTab({
         <p className="text-sm text-text-secondary">
           Shortened affiliate links for tracking clicks.
         </p>
-        <button onClick={onCreateLink} className="btn-secondary flex items-center gap-2 text-sm">
+        <button type="button" onClick={onCreateLink} className="btn-secondary flex items-center gap-2 text-sm">
           <Link2 size={14} /> Create Link
         </button>
       </div>
@@ -1468,6 +1472,7 @@ function ProductDetailModal({
                   Save Changes
                 </LoadingButton>
                 <button
+                  type="button"
                   onClick={() => {
                     populateForm(product);
                     setEditing(false);
@@ -1565,10 +1570,10 @@ function ProductDetailModal({
               )}
 
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setEditing(true)} className="btn-primary flex-1">
+                <button type="button" onClick={() => setEditing(true)} className="btn-primary flex-1">
                   Edit Product
                 </button>
-                <button onClick={onClose} className="btn-secondary">
+                <button type="button" onClick={onClose} className="btn-secondary">
                   Close
                 </button>
               </div>
@@ -1786,7 +1791,7 @@ function StorefrontsTab({
         <p className="text-sm text-text-secondary">
           Public storefronts showcasing your affiliate products.
         </p>
-        <button onClick={onCreateStorefront} className="btn-secondary flex items-center gap-2 text-sm">
+        <button type="button" onClick={onCreateStorefront} className="btn-secondary flex items-center gap-2 text-sm">
           <Store size={14} /> Create Storefront
         </button>
       </div>
@@ -1897,16 +1902,16 @@ function StorefrontsTab({
                           <LoadingButton onClick={handleSave} loading={saving} loadingText="Saving..." className="btn-primary btn-sm text-xs">
                             Save
                           </LoadingButton>
-                          <button onClick={cancelEdit} className="btn-secondary btn-sm text-xs">
+                          <button type="button" onClick={cancelEdit} className="btn-secondary btn-sm text-xs">
                             Cancel
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 justify-end">
-                          <button onClick={() => startEdit(sf)} className="btn-secondary btn-sm p-1" title="Edit" aria-label="Edit storefront">
+                          <button type="button" onClick={() => startEdit(sf)} className="btn-secondary btn-sm p-1" title="Edit" aria-label="Edit storefront">
                             <Edit2 size={14} />
                           </button>
-                          <button onClick={() => setDeleteTarget(sf)} className="btn-secondary btn-sm p-1 text-accent-red" title="Delete" aria-label="Delete storefront">
+                          <button type="button" onClick={() => setDeleteTarget(sf)} className="btn-secondary btn-sm p-1 text-accent-red" title="Delete" aria-label="Delete storefront">
                             <Trash2 size={14} />
                           </button>
                         </div>

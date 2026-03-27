@@ -15,9 +15,9 @@ interface AiGuidancePanelProps {
 }
 
 const TYPE_STYLES: Record<string, string> = {
-  info: 'border-blue-500/30 bg-blue-500/5',
-  warning: 'border-yellow-500/30 bg-yellow-500/5',
-  improvement: 'border-emerald-500/30 bg-emerald-500/5',
+  info: 'border-accent-blue/30 bg-accent-blue/5',
+  warning: 'border-accent-amber/30 bg-accent-amber/5',
+  improvement: 'border-accent-green/30 bg-accent-green/5',
 };
 
 const TYPE_LABELS: Record<string, string> = {

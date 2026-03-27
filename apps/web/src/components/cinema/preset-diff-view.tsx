@@ -32,12 +32,12 @@ export function PresetDiffView({ diff }: PresetDiffViewProps) {
               <span className="text-text-secondary font-mono min-w-[120px]">{entry.label}</span>
               {entry.before !== undefined ? (
                 <>
-                  <span className="text-amber-400">{formatValue(entry.before)}</span>
+                  <span className="text-accent-amber">{formatValue(entry.before)}</span>
                   <span className="text-text-tertiary">&rarr;</span>
-                  <span className="text-emerald-400">{formatValue(entry.after)}</span>
+                  <span className="text-accent-green">{formatValue(entry.after)}</span>
                 </>
               ) : (
-                <span className="text-emerald-400">+ {formatValue(entry.after)}</span>
+                <span className="text-accent-green">+ {formatValue(entry.after)}</span>
               )}
             </div>
           ))}

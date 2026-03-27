@@ -9,11 +9,11 @@ interface ShotListProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-500/20 text-yellow-400',
-  generating: 'bg-blue-500/20 text-blue-400',
-  generated: 'bg-green-500/20 text-green-400',
-  approved: 'bg-emerald-500/20 text-emerald-400',
-  failed: 'bg-red-500/20 text-red-400',
+  pending: 'bg-accent-amber/20 text-accent-amber',
+  generating: 'bg-accent-blue/20 text-accent-blue',
+  generated: 'bg-accent-green/20 text-accent-green',
+  approved: 'bg-accent-green/20 text-accent-green',
+  failed: 'bg-accent-red/20 text-accent-red',
 };
 
 export function ShotList({ shots, selectedId, onSelect }: ShotListProps) {
@@ -34,7 +34,7 @@ export function ShotList({ shots, selectedId, onSelect }: ShotListProps) {
         >
           <div className="flex items-center justify-between">
             <span className="font-medium">Shot {shot.shotNumber}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded ${STATUS_COLORS[shot.status] ?? 'bg-gray-500/20 text-gray-400'}`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded ${STATUS_COLORS[shot.status] ?? 'bg-bg-tertiary text-text-tertiary'}`}>
               {shot.status}
             </span>
           </div>

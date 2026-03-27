@@ -20,11 +20,11 @@ interface ShotTableProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-  generating: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  generated: 'bg-green-500/20 text-green-400 border-green-500/30',
-  approved: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  failed: 'bg-red-500/20 text-red-400 border-red-500/30',
+  pending: 'bg-bg-tertiary text-text-tertiary border-border',
+  generating: 'bg-accent-blue/20 text-accent-blue border-accent-blue/30',
+  generated: 'bg-accent-green/20 text-accent-green border-accent-green/30',
+  approved: 'bg-accent-green/20 text-accent-green border-accent-green/30',
+  failed: 'bg-accent-red/20 text-accent-red border-accent-red/30',
 };
 
 function formatTimecode(seconds: number | null): string {

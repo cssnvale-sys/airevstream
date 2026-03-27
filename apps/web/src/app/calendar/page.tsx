@@ -523,6 +523,7 @@ export default function CalendarPage() {
           value={filters.channelId}
           onChange={(e) => updateFilter('channelId', e.target.value)}
           className="input text-caption"
+          aria-label="Filter by channel"
         >
           <option value="all">All Channels</option>
           {channels.map((ch) => (
@@ -536,6 +537,7 @@ export default function CalendarPage() {
           value={filters.platform}
           onChange={(e) => updateFilter('platform', e.target.value)}
           className="input text-caption"
+          aria-label="Filter by platform"
         >
           {PLATFORM_OPTIONS.map((p) => (
             <option key={p} value={p}>
@@ -548,6 +550,7 @@ export default function CalendarPage() {
           value={filters.status}
           onChange={(e) => updateFilter('status', e.target.value)}
           className="input text-caption"
+          aria-label="Filter by status"
         >
           {STATUS_OPTIONS.map((s) => (
             <option key={s} value={s}>
@@ -560,6 +563,7 @@ export default function CalendarPage() {
           value={filters.colorBy}
           onChange={(e) => updateFilter('colorBy', e.target.value as Filters['colorBy'])}
           className="input text-caption"
+          aria-label="Color by"
         >
           <option value="status">Color by Status</option>
           <option value="platform">Color by Platform</option>

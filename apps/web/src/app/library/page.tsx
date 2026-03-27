@@ -452,6 +452,7 @@ export default function LibraryPage() {
             value={filterType}
             onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
             className="input"
+            aria-label="Filter by content type"
           >
             <option value="">All Types</option>
             {CONTENT_TYPES.filter(Boolean).map((t) => (
@@ -462,6 +463,7 @@ export default function LibraryPage() {
             value={filterStatus}
             onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
             className="input"
+            aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
             {STATUS_OPTIONS.filter(Boolean).map((s) => (
@@ -472,6 +474,7 @@ export default function LibraryPage() {
             value={sortValue}
             onChange={(e) => { setSortValue(e.target.value); setPage(1); }}
             className="input"
+            aria-label="Sort by"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -486,6 +489,7 @@ export default function LibraryPage() {
               value={filterChannel}
               onChange={(e) => { setFilterChannel(e.target.value); setPage(1); }}
               className="input"
+              aria-label="Filter by channel"
             >
               <option value="">All Channels</option>
               {channels.map((ch) => (
@@ -496,6 +500,7 @@ export default function LibraryPage() {
               value={filterModel}
               onChange={(e) => { setFilterModel(e.target.value); setPage(1); }}
               className="input"
+              aria-label="Filter by AI model"
             >
               <option value="">All Models</option>
               {aiServices.map((svc) => (

@@ -104,6 +104,7 @@ export default function WorkflowsPage() {
                   value={jobTypeFilter}
                   onChange={(e) => updateJobTypeFilter(e.target.value)}
                   className="input text-caption"
+                  aria-label="Filter by job type"
                 >
                   {JOB_TYPE_FILTERS.map((t) => (
                     <option key={t} value={t}>

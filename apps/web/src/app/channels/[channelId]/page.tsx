@@ -191,7 +191,7 @@ export default function ChannelDetailPage() {
           <textarea
             value={personality}
             onChange={(e) => setPersonality(e.target.value)}
-            className="input w-full"
+            className="input w-full resize-none"
             rows={3}
             placeholder="Describe the channel's personality and voice..."
           />
@@ -202,7 +202,7 @@ export default function ChannelDetailPage() {
           <textarea
             value={targetAudience}
             onChange={(e) => setTargetAudience(e.target.value)}
-            className="input w-full"
+            className="input w-full resize-none"
             rows={3}
             placeholder="Describe the target audience..."
           />

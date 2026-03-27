@@ -431,7 +431,7 @@ function BulkImportModal({
             <textarea
               value={json}
               onChange={(e) => setJson(e.target.value)}
-              className="input w-full h-40 font-mono text-xs"
+              className="input w-full h-40 font-mono text-xs resize-none"
               placeholder={`[
   { "email": "user1@example.com", "password": "pass1", "tier": "tier2" },
   { "email": "user2@example.com", "password": "pass2", "tier": "tier1" }

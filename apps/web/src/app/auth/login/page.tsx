@@ -60,7 +60,7 @@ export default function LoginPage() {
           <p className="text-text-secondary mt-1">Sign in to your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="card space-y-4">
           {error && (
             <div className="bg-accent-red/10 border border-accent-red/20 text-accent-red px-4 py-2 rounded-md text-body">
               {error}

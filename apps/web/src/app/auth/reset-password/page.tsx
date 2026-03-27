@@ -82,7 +82,7 @@ function ResetPasswordForm() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="card space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="card space-y-4">
           {error && (
             <div className="bg-accent-red/10 border border-accent-red/20 text-accent-red px-4 py-2 rounded-md text-body">
               {error}

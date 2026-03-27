@@ -1198,7 +1198,7 @@ function AddProductModal({
       }}
       title="Add Affiliate Product"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
           <div className="text-sm text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
             {errorMsg}
@@ -1614,7 +1614,7 @@ function CreateLinkModal({
       }}
       title="Create Affiliate Link"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
           <div className="text-sm text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
             {errorMsg}
@@ -1980,7 +1980,7 @@ function CreateStorefrontModal({
       }}
       title="Create Storefront"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
           <div className="text-sm text-accent-red bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
             {errorMsg}

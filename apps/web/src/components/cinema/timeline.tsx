@@ -104,7 +104,7 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
               <span className="absolute -left-0 text-[10px] text-text-tertiary w-12">Audio</span>
               <div
                 style={{ position: 'absolute', left: 0, width: totalWidth, height: TRACK_HEIGHT - 8 }}
-                className="bg-accent-green/10 border border-emerald-500/20 rounded"
+                className="bg-accent-green/10 border border-accent-green/20 rounded"
               />
             </div>
           )}

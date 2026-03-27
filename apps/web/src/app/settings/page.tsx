@@ -844,7 +844,7 @@ function SecurityTab() {
       {/* Change Password */}
       <div>
         <h3 className="text-base font-semibold text-text-primary mb-4">Change Password</h3>
-        <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
+        <form noValidate onSubmit={handleChangePassword} className="max-w-md space-y-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1.5">Current Password</label>
             <div className="relative">

@@ -97,7 +97,7 @@ export function CreateSceneryModal({ open, onClose, onCreated }: CreateSceneryMo
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
             <label htmlFor="scenery-name" className="block text-body text-text-secondary mb-1">

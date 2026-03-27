@@ -78,7 +78,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
             <X size={18} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Search Content</label>
             <div className="relative">

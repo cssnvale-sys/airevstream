@@ -99,7 +99,7 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
             <label htmlFor="avatar-name" className="block text-body text-text-secondary mb-1">

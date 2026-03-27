@@ -6,6 +6,8 @@ import { success, error, validationError, getJwtSecret } from '@/lib/api-server'
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { hashPassword } from '@/lib/password';
 
+export const dynamic = 'force-dynamic';
+
 const ResetPasswordSchema = z.object({
   token: z.string().min(1).max(2048),
   newPassword: z.string().min(8, 'Password must be at least 8 characters').max(256),

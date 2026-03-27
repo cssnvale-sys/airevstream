@@ -1,6 +1,8 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 function getDateRange(period: string): { start: Date; end: Date } {
   const now = new Date();
   const end = now;

@@ -2,6 +2,8 @@ import { authenticateAny, success, error, validationError } from '@/lib/api-serv
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/analytics/export
  * Export analytics report as JSON.

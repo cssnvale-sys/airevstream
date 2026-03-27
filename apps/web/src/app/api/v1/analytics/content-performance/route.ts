@@ -1,6 +1,8 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/analytics/content-performance
  * Content performance: quality scores, status counts, model usage.

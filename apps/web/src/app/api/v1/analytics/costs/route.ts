@@ -1,6 +1,8 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/analytics/costs
  * Cost analysis: AiServiceUsage aggregated by service, type.

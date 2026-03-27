@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAny, success, error } from '@/lib/api-server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/suggestions/stats
  * Aggregated suggestion stats: acceptance rate, per-preset rates, avg viral improvement

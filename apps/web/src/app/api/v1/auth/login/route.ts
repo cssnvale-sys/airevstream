@@ -6,6 +6,8 @@ import { success, error, validationError, getJwtSecret } from '@/lib/api-server'
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { verifyPassword } from '@/lib/password';
 
+export const dynamic = 'force-dynamic';
+
 const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1).max(256),

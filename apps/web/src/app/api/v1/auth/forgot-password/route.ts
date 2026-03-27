@@ -5,6 +5,8 @@ import { getDb } from '@airevstream/db';
 import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 const ForgotPasswordSchema = z.object({
   email: z.string().email(),
 });

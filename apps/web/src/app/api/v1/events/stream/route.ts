@@ -4,6 +4,8 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import type { ApiContext } from '@/lib/api-server';
 import type { SystemEvent, AlertSeverity, WorkflowStatus, ContentStatus } from '@/lib/event-types';
 
+export const dynamic = 'force-dynamic';
+
 const encoder = new TextEncoder();
 
 function sseMessage(event: string, data: unknown): Uint8Array {

@@ -1,6 +1,8 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/analytics/audience
  * Audience insights: channel subscriber/follower counts from platform metadata.

@@ -1,6 +1,8 @@
 import { authenticateAny, success, error, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/calendar
  * Get calendar events (scheduled posts) for a date range.

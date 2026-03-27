@@ -51,7 +51,7 @@ export function Breadcrumbs() {
 
   return (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-text-secondary mb-4">
-      <Link href="/dashboard" className="hover:text-text-primary transition-colors">
+      <Link href="/dashboard" aria-label="Home" className="hover:text-text-primary transition-colors">
         <Home size={12} />
       </Link>
       {crumbs.map((crumb) => (

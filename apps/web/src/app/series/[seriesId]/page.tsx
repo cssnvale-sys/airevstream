@@ -125,10 +125,12 @@ export default function SeriesDetailPage() {
 
       {/* Tabs */}
       <div className="border-b border-border mb-6">
-        <div className="flex gap-6">
+        <div role="tablist" className="flex gap-6">
           {TABS.map((tab) => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
                 'pb-3 text-sm font-medium border-b-2 transition-colors',

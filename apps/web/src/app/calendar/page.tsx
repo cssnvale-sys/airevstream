@@ -419,6 +419,7 @@ export default function CalendarPage() {
             if (item.content?.id) router.push(`/content/${item.content.id}`);
           }}
           title={`${item.content?.title ?? 'Untitled'} (${item.channel?.name ?? 'Unknown'}) - ${format(new Date(item.scheduledAt), 'h:mm a')}`}
+          aria-label={`${item.content?.title ?? 'Untitled'} — ${item.content?.status ?? item.status}`}
           className={cn(
             'w-2.5 h-2.5 rounded-full shrink-0 cursor-grab active:cursor-grabbing transition-opacity',
             STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-text-tertiary',

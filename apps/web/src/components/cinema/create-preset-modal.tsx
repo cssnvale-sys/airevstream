@@ -132,7 +132,9 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h2 className="text-sm font-semibold text-text-primary">Create a Preset</h2>
           <button
+            type="button"
             onClick={handleClose}
+            aria-label="Close"
             className="text-text-tertiary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded text-lg leading-none"
           >
             &times;
@@ -161,6 +163,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
                 {description.length}/500
               </span>
               <button
+                type="button"
                 onClick={handleGenerate}
                 disabled={description.length < 3 || isGenerating || state === 'saving'}
                 className={cn(
@@ -193,6 +196,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-text-secondary">Preview</span>
                 <button
+                  type="button"
                   onClick={handleRegenerate}
                   disabled={state === 'saving'}
                   className="text-[10px] text-accent-blue hover:text-accent-blue/80 transition-colors"
@@ -253,6 +257,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
               {/* Overrides (expandable) */}
               <div>
                 <button
+                  type="button"
                   onClick={() => setShowOverrides(!showOverrides)}
                   className="text-[10px] text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1"
                 >
@@ -272,6 +277,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
         {/* Footer */}
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">
           <button
+            type="button"
             onClick={handleClose}
             className="px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors"
           >

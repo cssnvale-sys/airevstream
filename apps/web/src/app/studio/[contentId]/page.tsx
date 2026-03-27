@@ -296,9 +296,10 @@ export default function StudioPage() {
           )}
           <button
             onClick={handleGenerateAll}
-            className="btn-primary btn-sm"
+            disabled={!!activeJobId}
+            className="btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Render
+            {activeJobId ? 'Rendering...' : 'Render'}
           </button>
         </div>
       </div>
@@ -448,9 +449,10 @@ export default function StudioPage() {
                   <p className="text-text-secondary">No storyboard yet</p>
                   <button
                     onClick={handleGenerateAll}
-                    className="btn-primary mt-3"
+                    disabled={!!activeJobId}
+                    className="btn-primary mt-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Generate Storyboard
+                    {activeJobId ? 'Generating...' : 'Generate Storyboard'}
                   </button>
                 </div>
               </div>

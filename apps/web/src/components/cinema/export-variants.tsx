@@ -99,26 +99,38 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
       const variants = VARIANT_OPTIONS.filter((v) => selected.has(v.id));
 
       // Queue a render job for each selected variant
+      let queued = 0;
       for (const variant of variants) {
-        await apiPost('/pipeline/cinema', {
-          contentId,
-          storyboardId,
-          channelId,
-          topic: topic ?? 'Untitled',
-          contentType: contentType ?? 'short',
-          qualityTier,
-          exportVariant: {
-            label: variant.label,
-            width: variant.width,
-            height: variant.height,
-            fps: variant.fps,
-            aspect: variant.aspect,
-            codec: variant.codec,
-          },
-        });
+        try {
+          await apiPost('/pipeline/cinema', {
+            contentId,
+            storyboardId,
+            channelId,
+            topic: topic ?? 'Untitled',
+            contentType: contentType ?? 'short',
+            qualityTier,
+            exportVariant: {
+              label: variant.label,
+              width: variant.width,
+              height: variant.height,
+              fps: variant.fps,
+              aspect: variant.aspect,
+              codec: variant.codec,
+            },
+          });
+          queued++;
+        } catch (err) {
+          console.error(`Failed to queue export variant "${variant.label}":`, err);
+        }
       }
 
-      toast.success(`${variants.length} export${variants.length > 1 ? 's' : ''} queued`);
+      if (queued === variants.length) {
+        toast.success(`${queued} export${queued > 1 ? 's' : ''} queued`);
+      } else if (queued > 0) {
+        toast.warning(`${queued}/${variants.length} exports queued — some failed`);
+      } else {
+        toast.error('Failed to queue exports');
+      }
     } catch (err) {
       console.error('Failed to queue exports:', err);
       toast.error('Failed to queue exports');

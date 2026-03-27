@@ -30,16 +30,16 @@ const FAMILY_LABELS: Record<PresetFamily, string> = {
 };
 
 const FAMILY_COLORS: Record<PresetFamily, string> = {
-  visual: 'bg-purple-500/15 border-purple-500/30 text-purple-400',
-  camera: 'bg-blue-500/15 border-blue-500/30 text-blue-400',
-  audio: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
-  edit: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400',
-  output: 'bg-orange-500/15 border-orange-500/30 text-orange-400',
-  project: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400',
-  character: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
-  story: 'bg-pink-500/15 border-pink-500/30 text-pink-400',
-  dialogue: 'bg-teal-500/15 border-teal-500/30 text-teal-400',
-  continuity: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400',
+  visual: 'bg-accent-purple/15 border-accent-purple/30 text-accent-purple',
+  camera: 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue',
+  audio: 'bg-accent-green/15 border-accent-green/30 text-accent-green',
+  edit: 'bg-accent-amber/15 border-accent-amber/30 text-accent-amber',
+  output: 'bg-accent-red/15 border-accent-red/30 text-accent-red',
+  project: 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue',
+  character: 'bg-accent-red/15 border-accent-red/30 text-accent-red',
+  story: 'bg-accent-red/15 border-accent-red/30 text-accent-red',
+  dialogue: 'bg-accent-green/15 border-accent-green/30 text-accent-green',
+  continuity: 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue',
 };
 
 type TabValue = 'recipes' | 'my-presets' | PresetFamily;
@@ -289,22 +289,22 @@ function RecipeCard({ recipe, onApply, mode }: { recipe: Recipe; onApply: (recip
       {mode && mode !== 'simple' && (recipe.routing || recipe.constraints) && (
         <div className="flex gap-1 mt-1.5 flex-wrap">
           {recipe.routing && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 border-cyan-500/20 text-cyan-400">
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-accent-blue/10 border-accent-blue/20 text-accent-blue">
               {[recipe.routing.keyframeEngine, recipe.routing.motionEngine].filter(Boolean).join(' + ')} &rarr; {recipe.routing.assemblyEngine ?? 'remotion'}
             </span>
           )}
           {recipe.constraints?.maxRuntimeSeconds && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-500/10 border-amber-500/20 text-amber-400">
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-accent-amber/10 border-accent-amber/20 text-accent-amber">
               max {recipe.constraints.maxRuntimeSeconds}s
             </span>
           )}
           {recipe.constraints?.maxCostUsd && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-accent-green/10 border-accent-green/20 text-accent-green">
               ${recipe.constraints.maxCostUsd}
             </span>
           )}
           {recipe.constraints?.allowedAspects && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-indigo-500/10 border-indigo-500/20 text-indigo-400">
+            <span className="text-[10px] px-1.5 py-0.5 rounded border bg-accent-blue/10 border-accent-blue/20 text-accent-blue">
               {recipe.constraints.allowedAspects.join(', ')}
             </span>
           )}

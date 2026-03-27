@@ -13,16 +13,16 @@ interface CreatePresetModalProps {
 }
 
 const FAMILY_COLORS: Record<PresetFamily, string> = {
-  visual: 'bg-purple-500/15 border-purple-500/30 text-purple-400',
-  camera: 'bg-blue-500/15 border-blue-500/30 text-blue-400',
-  audio: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
-  edit: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400',
-  output: 'bg-orange-500/15 border-orange-500/30 text-orange-400',
-  project: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400',
-  character: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
-  story: 'bg-pink-500/15 border-pink-500/30 text-pink-400',
-  dialogue: 'bg-teal-500/15 border-teal-500/30 text-teal-400',
-  continuity: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400',
+  visual: 'bg-accent-purple/15 border-accent-purple/30 text-accent-purple',
+  camera: 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue',
+  audio: 'bg-accent-green/15 border-accent-green/30 text-accent-green',
+  edit: 'bg-accent-amber/15 border-accent-amber/30 text-accent-amber',
+  output: 'bg-accent-amber/15 border-accent-amber/30 text-accent-amber',
+  project: 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue',
+  character: 'bg-accent-red/15 border-accent-red/30 text-accent-red',
+  story: 'bg-accent-red/15 border-accent-red/30 text-accent-red',
+  dialogue: 'bg-accent-green/15 border-accent-green/30 text-accent-green',
+  continuity: 'bg-accent-blue/15 border-accent-blue/30 text-accent-blue',
 };
 
 const FAMILY_LABELS: Record<PresetFamily, string> = {
@@ -170,12 +170,12 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
 
           {/* Error */}
           {genError && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
+            <p className="text-xs text-accent-red bg-accent-red/10 border border-accent-red/20 rounded px-3 py-2">
               {genError}
             </p>
           )}
           {saveError && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
+            <p className="text-xs text-accent-red bg-accent-red/10 border border-accent-red/20 rounded px-3 py-2">
               {saveError}
             </p>
           )}

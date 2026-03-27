@@ -47,7 +47,7 @@ export function AvatarAssignPicker({ selectedId, onChange }: AvatarAssignPickerP
           className={cn(
             'rounded-lg border-2 p-3 text-center transition-all',
             selectedId === avatar.id
-              ? 'border-violet-500/50 bg-violet-900/10'
+              ? 'border-accent-purple/50 bg-accent-purple/10'
               : 'border-zinc-700 hover:border-zinc-600',
           )}
         >

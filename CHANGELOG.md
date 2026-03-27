@@ -27,6 +27,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Search debounce** (Session 47): Added useDebounce(300ms) to affiliate, assets, add-episode-modal, and asset-picker-modal search inputs.
 - **Table overflow** (Session 47): Added overflow-x-auto to 9 tables across analytics, channels, experiments, series pages.
 - **Theme token consistency** (Session 47): Replaced hardcoded hex colors with design system tokens in timeline and cost-preview-panel.
+- **Design system color migration** (Session 47): ~80 hardcoded Tailwind color classes across 16 files migrated to accent-* tokens (bible-editor, quality-badge, file-upload, cost-preview-panel, approvals, content, studio, timeline, shot-table, shot-list, ai-guidance-panel, preset-diff-view, budgets, accounts, calendar, status-bar, analytics, affiliate, scenery-card). Analytics chart CHART_COLORS and tooltipStyle inline hex values replaced with CSS variable references.
+- **Error boundaries** (Session 47 cont.): Added error.tsx to 8 remaining page segments (4 auth child pages + 4 detail pages). All page segments now have error boundaries.
+- **Loading skeletons** (Session 47 cont.): Added loading.tsx to 4 detail pages (assets/[assetId], channels/[channelId], experiments/[experimentId], series/[seriesId]). All page segments now have loading states.
 - **Modal Escape handlers** (Session 47): Added Escape key listeners to create-preset-modal and asset-picker-modal.
 - **Form autoComplete** (Session 47): Added autoComplete attributes to all auth form inputs (email, password, name).
 - **Stable list keys** (Session 47): Fixed index key anti-pattern in channel-viral-dashboard topic suggestions.

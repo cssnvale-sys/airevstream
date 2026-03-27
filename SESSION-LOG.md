@@ -96,7 +96,21 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 24**: Disabled button opacity + input placeholders — plan-review-card regenerate button, preset name/description inputs. KI-058 marked fixed (upscale workflow added).
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 27 (9 original + 18 continuation).
+**Iteration 25**: Stable React keys + search cleanup — viral-score-panel issues list key fixed (index→composite), assets page handleSearchChange replaced with useEffect+setSearch.
+
+**Iteration 26**: Error boundaries + loading skeletons — 8 new error.tsx files (4 auth child pages, 4 detail pages). 4 new loading.tsx files (assets/[assetId], channels/[channelId], experiments/[experimentId], series/[seriesId]). Last Loader2 button converted (asset generate).
+
+**Iteration 27**: Color token migration batch 1 — bible-editor (10 delete buttons), quality-badge, file-upload, cost-preview-panel budget bar. All red/green raw Tailwind → accent-* tokens.
+
+**Iteration 28**: Color token migration batch 2 — approvals, content/[id], studio, timeline. Status indicator and error state colors → accent-* tokens.
+
+**Iteration 29**: Color token migration batch 3 — shot-table (5 statuses), shot-list (5+fallback), ai-guidance-panel (3 types), preset-diff-view (before/after diffs). Cinema components fully tokenized.
+
+**Iteration 30**: Color token migration batch 4 — budgets (status+usage), accounts (health+error), calendar (status dot fallbacks), status-bar (offline indicator).
+
+**Iteration 31**: Color token migration batch 5 — analytics (CHART_COLORS hex→CSS vars, tooltipStyle hex→CSS vars), affiliate (18 red status classes), scenery-card (category colors).
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 34 (9 original + 25 continuation).
 
 ---
 

@@ -219,8 +219,9 @@ function AddEmailModal({
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-text-secondary mb-1">Email</label>
+              <label htmlFor="account-email" className="block text-sm text-text-secondary mb-1">Email</label>
               <input
+                id="account-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -230,8 +231,9 @@ function AddEmailModal({
               />
             </div>
             <div>
-              <label className="block text-sm text-text-secondary mb-1">Password</label>
+              <label htmlFor="account-password" className="block text-sm text-text-secondary mb-1">Password</label>
               <input
+                id="account-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -243,8 +245,8 @@ function AddEmailModal({
               <p className="text-xs text-text-secondary mt-1">Minimum 8 characters</p>
             </div>
             <div>
-              <label className="block text-sm text-text-secondary mb-1">Tier</label>
-              <select value={tier} onChange={(e) => setTier(e.target.value)} className="input w-full">
+              <label htmlFor="account-tier" className="block text-sm text-text-secondary mb-1">Tier</label>
+              <select id="account-tier" value={tier} onChange={(e) => setTier(e.target.value)} className="input w-full">
                 <option value="tier1">Tier 1 (Fresh)</option>
                 <option value="tier2">Tier 2 (Warmed)</option>
                 <option value="tier3">Tier 3 (Established)</option>
@@ -427,10 +429,11 @@ function BulkImportModal({
         </div>
         <form noValidate onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-text-secondary mb-1">
+            <label htmlFor="account-json-import" className="block text-sm text-text-secondary mb-1">
               Paste JSON array of accounts
             </label>
             <textarea
+              id="account-json-import"
               value={json}
               onChange={(e) => setJson(e.target.value)}
               className="input w-full h-40 font-mono text-xs resize-none"

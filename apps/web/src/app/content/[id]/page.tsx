@@ -614,8 +614,9 @@ export default function ContentDetailPage() {
               <h3 className="text-sm font-semibold text-text-primary mb-4">Repurpose Content</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-text-secondary mb-1">Target Format</label>
+                  <label htmlFor="content-target-format" className="block text-xs text-text-secondary mb-1">Target Format</label>
                   <select
+                    id="content-target-format"
                     value={repurposeFormat}
                     onChange={(e) => setRepurposeFormat(e.target.value as 'short' | 'reel' | 'story')}
                     className="input w-full"
@@ -692,8 +693,9 @@ export default function ContentDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-text-secondary mb-1">Schedule For (optional)</label>
+                  <label htmlFor="content-schedule-date" className="block text-xs text-text-secondary mb-1">Schedule For (optional)</label>
                   <input
+                    id="content-schedule-date"
                     type="datetime-local"
                     value={distributeSchedule}
                     onChange={(e) => setDistributeSchedule(e.target.value)}

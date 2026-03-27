@@ -681,11 +681,12 @@ function ChannelPoolsTab({
     <div>
       {/* Channel selector */}
       <div className="mb-6">
-        <label className="block text-sm text-text-secondary mb-1.5">Select Channel</label>
+        <label htmlFor="affiliate-channel-select" className="block text-sm text-text-secondary mb-1.5">Select Channel</label>
         {channelsLoading ? (
           <div className="h-10 bg-bg-tertiary rounded animate-pulse w-64" />
         ) : (
           <select
+            id="affiliate-channel-select"
             value={selectedChannelId ?? ''}
             onChange={(e) => onSelectChannel(e.target.value || null)}
             className="input w-full max-w-sm"
@@ -1218,10 +1219,11 @@ function AddProductModal({
         )}
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">
+          <label htmlFor="affiliate-create-name" className="block text-sm text-text-secondary mb-1">
             Name <span className="text-accent-red">*</span>
           </label>
           <input
+            id="affiliate-create-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -1232,10 +1234,11 @@ function AddProductModal({
         </div>
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">
+          <label htmlFor="affiliate-create-url" className="block text-sm text-text-secondary mb-1">
             URL <span className="text-accent-red">*</span>
           </label>
           <input
+            id="affiliate-create-url"
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -1246,8 +1249,9 @@ function AddProductModal({
         </div>
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">Sales Angle</label>
+          <label htmlFor="affiliate-create-sales-angle" className="block text-sm text-text-secondary mb-1">Sales Angle</label>
           <textarea
+            id="affiliate-create-sales-angle"
             value={salesAngle}
             onChange={(e) => setSalesAngle(e.target.value)}
             className="input w-full h-20 resize-none"
@@ -1257,8 +1261,9 @@ function AddProductModal({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-text-secondary mb-1">Commission Rate (%)</label>
+            <label htmlFor="affiliate-create-commission" className="block text-sm text-text-secondary mb-1">Commission Rate (%)</label>
             <input
+              id="affiliate-create-commission"
               type="number"
               min="0"
               max="100"
@@ -1270,8 +1275,9 @@ function AddProductModal({
             />
           </div>
           <div>
-            <label className="block text-sm text-text-secondary mb-1">Category</label>
+            <label htmlFor="affiliate-create-category" className="block text-sm text-text-secondary mb-1">Category</label>
             <select
+              id="affiliate-create-category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="input w-full"
@@ -1390,8 +1396,9 @@ function ProductDetailModal({
             /* Edit mode */
             <>
               <div>
-                <label className="block text-sm text-text-secondary mb-1">Name</label>
+                <label htmlFor="affiliate-edit-name" className="block text-sm text-text-secondary mb-1">Name</label>
                 <input
+                  id="affiliate-edit-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -1399,8 +1406,9 @@ function ProductDetailModal({
                 />
               </div>
               <div>
-                <label className="block text-sm text-text-secondary mb-1">Sales Angle</label>
+                <label htmlFor="affiliate-edit-sales-angle" className="block text-sm text-text-secondary mb-1">Sales Angle</label>
                 <textarea
+                  id="affiliate-edit-sales-angle"
                   value={salesAngle}
                   onChange={(e) => setSalesAngle(e.target.value)}
                   className="input w-full h-20 resize-none"
@@ -1408,8 +1416,9 @@ function ProductDetailModal({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-text-secondary mb-1">Commission (%)</label>
+                  <label htmlFor="affiliate-edit-commission" className="block text-sm text-text-secondary mb-1">Commission (%)</label>
                   <input
+                    id="affiliate-edit-commission"
                     type="number"
                     min="0"
                     max="100"
@@ -1420,8 +1429,9 @@ function ProductDetailModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-text-secondary mb-1">Category</label>
+                  <label htmlFor="affiliate-edit-category" className="block text-sm text-text-secondary mb-1">Category</label>
                   <select
+                    id="affiliate-edit-category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="input w-full"
@@ -1436,8 +1446,9 @@ function ProductDetailModal({
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-text-secondary mb-1">Status</label>
+                <label htmlFor="affiliate-edit-status" className="block text-sm text-text-secondary mb-1">Status</label>
                 <select
+                  id="affiliate-edit-status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   className="input w-full"
@@ -1634,10 +1645,11 @@ function CreateLinkModal({
         )}
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">
+          <label htmlFor="affiliate-link-product" className="block text-sm text-text-secondary mb-1">
             Product <span className="text-accent-red">*</span>
           </label>
           <select
+            id="affiliate-link-product"
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
             className="input w-full"
@@ -1654,10 +1666,11 @@ function CreateLinkModal({
         </div>
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">
+          <label htmlFor="affiliate-link-short-url" className="block text-sm text-text-secondary mb-1">
             Custom Short URL <span className="text-text-secondary text-xs">(optional)</span>
           </label>
           <input
+            id="affiliate-link-short-url"
             type="url"
             value={shortUrl}
             onChange={(e) => setShortUrl(e.target.value)}
@@ -2000,10 +2013,11 @@ function CreateStorefrontModal({
         )}
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">
+          <label htmlFor="affiliate-storefront-channel" className="block text-sm text-text-secondary mb-1">
             Channel <span className="text-accent-red">*</span>
           </label>
           <select
+            id="affiliate-storefront-channel"
             value={channelId}
             onChange={(e) => setChannelId(e.target.value)}
             className="input w-full"
@@ -2020,10 +2034,11 @@ function CreateStorefrontModal({
         </div>
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">
+          <label htmlFor="affiliate-storefront-name" className="block text-sm text-text-secondary mb-1">
             Name <span className="text-accent-red">*</span>
           </label>
           <input
+            id="affiliate-storefront-name"
             type="text"
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
@@ -2034,10 +2049,11 @@ function CreateStorefrontModal({
         </div>
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">
+          <label htmlFor="affiliate-storefront-slug" className="block text-sm text-text-secondary mb-1">
             Slug <span className="text-accent-red">*</span>
           </label>
           <input
+            id="affiliate-storefront-slug"
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
@@ -2050,8 +2066,9 @@ function CreateStorefrontModal({
         </div>
 
         <div>
-          <label className="block text-sm text-text-secondary mb-1">Description</label>
+          <label htmlFor="affiliate-storefront-description" className="block text-sm text-text-secondary mb-1">Description</label>
           <textarea
+            id="affiliate-storefront-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="input w-full h-20 resize-none"

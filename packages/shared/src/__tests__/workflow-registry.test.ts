@@ -15,8 +15,8 @@ describe('workflow-registry', () => {
     expect(WORKFLOW_REGISTRY.length).toBeGreaterThanOrEqual(4);
   });
 
-  it('should have 8 standard shot classes', () => {
-    expect(SHOT_CLASSES).toHaveLength(8);
+  it('should have 11 standard shot classes', () => {
+    expect(SHOT_CLASSES).toHaveLength(11);
   });
 
   it('should find workflow for Dialogue_Closeup', () => {

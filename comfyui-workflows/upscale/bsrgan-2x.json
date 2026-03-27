@@ -1,0 +1,34 @@
+{
+  "id": "bsrgan-2x-upscale",
+  "name": "BSRGAN 2x Upscale",
+  "version": "1.0.0",
+  "description": "2x upscale using BSRGAN model for quality enhancement",
+  "nodes": {
+    "load_image": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "{input_image}"
+      }
+    },
+    "upscale_model": {
+      "class_type": "UpscaleModelLoader",
+      "inputs": {
+        "model_name": "BSRGAN.pth"
+      }
+    },
+    "upscale": {
+      "class_type": "ImageUpscaleWithModel",
+      "inputs": {
+        "upscale_model": ["upscale_model", 0],
+        "image": ["load_image", 0]
+      }
+    },
+    "save_image": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": ["upscale", 0],
+        "filename_prefix": "upscaled"
+      }
+    }
+  }
+}

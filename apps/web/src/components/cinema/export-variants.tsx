@@ -55,6 +55,20 @@ const VARIANT_OPTIONS: VariantOption[] = [
     width: 1920, height: 1080, fps: 24,
     aspect: '16:9', codec: 'prores',
   },
+  {
+    id: '4k-uhd',
+    label: '4K UHD',
+    description: '3840x2160 • 24fps • H.264',
+    width: 3840, height: 2160, fps: 24,
+    aspect: '16:9', codec: 'h264',
+  },
+  {
+    id: 'stories-9:16',
+    label: 'Mobile Stories',
+    description: '1080x1920 • 15fps • H.264',
+    width: 1080, height: 1920, fps: 15,
+    aspect: '9:16', codec: 'h264',
+  },
 ];
 
 export function ExportVariants({ contentId, storyboardId, channelId, topic, contentType, qualityTier }: ExportVariantsProps) {

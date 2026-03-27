@@ -71,6 +71,9 @@ export const SHOT_CLASSES = [
   'Montage_Quick',
   'Reveal_Dolly',
   'POV_Handheld',
+  'Macro_Insert',
+  'Dutch_Angle',
+  'Crane_Reveal',
 ] as const;
 
 export type ShotClass = (typeof SHOT_CLASSES)[number];
@@ -245,6 +248,69 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     requiredFields: ['promptBlocks', 'camera'],
     supportsFrameAnchoring: true,
     tags: ['action', 'tracking', 'motion', 'dynamic'],
+  },
+  // ── Macro Insert ──
+  {
+    id: 'macro-insert',
+    name: 'Macro Insert',
+    version: '1.0.0',
+    useCase: 'Extreme close-up detail shots — product, texture, small objects',
+    provider: 'comfyui',
+    shotClasses: ['Macro_Insert'],
+    allowedOverrides: ['steps', 'cfg', 'width', 'height', 'seed', 'prompt', 'negativePrompt'],
+    qualityTiers: ['standard', 'cinema'],
+    continuityTier: 'strong',
+    tierDefaults: {
+      standard: { steps: 30, cfg: 7.5, width: 1024, height: 1024, sampler: 'euler_ancestral' },
+      cinema: { steps: 50, cfg: 8.0, width: 1536, height: 1536, sampler: 'dpmpp_2m_sde_karras' },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { standard: 35, cinema: 90 },
+    requiredFields: ['prompt'],
+    supportsFrameAnchoring: true,
+    tags: ['character', 'detail', 'macro', 'product'],
+  },
+  // ── Dutch Angle ──
+  {
+    id: 'dutch-angle',
+    name: 'Dutch Angle',
+    version: '1.0.0',
+    useCase: 'Tilted framing for psychological tension and unease',
+    provider: 'comfyui',
+    shotClasses: ['Dutch_Angle'],
+    allowedOverrides: ['steps', 'cfg', 'width', 'height', 'seed', 'prompt', 'negativePrompt'],
+    qualityTiers: ['standard', 'cinema'],
+    continuityTier: 'standard',
+    tierDefaults: {
+      standard: { steps: 28, cfg: 7.0, width: 1344, height: 768, sampler: 'euler_ancestral' },
+      cinema: { steps: 45, cfg: 7.5, width: 1536, height: 896, sampler: 'dpmpp_2m_sde_karras' },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { standard: 30, cinema: 75 },
+    requiredFields: ['prompt'],
+    supportsFrameAnchoring: false,
+    tags: ['style', 'tension', 'psychological', 'dramatic'],
+  },
+  // ── Crane Reveal ──
+  {
+    id: 'crane-reveal',
+    name: 'Crane Reveal',
+    version: '1.0.0',
+    useCase: 'High-angle descending to eye-level reveal for establishing shots',
+    provider: 'comfyui',
+    shotClasses: ['Crane_Reveal'],
+    allowedOverrides: ['steps', 'cfg', 'width', 'height', 'seed', 'prompt', 'negativePrompt'],
+    qualityTiers: ['standard', 'cinema'],
+    continuityTier: 'strong',
+    tierDefaults: {
+      standard: { steps: 30, cfg: 7.0, width: 1344, height: 768, sampler: 'euler_ancestral' },
+      cinema: { steps: 50, cfg: 7.5, width: 1920, height: 1080, sampler: 'dpmpp_2m_sde_karras' },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { standard: 35, cinema: 85 },
+    requiredFields: ['prompt'],
+    supportsFrameAnchoring: true,
+    tags: ['environment', 'reveal', 'establishing', 'cinematic', 'crane'],
   },
 ];
 

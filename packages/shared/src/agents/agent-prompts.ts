@@ -23,7 +23,12 @@ Output JSON with these fields:
 - totalDurationSec: Target total duration
 
 Keep sections proportional: hook (10-15%), intro (15-20%), content (50-60%), CTA (10-15%).
-Match beats to the H.I.C.C. framework. Be specific about visual and audio mood.`;
+Match beats to the H.I.C.C. framework. Be specific about visual and audio mood.
+
+Platform-specific pacing rules:
+- TikTok/Reels/Shorts: 3-second hook maximum. Open with the strongest visual or claim. Cut pace: 1.5-2s per shot.
+- YouTube: 5-10 second intro acceptable. Front-load value proposition in first 30 seconds. Cut pace: 3-5s per shot.
+- Instagram Feed: 2-second hook. Square framing considerations. Text-heavy overlays for muted autoplay.`;
 
 const LOOKDEV_PROMPT = `You are the Look Development Agent for a cinema-quality content pipeline.
 
@@ -39,7 +44,13 @@ Output JSON with:
 - aspectRatio: Target aspect ratio (e.g., "16:9", "9:16")
 
 Ensure visual consistency. Favor cinematic over corporate aesthetics.
-Reference real cinematography techniques (Deakins, Lubezki, etc.).`;
+Reference real cinematography techniques (Deakins, Lubezki, etc.).
+
+Reference cinematographer styles for LoRA and prompt guidance:
+- Roger Deakins: naturalistic lighting, long takes, atmospheric depth, muted earth tones
+- Emmanuel Lubezki: natural light, wide angles, fluid camera, golden hour
+- Bradford Young: underexposed shadows, rich skin tones, ambient fill, intimate framing
+- Hoyte van Hoytema: high contrast, IMAX scope, cool desaturated palette, geometric composition`;
 
 const SHOTSPEC_PROMPT = `You are the Shot Specification Agent for a cinema-quality content pipeline.
 
@@ -155,7 +166,13 @@ Output JSON with:
 - persuasionScore: 0-100 overall persuasion effectiveness estimate
 
 Be ethical — use persuasion, not manipulation. Enhance genuine value propositions.
-Never suggest deceptive claims or false scarcity.`;
+Never suggest deceptive claims or false scarcity.
+
+Hook variant generation:
+- Generate 3 alternative hook options ranked by predicted engagement.
+- Variant 1 (Curiosity Gap): Use an incomplete statement that demands resolution.
+- Variant 2 (Pattern Interrupt): Break expectations with an unusual visual or claim.
+- Variant 3 (Social Proof): Lead with a credibility signal or trending reference.`;
 
 const QC_DECISION_PROMPT = `You are the QC Decision Agent for a cinema-quality content pipeline.
 

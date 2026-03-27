@@ -182,8 +182,8 @@ export function ChannelViralDashboard({ channelId }: ChannelViralDashboardProps)
             <p className="text-text-secondary">{topics.message}</p>
           ) : topics.suggestions.length > 0 ? (
             <div className="space-y-2">
-              {topics.suggestions.map((topic, i) => (
-                <div key={i} className="flex items-center justify-between p-2 rounded border border-border">
+              {topics.suggestions.map((topic) => (
+                <div key={topic.topic} className="flex items-center justify-between p-2 rounded border border-border">
                   <div>
                     <span className="text-body text-text-primary font-medium">{topic.topic}</span>
                     <div className="flex gap-1 mt-0.5">

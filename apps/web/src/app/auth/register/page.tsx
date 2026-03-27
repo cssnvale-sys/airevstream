@@ -75,6 +75,7 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="input w-full"
+              autoComplete="name"
             />
           </div>
 
@@ -87,6 +88,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="input w-full"
               required
+              autoComplete="email"
             />
           </div>
 
@@ -101,6 +103,7 @@ export default function RegisterPage() {
                 className="input w-full pr-10"
                 minLength={8}
                 required
+                autoComplete="new-password"
                 aria-describedby="password-requirements"
               />
               <button

@@ -104,6 +104,7 @@ function ResetPasswordForm() {
               className="input w-full"
               required
               minLength={8}
+              autoComplete="new-password"
               placeholder="At least 8 characters"
             />
           </div>
@@ -117,6 +118,7 @@ function ResetPasswordForm() {
               className="input w-full"
               required
               minLength={8}
+              autoComplete="new-password"
             />
           </div>
 

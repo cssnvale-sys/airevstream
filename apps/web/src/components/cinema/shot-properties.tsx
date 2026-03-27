@@ -56,6 +56,7 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
           value={promptBlocks.join('\n')}
           onChange={(e) => update('promptBlocks', e.target.value.split('\n').filter(Boolean))}
           placeholder="Shot prompt blocks (one per line)"
+          aria-label="Shot prompt blocks"
           className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-3 text-sm resize-y min-h-[80px] focus:ring-1 focus:ring-accent-blue outline-none"
         />
         <div className="text-xs text-text-tertiary mt-1">
@@ -209,6 +210,7 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
             value={(spec.lighting as string) ?? ''}
             onChange={(e) => update('lighting', e.target.value)}
             placeholder="e.g., golden hour, soft diffused, hard dramatic"
+            aria-label="Lighting description"
             className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
           />
         </CollapsibleSection>

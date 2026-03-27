@@ -580,6 +580,7 @@ export default function ContentDetailPage() {
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Explain what needs to change..."
+                aria-label="Rejection reason"
                 required
                 rows={3}
                 className="w-full px-3 py-2 mb-4 text-sm rounded-lg bg-bg-tertiary border border-border text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent-blue resize-none"

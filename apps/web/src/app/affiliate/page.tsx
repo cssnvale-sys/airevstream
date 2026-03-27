@@ -1867,6 +1867,7 @@ function StorefrontsTab({
                         <select
                           value={editStatus}
                           onChange={(e) => setEditStatus(e.target.value)}
+                          aria-label="Storefront status"
                           className="input text-xs py-1 w-24"
                         >
                           <option value="draft">Draft</option>

@@ -448,13 +448,14 @@ export default function AssetDetailPage() {
 
           {/* Description */}
           <section>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
+            <label htmlFor="asset-description" className="block text-sm font-medium text-text-secondary mb-1">
               Description (JSON)
             </label>
             <p className="text-xs text-text-tertiary mb-1">
               Physical attributes, personality traits, backstory, etc.
             </p>
             <textarea
+              id="asset-description"
               value={descriptionText}
               onChange={(e) => setDescriptionText(e.target.value)}
               placeholder='{"hair": "dark brown", "eyes": "green", "build": "athletic"}'
@@ -465,13 +466,14 @@ export default function AssetDetailPage() {
 
           {/* Trait Locks */}
           <section>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
+            <label htmlFor="asset-trait-locks" className="block text-sm font-medium text-text-secondary mb-1">
               Trait Locks (JSON)
             </label>
             <p className="text-xs text-text-tertiary mb-1">
               Locked visual traits that remain consistent across generations.
             </p>
             <textarea
+              id="asset-trait-locks"
               value={traitLockText}
               onChange={(e) => setTraitLockText(e.target.value)}
               placeholder='{"hairColor": "dark brown", "eyeColor": "green"}'
@@ -485,13 +487,14 @@ export default function AssetDetailPage() {
         <div className="space-y-6">
           {/* Voice Profiles */}
           <section>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
+            <label htmlFor="asset-voice-profiles" className="block text-sm font-medium text-text-secondary mb-1">
               Voice Profiles (JSON)
             </label>
             <p className="text-xs text-text-tertiary mb-1">
               TTS voice configuration for this character.
             </p>
             <textarea
+              id="asset-voice-profiles"
               value={voiceProfilesText}
               onChange={(e) => setVoiceProfilesText(e.target.value)}
               placeholder='{"primary": {"provider": "piper", "voice": "en_US-joe-medium"}}'

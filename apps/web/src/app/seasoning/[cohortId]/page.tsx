@@ -138,6 +138,7 @@ export default function CohortDetailPage() {
             value={enrollIds}
             onChange={(e) => setEnrollIds(e.target.value)}
             placeholder="Paste email account UUIDs (one per line or comma-separated)"
+            aria-label="Email account UUIDs to enroll"
             className="input w-full h-24 text-caption font-mono"
           />
           <div className="flex justify-end gap-2">

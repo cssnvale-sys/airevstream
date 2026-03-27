@@ -187,8 +187,9 @@ export default function ChannelDetailPage() {
         </div>
 
         <div>
-          <label className="text-caption text-text-secondary block mb-1">Personality</label>
+          <label htmlFor="channel-personality" className="text-caption text-text-secondary block mb-1">Personality</label>
           <textarea
+            id="channel-personality"
             value={personality}
             onChange={(e) => setPersonality(e.target.value)}
             className="input w-full resize-none"
@@ -198,8 +199,9 @@ export default function ChannelDetailPage() {
         </div>
 
         <div>
-          <label className="text-caption text-text-secondary block mb-1">Target Audience</label>
+          <label htmlFor="channel-target-audience" className="text-caption text-text-secondary block mb-1">Target Audience</label>
           <textarea
+            id="channel-target-audience"
             value={targetAudience}
             onChange={(e) => setTargetAudience(e.target.value)}
             className="input w-full resize-none"

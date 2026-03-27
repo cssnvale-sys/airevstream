@@ -293,6 +293,7 @@ function AiServicesTab() {
   const [newService, setNewService] = useState({ name: '', type: 'text', endpoint: '' });
   const [adding, setAdding] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [deletingServiceId, setDeletingServiceId] = useState<string | null>(null);
 
   // DnD state for fallback chain editor
   const [reorderableChains, setReorderableChains] = useState<FallbackChain[]>([]);
@@ -390,6 +391,7 @@ function AiServicesTab() {
   };
 
   const handleDeleteService = async (id: string) => {
+    setDeletingServiceId(id);
     try {
       await apiDelete(`/ai-services/${id}`);
       mutate();
@@ -397,6 +399,8 @@ function AiServicesTab() {
     } catch (err) {
       console.error('Failed to remove service:', err);
       toast.error('Failed to remove service');
+    } finally {
+      setDeletingServiceId(null);
     }
   };
 
@@ -548,10 +552,11 @@ function AiServicesTab() {
                 </span>
                 <button
                   onClick={() => handleDeleteService(svc.id)}
-                  className="text-text-secondary hover:text-accent-red transition-colors p-1"
+                  disabled={deletingServiceId === svc.id}
+                  className={cn('text-text-secondary hover:text-accent-red transition-colors p-1', deletingServiceId === svc.id && 'opacity-50 cursor-not-allowed')}
                   title="Remove service"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={14} className={deletingServiceId === svc.id ? 'animate-pulse' : ''} />
                 </button>
               </div>
             ))}
@@ -770,6 +775,7 @@ function SecurityTab() {
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
+  const [revokingKeyId, setRevokingKeyId] = useState<string | null>(null);
 
   const apiKeys = keysRes?.data ?? [];
 
@@ -820,6 +826,7 @@ function SecurityTab() {
   };
 
   const handleRevokeKey = async (id: string) => {
+    setRevokingKeyId(id);
     try {
       await apiPost(`/settings/api-keys/${id}/revoke`);
       mutateKeys();
@@ -828,6 +835,8 @@ function SecurityTab() {
     } catch (err) {
       console.error('Failed to revoke key:', err);
       toast.error('Failed to revoke key');
+    } finally {
+      setRevokingKeyId(null);
     }
   };
 
@@ -1008,10 +1017,10 @@ function SecurityTab() {
                 </div>
                 <button
                   onClick={() => setRevokeTarget(key.id)}
-                  disabled={key.status === 'revoked'}
-                  className={cn('btn-danger btn-sm flex items-center gap-1', key.status === 'revoked' && 'opacity-50 cursor-not-allowed')}
+                  disabled={key.status === 'revoked' || revokingKeyId === key.id}
+                  className={cn('btn-danger btn-sm flex items-center gap-1', (key.status === 'revoked' || revokingKeyId === key.id) && 'opacity-50 cursor-not-allowed')}
                 >
-                  <Trash2 size={12} /> Revoke
+                  <Trash2 size={12} /> {revokingKeyId === key.id ? 'Revoking...' : 'Revoke'}
                 </button>
               </div>
             ))}
@@ -1025,6 +1034,7 @@ function SecurityTab() {
         message="This key will be permanently revoked and can no longer be used for authentication. This action cannot be undone."
         confirmLabel="Revoke Key"
         variant="danger"
+        loading={revokingKeyId !== null}
         onConfirm={() => revokeTarget && handleRevokeKey(revokeTarget)}
         onCancel={() => setRevokeTarget(null)}
       />
@@ -1166,6 +1176,7 @@ function ProxiesTab() {
   const [adding, setAdding] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deletingProxyId, setDeletingProxyId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const proxies = proxiesRes?.data ?? [];
@@ -1201,6 +1212,7 @@ function ProxiesTab() {
   };
 
   const handleDeleteProxy = async (id: string) => {
+    setDeletingProxyId(id);
     try {
       await apiDelete(`/settings/proxies/${id}`);
       mutate();
@@ -1209,6 +1221,8 @@ function ProxiesTab() {
     } catch (err) {
       console.error('Failed to delete proxy:', err);
       toast.error('Failed to delete proxy');
+    } finally {
+      setDeletingProxyId(null);
     }
   };
 
@@ -1414,10 +1428,11 @@ function ProxiesTab() {
                         </LoadingButton>
                         <button
                           onClick={() => setDeleteTarget(proxy.id)}
-                          className="text-text-secondary hover:text-accent-red transition-colors p-1.5"
+                          disabled={deletingProxyId === proxy.id}
+                          className={cn('text-text-secondary hover:text-accent-red transition-colors p-1.5', deletingProxyId === proxy.id && 'opacity-50 cursor-not-allowed')}
                           title="Delete proxy"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} className={deletingProxyId === proxy.id ? 'animate-pulse' : ''} />
                         </button>
                       </div>
                     </td>
@@ -1435,6 +1450,7 @@ function ProxiesTab() {
         message="This proxy will be permanently removed from the configuration. This action cannot be undone."
         confirmLabel="Delete Proxy"
         variant="danger"
+        loading={deletingProxyId !== null}
         onConfirm={() => deleteTarget && handleDeleteProxy(deleteTarget)}
         onCancel={() => setDeleteTarget(null)}
       />

@@ -342,10 +342,11 @@ export default function LibraryPage() {
     if (filterType) p.set('contentType', filterType);
     if (filterStatus) p.set('status', filterStatus);
     if (filterChannel) p.set('channelId', filterChannel);
+    if (filterModel) p.set('aiServiceId', filterModel);
     if (dateFrom) p.set('dateFrom', dateFrom);
     if (dateTo) p.set('dateTo', dateTo);
     return p.toString();
-  }, [page, perPage, sortField, sortOrder, debouncedSearch, filterType, filterStatus, filterChannel, dateFrom, dateTo]);
+  }, [page, perPage, sortField, sortOrder, debouncedSearch, filterType, filterStatus, filterChannel, filterModel, dateFrom, dateTo]);
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -354,11 +355,7 @@ export default function LibraryPage() {
   const allItems = (data?.data ?? []) as ContentItem[];
   const meta = data?.meta ?? { total: 0, page: 1, limit: perPage, pages: 1 };
 
-  // Client-side filter for AI model (not yet a server-side query param)
-  const items = useMemo(() => {
-    if (!filterModel) return allItems;
-    return allItems.filter((item) => item.aiService?.id === filterModel);
-  }, [allItems, filterModel]);
+  const items = allItems;
 
   const handleRefresh = useCallback(() => { mutate(); }, [mutate]);
 

@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     const status = params.get('status') ?? undefined;
     const contentType = params.get('contentType') ?? undefined;
     const channelId = params.get('channelId') ?? undefined;
+    const aiServiceId = params.get('aiServiceId') ?? undefined;
     const dateFrom = params.get('dateFrom') ?? undefined;
     const dateTo = params.get('dateTo') ?? undefined;
 
@@ -42,6 +43,9 @@ export async function GET(req: NextRequest) {
     }
     if (channelId) {
       where.channelId = channelId;
+    }
+    if (aiServiceId) {
+      where.aiServiceId = aiServiceId;
     }
     if (search) {
       where.OR = [

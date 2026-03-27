@@ -62,7 +62,7 @@ export function Pagination({
           <button
             onClick={() => onPageChange(Math.max(1, page - 1))}
             disabled={page <= 1}
-            className="btn-secondary btn-sm p-1 disabled:opacity-30"
+            className="btn-secondary btn-sm p-2 disabled:opacity-30"
             aria-label="Previous page"
           >
             <ChevronLeft size={14} />
@@ -72,7 +72,7 @@ export function Pagination({
               key={num}
               onClick={() => onPageChange(num)}
               className={cn(
-                'btn-sm w-8 h-8 flex items-center justify-center rounded text-xs',
+                'btn-sm min-w-[36px] h-9 flex items-center justify-center rounded text-xs',
                 page === num ? 'btn-primary' : 'btn-secondary',
               )}
             >
@@ -82,7 +82,7 @@ export function Pagination({
           <button
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
-            className="btn-secondary btn-sm p-1 disabled:opacity-30"
+            className="btn-secondary btn-sm p-2 disabled:opacity-30"
             aria-label="Next page"
           >
             <ChevronRight size={14} />

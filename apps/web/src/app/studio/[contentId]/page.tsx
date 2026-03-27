@@ -339,11 +339,11 @@ export default function StudioPage() {
                   </span>
                   {shot.qualityScore != null && <QualityBadge score={shot.qualityScore} size="sm" />}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5">
                   <button
                     onClick={() => handleShotAction(shot.id, 'approve')}
                     disabled={reviewActing === shot.id || shot.status === 'approved'}
-                    className="p-1 rounded text-accent-green hover:bg-accent-green/10 disabled:opacity-30"
+                    className="p-2 rounded text-accent-green hover:bg-accent-green/10 disabled:opacity-30"
                     title="Approve shot"
                   >
                     <Check size={14} />
@@ -351,7 +351,7 @@ export default function StudioPage() {
                   <button
                     onClick={() => handleShotAction(shot.id, 'reject')}
                     disabled={reviewActing === shot.id || shot.status === 'failed'}
-                    className="p-1 rounded text-accent-red hover:bg-accent-red/10 disabled:opacity-30"
+                    className="p-2 rounded text-accent-red hover:bg-accent-red/10 disabled:opacity-30"
                     title="Reject shot"
                   >
                     <X size={14} />
@@ -359,7 +359,7 @@ export default function StudioPage() {
                   <button
                     onClick={() => handleShotAction(shot.id, 'regenerate')}
                     disabled={reviewActing === shot.id || shot.status === 'generating'}
-                    className="p-1 rounded text-accent-blue hover:bg-accent-blue/10 disabled:opacity-30"
+                    className="p-2 rounded text-accent-blue hover:bg-accent-blue/10 disabled:opacity-30"
                     title="Regenerate shot"
                   >
                     <RotateCcw size={14} />

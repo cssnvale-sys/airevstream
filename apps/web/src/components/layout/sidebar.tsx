@@ -199,7 +199,7 @@ export function Sidebar() {
           <button
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
-            className="p-1.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors"
+            className="p-2.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors"
           >
             <X size={20} />
           </button>

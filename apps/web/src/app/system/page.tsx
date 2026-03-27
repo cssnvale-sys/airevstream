@@ -527,7 +527,7 @@ export default function SystemPage() {
                       </span>
                     </td>
                     <td className="py-2 pr-3 text-text-secondary">{err.jobType}</td>
-                    <td className="py-2 pr-3 max-w-xs truncate">{err.error}</td>
+                    <td className="py-2 pr-3 max-w-xs truncate" title={err.error ?? undefined}>{err.error}</td>
                     <td className="py-2 pr-3 text-text-secondary whitespace-nowrap text-xs">
                       {formatRelativeTime(err.updatedAt)}
                     </td>

@@ -87,7 +87,7 @@ export function ShotTable({ shots, selectedShotId, onSelectShot }: ShotTableProp
                 <td className="px-3 py-2 text-text-secondary text-xs">
                   {camera ? `${camera.lens ?? ''} ${camera.framing ?? ''}`.trim() || '--' : '--'}
                 </td>
-                <td className="px-3 py-2 text-text-tertiary text-xs max-w-[200px] truncate">
+                <td className="px-3 py-2 text-text-tertiary text-xs max-w-[200px] truncate" title={dialogue || undefined}>
                   {dialogue || '--'}
                 </td>
                 <td className="px-3 py-2">

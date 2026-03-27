@@ -47,7 +47,7 @@ export function AvatarCard({ avatar }: AvatarCardProps) {
         </div>
 
         {/* Name */}
-        <h4 className="text-sm font-medium text-text-primary truncate w-full text-center">
+        <h4 className="text-sm font-medium text-text-primary truncate w-full text-center" title={avatar.name}>
           {avatar.name}
         </h4>
 

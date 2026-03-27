@@ -861,7 +861,7 @@ function LinksTab({
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 max-w-xs">
-                      <span className="truncate text-text-primary">{link.url}</span>
+                      <span className="truncate text-text-primary" title={link.url}>{link.url}</span>
                       <a
                         href={link.url}
                         target="_blank"

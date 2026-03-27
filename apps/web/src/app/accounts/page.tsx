@@ -1168,7 +1168,7 @@ export default function AccountsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <Mail size={14} className="text-text-secondary flex-shrink-0" />
-                            <span className="font-medium text-text-primary truncate max-w-[220px]">{account.email}</span>
+                            <span className="font-medium text-text-primary truncate max-w-[220px]" title={account.email}>{account.email}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">

@@ -102,7 +102,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium text-text-primary truncate">{a.avatar.name}</span>
+                  <span className="text-sm font-medium text-text-primary truncate" title={a.avatar.name}>{a.avatar.name}</span>
                   {a.isPrimary && <Star size={12} className="text-accent-yellow shrink-0" />}
                 </div>
                 {a.role && (

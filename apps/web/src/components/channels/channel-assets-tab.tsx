@@ -68,7 +68,7 @@ function ChannelAvatarItem({
           <User size={18} className="text-text-tertiary" />
         )}
       </div>
-      <span className="text-sm text-text-primary flex-1 truncate">{assignment.avatar.name}</span>
+      <span className="text-sm text-text-primary flex-1 truncate" title={assignment.avatar.name}>{assignment.avatar.name}</span>
       <button
         onClick={() => onRemove(assignment.id)}
         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-secondary hover:text-accent-red"
@@ -100,7 +100,7 @@ function ChannelSceneryItem({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <span className="text-sm text-text-primary truncate block">{assignment.scenery.name}</span>
+        <span className="text-sm text-text-primary truncate block" title={assignment.scenery.name}>{assignment.scenery.name}</span>
         {assignment.scenery.category && (
           <span className="text-xs text-text-tertiary">{assignment.scenery.category}</span>
         )}

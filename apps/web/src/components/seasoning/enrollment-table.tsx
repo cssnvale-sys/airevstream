@@ -81,7 +81,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
         <tbody>
           {enrollments.map((e) => (
             <tr key={e.id} className="border-b border-border/50 hover:bg-bg-tertiary/50">
-              <td className="py-2 px-3 text-text-primary truncate max-w-[200px]">{e.emailAccount.email}</td>
+              <td className="py-2 px-3 text-text-primary truncate max-w-[200px]" title={e.emailAccount.email}>{e.emailAccount.email}</td>
               <td className="py-2 px-3">
                 <span className="px-1.5 py-0.5 rounded text-caption bg-bg-tertiary">
                   {PLATFORM_ICONS[e.platform] ?? e.platform}

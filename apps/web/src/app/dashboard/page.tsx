@@ -586,7 +586,7 @@ export default function DashboardPage() {
                   {activityIcon(item.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-primary truncate">{item.message}</p>
+                  <p className="text-sm text-text-primary truncate" title={item.message}>{item.message}</p>
                 </div>
                 <span className="text-xs text-text-secondary whitespace-nowrap shrink-0">
                   {formatRelativeTime(item.timestamp)}

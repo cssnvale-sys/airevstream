@@ -132,7 +132,7 @@ export default function ExperimentsPage() {
                         {exp.name}
                       </Link>
                       {exp.hypothesis && (
-                        <p className="text-caption text-text-tertiary mt-0.5 truncate max-w-xs">{exp.hypothesis}</p>
+                        <p className="text-caption text-text-tertiary mt-0.5 truncate max-w-xs" title={exp.hypothesis ?? undefined}>{exp.hypothesis}</p>
                       )}
                     </td>
                     <td className="py-3 px-4">

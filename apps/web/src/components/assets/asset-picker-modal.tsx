@@ -48,7 +48,7 @@ function AvatarPickerItem({ avatar, onSelect }: { avatar: AvatarItem; onSelect: 
           <User size={24} className="text-text-tertiary" />
         )}
       </div>
-      <span className="text-xs text-text-primary truncate w-full text-center">{avatar.name}</span>
+      <span className="text-xs text-text-primary truncate w-full text-center" title={avatar.name}>{avatar.name}</span>
     </button>
   );
 }
@@ -68,7 +68,7 @@ function SceneryPickerItem({ scenery, onSelect }: { scenery: SceneryItem; onSele
           <ImageIcon size={24} className="text-text-tertiary" />
         )}
       </div>
-      <span className="text-xs text-text-primary truncate w-full">{scenery.name}</span>
+      <span className="text-xs text-text-primary truncate w-full" title={scenery.name}>{scenery.name}</span>
     </button>
   );
 }

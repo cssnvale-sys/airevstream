@@ -32,11 +32,12 @@ export function SeriesCard({ series }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium text-text-primary truncate">{series.name}</h4>
-            <div className={cn('w-2 h-2 rounded-full shrink-0', STATUS_DOT[series.status] ?? STATUS_DOT.draft)} />
+            <h4 className="text-sm font-medium text-text-primary truncate" title={series.name}>{series.name}</h4>
+            <div className={cn('w-2 h-2 rounded-full shrink-0', STATUS_DOT[series.status] ?? STATUS_DOT.draft)} aria-hidden="true" />
+            <span className="sr-only">{series.status}</span>
           </div>
           {series.description && (
-            <p className="text-xs text-text-secondary truncate mt-0.5">{series.description}</p>
+            <p className="text-xs text-text-secondary truncate mt-0.5" title={series.description ?? undefined}>{series.description}</p>
           )}
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-text-secondary flex items-center gap-1">

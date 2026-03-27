@@ -49,6 +49,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Table header consistency** (Session 47): Standardized padding/font-weight across system, settings proxy, and enrollment tables.
 - **EmptyState adoption** (Session 47): Series and channels pages now use reusable EmptyState component.
 - **SWR auto-refresh** (Session 47): Approvals (30s), workflows/HITL (10s), dashboard (30s/15s), alerts (30s). Config passthrough for useContent, useApprovals, useCalendar, useWorkflows.
+- **Design tokens** (Session 47): Added text-tertiary and accent-orange as proper CSS variables + Tailwind config (189 + 21 formerly undefined token usages now resolve correctly).
+- **Focus-visible rings** (Session 47): All 6 button utility classes (btn-primary, btn-secondary, btn-danger, btn-success, btn-ghost, btn-icon) now have focus-visible:ring for keyboard navigation.
+- **Date formatting** (Session 47): formatDate() and formatDateTime() utilities with consistent en-US locale. All 13 raw .toLocaleDateString() calls replaced.
+- **Modal auto-focus** (Session 47): 5 modals auto-focus first input on open. Breadcrumbs last crumb has aria-current="page".
+- **ConfirmDialog loading states** (Session 47): Series avatar manager + episode table dialogs now disable buttons during async operations.
+- **Input class standardization** (Session 47): 23 raw Tailwind input/select classes replaced with utility classes across 12 files.
+- **Budgets LoadingButton** (Session 47): Budget form save button converted to LoadingButton to prevent double-submit.
 - **KI-066 fix** (Session 47): Removed 4 unused dependencies (class-variance-authority, @fastify/websocket, playwright-extra, puppeteer-extra-plugin-stealth).
 - **15 API routes missing force-dynamic** (Session 47): Analytics, auth, calendar, events/stream, suggestions/stats, system/metrics routes now export force-dynamic.
 - **22 inline button styles** (Session 47): Replaced with utility classes (btn-primary, btn-secondary, btn-ghost) across 10 components.

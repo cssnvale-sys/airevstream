@@ -154,7 +154,21 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 53**: SWR auto-refresh — Added refreshInterval to approvals (30s), workflows/HITL (10s), dashboard approvals (30s) + workflows (15s). useAlerts default 30s refresh. Config passthrough added to useContent, useApprovals, useCalendar, useWorkflows hooks.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~63 total. Full SEO metadata, responsive design, SWR live refresh, comprehensive form accessibility.
+**Iteration 54**: Modal auto-focus + breadcrumbs — aria-current="page" on breadcrumbs last crumb. Auto-focus on 5 modal open (create-series, create-experiment, create-avatar, asset-picker, create-preset).
+
+**Iteration 55**: Button type + keyboard a11y + responsive grids — type="button" on series modal close. Shot-gallery expandable div made keyboard accessible (role, tabIndex, onKeyDown). Responsive breakpoints on style-card-picker and avatar-assign-picker.
+
+**Iteration 56**: Modal backdrop + input class standardization — 4 modal backdrops standardized to bg-black/60. 11 `input-field` classes replaced with `input` across series/episode files.
+
+**Iteration 57**: Raw Tailwind input cleanup — 9 inputs across 6 files (create-avatar, create-scenery, branding-editor, create-cohort, asset-picker, seasoning cohort) replaced with `input` utility class.
+
+**Iteration 58**: Design system fixes — Added `text-tertiary` (189 usages) and `accent-orange` (21 usages) as proper CSS variables + Tailwind config tokens. Added focus-visible:ring to all 6 button classes (btn-primary, btn-secondary, btn-danger, btn-success, btn-ghost, btn-icon). Added aria-label to 6 icon-only buttons. Budgets page save button converted to LoadingButton.
+
+**Iteration 59**: Date formatting + select cleanup — Created `formatDate()` and `formatDateTime()` utilities. Replaced all 13 `.toLocaleDateString()` calls across 8 files. Replaced 3 raw Tailwind select inputs with `input` class.
+
+**Iteration 60**: ConfirmDialog loading states — Series avatar manager: added removing state + loading prop. Episode table: connected deletingId to ConfirmDialog loading. Added aria-labels to both delete buttons.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~70 total. Design tokens complete, consistent date formatting, comprehensive loading/disabled states.
 
 ---
 

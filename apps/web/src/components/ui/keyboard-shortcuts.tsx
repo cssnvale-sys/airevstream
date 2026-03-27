@@ -13,7 +13,12 @@ const SHORTCUTS: { section: string; items: Shortcut[] }[] = [
     section: 'Navigation',
     items: [
       { keys: ['?'], description: 'Open this shortcuts modal' },
+      { keys: ['⌘', 'K'], description: 'Open command palette' },
       { keys: ['Esc'], description: 'Close panels and modals' },
+      { keys: ['D'], description: 'Go to Dashboard' },
+      { keys: ['S'], description: 'Go to Settings' },
+      { keys: ['P'], description: 'Go to Approvals' },
+      { keys: ['Y'], description: 'Go to System' },
     ],
   },
   {

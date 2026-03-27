@@ -158,6 +158,22 @@ export function Sidebar() {
       case 'T':
         if (!e.metaKey && !e.ctrlKey) router.push('/assets');
         break;
+      case 'd':
+      case 'D':
+        if (!e.metaKey && !e.ctrlKey) router.push('/dashboard');
+        break;
+      case 's':
+      case 'S':
+        if (!e.metaKey && !e.ctrlKey) router.push('/settings');
+        break;
+      case 'p':
+      case 'P':
+        if (!e.metaKey && !e.ctrlKey) router.push('/approvals');
+        break;
+      case 'y':
+      case 'Y':
+        if (!e.metaKey && !e.ctrlKey) router.push('/system');
+        break;
     }
   }, [router]);
 

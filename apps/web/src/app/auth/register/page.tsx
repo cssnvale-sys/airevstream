@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { setToken } from '@/lib/auth';
 
 export default function RegisterPage() {
@@ -90,7 +90,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="register-password" className="block text-body text-text-secondary mb-1">Password (min 8 characters)</label>
+            <label htmlFor="register-password" className="block text-body text-text-secondary mb-1">Password</label>
             <div className="relative">
               <input
                 id="register-password"
@@ -100,6 +100,7 @@ export default function RegisterPage() {
                 className="input w-full pr-10"
                 minLength={8}
                 required
+                aria-describedby="password-requirements"
               />
               <button
                 type="button"
@@ -110,6 +111,14 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {password.length > 0 && (
+              <ul id="password-requirements" className="mt-2 space-y-1 text-xs" aria-label="Password requirements">
+                <li className={`flex items-center gap-1.5 ${password.length >= 8 ? 'text-accent-green' : 'text-text-secondary'}`}>
+                  {password.length >= 8 ? <Check size={12} /> : <X size={12} />}
+                  At least 8 characters
+                </li>
+              </ul>
+            )}
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary w-full">

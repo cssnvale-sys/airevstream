@@ -37,7 +37,7 @@ import {
  * 6. Audio track
  */
 export const ShortFormVideo: React.FC<ShortFormVideoProps> = ({
-  title,
+  title: _title,
   script,
   shots,
   audioUrl,

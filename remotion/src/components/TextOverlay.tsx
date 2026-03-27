@@ -178,8 +178,8 @@ function getAnimationTransform(
 function getPositionStyles(
   position: TextPosition,
   width: number,
-  height: number,
-  padding: number,
+  _height: number,
+  _padding: number,
   maxWidth?: number,
 ): React.CSSProperties {
   const margin = 40;

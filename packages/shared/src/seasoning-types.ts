@@ -1,5 +1,4 @@
-import type { Platform } from './types.js';
-import type { WarmingActivity } from './types.js';
+import type { Platform, WarmingActivity } from './types.js';
 
 // ─── Enrollment Status ───
 

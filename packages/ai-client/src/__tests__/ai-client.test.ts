@@ -38,9 +38,9 @@ describe('@airevstream/ai-client legacy API', () => {
     expect(typeof listModels).toBe('function');
   });
 
-  it('creates an Ollama client', () => {
+  it('creates an Ollama client', async () => {
     resetAiClient();
-    const client = getAiClient('http://localhost:11434');
+    const client = await getAiClient('http://localhost:11434');
     expect(client).toBeDefined();
     resetAiClient();
   });

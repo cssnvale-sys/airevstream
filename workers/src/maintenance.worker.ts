@@ -234,17 +234,17 @@ export function startMaintenanceWorker() {
     repeat: { every: 24 * 60 * 60 * 1000 }, // every 24 hours
     removeOnComplete: true,
     removeOnFail: 10,
-  });
+  }).catch((err: unknown) => logger.error({ err }, 'Failed to register maintenance:backup repeatable job'));
   maintenanceQueue.add('maintenance:cleanup', { olderThanDays: 30 } as any, {
     repeat: { every: 7 * 24 * 60 * 60 * 1000 }, // every 7 days
     removeOnComplete: true,
     removeOnFail: 10,
-  });
+  }).catch((err: unknown) => logger.error({ err }, 'Failed to register maintenance:cleanup repeatable job'));
   maintenanceQueue.add('maintenance:metrics', {} as any, {
     repeat: { every: 5 * 60 * 1000 }, // every 5 minutes
     removeOnComplete: true,
     removeOnFail: 10,
-  });
+  }).catch((err: unknown) => logger.error({ err }, 'Failed to register maintenance:metrics repeatable job'));
 
   logger.info('Maintenance worker started');
   return worker;

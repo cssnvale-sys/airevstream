@@ -29,18 +29,26 @@ export async function imageRoutes(app: FastifyInstance) {
       });
     }
 
-    const job = await addJob('production', 'production:generate-image', {
-      contentId: parsed.data.contentId,
-      channelId: parsed.data.channelId,
-      shotId: parsed.data.shotId,
-      workflowType: parsed.data.workflowType,
-      params: parsed.data.params ?? {},
-    });
+    try {
+      const job = await addJob('production', 'production:generate-image', {
+        contentId: parsed.data.contentId,
+        channelId: parsed.data.channelId,
+        shotId: parsed.data.shotId,
+        workflowType: parsed.data.workflowType,
+        params: parsed.data.params ?? {},
+      });
 
-    return reply.status(202).send({
-      success: true,
-      data: { jobId: job.id, status: 'queued' },
-    });
+      return reply.status(202).send({
+        success: true,
+        data: { jobId: job.id, status: 'queued' },
+      });
+    } catch (err) {
+      imageLogger.error({ err, workflowType: parsed.data.workflowType }, 'Failed to queue image generation job');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'QUEUE_ERROR', message: 'Failed to queue image generation' },
+      });
+    }
   });
 
   // Get ComfyUI status

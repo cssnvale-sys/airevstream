@@ -607,8 +607,8 @@ async function handleGenerateAudio(data: ProductionGenerateAudioJob): Promise<vo
   try {
     const { TTSClient } = await import('@airevstream/audio-engine');
     ttsClient = new TTSClient();
-  } catch {
-    logger.warn('Audio engine not available — recording placeholder');
+  } catch (audioEngineErr) {
+    logger.warn({ err: audioEngineErr }, 'Audio engine not available — recording placeholder');
     await db.workflowJob.create({
       data: {
         jobType: 'audio_generation',
@@ -1255,8 +1255,8 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
     const audioEngine = await import('@airevstream/audio-engine');
     AudioMixer = audioEngine.AudioMixer;
     TTSClient = audioEngine.TTSClient;
-  } catch {
-    logger.warn('Audio engine not available — skipping audio mix');
+  } catch (audioEngineErr) {
+    logger.warn({ err: audioEngineErr }, 'Audio engine not available — skipping audio mix');
     return;
   }
 

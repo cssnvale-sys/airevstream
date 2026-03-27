@@ -7,6 +7,7 @@ import { InstagramWorkflow } from './instagram-workflow.js';
 import { FacebookWorkflow } from './facebook-workflow.js';
 
 export { BasePlatformWorkflow } from './base-workflow.js';
+export type { WorkflowOptions } from './base-workflow.js';
 export { YouTubeWorkflow } from './youtube-workflow.js';
 export { TikTokWorkflow } from './tiktok-workflow.js';
 export { InstagramWorkflow } from './instagram-workflow.js';

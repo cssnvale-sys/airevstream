@@ -195,5 +195,16 @@ async function handleRecordMetric(data: ExperimentRecordMetricJob) {
 }
 
 export function startExperimentWorker() {
-  return createWorker('experiment', processExperimentJob, { concurrency: 2 });
+  const worker = createWorker('experiment', processExperimentJob, { concurrency: 2 });
+
+  worker.on('completed', (job) => {
+    logger.info({ jobId: job.id }, 'Experiment job completed');
+  });
+
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'Experiment job failed');
+  });
+
+  logger.info('Experiment worker started');
+  return worker;
 }

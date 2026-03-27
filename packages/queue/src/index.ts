@@ -125,6 +125,8 @@ export interface ProductionStoryboardJob {
   directives?: Record<string, unknown>;
   /** Resolved preset overrides (visual, camera, audio settings) */
   overrides?: Record<string, unknown>;
+  /** Quality preset tier (used by preview pipeline to signal draft mode) */
+  qualityPreset?: 'draft' | 'standard' | 'cinema';
 }
 
 export interface PostingScheduleJob {

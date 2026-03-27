@@ -39,227 +39,291 @@ export async function accountRoutes(app: FastifyInstance) {
 
   // List email accounts (paginated, filterable)
   app.get('/', async (request, reply) => {
-    const { page = '1', limit = '50', status, tier, search } = request.query as Record<string, string>;
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
-    const skip = (pageNum - 1) * limitNum;
+    try {
+      const { page = '1', limit = '50', status, tier, search } = request.query as Record<string, string>;
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+      const skip = (pageNum - 1) * limitNum;
 
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (tier) where.tier = tier;
-    if (search) where.email = { contains: search, mode: 'insensitive' };
+      const where: Record<string, unknown> = {};
+      if (status) where.status = status;
+      if (tier) where.tier = tier;
+      if (search) where.email = { contains: search, mode: 'insensitive' };
 
-    const db = getDb();
-    const [items, total] = await Promise.all([
-      db.emailAccount.findMany({
-        where,
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          socialAccounts: {
-            select: { id: true, platform: true, username: true, status: true, healthScore: true },
-            orderBy: { platform: 'asc' },
+      const db = getDb();
+      const [items, total] = await Promise.all([
+        db.emailAccount.findMany({
+          where,
+          skip,
+          take: limitNum,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            socialAccounts: {
+              select: { id: true, platform: true, username: true, status: true, healthScore: true },
+              orderBy: { platform: 'asc' },
+            },
+            _count: { select: { socialAccounts: true } },
           },
-          _count: { select: { socialAccounts: true } },
-        },
-      }),
-      db.emailAccount.count({ where }),
-    ]);
+        }),
+        db.emailAccount.count({ where }),
+      ]);
 
-    return reply.send({
-      success: true,
-      data: items,
-      meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
-    });
+      return reply.send({
+        success: true,
+        data: items,
+        meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
+      });
+    } catch (err) {
+      logger.error({ err }, 'GET /accounts failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to list accounts' },
+      });
+    }
   });
 
   // Get email account detail
   app.get('/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
+    try {
+      const { id } = request.params as { id: string };
+      const db = getDb();
 
-    const account = await db.emailAccount.findUnique({
-      where: { id },
-      include: {
-        socialAccounts: {
-          include: {
-            channels: {
-              include: {
-                channelAvatars: { include: { avatar: true } },
-                brandingPackages: true,
-                affiliatePool: { include: { affiliateProduct: true } },
+      const account = await db.emailAccount.findUnique({
+        where: { id },
+        include: {
+          socialAccounts: {
+            include: {
+              channels: {
+                include: {
+                  channelAvatars: { include: { avatar: true } },
+                  brandingPackages: true,
+                  affiliatePool: { include: { affiliateProduct: true } },
+                },
               },
             },
           },
         },
-      },
-    });
-
-    if (!account) {
-      return reply.status(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Email account not found' },
       });
-    }
 
-    // Wrap Decimal fields for JSON serialization (nested affiliatePool + affiliateProduct)
-    const serializedAccount = {
-      ...account,
-      socialAccounts: account.socialAccounts.map((sa) => ({
-        ...sa,
-        channels: sa.channels.map((ch) => ({
-          ...ch,
-          affiliatePool: ch.affiliatePool.map((pool) => ({
-            ...pool,
-            performanceScore: Number(pool.performanceScore),
-            affiliateProduct: pool.affiliateProduct ? {
-              ...pool.affiliateProduct,
-              commissionRate: pool.affiliateProduct.commissionRate != null ? Number(pool.affiliateProduct.commissionRate) : null,
-              totalRevenue: Number(pool.affiliateProduct.totalRevenue),
-            } : pool.affiliateProduct,
+      if (!account) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Email account not found' },
+        });
+      }
+
+      // Wrap Decimal fields for JSON serialization (nested affiliatePool + affiliateProduct)
+      const serializedAccount = {
+        ...account,
+        socialAccounts: account.socialAccounts.map((sa) => ({
+          ...sa,
+          channels: sa.channels.map((ch) => ({
+            ...ch,
+            affiliatePool: ch.affiliatePool.map((pool) => ({
+              ...pool,
+              performanceScore: Number(pool.performanceScore),
+              affiliateProduct: pool.affiliateProduct ? {
+                ...pool.affiliateProduct,
+                commissionRate: pool.affiliateProduct.commissionRate != null ? Number(pool.affiliateProduct.commissionRate) : null,
+                totalRevenue: Number(pool.affiliateProduct.totalRevenue),
+              } : pool.affiliateProduct,
+            })),
           })),
         })),
-      })),
-    };
+      };
 
-    return reply.send({ success: true, data: serializedAccount });
+      return reply.send({ success: true, data: serializedAccount });
+    } catch (err) {
+      logger.error({ err }, 'GET /accounts/:id failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch account' },
+      });
+    }
   });
 
   // Create email account
   app.post('/', async (request, reply) => {
-    const parsed = createEmailAccountSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({
+    try {
+      const parsed = createEmailAccountSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid email account data' },
+        });
+      }
+
+      const config = getConfig();
+      if (!config.ENCRYPTION_KEY) {
+        logger.warn('ENCRYPTION_KEY not set — storing password in plaintext. Set ENCRYPTION_KEY in .env for production.');
+      }
+      const passwordEnc = config.ENCRYPTION_KEY
+        ? encrypt(parsed.data.password, config.ENCRYPTION_KEY)
+        : parsed.data.password;
+
+      const db = getDb();
+      const account = await db.emailAccount.create({
+        data: {
+          email: parsed.data.email,
+          passwordEnc,
+          tier: parsed.data.tier,
+          notes: parsed.data.notes,
+        },
+      });
+
+      return reply.status(201).send({ success: true, data: account });
+    } catch (err) {
+      logger.error({ err }, 'POST /accounts failed');
+      return reply.status(500).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to create account' },
       });
     }
-
-    const config = getConfig();
-    if (!config.ENCRYPTION_KEY) {
-      logger.warn('ENCRYPTION_KEY not set — storing password in plaintext. Set ENCRYPTION_KEY in .env for production.');
-    }
-    const passwordEnc = config.ENCRYPTION_KEY
-      ? encrypt(parsed.data.password, config.ENCRYPTION_KEY)
-      : parsed.data.password;
-
-    const db = getDb();
-    const account = await db.emailAccount.create({
-      data: {
-        email: parsed.data.email,
-        passwordEnc,
-        tier: parsed.data.tier,
-        notes: parsed.data.notes,
-      },
-    });
-
-    return reply.status(201).send({ success: true, data: account });
   });
 
   // Update email account
   app.put('/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const parsed = updateEmailAccountSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({
+    try {
+      const { id } = request.params as { id: string };
+      const parsed = updateEmailAccountSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid account update data' },
+        });
+      }
+
+      const db = getDb();
+      const updateData: Record<string, unknown> = {};
+      if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+      if (parsed.data.tier !== undefined) updateData.tier = parsed.data.tier;
+      if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
+
+      const account = await db.emailAccount.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return reply.send({ success: true, data: account });
+    } catch (err) {
+      logger.error({ err }, 'PUT /accounts/:id failed');
+      return reply.status(500).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to update account' },
       });
     }
-
-    const db = getDb();
-    const updateData: Record<string, unknown> = {};
-    if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
-    if (parsed.data.tier !== undefined) updateData.tier = parsed.data.tier;
-    if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
-
-    const account = await db.emailAccount.update({
-      where: { id },
-      data: updateData,
-    });
-
-    return reply.send({ success: true, data: account });
   });
 
   // Delete email account
   app.delete('/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
-    await db.emailAccount.delete({ where: { id } });
-    return reply.status(204).send();
+    try {
+      const { id } = request.params as { id: string };
+      const db = getDb();
+      await db.emailAccount.delete({ where: { id } });
+      return reply.status(204).send();
+    } catch (err) {
+      logger.error({ err }, 'DELETE /accounts/:id failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to delete account' },
+      });
+    }
   });
 
   // Bulk import email accounts
   app.post('/bulk-import', async (request, reply) => {
-    const parsed = bulkImportSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({
+    try {
+      const parsed = bulkImportSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid bulk import data' },
+        });
+      }
+      const { accounts } = parsed.data;
+      const config = getConfig();
+      const db = getDb();
+
+      const results = await db.$transaction(
+        accounts.map((a) =>
+          db.emailAccount.create({
+            data: {
+              email: a.email,
+              passwordEnc: config.ENCRYPTION_KEY ? encrypt(a.password, config.ENCRYPTION_KEY) : a.password,
+              tier: a.tier || 'tier2',
+            },
+          }),
+        ),
+      );
+
+      return reply.status(201).send({ success: true, data: results, meta: { total: results.length, page: 1, limit: results.length, pages: 1 } });
+    } catch (err) {
+      logger.error({ err }, 'POST /accounts/bulk-import failed');
+      return reply.status(500).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to import accounts' },
       });
     }
-    const { accounts } = parsed.data;
-    const config = getConfig();
-    const db = getDb();
-
-    const results = await db.$transaction(
-      accounts.map((a) =>
-        db.emailAccount.create({
-          data: {
-            email: a.email,
-            passwordEnc: config.ENCRYPTION_KEY ? encrypt(a.password, config.ENCRYPTION_KEY) : a.password,
-            tier: a.tier || 'tier2',
-          },
-        }),
-      ),
-    );
-
-    return reply.status(201).send({ success: true, data: results, meta: { total: results.length, page: 1, limit: results.length, pages: 1 } });
   });
 
   // List social accounts for email
   app.get('/:id/socials', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
+    try {
+      const { id } = request.params as { id: string };
+      const db = getDb();
 
-    const socials = await db.socialAccount.findMany({
-      where: { emailAccountId: id },
-      include: {
-        channels: { select: { id: true, name: true, primaryLanguage: true, status: true } },
-      },
-    });
+      const socials = await db.socialAccount.findMany({
+        where: { emailAccountId: id },
+        include: {
+          channels: { select: { id: true, name: true, primaryLanguage: true, status: true } },
+        },
+      });
 
-    return reply.send({ success: true, data: socials });
+      return reply.send({ success: true, data: socials });
+    } catch (err) {
+      logger.error({ err }, 'GET /accounts/:id/socials failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to list social accounts' },
+      });
+    }
   });
 
   // Create social account for email
   app.post('/:id/socials', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const parsed = createSocialAccountSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({
+    try {
+      const { id } = request.params as { id: string };
+      const parsed = createSocialAccountSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid social account data' },
+        });
+      }
+
+      const config = getConfig();
+      const credentialsEnc = parsed.data.credentials && config.ENCRYPTION_KEY
+        ? encrypt(parsed.data.credentials, config.ENCRYPTION_KEY)
+        : parsed.data.credentials ?? null;
+
+      const db = getDb();
+      const social = await db.socialAccount.create({
+        data: {
+          emailAccountId: id,
+          platform: parsed.data.platform,
+          platformUserId: parsed.data.platformUserId,
+          username: parsed.data.username,
+          credentialsEnc,
+        },
+      });
+
+      return reply.status(201).send({ success: true, data: social });
+    } catch (err) {
+      logger.error({ err }, 'POST /accounts/:id/socials failed');
+      return reply.status(500).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to create social account' },
       });
     }
-
-    const config = getConfig();
-    const credentialsEnc = parsed.data.credentials && config.ENCRYPTION_KEY
-      ? encrypt(parsed.data.credentials, config.ENCRYPTION_KEY)
-      : parsed.data.credentials ?? null;
-
-    const db = getDb();
-    const social = await db.socialAccount.create({
-      data: {
-        emailAccountId: id,
-        platform: parsed.data.platform,
-        platformUserId: parsed.data.platformUserId,
-        username: parsed.data.username,
-        credentialsEnc,
-      },
-    });
-
-    return reply.status(201).send({ success: true, data: social });
   });
 }

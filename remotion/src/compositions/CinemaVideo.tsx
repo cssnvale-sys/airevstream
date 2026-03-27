@@ -192,7 +192,7 @@ const WatermarkRenderer: React.FC<{
   config: NonNullable<CinemaVideoProps['watermark']>;
   width: number;
   height: number;
-}> = ({ config }) => {
+}> = ({ config, width: _width, height: _height }) => {
   const positionStyles: React.CSSProperties = {};
   const margin = 20;
 

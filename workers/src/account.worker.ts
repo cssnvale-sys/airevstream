@@ -17,7 +17,7 @@ import type { Job } from 'bullmq';
 // Lazy imports for browser automation (heavy dependency)
 let BrowserContextManager: typeof import('@airevstream/browser-automation').BrowserContextManager | null = null;
 let SessionManager: typeof import('@airevstream/browser-automation').SessionManager | null = null;
-let ProxyManager: typeof import('@airevstream/browser-automation').ProxyManager | null = null;
+let ProxyManager: typeof import('@airevstream/browser-automation').ProxyManager | null = null; // Reserved for future proxy rotation
 let createWorkflow: typeof import('@airevstream/browser-automation').createWorkflow | null = null;
 let AccountProxyPinning: typeof import('@airevstream/browser-automation').AccountProxyPinning | null = null;
 let FingerprintStore: typeof import('@airevstream/browser-automation').FingerprintStore | null = null;
@@ -46,8 +46,6 @@ const logger = createLogger('worker:account');
 // Shared instances (initialized lazily)
 let browserManager: InstanceType<typeof import('@airevstream/browser-automation').BrowserContextManager> | null = null;
 let sessionManager: InstanceType<typeof import('@airevstream/browser-automation').SessionManager> | null = null;
-let proxyManager: InstanceType<typeof import('@airevstream/browser-automation').ProxyManager> | null = null;
-
 async function getBrowserManager() {
   if (!browserManager && BrowserContextManager) {
     browserManager = new BrowserContextManager();

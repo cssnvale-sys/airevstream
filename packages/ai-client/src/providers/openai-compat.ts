@@ -145,8 +145,9 @@ export class OpenAICompatProvider implements AiProvider {
           if (delta || finished) {
             yield { content: delta, done: finished };
           }
-        } catch {
-          // skip malformed chunks
+        } catch (parseErr) {
+          // Malformed SSE chunk — skip but log for debugging
+          console.debug(`[OpenAICompat] Skipping malformed SSE chunk: ${data.substring(0, 80)}`);
         }
       }
     }

@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, unlink, stat } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, unlink, stat, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { BrowserContext } from 'playwright';
 import { createLogger } from '@airevstream/shared';
@@ -239,7 +239,6 @@ export class SessionManager {
   async listSessions(platform: Platform): Promise<string[]> {
     const dir = join(this.storageDir, platform);
     try {
-      const { readdir } = await import('node:fs/promises');
       const files = await readdir(dir);
       return files
         .filter((f) => f.endsWith('.json'))

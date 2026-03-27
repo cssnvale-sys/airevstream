@@ -188,10 +188,14 @@ export function calculateNextSessionTime(
  * Earlier phases get more passive activities; later phases get interactive ones.
  */
 export function selectActivitiesForSession(
-  phase: SeasoningPhase,
+  _phase: SeasoningPhase,
   phaseConfig: PhaseConfig,
 ): WarmingActivity[] {
   const { allowedActivities, minDailyActivities, maxDailyActivities } = phaseConfig;
+
+  if (allowedActivities.length === 0) {
+    return [];
+  }
 
   // Random count between min and max per session (usually 1 session = fraction of daily)
   const sessionsPerDay = (phaseConfig.sessionsPerDay.min + phaseConfig.sessionsPerDay.max) / 2;
@@ -200,10 +204,9 @@ export function selectActivitiesForSession(
 
   const count = Math.floor(Math.random() * (perSessionMax - perSessionMin + 1)) + perSessionMin;
 
-  // Weighted selection: passive activities more likely in early phases
   const selected: WarmingActivity[] = [];
   for (let i = 0; i < count; i++) {
-    const activity = allowedActivities[Math.floor(Math.random() * allowedActivities.length)];
+    const activity = allowedActivities[Math.floor(Math.random() * allowedActivities.length)]!;
     selected.push(activity);
   }
 

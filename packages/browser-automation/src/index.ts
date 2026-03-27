@@ -49,3 +49,4 @@ export {
   FacebookWorkflow,
   createWorkflow,
 } from './platform-workflows/index.js';
+export type { WorkflowOptions } from './platform-workflows/index.js';

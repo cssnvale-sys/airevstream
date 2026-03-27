@@ -327,7 +327,7 @@ export function startPostingWorker() {
     repeat: { every: 60000 },
     removeOnComplete: true,
     removeOnFail: 100,
-  });
+  }).catch((err: unknown) => logger.error({ err }, 'Failed to register posting:check-scheduled repeatable job'));
 
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id }, 'Posting job completed');

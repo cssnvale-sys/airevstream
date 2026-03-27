@@ -9,7 +9,6 @@
  */
 
 import type { AssemblyManifest, AssembledShot, ColorGradeSpec } from './types.js';
-import { getCompositionById } from './composition-registry.js';
 
 // ─── Minimal Remotion-compatible interfaces ───
 // These mirror the types in remotion/src/types.ts without a runtime import.
@@ -80,7 +79,7 @@ export interface ResolveResult {
   height: number;
   fps: number;
   durationInFrames: number;
-  codec: 'h264' | 'h265' | 'prores';
+  codec: 'h264' | 'prores';
 }
 
 // ─── Core Resolver ───

@@ -126,7 +126,8 @@ export class SoraProvider implements VideoProvider {
         signal: AbortSignal.timeout(5000),
       });
       return res.ok;
-    } catch {
+    } catch (err) {
+      console.debug(`[Sora] Health check failed: ${err instanceof Error ? err.message : String(err)}`);
       return false;
     }
   }

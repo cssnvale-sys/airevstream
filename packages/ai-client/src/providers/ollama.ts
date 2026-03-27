@@ -138,7 +138,8 @@ export class OllamaProvider implements AiProvider {
     try {
       const models = await this.listModels(endpoint);
       return models.some((m) => m.name === name || m.name.startsWith(name + ':'));
-    } catch {
+    } catch (err) {
+      console.debug(`[Ollama] isModelAvailable check failed for "${name}": ${err instanceof Error ? err.message : String(err)}`);
       return false;
     }
   }

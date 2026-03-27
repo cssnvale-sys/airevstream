@@ -282,9 +282,9 @@ Return a JSON array of objects with: title, content (informative summary, max 50
         entries = await generateJSON(prompt, {
           systemPrompt: 'You are a research assistant. Return valid JSON only.',
         });
-      } catch {
+      } catch (aiErr) {
         // If AI is unavailable, create a single placeholder entry
-        logger.warn('AI unavailable for knowledge population, creating placeholder entries');
+        logger.warn({ err: aiErr }, 'AI unavailable for knowledge population, creating placeholder entries');
         entries = [
           {
             title: `Research: ${topic}`,
@@ -373,7 +373,7 @@ export function startResearchWorker() {
     repeat: { every: 12 * 60 * 60 * 1000 }, // every 12 hours
     removeOnComplete: true,
     removeOnFail: 10,
-  });
+  }).catch((err: unknown) => logger.error({ err }, 'Failed to register research:trends repeatable job'));
 
   logger.info('Research worker started');
   return worker;

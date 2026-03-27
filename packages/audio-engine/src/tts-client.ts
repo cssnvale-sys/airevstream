@@ -58,7 +58,8 @@ export class TTSClient {
         default:
           return false;
       }
-    } catch {
+    } catch (err) {
+      logger.debug({ provider: this.config.provider, err }, 'Health check failed');
       return false;
     }
   }

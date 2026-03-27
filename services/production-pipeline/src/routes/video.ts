@@ -1,6 +1,9 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { addJob } from '@airevstream/queue';
+import { createLogger } from '@airevstream/shared';
+
+const videoLogger = createLogger('production-pipeline:video');
 
 const renderVideoSchema = z.object({
   contentId: z.string().uuid(),
@@ -34,16 +37,24 @@ export async function videoRoutes(app: FastifyInstance) {
       });
     }
 
-    const job = await addJob('production', 'production:render-video', {
-      contentId: parsed.data.contentId,
-      storyboardId: parsed.data.storyboardId,
-      channelId: parsed.data.channelId,
-    });
+    try {
+      const job = await addJob('production', 'production:render-video', {
+        contentId: parsed.data.contentId,
+        storyboardId: parsed.data.storyboardId,
+        channelId: parsed.data.channelId,
+      });
 
-    return reply.status(202).send({
-      success: true,
-      data: { jobId: job.id, status: 'queued' },
-    });
+      return reply.status(202).send({
+        success: true,
+        data: { jobId: job.id, status: 'queued' },
+      });
+    } catch (err) {
+      videoLogger.error({ err, contentId: parsed.data.contentId }, 'Failed to queue video render job');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'QUEUE_ERROR', message: 'Failed to queue video render' },
+      });
+    }
   });
 
   // Queue audio generation (TTS)
@@ -56,17 +67,25 @@ export async function videoRoutes(app: FastifyInstance) {
       });
     }
 
-    const job = await addJob('production', 'production:generate-audio', {
-      contentId: parsed.data.contentId,
-      text: parsed.data.text,
-      voice: parsed.data.voice,
-      language: parsed.data.language,
-    });
+    try {
+      const job = await addJob('production', 'production:generate-audio', {
+        contentId: parsed.data.contentId,
+        text: parsed.data.text,
+        voice: parsed.data.voice,
+        language: parsed.data.language,
+      });
 
-    return reply.status(202).send({
-      success: true,
-      data: { jobId: job.id, status: 'queued' },
-    });
+      return reply.status(202).send({
+        success: true,
+        data: { jobId: job.id, status: 'queued' },
+      });
+    } catch (err) {
+      videoLogger.error({ err, contentId: parsed.data.contentId }, 'Failed to queue audio generation job');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'QUEUE_ERROR', message: 'Failed to queue audio generation' },
+      });
+    }
   });
 
   // Queue storyboard generation
@@ -79,15 +98,23 @@ export async function videoRoutes(app: FastifyInstance) {
       });
     }
 
-    const job = await addJob('production', 'production:storyboard', {
-      contentId: parsed.data.contentId,
-      channelId: parsed.data.channelId,
-      scriptJson: parsed.data.scriptJson,
-    });
+    try {
+      const job = await addJob('production', 'production:storyboard', {
+        contentId: parsed.data.contentId,
+        channelId: parsed.data.channelId,
+        scriptJson: parsed.data.scriptJson,
+      });
 
-    return reply.status(202).send({
-      success: true,
-      data: { jobId: job.id, status: 'queued' },
-    });
+      return reply.status(202).send({
+        success: true,
+        data: { jobId: job.id, status: 'queued' },
+      });
+    } catch (err) {
+      videoLogger.error({ err, contentId: parsed.data.contentId }, 'Failed to queue storyboard generation job');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'QUEUE_ERROR', message: 'Failed to queue storyboard generation' },
+      });
+    }
   });
 }

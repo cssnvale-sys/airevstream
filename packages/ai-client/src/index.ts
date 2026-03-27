@@ -57,8 +57,8 @@ function getOllamaProvider(): OllamaProvider {
 }
 
 /** @deprecated Use ServiceRegistry.generate() instead */
-export function getAiClient(baseUrl?: string) {
-  const { Ollama } = require('ollama');
+export async function getAiClient(baseUrl?: string) {
+  const { Ollama } = await import('ollama');
   return new Ollama({
     host: baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434',
   });

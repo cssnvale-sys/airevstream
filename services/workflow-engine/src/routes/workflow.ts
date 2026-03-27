@@ -1,7 +1,10 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
+import { createLogger } from '@airevstream/shared';
 import type { Prisma } from '@prisma/client';
+
+const logger = createLogger('routes:workflow');
 
 const createJobSchema = z.object({
   jobType: z.enum(['content_production', 'account_creation', 'warming', 'research', 'posting', 'maintenance', 'health_check']),
@@ -19,122 +22,162 @@ export async function workflowRoutes(app: FastifyInstance) {
 
   // List workflow jobs (paginated, filterable)
   app.get('/', async (request, reply) => {
-    const { page = '1', limit = '50', status, jobType, sort = 'createdAt', order = 'desc' } = request.query as Record<string, string>;
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
-    const skip = (pageNum - 1) * limitNum;
-    const db = getDb();
+    try {
+      const { page = '1', limit = '50', status, jobType, sort = 'createdAt', order = 'desc' } = request.query as Record<string, string>;
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+      const skip = (pageNum - 1) * limitNum;
+      const db = getDb();
 
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (jobType) where.jobType = jobType;
+      const where: Record<string, unknown> = {};
+      if (status) where.status = status;
+      if (jobType) where.jobType = jobType;
 
-    const safeSort = (WORKFLOW_SORT_FIELDS as readonly string[]).includes(sort) ? sort : 'createdAt';
-    const safeOrder = order === 'asc' ? 'asc' : 'desc';
+      const safeSort = (WORKFLOW_SORT_FIELDS as readonly string[]).includes(sort) ? sort : 'createdAt';
+      const safeOrder = order === 'asc' ? 'asc' : 'desc';
 
-    const [items, total] = await Promise.all([
-      db.workflowJob.findMany({
-        where,
-        skip,
-        take: limitNum,
-        orderBy: { [safeSort]: safeOrder },
-        include: {
-          content: { select: { id: true, title: true, contentType: true } },
-        },
-      }),
-      db.workflowJob.count({ where }),
-    ]);
+      const [items, total] = await Promise.all([
+        db.workflowJob.findMany({
+          where,
+          skip,
+          take: limitNum,
+          orderBy: { [safeSort]: safeOrder },
+          include: {
+            content: { select: { id: true, title: true, contentType: true } },
+          },
+        }),
+        db.workflowJob.count({ where }),
+      ]);
 
-    return reply.send({
-      success: true,
-      data: items,
-      meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
-    });
+      return reply.send({
+        success: true,
+        data: items,
+        meta: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) },
+      });
+    } catch (err) {
+      logger.error({ err }, 'GET /workflows failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to list workflow jobs' },
+      });
+    }
   });
 
   // Get job detail
   app.get('/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
+    try {
+      const { id } = request.params as { id: string };
+      const db = getDb();
 
-    const job = await db.workflowJob.findUnique({
-      where: { id },
-      include: { content: true },
-    });
+      const job = await db.workflowJob.findUnique({
+        where: { id },
+        include: { content: true },
+      });
 
-    if (!job) {
-      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Job not found' } });
+      if (!job) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Job not found' } });
+      }
+
+      return reply.send({ success: true, data: job });
+    } catch (err) {
+      logger.error({ err }, 'GET /workflows/:id failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch workflow job' },
+      });
     }
-
-    return reply.send({ success: true, data: job });
   });
 
   // Create workflow job
   app.post('/', async (request, reply) => {
-    const parsed = createJobSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({
+    try {
+      const parsed = createJobSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Invalid workflow job data' },
+        });
+      }
+
+      const db = getDb();
+      const job = await db.workflowJob.create({
+        data: {
+          jobType: parsed.data.jobType,
+          priority: parsed.data.priority,
+          channelId: parsed.data.channelId,
+          contentId: parsed.data.contentId,
+          emailAccountId: parsed.data.emailAccountId,
+          params: parsed.data.params as Prisma.InputJsonValue,
+        },
+      });
+
+      return reply.status(201).send({ success: true, data: job });
+    } catch (err) {
+      logger.error({ err }, 'POST /workflows failed');
+      return reply.status(500).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to create workflow job' },
       });
     }
-
-    const db = getDb();
-    const job = await db.workflowJob.create({
-      data: {
-        jobType: parsed.data.jobType,
-        priority: parsed.data.priority,
-        channelId: parsed.data.channelId,
-        contentId: parsed.data.contentId,
-        emailAccountId: parsed.data.emailAccountId,
-        params: parsed.data.params as Prisma.InputJsonValue,
-      },
-    });
-
-    return reply.status(201).send({ success: true, data: job });
   });
 
   // Cancel job
   app.post('/:id/cancel', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
+    try {
+      const { id } = request.params as { id: string };
+      const db = getDb();
 
-    const job = await db.workflowJob.findUnique({ where: { id } });
-    if (!job) {
-      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Job not found' } });
-    }
+      const job = await db.workflowJob.findUnique({ where: { id } });
+      if (!job) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Job not found' } });
+      }
 
-    if (job.status === 'completed' || job.status === 'cancelled') {
-      return reply.status(400).send({
+      if (job.status === 'completed' || job.status === 'cancelled') {
+        return reply.status(400).send({
+          success: false,
+          error: { code: 'INVALID_STATE', message: 'Cannot cancel a completed or cancelled job' },
+        });
+      }
+
+      const updated = await db.workflowJob.update({
+        where: { id },
+        data: { status: 'cancelled' },
+      });
+
+      return reply.send({ success: true, data: updated });
+    } catch (err) {
+      logger.error({ err }, 'POST /workflows/:id/cancel failed');
+      return reply.status(500).send({
         success: false,
-        error: { code: 'INVALID_STATE', message: 'Cannot cancel a completed or cancelled job' },
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to cancel workflow job' },
       });
     }
-
-    const updated = await db.workflowJob.update({
-      where: { id },
-      data: { status: 'cancelled' },
-    });
-
-    return reply.send({ success: true, data: updated });
   });
 
   // Complete HITL task
   app.post('/:id/human-complete', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const db = getDb();
+    try {
+      const { id } = request.params as { id: string };
+      const db = getDb();
 
-    const job = await db.workflowJob.findUnique({ where: { id } });
-    if (!job || !job.needsHuman) {
-      return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No HITL task found' } });
+      const job = await db.workflowJob.findUnique({ where: { id } });
+      if (!job || !job.needsHuman) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No HITL task found' } });
+      }
+
+      const updated = await db.workflowJob.update({
+        where: { id },
+        data: { needsHuman: false, humanCompletedAt: new Date(), status: 'running' },
+      });
+
+      return reply.send({ success: true, data: updated });
+    } catch (err) {
+      logger.error({ err }, 'POST /workflows/:id/human-complete failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to complete HITL task' },
+      });
     }
-
-    const updated = await db.workflowJob.update({
-      where: { id },
-      data: { needsHuman: false, humanCompletedAt: new Date(), status: 'running' },
-    });
-
-    return reply.send({ success: true, data: updated });
   });
 
   // Trigger content production pipeline
@@ -151,7 +194,7 @@ export async function workflowRoutes(app: FastifyInstance) {
     if (!parsed.success) {
       return reply.status(400).send({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0].message },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid pipeline request data' },
       });
     }
 
@@ -167,7 +210,7 @@ export async function workflowRoutes(app: FastifyInstance) {
       const result = await startContentPipeline({ ...parsed.data, tenantId: user.tenantId });
       return reply.status(201).send({ success: true, data: { flowJobId: result.job.id } });
     } catch (err) {
-      request.log.error({ err }, 'Failed to start content pipeline');
+      logger.error({ err }, 'POST /workflows/pipeline/content failed');
       return reply.status(500).send({
         success: false,
         error: { code: 'INTERNAL_ERROR', message: 'Failed to start content pipeline' },
@@ -176,32 +219,40 @@ export async function workflowRoutes(app: FastifyInstance) {
   });
 
   // Get active workflows summary
-  app.get('/summary/active', async (request, reply) => {
-    const db = getDb();
+  app.get('/summary/active', async (_request, reply) => {
+    try {
+      const db = getDb();
 
-    const [running, queued, paused, needsHuman] = await Promise.all([
-      db.workflowJob.count({ where: { status: 'running' } }),
-      db.workflowJob.count({ where: { status: 'queued' } }),
-      db.workflowJob.count({ where: { status: 'paused' } }),
-      db.workflowJob.count({ where: { needsHuman: true, humanCompletedAt: null } }),
-    ]);
+      const [running, queued, paused, needsHuman] = await Promise.all([
+        db.workflowJob.count({ where: { status: 'running' } }),
+        db.workflowJob.count({ where: { status: 'queued' } }),
+        db.workflowJob.count({ where: { status: 'paused' } }),
+        db.workflowJob.count({ where: { needsHuman: true, humanCompletedAt: null } }),
+      ]);
 
-    // Count by job type
-    const byType = await db.workflowJob.groupBy({
-      by: ['jobType'],
-      where: { status: { in: ['running', 'queued'] } },
-      _count: true,
-    });
+      // Count by job type
+      const byType = await db.workflowJob.groupBy({
+        by: ['jobType'],
+        where: { status: { in: ['running', 'queued'] } },
+        _count: true,
+      });
 
-    return reply.send({
-      success: true,
-      data: {
-        running,
-        queued,
-        paused,
-        needsHuman,
-        byType: byType.map((t) => ({ jobType: t.jobType, count: t._count })),
-      },
-    });
+      return reply.send({
+        success: true,
+        data: {
+          running,
+          queued,
+          paused,
+          needsHuman,
+          byType: byType.map((t) => ({ jobType: t.jobType, count: t._count })),
+        },
+      });
+    } catch (err) {
+      logger.error({ err }, 'GET /workflows/summary/active failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch workflow summary' },
+      });
+    }
   });
 }

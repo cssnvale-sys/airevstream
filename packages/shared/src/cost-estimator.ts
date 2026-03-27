@@ -19,7 +19,7 @@ export interface CostBreakdownItem {
 }
 
 export interface PipelineConfig {
-  qualityTier: 'quick' | 'standard' | 'cinema';
+  qualityTier: 'draft' | 'standard' | 'cinema';
   durationSec: number;
   shotCount: number;
   resolution?: { width: number; height: number };
@@ -39,7 +39,7 @@ export interface PipelineConfig {
 
 /** Tier multipliers for resource usage */
 const TIER_MULTIPLIERS = {
-  quick: { steps: 20, passes: 1, upscale: false },
+  draft: { steps: 20, passes: 1, upscale: false },
   standard: { steps: 30, passes: 1, upscale: false },
   cinema: { steps: 40, passes: 2, upscale: true },
 } as const;
@@ -183,7 +183,7 @@ export function estimateFromResolvedConfig(
   shots: Array<{ duration?: number; outputType?: string; generation?: { width?: number; height?: number } }>,
   config: {
     provider?: string;
-    qualityTier?: 'quick' | 'standard' | 'cinema';
+    qualityTier?: 'draft' | 'standard' | 'cinema';
     ttsCostPerSec?: number;
     audioLayers?: number;
   },

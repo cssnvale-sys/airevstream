@@ -1,6 +1,9 @@
 import { type FastifyInstance, type FastifyRequest, type FastifyReply } from 'fastify';
 import { getDb } from '@airevstream/db';
 import { getPresignedUrl } from '@airevstream/storage';
+import { createLogger } from '@airevstream/shared';
+
+const assetLogger = createLogger('production-pipeline:asset');
 
 /** Resolve the tenantId for the authenticated user, or send 403. Returns null if 403 was sent. */
 async function resolveTenantId(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -67,6 +70,9 @@ export async function assetRoutes(app: FastifyInstance) {
 
   // Get presigned download URL for a shot keyframe or scenery asset
   app.get('/download', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const { bucket, key } = request.query as { bucket: string; key: string };
 
     if (!bucket || !key) {
@@ -76,16 +82,27 @@ export async function assetRoutes(app: FastifyInstance) {
       });
     }
 
-    const url = await getPresignedUrl(bucket, key, 3600);
-    return reply.send({ success: true, data: { url, expiresIn: 3600 } });
+    try {
+      const url = await getPresignedUrl(bucket, key, 3600);
+      return reply.send({ success: true, data: { url, expiresIn: 3600 } });
+    } catch (err) {
+      assetLogger.error({ err, bucket, key }, 'Failed to generate presigned URL');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'STORAGE_ERROR', message: 'Failed to generate download URL' },
+      });
+    }
   });
 
   // List scenery assets
   app.get('/scenery', async (request, reply) => {
+    const tenantId = await resolveTenantId(request, reply);
+    if (!tenantId) return;
+
     const { category } = request.query as { category?: string };
     const db = getDb();
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { tenantId };
     if (category) where.category = category;
 
     const assets = await db.sceneryAsset.findMany({

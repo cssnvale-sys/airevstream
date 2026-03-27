@@ -12,7 +12,7 @@ import type { Preset, PresetFamily } from './schema.js';
 // ─── Family → valid override keys ───
 
 export const FAMILY_OVERRIDE_KEYS: Record<PresetFamily, string[]> = {
-  visual: ['colorGrade', 'postProcess', 'lighting'],
+  visual: ['colorGrade', 'postProcess', 'lighting', 'generation', 'negativePrompt'],
   camera: ['camera', 'aspect'],
   audio: ['audioPlan'],
   edit: ['transition', 'duration', '_directives'],
@@ -21,7 +21,7 @@ export const FAMILY_OVERRIDE_KEYS: Record<PresetFamily, string[]> = {
   character: ['characterCount', 'dialogueMode', 'personGeneration', 'audioPlan'],
   story: ['_directives'],
   dialogue: ['audioPlan'],
-  continuity: ['seedPolicy'],
+  continuity: ['seedPolicy', 'continuityLocks'],
 };
 
 // ─── Preset ID generation ───
@@ -45,7 +45,7 @@ export const PRESET_GENERATION_SYSTEM_PROMPT = `You are an expert cinema pipelin
 
 PRESET FAMILIES AND THEIR VALID OVERRIDE KEYS:
 
-- visual: colorGrade (object with: contrast, saturation, temperature, tint, shadows, highlights, blacks, whites), postProcess (object with: filmGrain, vignette, sharpen), lighting (string description)
+- visual: colorGrade (object with: contrast, saturation, temperature, tint, shadows, highlights, blacks, whites), postProcess (object with: filmGrain, vignette, sharpen), lighting (string description), generation (object with: steps, cfg, sampler, scheduler, denoise), negativePrompt (string)
 - camera: camera (object with: lens, framing, dof, movement, stabilization), aspect (string like "16:9")
 - audio: audioPlan (object with bg/mg/fg layers, each: { source, volume, loop?, fadeInMs?, fadeOutMs? })
 - edit: transition (string: "cut", "crossfade"), duration (number in seconds)
@@ -54,7 +54,7 @@ PRESET FAMILIES AND THEIR VALID OVERRIDE KEYS:
 - character: characterCount (number), dialogueMode ("narrator"|"conversational"|"none"), personGeneration ("allow"|"disallow"), audioPlan
 - story: _directives (object with optional: narrativeStructure, pacing — used to embed production directives)
 - dialogue: audioPlan
-- continuity: seedPolicy ("free"|"shot-offset"|"scene-lock"|"series-lock")
+- continuity: seedPolicy ("free"|"shot-offset"|"scene-lock"|"series-lock"), continuityLocks (object with: characterLock, wardrobeLock, environmentLock — each "off"|"standard"|"strong")
 
 RULES:
 1. Auto-detect the most appropriate family from the description

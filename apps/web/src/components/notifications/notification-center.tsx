@@ -211,7 +211,7 @@ export function NotificationCenter() {
         <div
           ref={panelRef}
           className={cn(
-            'absolute right-0 top-full mt-2 w-[380px] max-h-[480px]',
+            'absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[480px]',
             'bg-bg-secondary border border-border rounded-lg shadow-lg',
             'flex flex-col overflow-hidden',
             'backdrop-blur-sm',

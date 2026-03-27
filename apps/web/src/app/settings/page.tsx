@@ -1259,7 +1259,7 @@ function ProxiesTab() {
   return (
     <div className="space-y-6">
       {/* Pool Stats */}
-      <div className="grid grid-cols-3 gap-4 max-w-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg">
         <div className="card text-center">
           <div className="text-2xl font-bold text-text-primary">{proxies.length}</div>
           <div className="text-xs text-text-secondary mt-1">Total</div>

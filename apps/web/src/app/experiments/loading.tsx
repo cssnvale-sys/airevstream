@@ -5,7 +5,7 @@ export default function ExperimentsLoading() {
         <div className="h-8 w-48 bg-bg-tertiary rounded" />
         <div className="h-10 w-40 bg-bg-tertiary rounded" />
       </div>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-24 bg-bg-tertiary rounded-lg" />
         ))}

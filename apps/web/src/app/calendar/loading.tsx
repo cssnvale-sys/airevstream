@@ -10,7 +10,14 @@ export default function CalendarLoading() {
         </div>
       </div>
       <div className="card p-4">
-        <div className="grid grid-cols-7 gap-1">
+        {/* Mobile: simplified stack */}
+        <div className="md:hidden space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={`m-${i}`} className="h-16 bg-bg-tertiary rounded" />
+          ))}
+        </div>
+        {/* Desktop: 7-column calendar grid */}
+        <div className="hidden md:grid grid-cols-7 gap-1">
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={`h-${i}`} className="h-6 bg-bg-tertiary rounded mb-2" />
           ))}

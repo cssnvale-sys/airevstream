@@ -819,7 +819,7 @@ function DetailPanel({
               {allAvatars.length === 0 ? (
                 <p className="text-sm text-text-secondary">No avatars assigned.</p>
               ) : (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {allAvatars.map((avatar, idx) => (
                     <div key={`${avatar.id}-${idx}`} className="bg-bg-tertiary rounded-lg p-2 text-center">
                       <div className="w-full aspect-square bg-bg-primary rounded-md mb-1.5 flex items-center justify-center">

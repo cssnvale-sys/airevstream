@@ -107,6 +107,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **POLL_INTERVALS constant** (Session 47): FAST (3s), STANDARD (15s), SLOW (30s) replacing 8+ hardcoded refreshInterval values across use-api, pipeline-progress, workflows, dashboard.
 - **COMFYUI_POLL_INTERVAL_MS** (Session 47): Named constant replacing hardcoded 2000ms in both ComfyUI client implementations.
 - **Pino logger migration** (Session 47): console.warn in comfyui-client.ts and comfyui-composer.ts replaced with structured pino logger calls.
+- **MAX_WARM_FAILURES constant** (Session 47): Extracted from 4 browser-automation platform workflows.
+- **Pino logger migration (extended)** (Session 47): 9 more console calls replaced in quality-regression, provenance-c2pa-cli, ai-client/create-registry, and 5 ai-client providers.
+- **Analytics rate limiting** (Session 47): 8 expensive GET analytics routes now rate-limited at 30 req/min.
+- **RATE_LIMITS.standardRead preset** (Session 47): New preset (30 req/min), used by 9 routes.
 - **Next.js build errors** (Session 46): Added `export const dynamic = 'force-dynamic'` to 83 non-parameterized API routes to prevent misleading error log lines during `next build` static rendering probes (D129)
 - **CRITICAL: Tenant scoping violations** (Session 46): ~15 missing guards across activity, assets, usage, jobs, knowledge base, assistant actions, product analytics, avatar assignment, scenery assets, approvals
 - **CRITICAL: PM2 worker script paths** (Session 46): All 6 worker entries had wrong paths (would crash on `pm2 start`), 2 workers missing from config

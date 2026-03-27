@@ -3491,6 +3491,23 @@ Implemented all 34 identified system gaps across 7 phases using parallel agents.
 - `apps/web/src/app/workflows/page.tsx` — POLL_INTERVALS
 - `apps/web/src/app/dashboard/page.tsx` — POLL_INTERVALS
 
+### Iteration 98: MAX_WARM_FAILURES + Health Score Thresholds
+- Added MAX_WARM_FAILURES = 5 to browser-automation base-workflow
+- Replaced hardcoded `failCount > 5` in 4 platform workflows
+- Added HEALTH_SCORE_THRESHOLDS local constant in accounts page
+
+### Iteration 99: Pino Logger Migration (Extended)
+- quality-regression.ts: console.warn → logger.warn for VMAF availability
+- provenance-c2pa-cli.ts: console.warn → logger.warn for c2patool
+- ai-client/create-registry.ts: 2× console.error → logger.error
+- 5 ai-client providers: console.debug → logger.debug
+
+### Iteration 100: Analytics Rate Limiting
+- Added checkRateLimit to 8 expensive GET analytics routes
+- Added RATE_LIMITS.standardRead preset (30 req/min)
+- Refactored 9 routes to use standardRead preset instead of inline config
+- Removed console.warn from rate limiter store overflow
+
 ### Verification
 - `turbo build`: 14/14 ✓
 - `turbo test`: 27/27 tasks ✓

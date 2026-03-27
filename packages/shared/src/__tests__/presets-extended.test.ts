@@ -90,16 +90,16 @@ describe('extended presets', () => {
     }
   });
 
-  it('should have 62 total built-in presets', () => {
-    expect(ALL_BUILT_IN_PRESETS).toHaveLength(62);
+  it('should have 81 total built-in presets', () => {
+    expect(ALL_BUILT_IN_PRESETS).toHaveLength(81);
   });
 
-  it('should have 18 total built-in recipes', () => {
-    expect(BUILT_IN_RECIPES).toHaveLength(18);
+  it('should have 22 total built-in recipes', () => {
+    expect(BUILT_IN_RECIPES).toHaveLength(22);
   });
 
-  it('should have 15 master bundles', () => {
-    expect(MASTER_BUNDLES).toHaveLength(15);
+  it('should have 19 master bundles', () => {
+    expect(MASTER_BUNDLES).toHaveLength(19);
   });
 
   it('all master bundles should have routing and constraints', () => {

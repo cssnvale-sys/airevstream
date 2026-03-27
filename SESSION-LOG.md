@@ -168,7 +168,19 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 60**: ConfirmDialog loading states — Series avatar manager: added removing state + loading prop. Episode table: connected deletingId to ConfirmDialog loading. Added aria-labels to both delete buttons.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~70 total. Design tokens complete, consistent date formatting, comprehensive loading/disabled states.
+**Iteration 61**: Semantic HTML — QualityBadge role="status" + aria-label. 7 date displays wrapped in `<time dateTime="">` (notification-item, hitl-task-card, episode-table, experiments, settings API keys x3).
+
+**Iteration 62**: Disabled cursor + skeleton fix — Dashboard loading skeleton breakpoint fixed (md→sm). `disabled:cursor-not-allowed` added to 5 buttons (viral-score-panel, shot-editor-panel, branding-editor x2, create-experiment-modal x2).
+
+**Iteration 63**: Number input constraints + time elements — Budget limit input min/step constraints. 5 more `<time dateTime="">` wrappers (budgets period x2, analytics, cinema-bible, asset detail).
+
+**Iteration 64**: type="button" + contrast fixes — 13 buttons across 8 components given explicit type="button" to prevent accidental form submission. 10 same-element low-contrast combos (text-text-tertiary bg-bg-tertiary) upgraded to text-text-secondary for readability.
+
+**Iteration 65**: ARIA accessibility pass — Mobile nav drawer role="dialog" + aria-modal. Pagination aria-current="page". Notification badge aria-live="polite". Close button aria-labels + transition-colors on 4 buttons.
+
+**Iteration 66**: Transition polish — Export variants "All" button transition-colors.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~76 total. Design tokens complete, WCAG accessibility comprehensive, consistent date formatting, all loading/disabled states.
 
 ---
 

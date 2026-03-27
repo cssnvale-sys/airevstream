@@ -56,6 +56,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **ConfirmDialog loading states** (Session 47): Series avatar manager + episode table dialogs now disable buttons during async operations.
 - **Input class standardization** (Session 47): 23 raw Tailwind input/select classes replaced with utility classes across 12 files.
 - **Budgets LoadingButton** (Session 47): Budget form save button converted to LoadingButton to prevent double-submit.
+- **Semantic HTML** (Session 47): QualityBadge role="status" with aria-label. 12 date displays wrapped in `<time dateTime="">` elements for machine-readability.
+- **type="button" sweep** (Session 47): 13 buttons in 8 components given explicit type="button" to prevent accidental form submission.
+- **Low-contrast fix** (Session 47): 10 same-element text-text-tertiary + bg-bg-tertiary combos upgraded to text-text-secondary for better readability.
+- **ARIA accessibility** (Session 47): Mobile nav drawer role="dialog" + aria-modal, pagination aria-current="page", notification badge aria-live="polite".
+- **Disabled cursor** (Session 47): disabled:cursor-not-allowed added to 5 custom-styled disabled buttons.
+- **Number input constraints** (Session 47): Budget limit input min/step attributes for numeric validation.
+- **Transition polish** (Session 47): transition-colors added to 5 close/zoom/select buttons for smooth hover states.
 - **KI-066 fix** (Session 47): Removed 4 unused dependencies (class-variance-authority, @fastify/websocket, playwright-extra, puppeteer-extra-plugin-stealth).
 - **15 API routes missing force-dynamic** (Session 47): Analytics, auth, calendar, events/stream, suggestions/stats, system/metrics routes now export force-dynamic.
 - **22 inline button styles** (Session 47): Replaced with utility classes (btn-primary, btn-secondary, btn-ghost) across 10 components.

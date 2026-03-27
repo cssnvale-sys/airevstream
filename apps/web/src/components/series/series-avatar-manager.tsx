@@ -34,6 +34,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
   const [selectedRole, setSelectedRole] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const { data: allAvatarsData } = useApi<AvatarOption[]>(adding ? '/avatars?limit=100' : null);
   const allAvatars = allAvatarsData?.data ?? [];
@@ -63,15 +64,17 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
 
   const handleRemove = async () => {
     if (!removeTarget) return;
+    setRemoving(true);
     try {
       await apiDelete(`/series/${seriesId}/avatars?avatarId=${removeTarget}`);
       toast.success('Avatar removed');
+      setRemoveTarget(null);
       onUpdate();
     } catch (err) {
       console.error('Failed to remove avatar:', err);
       toast.error('Failed to remove avatar');
     } finally {
-      setRemoveTarget(null);
+      setRemoving(false);
     }
   };
 
@@ -110,6 +113,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
                 onClick={() => setRemoveTarget(a.avatarId)}
                 className="text-text-secondary hover:text-accent-red transition-colors shrink-0"
                 title="Remove"
+                aria-label="Remove avatar"
               >
                 <Trash2 size={14} />
               </button>
@@ -122,6 +126,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
         open={!!removeTarget}
         onCancel={() => setRemoveTarget(null)}
         onConfirm={handleRemove}
+        loading={removing}
         title="Remove Avatar"
         message="Remove this avatar from the series? This does not delete the avatar itself."
         variant="danger"

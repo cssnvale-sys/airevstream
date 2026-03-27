@@ -131,6 +131,7 @@ export function EpisodeTable({ seriesId }: Props) {
                       disabled={deletingId === ep.id}
                       className="text-text-secondary hover:text-accent-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Remove episode"
+                      aria-label="Remove episode"
                     >
                       {deletingId === ep.id ? (
                         <div className="inline-block animate-spin">
@@ -154,6 +155,7 @@ export function EpisodeTable({ seriesId }: Props) {
         message="Remove this episode from the series? The underlying content will not be deleted."
         confirmLabel="Remove"
         variant="danger"
+        loading={deletingId !== null}
         onConfirm={() => deleteId && handleDelete(deleteId)}
         onCancel={() => setDeleteId(null)}
       />

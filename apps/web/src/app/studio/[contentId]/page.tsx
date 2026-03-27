@@ -13,7 +13,8 @@ import { CostPreviewPanel } from '@/components/cinema/cost-preview-panel';
 import type { ShotData } from '@/components/cinema/shot-editor-panel';
 import type { GuidanceSuggestion } from '@/components/cinema/ai-guidance-panel';
 import Link from 'next/link';
-import { List, Table2, ImageIcon, Film as FilmIcon, Check, X, RotateCcw, Loader2 } from 'lucide-react';
+import { List, Table2, ImageIcon, Film as FilmIcon, Check, X, RotateCcw } from 'lucide-react';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { MediaPreview } from '@/components/ui/media-preview';
 import { QualityBadge } from '@/components/ui/quality-badge';
 import { ComplexityToggle } from '@/components/ui/complexity-toggle';
@@ -313,14 +314,15 @@ export default function StudioPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <LoadingButton
                 onClick={handleApproveAllAndRender}
-                disabled={reviewActing === 'all'}
+                loading={reviewActing === 'all'}
+                loadingText="Approve All & Render"
                 className="btn-primary flex items-center gap-1.5 text-sm"
               >
-                {reviewActing === 'all' ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                <Check size={14} />
                 Approve All & Render
-              </button>
+              </LoadingButton>
             </div>
           </div>
           {/* Per-shot review controls */}

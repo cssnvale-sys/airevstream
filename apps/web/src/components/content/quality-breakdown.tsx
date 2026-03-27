@@ -2,8 +2,9 @@
 
 import { useApi, apiPost } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
-import { RefreshCw, Loader2 } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { toast } from '@/lib/toast';
 import { QUALITY_THRESHOLDS } from '@airevstream/shared';
 
@@ -77,10 +78,10 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
     return (
       <div className="text-center py-6">
         <p className="text-text-secondary text-sm mb-2">No quality score available</p>
-        <button onClick={handleRecalculate} disabled={recalculating} className="btn-secondary btn-sm flex items-center gap-1 mx-auto">
-          {recalculating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+        <LoadingButton onClick={handleRecalculate} loading={recalculating} loadingText="Calculate" className="btn-secondary btn-sm flex items-center gap-1 mx-auto">
+          <RefreshCw size={14} />
           Calculate
-        </button>
+        </LoadingButton>
       </div>
     );
   }
@@ -98,9 +99,9 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
           <p className="text-sm font-medium text-text-primary">Overall Quality</p>
           <p className="text-xs text-text-secondary">{overall >= QUALITY_THRESHOLDS.AUTO_APPROVE ? 'Excellent' : overall >= QUALITY_THRESHOLDS.REVIEW_REQUIRED ? 'Needs review' : overall >= QUALITY_THRESHOLDS.AUTO_REJECT ? 'Low quality' : 'Rejected'}</p>
         </div>
-        <button onClick={handleRecalculate} disabled={recalculating} className="btn-secondary btn-sm flex items-center gap-1 ml-auto" title="Recalculate">
-          {recalculating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-        </button>
+        <LoadingButton onClick={handleRecalculate} loading={recalculating} loadingText="" className="btn-secondary btn-sm flex items-center gap-1 ml-auto" title="Recalculate">
+          <RefreshCw size={14} />
+        </LoadingButton>
       </div>
 
       {/* Breakdown bars — only available after POST (recalculate) */}

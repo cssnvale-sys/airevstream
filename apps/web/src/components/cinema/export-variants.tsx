@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
-import { Download, Loader2 } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface ExportVariantsProps {
   contentId: string;
@@ -137,14 +138,16 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
           >
             All
           </button>
-          <button
+          <LoadingButton
             onClick={handleExport}
-            disabled={exporting || selected.size === 0}
+            loading={exporting}
+            disabled={selected.size === 0}
+            loadingText={`Export (${selected.size})`}
             className="btn-primary btn-sm flex items-center gap-1.5"
           >
-            {exporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+            <Download size={12} />
             Export ({selected.size})
-          </button>
+          </LoadingButton>
         </div>
       </div>
       <div className="p-2 space-y-1.5">

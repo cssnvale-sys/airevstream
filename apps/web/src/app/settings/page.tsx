@@ -855,12 +855,14 @@ function SecurityTab() {
         <h3 className="text-base font-semibold text-text-primary mb-4">Change Password</h3>
         <form noValidate onSubmit={handleChangePassword} className="max-w-md space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">Current Password</label>
+            <label htmlFor="current-password" className="block text-sm font-medium text-text-secondary mb-1.5">Current Password</label>
             <div className="relative">
               <input
+                id="current-password"
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={passwordForm.currentPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                autoComplete="current-password"
                 className="input w-full pr-10"
                 required
               />
@@ -876,12 +878,14 @@ function SecurityTab() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">New Password</label>
+            <label htmlFor="new-password" className="block text-sm font-medium text-text-secondary mb-1.5">New Password</label>
             <div className="relative">
               <input
+                id="new-password"
                 type={showNewPassword ? 'text' : 'password'}
                 value={passwordForm.newPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                autoComplete="new-password"
                 className="input w-full pr-10"
                 required
               />
@@ -897,11 +901,13 @@ function SecurityTab() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">Confirm New Password</label>
+            <label htmlFor="confirm-password" className="block text-sm font-medium text-text-secondary mb-1.5">Confirm New Password</label>
             <input
+              id="confirm-password"
               type="password"
               value={passwordForm.confirmPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              autoComplete="new-password"
               className="input w-full"
               required
             />

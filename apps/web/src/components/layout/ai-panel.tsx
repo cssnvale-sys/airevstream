@@ -79,7 +79,7 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
           <Sparkles size={18} className="text-accent-purple" />
           <span className="text-card-title text-text-primary">AI Assistant</span>
         </div>
-        <button onClick={onClose} className="btn-icon" aria-label="Close AI assistant">
+        <button type="button" onClick={onClose} className="btn-icon" aria-label="Close AI assistant">
           <X size={16} />
         </button>
       </div>
@@ -123,10 +123,11 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
             placeholder="Ask anything..."
+            aria-label="Ask AI assistant"
             className="input flex-1"
             disabled={loading}
           />
-          <button onClick={send} disabled={loading || !input.trim()} className="btn-primary btn-sm">
+          <button type="button" onClick={send} disabled={loading || !input.trim()} className="btn-primary btn-sm" aria-label="Send message">
             <Send size={16} />
           </button>
         </div>

@@ -197,6 +197,7 @@ export function Sidebar() {
         )}
         {isMobile && (
           <button
+            type="button"
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
             className="p-2.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors"
@@ -238,6 +239,7 @@ export function Sidebar() {
 
       <div className="p-2 border-t border-border space-y-0.5 safe-bottom">
         <button
+          type="button"
           onClick={() => setShowShortcuts(true)}
           aria-label="Show keyboard shortcuts"
           title={!isMobile && collapsed ? 'Keyboard Shortcuts (?)' : undefined}
@@ -251,6 +253,7 @@ export function Sidebar() {
         </button>
         {!isMobile && (
           <button
+            type="button"
             onClick={toggleCollapsed}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
@@ -263,6 +266,7 @@ export function Sidebar() {
           </button>
         )}
         <button
+          type="button"
           onClick={handleLogout}
           aria-label="Sign out"
           className={cn(
@@ -281,6 +285,7 @@ export function Sidebar() {
     <>
       {/* Mobile hamburger button — fixed top-left, visible only below md */}
       <button
+        type="button"
         onClick={() => setMobileOpen(true)}
         aria-label="Open menu"
         className="fixed top-3 left-3 z-50 md:hidden p-2 rounded-md bg-bg-secondary border border-border text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"

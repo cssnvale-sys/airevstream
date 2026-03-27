@@ -96,8 +96,9 @@ function ResetPasswordForm() {
           )}
 
           <div>
-            <label className="block text-body text-text-secondary mb-1">New Password</label>
+            <label htmlFor="reset-new-password" className="block text-body text-text-secondary mb-1">New Password</label>
             <input
+              id="reset-new-password"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -110,8 +111,9 @@ function ResetPasswordForm() {
           </div>
 
           <div>
-            <label className="block text-body text-text-secondary mb-1">Confirm Password</label>
+            <label htmlFor="reset-confirm-password" className="block text-body text-text-secondary mb-1">Confirm Password</label>
             <input
+              id="reset-confirm-password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

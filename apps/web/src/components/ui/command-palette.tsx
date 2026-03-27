@@ -152,7 +152,7 @@ export function CommandPalette() {
             aria-label="Search content, channels, accounts"
             className="flex-1 bg-transparent text-text-primary placeholder:text-text-secondary outline-none text-sm"
           />
-          <button onClick={() => setOpen(false)} className="text-text-secondary hover:text-text-primary" aria-label="Close command palette">
+          <button type="button" onClick={() => setOpen(false)} className="text-text-secondary hover:text-text-primary" aria-label="Close command palette">
             <X size={16} />
           </button>
         </div>
@@ -169,6 +169,7 @@ export function CommandPalette() {
                 const Icon = item.icon;
                 return (
                   <button
+                    type="button"
                     key={`${item.type}-${item.id}`}
                     onClick={() => { setOpen(false); router.push(item.href); }}
                     className={cn(

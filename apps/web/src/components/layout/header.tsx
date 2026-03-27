@@ -49,6 +49,7 @@ export function Header({ onToggleAssistant }: { onToggleAssistant: () => void })
 
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={onToggleAssistant}
           className="btn-icon relative"
           title="AI Assistant (Cmd+/)"
@@ -57,7 +58,7 @@ export function Header({ onToggleAssistant }: { onToggleAssistant: () => void })
           <MessageSquare size={18} />
         </button>
         <NotificationCenter />
-        <button className="btn-icon" aria-label="User profile">
+        <button type="button" className="btn-icon" aria-label="User profile">
           <User size={18} />
         </button>
       </div>

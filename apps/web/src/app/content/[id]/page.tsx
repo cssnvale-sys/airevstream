@@ -13,10 +13,11 @@ import { QualityBreakdown } from '@/components/content/quality-breakdown';
 import { ShotGallery } from '@/components/content/shot-gallery';
 import { MediaPreview } from '@/components/ui/media-preview';
 import { QualityBadge } from '@/components/ui/quality-badge';
+import { LoadingButton } from '@/components/ui/loading-button';
 import {
   ArrowLeft, Check, X, Clock, Send, Archive,
   FileText, Film, Video, Image, Mic, ImageIcon,
-  Loader2, Calendar, Globe, Tag, Cpu, BarChart3,
+  Calendar, Globe, Tag, Cpu, BarChart3,
   Copy, Share2, Eye, ThumbsUp, MessageCircle,
   MoreHorizontal,
 } from 'lucide-react';
@@ -238,10 +239,10 @@ export default function ContentDetailPage() {
           <div className="flex items-center gap-2">
             {(item.status === 'pending_approval' || item.status === 'generated') && (
               <>
-                <button onClick={() => handleAction('approve')} disabled={acting} className="btn-primary flex items-center gap-1.5">
-                  {activeAction === 'approve' ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  {activeAction === 'approve' ? 'Approving...' : 'Approve'}
-                </button>
+                <LoadingButton onClick={() => handleAction('approve')} loading={activeAction === 'approve'} disabled={acting} loadingText="Approving..." className="btn-primary flex items-center gap-1.5">
+                  <Check size={14} />
+                  Approve
+                </LoadingButton>
                 <button onClick={() => setRejectOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5 text-accent-red">
                   <X size={14} /> Reject
                 </button>
@@ -252,10 +253,10 @@ export default function ContentDetailPage() {
                 <button onClick={() => handleAction('schedule')} disabled={acting} className="btn-primary flex items-center gap-1.5">
                   <Send size={14} /> Schedule
                 </button>
-                <button onClick={() => setPublishOpen(true)} disabled={acting} className="btn-secondary flex items-center gap-1.5">
-                  {activeAction === 'publish' ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  {activeAction === 'publish' ? 'Publishing...' : 'Publish Now'}
-                </button>
+                <LoadingButton onClick={() => setPublishOpen(true)} loading={activeAction === 'publish'} disabled={acting} loadingText="Publishing..." className="btn-secondary flex items-center gap-1.5">
+                  <Send size={14} />
+                  Publish Now
+                </LoadingButton>
               </>
             )}
             {/* Secondary actions dropdown */}
@@ -627,7 +628,7 @@ export default function ContentDetailPage() {
               </div>
               <div className="flex gap-2 justify-end mt-4">
                 <button onClick={() => setRepurposeOpen(false)} className="btn-secondary text-sm">Cancel</button>
-                <button
+                <LoadingButton
                   onClick={async () => {
                     setActiveAction('repurpose');
                     try {
@@ -645,12 +646,12 @@ export default function ContentDetailPage() {
                       setActiveAction(null);
                     }
                   }}
-                  disabled={acting}
+                  loading={acting}
                   className="btn-primary text-sm flex items-center gap-1"
                 >
-                  {acting ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
+                  <Copy size={14} />
                   Repurpose
-                </button>
+                </LoadingButton>
               </div>
             </div>
           </div>
@@ -703,7 +704,7 @@ export default function ContentDetailPage() {
               </div>
               <div className="flex gap-2 justify-end mt-4">
                 <button onClick={() => { setDistributeOpen(false); setSelectedChannels([]); setDistributeSchedule(''); }} className="btn-secondary text-sm">Cancel</button>
-                <button
+                <LoadingButton
                   onClick={async () => {
                     if (selectedChannels.length === 0) {
                       toast.error('Select at least one channel');
@@ -727,12 +728,13 @@ export default function ContentDetailPage() {
                       setActiveAction(null);
                     }
                   }}
-                  disabled={acting || selectedChannels.length === 0}
+                  loading={acting}
+                  disabled={selectedChannels.length === 0}
                   className="btn-primary text-sm flex items-center gap-1"
                 >
-                  {acting ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />}
+                  <Share2 size={14} />
                   Distribute
-                </button>
+                </LoadingButton>
               </div>
             </div>
           </div>

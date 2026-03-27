@@ -8,6 +8,7 @@ import { Play, Pause, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Activity,
 import { EmptyState } from '@/components/ui/empty-state';
 import { CopyButton } from '@/components/ui/copy-button';
 import { toast } from '@/lib/toast';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { HitlTaskCard, type HitlTask } from '@/components/workflows/hitl-task-card';
 
 interface WorkflowJob {
@@ -240,18 +241,14 @@ export default function WorkflowsPage() {
                       </div>
                     )}
                     {job.status === 'failed' && (
-                      <button
+                      <LoadingButton
                         onClick={() => handleRetry(job.id)}
-                        disabled={retryingId === job.id}
+                        loading={retryingId === job.id}
                         className="btn-secondary btn-sm flex items-center gap-1 shrink-0"
                       >
-                        {retryingId === job.id ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
-                          <RotateCcw size={12} />
-                        )}
+                        <RotateCcw size={12} />
                         Retry
-                      </button>
+                      </LoadingButton>
                     )}
                     <div className="text-xs text-text-secondary whitespace-nowrap">
                       {formatRelativeTime(job.createdAt)}

@@ -9,6 +9,7 @@ import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { QualityBadge } from '@/components/ui/quality-badge';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface ApprovalItem {
   id: string;
@@ -170,14 +171,14 @@ export default function ApprovalsPage() {
             <span className="text-sm font-medium text-text-primary">
               {selectedIds.size} selected
             </span>
-            <button
+            <LoadingButton
               onClick={() => handleBulkAction('approve')}
-              disabled={bulkActing}
+              loading={bulkActing}
               className="btn-primary btn-sm flex items-center gap-1"
             >
-              {bulkActing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              <Check size={14} />
               Approve All
-            </button>
+            </LoadingButton>
             <button
               onClick={() => setBulkRejectOpen(true)}
               disabled={bulkActing}
@@ -273,14 +274,14 @@ export default function ApprovalsPage() {
                       })()}
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                      <LoadingButton
                         onClick={() => handleAction(item.id, 'approve')}
-                        disabled={acting === item.id}
+                        loading={acting === item.id}
                         className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
                       >
-                        {acting === item.id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                        <Check size={14} />
                         Approve
-                      </button>
+                      </LoadingButton>
                       <button
                         onClick={() => setRejectTarget(item.id)}
                         disabled={acting === item.id}

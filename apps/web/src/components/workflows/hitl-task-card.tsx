@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { apiPost } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { CheckCircle, Loader2, ExternalLink, AlertTriangle, Clock, User } from 'lucide-react';
+import { CheckCircle, ExternalLink, AlertTriangle, Clock, User } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { LoadingButton } from '@/components/ui/loading-button';
 import Link from 'next/link';
 
 export interface HitlTask {
@@ -95,14 +96,14 @@ export function HitlTaskCard({ task, onComplete }: HitlTaskCardProps) {
             </div>
           )}
         </div>
-        <button
+        <LoadingButton
           onClick={handleComplete}
-          disabled={completing}
+          loading={completing}
           className="btn-primary btn-sm flex items-center gap-1 shrink-0"
         >
-          {completing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+          <CheckCircle size={14} />
           Complete
-        </button>
+        </LoadingButton>
       </div>
     </div>
   );

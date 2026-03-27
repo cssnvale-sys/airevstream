@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Assets — AiRevStream',
+  title: 'Assets',
   description: 'Manage characters, backgrounds, and branding assets',
 };
 

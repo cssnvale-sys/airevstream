@@ -69,6 +69,7 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
       <div className="px-3 py-2 bg-bg-tertiary border-b border-border flex items-center justify-between">
         <span className="text-sm font-medium text-text-primary">Cost Preview</span>
         <button
+          type="button"
           onClick={fetchEstimate}
           disabled={loading || shots.length === 0}
           className="btn-primary btn-sm"

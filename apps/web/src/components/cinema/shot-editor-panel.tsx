@@ -105,6 +105,7 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
         <ShotPreview shot={selectedShot} />
         <div className="mt-3 flex gap-2">
           <button
+            type="button"
             onClick={() => selectedShotId && onGenerateShot(selectedShotId)}
             disabled={!selectedShotId}
             className="px-3 py-1.5 bg-accent-blue text-white rounded-md text-sm hover:bg-accent-blue/90 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -112,6 +113,7 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
             Generate Shot
           </button>
           <button
+            type="button"
             onClick={onGenerateAll}
             className="px-3 py-1.5 bg-bg-tertiary text-text-primary rounded-md text-sm hover:bg-border"
           >
@@ -189,6 +191,7 @@ function RepairMenu({ onRepair }: { onRepair: (type: RepairType) => void }) {
   return (
     <div className="relative" ref={menuRef}>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         className="px-3 py-1.5 bg-bg-tertiary text-text-primary rounded-md text-sm hover:bg-border border border-border"
       >
@@ -198,6 +201,7 @@ function RepairMenu({ onRepair }: { onRepair: (type: RepairType) => void }) {
         <div className="absolute bottom-full left-0 mb-1 w-52 bg-bg-secondary border border-border rounded-lg shadow-lg z-20">
           {items.map((item) => (
             <button
+              type="button"
               key={item.type}
               onClick={() => { onRepair(item.type); setOpen(false); }}
               className="w-full text-left px-3 py-2 hover:bg-bg-tertiary first:rounded-t-lg last:rounded-b-lg"

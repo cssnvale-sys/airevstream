@@ -112,6 +112,7 @@ export default function CinemaBiblePage() {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setShowCreate(!showCreate)}
             className="btn-primary"
           >
@@ -150,6 +151,7 @@ export default function CinemaBiblePage() {
                 Create
               </LoadingButton>
               <button
+                type="button"
                 onClick={() => { setShowCreate(false); setNewChannelId(''); }}
                 className="btn-secondary"
               >
@@ -174,6 +176,7 @@ export default function CinemaBiblePage() {
             <div className="col-span-3 space-y-2">
               {bibles.map((bible) => (
                 <button
+                  type="button"
                   key={bible.id}
                   onClick={() => setSelectedId(bible.id)}
                   className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${

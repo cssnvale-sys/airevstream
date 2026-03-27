@@ -250,6 +250,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
                     {!outcome && suggestionLogs.length > 0 && (
                       <div className="flex gap-0.5">
                         <button
+                          type="button"
                           onClick={() => handleOutcome(s.presetId, 'accepted')}
                           className="p-0.5 rounded hover:bg-accent-green/20 text-text-tertiary hover:text-accent-green transition-colors"
                           title="Accept suggestion"
@@ -258,6 +259,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
                           <Check size={12} />
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleOutcome(s.presetId, 'rejected')}
                           className="p-0.5 rounded hover:bg-accent-red/20 text-text-tertiary hover:text-accent-red transition-colors"
                           title="Reject suggestion"

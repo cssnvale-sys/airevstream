@@ -36,6 +36,7 @@ export function CopyButton({ value, label, className, size = 14, showToast = tru
 
   return (
     <button
+      type="button"
       onClick={(e) => {
         e.stopPropagation();
         handleCopy();

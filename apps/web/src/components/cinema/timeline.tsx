@@ -83,6 +83,7 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
               const width = (shot.endSec - shot.startSec) * pixelsPerSecond;
               return (
                 <button
+                  type="button"
                   key={shot.id}
                   onClick={() => onSelectShot(shot.id)}
                   style={{ position: 'absolute', left, width: Math.max(width - 2, 4), height: TRACK_HEIGHT - 4 }}

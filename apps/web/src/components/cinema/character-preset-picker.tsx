@@ -25,6 +25,7 @@ export function CharacterPresetPicker({ onApply, selectedId }: CharacterPresetPi
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {presets.map((preset) => (
           <button
+            type="button"
             key={preset.id}
             onClick={() => onApply(preset.overrides)}
             className={cn(

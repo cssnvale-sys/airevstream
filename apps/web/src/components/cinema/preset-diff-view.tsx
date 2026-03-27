@@ -19,6 +19,7 @@ export function PresetDiffView({ diff }: PresetDiffViewProps) {
   return (
     <div className="border border-border rounded-md overflow-hidden">
       <button
+        type="button"
         onClick={() => setCollapsed(!collapsed)}
         className="w-full flex items-center justify-between px-3 py-2 bg-bg-tertiary hover:bg-border text-sm font-medium text-text-primary transition-colors"
       >

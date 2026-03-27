@@ -91,6 +91,7 @@ export function SceneryCard({ scenery, onDelete }: SceneryCardProps) {
           {/* Delete button */}
           {onDelete && (
             <button
+              type="button"
               onClick={() => setConfirmOpen(true)}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-text-secondary hover:text-accent-red hover:bg-accent-red/10"
               aria-label={`Delete ${scenery.name}`}

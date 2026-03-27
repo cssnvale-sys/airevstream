@@ -81,6 +81,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-text-primary">Keyboard Shortcuts</h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close shortcuts modal"
             className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded"

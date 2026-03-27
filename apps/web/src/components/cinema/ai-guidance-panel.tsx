@@ -69,6 +69,7 @@ export function AiGuidancePanel({ suggestions, onApplyAction }: AiGuidancePanelP
                 <p className="text-sm text-text-primary">{suggestion.message}</p>
               </div>
               <button
+                type="button"
                 onClick={() => setDismissed((prev) => new Set(prev).add(i))}
                 className="text-text-tertiary hover:text-text-secondary text-xs"
               >
@@ -77,6 +78,7 @@ export function AiGuidancePanel({ suggestions, onApplyAction }: AiGuidancePanelP
             </div>
             {suggestion.action && onApplyAction && (
               <button
+                type="button"
                 onClick={() => onApplyAction(suggestion.action!.patch)}
                 className="mt-2 px-3 py-1 bg-accent-blue/20 text-accent-blue rounded text-xs hover:bg-accent-blue/30"
               >

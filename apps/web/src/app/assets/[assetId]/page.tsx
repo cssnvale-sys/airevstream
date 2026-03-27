@@ -148,6 +148,7 @@ function SlotCard({
           </div>
           <div className="flex gap-1">
             <button
+              type="button"
               onClick={() => setShowGenerate(true)}
               className="btn-secondary text-xs flex-1 inline-flex items-center justify-center gap-1"
             >
@@ -155,6 +156,7 @@ function SlotCard({
               Regenerate
             </button>
             <button
+              type="button"
               onClick={() => setDeleteSlotOpen(true)}
               disabled={deleting}
               className="btn-secondary text-xs px-2 text-accent-red hover:bg-accent-red/10"
@@ -174,6 +176,7 @@ function SlotCard({
             onUploaded={handleUploadComplete}
           />
           <button
+            type="button"
             onClick={() => setShowGenerate(true)}
             className="btn-secondary text-xs w-full inline-flex items-center justify-center gap-1"
           >
@@ -188,7 +191,7 @@ function SlotCard({
         <div className="mt-2 p-3 bg-bg-tertiary border border-border rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-text-secondary">Generation Prompt</span>
-            <button onClick={() => setShowGenerate(false)} aria-label="Close" className="text-text-tertiary hover:text-text-primary">
+            <button type="button" onClick={() => setShowGenerate(false)} aria-label="Close" className="text-text-tertiary hover:text-text-primary">
               <X size={14} />
             </button>
           </div>

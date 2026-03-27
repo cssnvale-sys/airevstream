@@ -145,6 +145,7 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
         <span className="text-sm font-medium text-text-primary">Export Variants</span>
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={() => setSelected(new Set(VARIANT_OPTIONS.map(v => v.id)))}
             className="text-xs px-2 py-1 text-text-secondary hover:text-text-primary border border-border rounded transition-colors"
           >

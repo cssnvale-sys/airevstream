@@ -47,6 +47,7 @@ export function ProvenanceViewer({ contentId }: ProvenanceViewerProps) {
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-3 py-2 bg-bg-tertiary hover:bg-border text-sm font-medium text-text-primary"
       >

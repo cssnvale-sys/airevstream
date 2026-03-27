@@ -38,6 +38,7 @@ function AvatarPickerItem({ avatar, onSelect }: { avatar: AvatarItem; onSelect: 
 
   return (
     <button
+      type="button"
       onClick={() => onSelect(avatar.id)}
       className="card hover:border-accent-blue/30 transition-colors flex flex-col items-center gap-2 p-3 cursor-pointer"
     >
@@ -58,6 +59,7 @@ function SceneryPickerItem({ scenery, onSelect }: { scenery: SceneryItem; onSele
 
   return (
     <button
+      type="button"
       onClick={() => onSelect(scenery.id)}
       className="card hover:border-accent-blue/30 transition-colors flex flex-col gap-2 p-2 cursor-pointer"
     >
@@ -135,6 +137,7 @@ export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [
             {title}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded"
             aria-label="Close"

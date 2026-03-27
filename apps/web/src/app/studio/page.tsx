@@ -64,7 +64,7 @@ export default function StudioIndexPage() {
           <AlertTriangle size={32} className="text-accent-red mx-auto mb-3" />
           <p className="text-accent-red font-medium mb-1">Failed to load content</p>
           <p className="text-sm text-text-secondary mb-4">Something went wrong. Please try again.</p>
-          <button onClick={() => mutate()} className="btn-secondary btn-sm inline-flex items-center gap-2">
+          <button type="button" onClick={() => mutate()} className="btn-secondary btn-sm inline-flex items-center gap-2">
             <RefreshCw size={14} />
             Retry
           </button>

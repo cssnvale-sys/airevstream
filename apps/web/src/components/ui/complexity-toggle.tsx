@@ -17,6 +17,7 @@ export function ComplexityToggle() {
     <div className="inline-flex rounded-md border border-border bg-bg-tertiary p-0.5">
       {MODES.map(({ value, label }) => (
         <button
+          type="button"
           key={value}
           onClick={() => setMode(value)}
           className={cn(

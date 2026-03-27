@@ -148,19 +148,19 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
         </div>
         <div className="flex items-center gap-2">
           {exp.status === 'draft' && (
-            <button onClick={handleStart} className="btn-primary flex items-center gap-2">
+            <button type="button" onClick={handleStart} className="btn-primary flex items-center gap-2">
               <Play size={16} />
               Start
             </button>
           )}
           {exp.status === 'running' && (
-            <button onClick={handleEvaluate} className="btn-secondary flex items-center gap-2">
+            <button type="button" onClick={handleEvaluate} className="btn-secondary flex items-center gap-2">
               <BarChart3 size={16} />
               Evaluate Now
             </button>
           )}
           {(exp.status === 'running' || exp.status === 'evaluating') && (
-            <button onClick={() => setStopOpen(true)} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
+            <button type="button" onClick={() => setStopOpen(true)} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
               <Square size={16} />
               Stop
             </button>

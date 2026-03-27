@@ -70,6 +70,7 @@ function ChannelAvatarItem({
       </div>
       <span className="text-sm text-text-primary flex-1 truncate" title={assignment.avatar.name}>{assignment.avatar.name}</span>
       <button
+        type="button"
         onClick={() => onRemove(assignment.id)}
         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-secondary hover:text-accent-red"
         aria-label={`Remove ${assignment.avatar.name}`}
@@ -106,6 +107,7 @@ function ChannelSceneryItem({
         )}
       </div>
       <button
+        type="button"
         onClick={() => onRemove(assignment.id)}
         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-secondary hover:text-accent-red"
         aria-label={`Remove ${assignment.scenery.name}`}
@@ -192,6 +194,7 @@ export function ChannelAssetsTab({ channelId }: ChannelAssetsTabProps) {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-text-primary">Characters</h3>
           <button
+            type="button"
             onClick={() => setPickerType('avatar')}
             className="flex items-center gap-1.5 text-xs text-accent-blue hover:text-accent-blue/80 transition-colors"
           >
@@ -223,6 +226,7 @@ export function ChannelAssetsTab({ channelId }: ChannelAssetsTabProps) {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-text-primary">Backgrounds</h3>
           <button
+            type="button"
             onClick={() => setPickerType('scenery')}
             className="flex items-center gap-1.5 text-xs text-accent-blue hover:text-accent-blue/80 transition-colors"
           >

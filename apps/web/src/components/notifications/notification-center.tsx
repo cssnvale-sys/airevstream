@@ -191,6 +191,7 @@ export function NotificationCenter() {
   return (
     <div className="relative">
       <button
+        type="button"
         ref={buttonRef}
         onClick={() => setOpen(!open)}
         className="btn-icon relative"
@@ -226,6 +227,7 @@ export function NotificationCenter() {
             <div className="flex items-center gap-1">
               {alerts.length > 0 && (
                 <button
+                  type="button"
                   onClick={markAllRead}
                   className="flex items-center gap-1 text-caption text-text-secondary hover:text-text-primary transition-colors px-2 py-1 rounded-md hover:bg-bg-tertiary"
                   title="Mark all as read"
@@ -262,6 +264,7 @@ export function NotificationCenter() {
           {alerts.length > 0 && (
             <div className="border-t border-border px-4 py-2">
               <button
+                type="button"
                 onClick={() => {
                   router.push('/system');
                   setOpen(false);

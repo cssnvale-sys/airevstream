@@ -88,6 +88,7 @@ export function ProjectTypePicker({ onSelect, selectedType }: ProjectTypePickerP
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {PROJECT_TYPES.map((pt) => (
           <button
+            type="button"
             key={pt.type}
             onClick={() => onSelect(pt.type, pt.overrides)}
             className={cn(

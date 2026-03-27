@@ -88,6 +88,7 @@ export function NotificationItem({ notification, onDismiss, onClick }: Notificat
       </div>
 
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           onDismiss(notification.id);

@@ -150,6 +150,7 @@ export function LifecycleStatusPanel({ emailAccountId }: LifecycleStatusPanelPro
 
       {lifecycle.status === 'failed' && (
         <button
+          type="button"
           onClick={handleRetry}
           className="flex items-center gap-1.5 rounded bg-bg-tertiary px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary"
         >

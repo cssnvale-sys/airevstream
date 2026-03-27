@@ -94,6 +94,7 @@ export function PlanReviewCard({ plan, onRevise, onRegenerate, regenerating }: P
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {REVISION_PRESETS.map((rev) => (
             <button
+              type="button"
               key={rev.id}
               onClick={() => handleRevision(rev)}
               className={cn(
@@ -113,6 +114,7 @@ export function PlanReviewCard({ plan, onRevise, onRegenerate, regenerating }: P
       {/* Regenerate button (visible when revisions applied) */}
       {dirty && (
         <button
+          type="button"
           onClick={() => {
             onRegenerate();
             setDirty(false);

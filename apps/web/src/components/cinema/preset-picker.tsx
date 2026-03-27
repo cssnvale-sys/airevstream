@@ -142,6 +142,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
         <div role="tablist" className="flex border-b border-border overflow-x-auto">
           {tabs.map(({ value, label }) => (
             <button
+              type="button"
               key={value}
               role="tab"
               aria-selected={activeTab === value}
@@ -256,6 +257,7 @@ function PresetCard({
       </button>
       {onDelete && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();

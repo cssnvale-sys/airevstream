@@ -110,6 +110,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
                 )}
               </div>
               <button
+                type="button"
                 onClick={() => setRemoveTarget(a.avatarId)}
                 className="text-text-secondary hover:text-accent-red transition-colors shrink-0"
                 title="Remove"

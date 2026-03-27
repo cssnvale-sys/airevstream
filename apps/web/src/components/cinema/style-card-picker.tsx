@@ -27,6 +27,7 @@ export function StyleCardPicker({ onApply, selectedId }: StyleCardPickerProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {presets.map((preset) => (
           <button
+            type="button"
             key={preset.id}
             onClick={() => onApply(preset.overrides)}
             className={cn(

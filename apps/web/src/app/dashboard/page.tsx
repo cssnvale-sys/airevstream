@@ -21,6 +21,7 @@ import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } fro
 import { toast } from '@/lib/toast';
 import { QualityBadge } from '@/components/ui/quality-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 import Link from 'next/link';
 
 function formatCountdown(createdAt: string, gateWindowHrs: number | null): { text: string; urgency: 'normal' | 'amber' | 'red' } | null {
@@ -347,7 +348,12 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : approvals.length === 0 ? (
-          <p className="text-text-secondary text-sm py-4 text-center">No pending approvals</p>
+          <EmptyState
+            icon={ClipboardCheck}
+            title="No pending approvals"
+            description="Content awaiting review will appear here."
+            className="py-8"
+          />
         ) : (
           <div className="divide-y divide-border">
             {approvals.slice(0, 5).map((item) => {
@@ -413,7 +419,12 @@ export default function DashboardPage() {
           {workflowsLoading ? (
             <SkeletonProgress />
           ) : workflowCategories.length === 0 ? (
-            <p className="text-text-secondary text-sm py-4 text-center">No active workflows</p>
+            <EmptyState
+              icon={Layers}
+              title="No active workflows"
+              description="Workflow jobs will appear here as content is generated."
+              className="py-8"
+            />
           ) : (
             <div className="space-y-3">
               {workflowCategories.map(([category, count]) => (
@@ -561,7 +572,12 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : activityFeed.length === 0 ? (
-          <p className="text-text-secondary text-sm py-4 text-center">No recent activity</p>
+          <EmptyState
+            icon={Clock}
+            title="No recent activity"
+            description="Activity will show here as you create and publish content."
+            className="py-8"
+          />
         ) : (
           <div className="divide-y divide-border">
             {activityFeed.slice(0, 10).map((item) => (

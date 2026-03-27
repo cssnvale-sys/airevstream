@@ -8,9 +8,11 @@ import { cn, platformIcon } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { useSWRConfig } from 'swr';
 import {
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   startOfWeek,
   endOfWeek,
@@ -570,6 +572,14 @@ export default function CalendarPage() {
         <div className="flex items-center justify-center py-24">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={CalendarDays}
+          title="No scheduled content"
+          description="No posts are scheduled for this period. Create content and schedule it to see it here."
+          actionLabel="Create Content"
+          actionHref="/create"
+        />
       ) : viewMode === 'day' ? (
         /* ================================================================ */
         /* DAY VIEW                                                         */

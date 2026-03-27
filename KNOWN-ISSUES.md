@@ -6,6 +6,30 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
+### KI-082: SoundOutput Layer Shape Incompatible with AudioLayerSpec
+**Severity**: Medium
+**Status**: Open (Session 46 — integration tracing)
+**Context**: `SoundOutput.audioLayers[].bg/mg/fg` returns `{ source: string; volume: number; description: string }` but `AudioLayerSpec` expects `{ source?: 'tts'|'file'|'generate'; text?; fileKey?; ... }`. The production worker casts with `as` but the sound agent's audio direction is lost at the mix stage — layers without `fileKey` or `text` are silently skipped.
+**Action**: Either update the sound agent to output `AudioLayerSpec`-compatible fields, or add a mapping layer in the production worker.
+
+### KI-083: Film Grain/Vignette Lost in Assembly Pipeline
+**Severity**: Medium
+**Status**: Open (Session 46 — integration tracing)
+**Context**: `ColorGradeSpec` lacks `filmGrain`/`vignette` fields. `toColorGrade()` only copies 8 fields from the spec. Additionally, `FinishingOutput.postProcess` (which has filmGrain/vignette) is never merged into the render color grade. These post-processing effects never reach Remotion.
+**Action**: Add filmGrain/vignette to `ColorGradeSpec` and merge `FinishingOutput.postProcess` in the production worker render path.
+
+### KI-084: qualityTier vs qualityPreset Naming Inconsistency
+**Severity**: Low
+**Status**: Open (Session 46 — integration tracing)
+**Context**: Assembly manifest, workflow-registry, cost-estimator use `qualityTier`. Pipeline params, cinema API route, production worker use `qualityPreset`. Worker must cast between them. No runtime impact but cognitive overhead.
+**Action**: Unify to a single name across all boundaries.
+
+### KI-085: runPreGenQC Hardcodes Cinema Tier for Cost Estimation
+**Severity**: Low
+**Status**: Open (Session 46 — integration tracing)
+**Context**: `pre-generation-qc.ts` always calls `estimatePipelineCost({ qualityTier: 'cinema' })` regardless of actual tier. Budget checks may reject jobs that fit within lower-tier budgets.
+**Action**: Pass actual quality tier through to the QC function.
+
 ### KI-079: Fastify Service Routes Lack Tenant Scoping
 **Severity**: High
 **Status**: Open (Session 45 — flagged, not fixed)

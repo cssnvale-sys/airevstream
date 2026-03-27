@@ -7,6 +7,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
+
+### Fixed
+- **CRITICAL: Tenant scoping violations** (Session 46): ~15 missing guards across activity, assets, usage, jobs, knowledge base, assistant actions, product analytics, avatar assignment, scenery assets, approvals
+- **CRITICAL: PM2 worker script paths** (Session 46): All 6 worker entries had wrong paths (would crash on `pm2 start`), 2 workers missing from config
+- **CRITICAL: Zod err.message leaks** (Session 46): 13 instances in workflow-engine service routes
+- **Missing try/catch** (Session 46): 27 workflow-engine handlers + 3 queue operations lacked error handling
+- **Rate limiting** (Session 46): Added to 20+ routes across settings, content, and system endpoints
+- **Quality tier naming** (Session 46): Unified `quick` → `draft` across cost-estimator and create page
+- **Dead imports** (Session 46): ~30 removals across API routes, E2E tests, and packages
+- **Silent catches** (Session 46): ~10 additional instances now log appropriately
+- **Unhandled promise rejections** (Session 46): 5 repeatable job registrations in workers
+- **Audit test infrastructure** (Session 46): extractCatchBlocks regex now matches paren-less `catch {}`, stale allowlist entries removed, dead code cleaned
+
+### Changed
+- **.gitignore** (Session 46): Added `remotion/out/` to prevent accidental video commits
+
+### Added
 - **Deep multi-wave codebase audit** (Session 45): 7-wave parallel-agent audit across 362 files (~96K LOC), 26 agents, 105 issues found and fixed with 0 regressions. 3 decisions (D121-D123).
 - **Deep UX/UI audit fixes** (Session 44): 6-wave audit fixing security, confirmation dialogs, loading states, SSE latency, empty states, and content detail polish across ~16 files. 3 decisions (D118-D120).
 

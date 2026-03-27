@@ -381,6 +381,19 @@
 | DA-7 | Wave 7: Remotion | Done | 14 files, 1 agent, 1 issue (unused destructured variable) |
 | DA-8 | Build verification | Done | 14 packages build, 507+ unit tests + 33 audit tests pass, 0 regressions |
 
+### Phase 29: Pre-Deployment Full System Audit (Session 46) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| PD-1 | Wave 1: Auth & system routes | Done | 49 files, 3 agents, 24 fixes (tenant scoping, rate limiting, admin checks) |
+| PD-2 | Wave 2: Content & cinema | Done | 65 files, 4 agents, 14 fixes (rate limiting, data shapes, tenant scoping, Decimal) |
+| PD-3 | Wave 3: Domain pages | Done | 86 files, 5 agents, 13 fixes (cross-tenant avatar, product analytics, dead imports) |
+| PD-4 | Wave 4: Remaining API + hooks + libs | Done | 67 files, 4 agents, 11 fixes (knowledge base, usage, assets, jobs tenant scoping) |
+| PD-5 | Wave 5: Backend packages | Done | 71 files, 4 agents, 19 fixes (silent catches, quality tier, integration mismatches) |
+| PD-6 | Wave 6: Services + workers | Done | 32 files, 3 agents, 59 fixes (try/catch, err.message leaks, unhandled rejections) |
+| PD-7 | Wave 7: Remotion + ComfyUI + integration | Done | 38 files, 3 agents, 3 fixes + 7 integration mismatches documented |
+| PD-8 | Wave 8: Test infra + config | Done | 66 files, 3 agents, PM2 paths fixed, 2 missing workers, audit regex gap, dead imports |
+| PD-9 | Build verification | Done | 14 packages build, all tests pass, 33 audit tests pass, 0 regressions |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|
@@ -400,6 +413,7 @@
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
 - **Test tasks**: 27 (all passing via Turbo)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
+- **Pre-deployment audit (Session 46)**: 8-wave, 30-agent audit across 450+ files. ~160 issues fixed. PM2 config corrected. 7 integration mismatches documented (KI-082 through KI-085). 3 decisions (D124-D126). 0 regressions.
 - Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
 - Codebase audit (Session 12→17): 9 bug classes automated, known violation sets for viewer checks and rate limiting emptied to 0
 - Full codebase audit (Session 19): 302 files scanned, 16 fixes applied (2 bugs, 4 silent catches, 9 type safety, 1 config), 0 silent catches remaining

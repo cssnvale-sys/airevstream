@@ -4,6 +4,60 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 46 — Pre-Deployment Full System Audit (8 Waves, 30 Agents)
+
+**Date**: 2026-03-26
+**Focus**: Complete pre-deployment audit across the entire codebase. 8 sequential waves with 30 parallel agents, ~450+ files audited, ~160 issues found and fixed with 0 regressions.
+
+### Wave 1: Auth & System Routes (49 files, 3 agents)
+- 24 fixes: 1 critical tenant scoping (activity alerts), 8 rate limiting, 11 settings rate limiting, 1 missing admin check, 1 console.debug removal, 1 dead code, 1 dead import
+
+### Wave 2: Content & Cinema (65 files, 4 agents)
+- 14 fixes: 5 rate limiting, 2 data shape fixes, 1 tenant scoping, 1 Decimal wrapping, 2 integration mismatches (job payloads), 1 native confirm→ConfirmDialog, 1 stale closure, 1 query optimization
+
+### Wave 3: Domain Pages (86 files, 5 agents)
+- 13 fixes: 1 cross-tenant avatar assignment (HIGH), 1 critical product analytics tenant scoping, 1 rate limit, 2 data shape mismatches, 3 dead imports, 1 stale status enum, 1 tenant assertion, 1 toast convention, 1 UUID validation
+
+### Wave 4: Remaining API + Hooks + Libs (67 files, 4 agents)
+- 11 fixes: 2 critical tenant scoping (knowledge base), 3 critical tenant scoping (usage/assets/jobs), 2 high missing tenant guards (approvals), 1 high data shape mismatch (AI panel), 1 medium channel ownership, 1 conditional scoping, 1 duplicate import
+
+### Wave 5: Backend Packages (71 files, 4 agents)
+- 19 fixes: 6 silent catches, 2 dead imports, 2 integration mismatches, 1 quality tier mismatch (quick→draft), 1 empty array guard, 1 unused param, 2 duplicate imports, 1 codec type mismatch, 2 FAMILY_OVERRIDE_KEYS gaps, 1 test update
+
+### Wave 6: Services + Workers (32 files, 3 agents)
+- 59 fixes: 27 missing try/catch in workflow-engine, 13 Zod err.message leaks, 3 missing try/catch (queue ops), 2 Decimal wrapping, 3 silent catches, 1 broken logger, 1 dead code, 1 dead variable, 1 critical tenant scoping (scenery assets), 1 presigned URL tenant guard, 1 missing worker event handlers, 5 unhandled promise rejections
+
+### Wave 7: Remotion + ComfyUI + Integration (38 files, 3 agents)
+- 3 fixes (7-A): unused param renames. 0 issues in ComfyUI JSON templates (7-B). Integration tracing (7-C, read-only): 7 cross-boundary mismatches documented (3 medium, 4 low)
+
+### Wave 8: Test Infrastructure + Config (66 files, 3 agents)
+- 8-A (audit tests): 7 fixes — catch regex gap (paren-less catch{}), stale tenant-scoping allowlist, dead KNOWN_DECIMAL_FIELDS, duplicate regex, expanded catch patterns
+- 8-B (E2E tests): 14 dead import removals across 13 spec files, 1 stale fixture flagged
+- 8-C (config): 3 critical fixes — PM2 worker paths wrong (dist/workers→workers/dist), 2 missing PM2 workers (experiment, lifecycle), .gitignore missing remotion/out/
+
+### Integration Tracing Findings (Wave 7-C, documented only)
+| ID | Severity | Description |
+|----|----------|-------------|
+| MISMATCH-1 | Medium | toColorGrade() drops filmGrain/vignette (ColorGradeSpec lacks them) |
+| MISMATCH-2 | Medium | FinishingOutput.postProcess (filmGrain, vignette) not merged into render color grade |
+| MISMATCH-3 | Low | BeatTiming.preset is string in resolver but BeatPreset union in Remotion |
+| MISMATCH-4 | Medium | SoundOutput layer shape incompatible with AudioLayerSpec |
+| MISMATCH-5 | Low | Mixed audio output not linked back to AssembledShot.audioStemUrls |
+| MISMATCH-6 | Low | qualityTier vs qualityPreset naming inconsistency |
+| MISMATCH-7 | Low | runPreGenQC hardcodes 'cinema' tier for cost estimation |
+
+### Key Decisions
+- D124: Pre-deployment audit methodology — 8 waves, 30 agents, fix-as-you-go, verify after each wave
+- D125: PM2 worker path convention — all worker scripts at `workers/dist/<name>.worker.js` from project root
+- D126: Catch regex completeness — audit tests must match both `catch(err) {` and `catch {` syntax
+
+### Commits
+1. `fix: backend — pre-deployment audit fixes across packages, services, workers` (34 files)
+2. `fix: frontend — pre-deployment audit fixes across API routes, pages, components` (56 files)
+3. `chore: audit infra + config — stale allowlists, dead imports, PM2 fixes` (21 files)
+
+---
+
 ## Session 45 — Deep Multi-Wave Codebase Audit (7 Waves, 26 Agents)
 
 **Date**: 2026-03-26

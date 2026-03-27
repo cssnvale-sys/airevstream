@@ -615,3 +615,18 @@
 **Date**: 2026-03-26
 **Decision**: All URL paths passed to `useApi()` and mutation helpers (`apiPost`, `apiPut`, `apiPatch`, `apiDelete`) must start with a leading `/`. The helpers prepend `/api/v1` to the path, so a missing slash causes path concatenation errors (e.g., `/api/v1accounts/...` instead of `/api/v1/accounts/...`).
 **Rationale**: 4 lifecycle hooks were missing the leading slash, causing all lifecycle API calls to return 404. This was a CRITICAL runtime bug that was invisible at build time. The fix is simple (add the slash) but the pattern is easy to miss during development. Codified as a decision so future code reviews catch it.
+
+## D124: Pre-Deployment Audit Methodology — 8 Waves, 30 Agents
+**Date**: 2026-03-26
+**Decision**: Structure the final pre-deployment audit as 8 sequential waves with 30 agents total: Auth & system (3), Content & cinema (4), Domain pages (5), Remaining API + hooks + libs (4), Backend packages (4), Services + workers (3), Remotion + ComfyUI + integration (3), Test infrastructure + config (3). Verify after each wave with `turbo build --force && turbo test && npm run audit`.
+**Rationale**: Building on the proven D121 methodology from Session 45. Added an 8th wave (test infra + config) since audit allowlists and PM2 config were never audited. Integration tracing (Wave 7-C) was run as read-only to document cross-boundary mismatches without fixing them — these are architectural issues needing design decisions, not quick fixes.
+
+## D125: PM2 Worker Path Convention
+**Date**: 2026-03-26
+**Decision**: All PM2 worker entries use script paths relative to project root: `workers/dist/<name>.worker.js`. Do not use `dist/workers/` (wrong directory) or set `cwd` to the workers directory (inconsistent with services).
+**Rationale**: All 6 original PM2 worker entries had `script: 'dist/workers/<name>.worker.js'` which resolves to `<root>/dist/workers/` — a directory that doesn't exist. The compiled output is at `workers/dist/`. Additionally, 2 workers added in later sessions (experiment, lifecycle) were never added to PM2. This would have caused all workers to crash on `pm2 start` in production.
+
+## D126: Catch Regex Completeness in Audit Tests
+**Date**: 2026-03-26
+**Decision**: The `extractCatchBlocks()` regex in audit-helpers.ts must match both `catch(err) {` and modern `catch {` (paren-less) syntax.
+**Rationale**: The original regex `\bcatch\s*\([^)]*\)\s*\{` only matched `catch(err) {`, missing 7 route files using ES2019 optional catch binding (`catch {`). These routes were invisible to the silent-catch audit test. Updated to `\bcatch\s*(?:\([^)]*\)\s*)?\{`.

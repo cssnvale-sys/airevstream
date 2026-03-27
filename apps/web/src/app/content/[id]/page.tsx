@@ -208,7 +208,7 @@ export default function ContentDetailPage() {
     return (
       <AppLayout>
         <div className="max-w-6xl mx-auto text-center py-20">
-          <p className="text-red-400 mb-3">Content not found or failed to load.</p>
+          <p className="text-accent-red mb-3">Content not found or failed to load.</p>
           <button onClick={() => router.back()} className="btn-secondary">Go Back</button>
         </div>
       </AppLayout>

@@ -198,8 +198,8 @@ export default function ApprovalsPage() {
         )}
 
         {fetchError ? (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center">
-            <p className="text-red-400 mb-3">Failed to load approvals</p>
+          <div className="rounded-lg border border-accent-red/30 bg-accent-red/10 p-6 text-center">
+            <p className="text-accent-red mb-3">Failed to load approvals</p>
             <button onClick={() => mutate()} className="btn-secondary btn-sm">Retry</button>
           </div>
         ) : isLoading ? (

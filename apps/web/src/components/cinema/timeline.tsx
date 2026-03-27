@@ -104,7 +104,7 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
               <span className="absolute -left-0 text-[10px] text-text-tertiary w-12">Audio</span>
               <div
                 style={{ position: 'absolute', left: 0, width: totalWidth, height: TRACK_HEIGHT - 8 }}
-                className="bg-emerald-500/10 border border-emerald-500/20 rounded"
+                className="bg-accent-green/10 border border-emerald-500/20 rounded"
               />
             </div>
           )}
@@ -115,7 +115,7 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
               <span className="absolute -left-0 text-[10px] text-text-tertiary w-12">Beats</span>
               {['Hook', 'Intro', 'Content', 'CTA'].map((label, i) => {
                 const sectionWidth = totalWidth / 4;
-                const colors = ['bg-red-500/15', 'bg-yellow-500/15', 'bg-blue-500/15', 'bg-green-500/15'];
+                const colors = ['bg-accent-red/15', 'bg-yellow-500/15', 'bg-accent-blue/10', 'bg-green-500/15'];
                 return (
                   <div
                     key={label}

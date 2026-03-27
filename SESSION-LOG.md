@@ -110,7 +110,15 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 31**: Color token migration batch 5 — analytics (CHART_COLORS hex→CSS vars, tooltipStyle hex→CSS vars), affiliate (18 red status classes), scenery-card (category colors).
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 34 (9 original + 25 continuation).
+**Iteration 32**: Color token migration — seasoning page (11 colors), phase-pipeline (11 colors), enrollment-table (15+ colors), library page (content type badges + quality colors).
+
+**Iteration 33**: Platform color tokens — dashboard, channels, platform-select. YouTube/TikTok/Instagram/Facebook colors → accent-* tokens.
+
+**Iteration 34**: Preset family colors — preset-picker (10 families + 4 recipe constraints), create-preset-modal (10 families + errors), avatar-assign-picker (violet → accent-purple). Then final 5 color stragglers fixed.
+
+**Iteration 35**: noValidate on 14 forms — auth (4), settings password, accounts import, affiliate (3), 5 modals. Legacy 'quick' tier reference removed from cost-preview-panel.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 40+ (9 original + 31 continuation). Color migration: ~130 hardcoded Tailwind classes → design system tokens.
 
 ---
 

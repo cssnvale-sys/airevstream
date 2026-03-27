@@ -134,7 +134,15 @@ function getAnimationOpacity(animation: TextAnimation, progress: number): number
     case 'scale-up':
       return progress;
     case 'typewriter':
+    case 'shimmer':
       return 1;
+    case 'bounce':
+      return progress;
+    case 'glitch':
+      // Flicker in with random opacity jumps
+      return progress < 0.5
+        ? (Math.sin(progress * 30) > 0 ? progress * 2 : 0.1)
+        : 1;
     case 'none':
       return 1;
     default:
@@ -168,6 +176,24 @@ function getAnimationTransform(
     }
     case 'typewriter':
       return 'none';
+    case 'shimmer':
+      // Shimmer: slight horizontal oscillation that settles
+      return `translateX(${Math.sin(progress * Math.PI * 4) * offset * 8}px)`;
+    case 'bounce': {
+      // Bounce: overshoot scale then settle
+      const bounceScale = progress < 0.6
+        ? interpolate(progress, [0, 0.6], [0.3, 1.15])
+        : interpolate(progress, [0.6, 0.8, 1], [1.15, 0.95, 1]);
+      const bounceY = offset * 40;
+      return `translateY(${bounceY}px) scale(${bounceScale})`;
+    }
+    case 'glitch': {
+      // Glitch: random jitter that settles
+      const jitter = offset * 15;
+      const gx = Math.sin(progress * 25) * jitter;
+      const gy = Math.cos(progress * 20) * jitter * 0.5;
+      return `translate(${gx}px, ${gy}px)`;
+    }
     case 'none':
       return 'none';
     default:

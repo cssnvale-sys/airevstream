@@ -40,7 +40,18 @@ export interface BeatTiming {
 // ─── Shot / Media Types ───
 
 /** Transition type between shots */
-export type TransitionType = 'fade' | 'cut' | 'zoom' | 'slide-left' | 'slide-right';
+export type TransitionType =
+  | 'fade'
+  | 'cut'
+  | 'zoom'
+  | 'slide-left'
+  | 'slide-right'
+  | 'wipe-left'
+  | 'wipe-right'
+  | 'wipe-up'
+  | 'wipe-down'
+  | 'glitch'
+  | 'iris';
 
 /** A single shot within a video sequence */
 export interface ShotData {
@@ -96,6 +107,9 @@ export type TextAnimation =
   | 'slide-right'
   | 'scale-up'
   | 'typewriter'
+  | 'shimmer'
+  | 'bounce'
+  | 'glitch'
   | 'none';
 
 /** Configuration for a single text overlay */
@@ -281,6 +295,14 @@ export const DEFAULT_LONG_BEAT_TIMINGS: BeatTiming[] = [
   { startFrame: 8100, endFrame: 9000, section: 'cta', label: 'cta_1', preset: 'INTIMATE' },
 ];
 
+/** Default beat timings for a 30-second square video at 30fps */
+export const DEFAULT_SQUARE_BEAT_TIMINGS: BeatTiming[] = [
+  { startFrame: 0, endFrame: 60, section: 'hook', label: 'hook_1', preset: 'POWER' },
+  { startFrame: 60, endFrame: 180, section: 'intro', label: 'intro_1', preset: 'MOMENTUM' },
+  { startFrame: 180, endFrame: 750, section: 'content', label: 'content_main', preset: 'EMOTIONAL' },
+  { startFrame: 750, endFrame: 900, section: 'cta', label: 'cta_1', preset: 'INTIMATE' },
+];
+
 /** Default audio visualization config */
 export const DEFAULT_AUDIO_VIZ_CONFIG: AudioVisualizationConfig = {
   style: 'bars',
@@ -400,4 +422,50 @@ export interface CinemaVideoProps {
   textOverlays?: TextOverlayConfig[];
   /** Watermark configuration */
   watermark?: WatermarkConfig;
+}
+
+/** Props for SquareSocial (1:1 square, e.g., Instagram feed, Facebook feed) */
+export interface SquareSocialProps {
+  /** Video title */
+  title: string;
+  /** H.I.C.C. structured script */
+  script: HiccScript;
+  /** Array of shot data for the visual sequence */
+  shots: ShotData[];
+  /** URL to background audio track */
+  audioUrl: string | null;
+  /** Beat timing markers for the H.I.C.C. framework */
+  beatTimings: BeatTiming[];
+  /** Text overlays to render */
+  textOverlays: TextOverlayConfig[];
+  /** Beat preset for mood/style */
+  beatPreset: BeatPreset;
+  /** Whether to show audio visualization */
+  showAudioVisualization: boolean;
+}
+
+/** Props for UltrawideCinema (21:9 ultrawide, 2560x1080, 24fps premium cinematic) */
+export interface UltrawideCinemaProps {
+  /** Video title */
+  title: string;
+  /** Cinema-quality shots with video support */
+  shots: CinemaShotData[];
+  /** Multi-track audio configuration */
+  audioTracks: CinemaAudioTrack[];
+  /** Frames per second */
+  fps: number;
+  /** Composition width */
+  width: number;
+  /** Composition height */
+  height: number;
+  /** Global color grade applied to all shots */
+  colorGrade?: CinemaColorGrade;
+  /** Beat timing markers */
+  beatTimings?: BeatTiming[];
+  /** Text overlays */
+  textOverlays?: TextOverlayConfig[];
+  /** Watermark configuration */
+  watermark?: WatermarkConfig;
+  /** Height of the letterbox bars in pixels (default: 40) */
+  letterboxHeight?: number;
 }

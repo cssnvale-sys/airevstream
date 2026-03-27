@@ -8,6 +8,8 @@ export { ShortFormVideo } from './compositions/ShortFormVideo';
 export { LongFormVideo } from './compositions/LongFormVideo';
 export { ThumbnailRenderer } from './compositions/ThumbnailRenderer';
 export { CinemaVideo } from './compositions/CinemaVideo';
+export { SquareSocial } from './compositions/SquareSocial';
+export { UltrawideCinema } from './compositions/UltrawideCinema';
 
 // Components
 export { ShotSequence } from './components/ShotSequence';
@@ -54,6 +56,12 @@ export type {
   CinemaAudioTrack,
   CinemaVideoProps,
 
+  // Square Social Types
+  SquareSocialProps,
+
+  // Ultrawide Cinema Types
+  UltrawideCinemaProps,
+
   // Component Props
   ShotSequenceProps,
   TextOverlayProps,
@@ -64,6 +72,7 @@ export type {
 export {
   DEFAULT_SHORT_BEAT_TIMINGS,
   DEFAULT_LONG_BEAT_TIMINGS,
+  DEFAULT_SQUARE_BEAT_TIMINGS,
   DEFAULT_AUDIO_VIZ_CONFIG,
   BEAT_PRESET_COLORS,
 } from './types';

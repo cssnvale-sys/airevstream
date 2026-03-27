@@ -7,8 +7,8 @@ import {
 } from '../composition-registry.js';
 
 describe('composition-registry', () => {
-  it('should have 4 registered compositions', () => {
-    expect(COMPOSITION_REGISTRY).toHaveLength(4);
+  it('should have 6 registered compositions', () => {
+    expect(COMPOSITION_REGISTRY).toHaveLength(6);
   });
 
   it('should have valid metadata on all entries', () => {

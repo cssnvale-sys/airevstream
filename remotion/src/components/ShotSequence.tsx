@@ -178,6 +178,19 @@ function getTransitionOpacity(type: TransitionType, progress: number): number {
       return progress;
     case 'slide-left':
     case 'slide-right':
+    case 'wipe-left':
+    case 'wipe-right':
+    case 'wipe-up':
+    case 'wipe-down':
+      return 1;
+    case 'glitch':
+      // Flicker effect — rapid opacity jumps during transition
+      return progress < 0.3
+        ? (Math.sin(progress * 40) > 0 ? 1 : 0.3)
+        : progress < 0.7
+          ? 1
+          : (Math.sin(progress * 40) > 0 ? 1 : 0.3);
+    case 'iris':
       return 1;
     default:
       return 1;
@@ -212,6 +225,38 @@ function getTransitionTransform(
         ? interpolate(progress, [0, 1], [100, 0])
         : interpolate(progress, [0, 1], [-100, 0]);
       return `translateX(${offset}%)`;
+    }
+    case 'wipe-left': {
+      // Clip-path based wipe from right to left
+      const pct = interpolate(progress, [0, 1], [0, 100]);
+      // Use translateX as a fallback visual; clip-path handled in Shot render
+      return isExit ? `translateX(${-(100 - pct)}%)` : `translateX(${100 - pct}%)`;
+    }
+    case 'wipe-right': {
+      const pct = interpolate(progress, [0, 1], [0, 100]);
+      return isExit ? `translateX(${100 - pct}%)` : `translateX(${-(100 - pct)}%)`;
+    }
+    case 'wipe-up': {
+      const pct = interpolate(progress, [0, 1], [0, 100]);
+      return isExit ? `translateY(${-(100 - pct)}%)` : `translateY(${100 - pct}%)`;
+    }
+    case 'wipe-down': {
+      const pct = interpolate(progress, [0, 1], [0, 100]);
+      return isExit ? `translateY(${100 - pct}%)` : `translateY(${-(100 - pct)}%)`;
+    }
+    case 'glitch': {
+      // Random X offset jitter that settles as progress increases
+      const jitter = (1 - progress) * 20;
+      const offsetX = Math.sin(progress * 30) * jitter;
+      const offsetY = Math.cos(progress * 25) * jitter * 0.5;
+      return `translate(${offsetX}px, ${offsetY}px)`;
+    }
+    case 'iris': {
+      // Circular reveal via scale from center
+      const irisScale = isExit
+        ? interpolate(progress, [0, 1], [0, 1])
+        : interpolate(progress, [0, 1], [0, 1]);
+      return `scale(${irisScale})`;
     }
     default:
       return '';

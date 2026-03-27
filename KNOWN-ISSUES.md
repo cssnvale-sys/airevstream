@@ -150,11 +150,8 @@ The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level stati
 `LookBible.loras`, `LookBible.lensKit`, `CharacterBible.characterLoras`, `EnvironmentBible.lightingSetups` are all typed but have no UI editor in the Cinema Bible settings page.
 **Action**: Add LoRA picker (from ComfyUI model list API), lens kit editor, color pipeline editor to Bible tabs.
 
-### KI-059: Library AI Model Filter is Client-Side
-**Severity**: Low
-**Status**: Open (Session 23 audit)
-The library page's AI model filter applies client-side after pagination, so it only filters items on the current page. To fix, add `aiServiceId` as a server-side query param in the content list API route.
-**Action**: Add `aiServiceId` filter to GET /content route and pass from frontend.
+### KI-059: ~~Library AI Model Filter is Client-Side~~ — FIXED (Session 47)
+**Status**: Fixed — Added `aiServiceId` query param to GET `/api/v1/content` route. Library page now sends filter server-side in query params instead of filtering client-side post-pagination.
 
 ### KI-060: Calendar Schedule Query Param Not Handled
 **Severity**: Low

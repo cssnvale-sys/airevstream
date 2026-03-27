@@ -130,7 +130,19 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 41**: Settings loading states — deletingServiceId, revokingKeyId, deletingProxyId. Per-ID tracking for precise button disabling. ConfirmDialog loading prop connected.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 51 (9 original + 42 continuation). Color: ~130 → tokens. WCAG: modals, tables, focus rings. Loading: all mutations covered.
+**Iteration 42**: Escape handlers + aria-labels — affiliate/accounts modals Escape key, 5 filter aria-labels.
+
+**Iteration 43**: Textarea resize-none — accounts BulkImport, channels personality/audience. 11 filter/sort aria-labels across library, calendar, workflows.
+
+**Iteration 44**: WCAG aria-labels sweep — 5 filter/status selects (series status, seasoning cohort filters, approvals type, pagination per-page), 7 icon buttons (AI panel close, viral accept/reject, notification dismiss, password show/hide, workflows refresh), 8 search/date inputs (studio, library, accounts, affiliate, command palette, preset picker).
+
+**Iteration 45**: Worker try/catch resilience — 6 unprotected handler functions wrapped: handleSeasoningCheckDue, handleSeasoningGraduate (account), handleRecordMetric (experiment), handleInit, handlePlan, handleEnroll (lifecycle). All log contextual errors before rethrowing.
+
+**Iteration 46**: Redis health check — Health API now checks Redis via raw RESP PING over TCP (no new dependencies). System page maps real infrastructure check results per service card with latency display. Added Redis + ComfyUI to service cards.
+
+**Iteration 47**: KI-059 fix — Added `aiServiceId` query param to GET `/api/v1/content` route. Library page sends AI model filter server-side instead of client-side post-pagination filtering.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~57 total. WCAG coverage comprehensive. Worker resilience improved. Health monitoring expanded.
 
 ---
 

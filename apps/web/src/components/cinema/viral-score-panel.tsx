@@ -232,7 +232,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
             onClick={handleGetSuggestions}
             loading={loadingSuggestions}
             loadingText="Loading..."
-            className="w-full py-1.5 px-2 rounded border border-border hover:bg-bg-tertiary text-text-secondary flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+            className="w-full py-1.5 px-2 rounded border border-border hover:bg-bg-tertiary text-text-secondary flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Sparkles size={12} />
             Improve with Presets

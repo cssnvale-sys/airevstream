@@ -206,7 +206,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
               <button
                 onClick={addVariant}
                 disabled={variants.length >= 10}
-                className="text-accent-blue hover:text-accent-blue/80 text-sm flex items-center gap-1 disabled:opacity-50"
+                className="text-accent-blue hover:text-accent-blue/80 text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus size={14} />
                 Add
@@ -251,7 +251,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
             loading={submitting}
             disabled={!name.trim() || totalTraffic !== 100}
             loadingText="Creating..."
-            className="btn-primary disabled:opacity-50"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Create Experiment
           </LoadingButton>

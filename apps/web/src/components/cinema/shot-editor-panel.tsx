@@ -107,7 +107,7 @@ export function ShotEditorPanel({ shots, onUpdateShot, onGenerateShot, onGenerat
           <button
             onClick={() => selectedShotId && onGenerateShot(selectedShotId)}
             disabled={!selectedShotId}
-            className="px-3 py-1.5 bg-accent-blue text-white rounded-md text-sm hover:bg-accent-blue/90 disabled:opacity-50"
+            className="px-3 py-1.5 bg-accent-blue text-white rounded-md text-sm hover:bg-accent-blue/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Generate Shot
           </button>

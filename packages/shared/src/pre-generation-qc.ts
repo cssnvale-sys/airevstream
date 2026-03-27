@@ -40,6 +40,7 @@ export function runPreGenQC(
   shots: ShotSpec[],
   provider: ProviderName,
   budgetRemaining?: number,
+  qualityTier: 'draft' | 'standard' | 'cinema' = 'standard',
 ): PreGenQCResult {
   const violations: Array<ConstraintViolation & { shotIndex: number }> = [];
 
@@ -54,7 +55,7 @@ export function runPreGenQC(
   // Estimate cost
   const totalDuration = shots.reduce((sum, s) => sum + (s.duration ?? 5), 0);
   const costEstimate = estimatePipelineCost({
-    qualityTier: 'cinema',
+    qualityTier,
     durationSec: totalDuration,
     shotCount: shots.length,
     isLocal: provider === 'comfyui',

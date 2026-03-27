@@ -61,6 +61,24 @@ async function registerAsset(params: AssetRegistryParams): Promise<void> {
   }
 }
 
+// ─── Sound Agent Layer Mapper ───
+
+/** Map sound agent layer output to AudioLayerSpec */
+function toAudioLayerSpec(layer: { source: string; volume: number; description: string } | null): {
+  source?: 'tts' | 'file' | 'generate';
+  text?: string;
+  volume?: number;
+} | undefined {
+  if (!layer) return undefined;
+  // Sound agent outputs descriptive source strings — map to generate type
+  // so the mix handler knows to synthesize/search for this audio
+  return {
+    source: 'generate',
+    text: layer.source,       // e.g., "ambient forest sounds"
+    volume: layer.volume,
+  };
+}
+
 // ─── ComfyUI Client Instance ───
 
 const comfyClient = new ComfyUIClient(
@@ -309,7 +327,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
   const scriptJson = storyboard.scriptJson as Record<string, unknown> | null;
   const hasManifest = scriptJson?.schemaVersion === '1.0.0';
 
-  const isCinema = data.qualityPreset === 'cinema';
+  const isCinema = data.qualityTier === 'cinema';
   const variant: ExportVariant | undefined = data.exportVariant;
   let compositionId: string;
   let inputProps: string;
@@ -332,7 +350,12 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     // Apply FinishingOutput color grade if available (closes G4)
     const finishingOutput = manifest.agentOutputs?.finishing as Record<string, unknown> | undefined;
     if (finishingOutput?.colorGrade && !resolved.inputProps.colorGrade) {
-      resolved.inputProps.colorGrade = finishingOutput.colorGrade;
+      const colorGrade = { ...(finishingOutput.colorGrade as Record<string, unknown>) };
+      // Merge postProcess filmGrain and vignette into color grade for Remotion
+      const postProcess = finishingOutput.postProcess as Record<string, unknown> | undefined;
+      if (postProcess?.filmGrain !== undefined) colorGrade.filmGrain = postProcess.filmGrain;
+      if (postProcess?.vignette !== undefined) colorGrade.vignette = postProcess.vignette;
+      resolved.inputProps.colorGrade = colorGrade;
     }
 
     compositionId = resolved.compositionId;
@@ -470,7 +493,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
       mimeType: contentType,
       generatedBy: 'remotion',
       contentId: data.contentId,
-      metadata: { compositionId, qualityPreset: data.qualityPreset },
+      metadata: { compositionId, qualityTier: data.qualityTier },
     });
 
     // ─── C2PA Content Credentials embedding ───
@@ -531,7 +554,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
           contentId: data.contentId,
           storyboardId: data.storyboardId,
           channelId: data.channelId,
-          qualityPreset: data.qualityPreset,
+          qualityTier: data.qualityTier,
           exportVariant: variantConfig,
         } as ProductionRenderVideoJob);
         logger.info({ variant: variantConfig.label, contentId: data.contentId }, 'Queued auto-variant render');
@@ -774,7 +797,7 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
 
       // Apply workflow registry tier defaults if available
       const shotClass = spec.shotClass ?? (spec as unknown as Record<string, unknown>).shotClass as string | undefined;
-      const qualityTier = (data.qualityPreset ?? 'standard') as 'draft' | 'standard' | 'cinema';
+      const qualityTier = (data.qualityTier ?? 'standard') as 'draft' | 'standard' | 'cinema';
       if (shotClass) {
         const registryResult = getWorkflowWithDefaults(shotClass, qualityTier);
         if (registryResult) {
@@ -1117,7 +1140,7 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
           shots: qcDecisionInputs,
           renderOutput: { storyboardId: data.storyboardId },
           lookDevOutput: {},
-          qualityPreset: 'standard',
+          qualityTier: 'standard',
         };
 
         // Log the agent input for diagnostics (actual LLM call is deferred to orchestrator)
@@ -1182,8 +1205,8 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
   }
 
   // Update storyboard status
-  const qualityPreset = (data as unknown as Record<string, unknown>).qualityPreset as string | undefined;
-  if (allApproved && qualityPreset === 'draft') {
+  const qualityTier = (data as unknown as Record<string, unknown>).qualityTier as string | undefined;
+  if (allApproved && qualityTier === 'draft') {
     // Draft quality — skip review, auto-approve
     await db.storyboard.update({
       where: { id: data.storyboardId },
@@ -1410,6 +1433,26 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
     await uploadBuffer(BUCKETS.AUDIO, key, mixResult.buffer, 'audio/wav');
 
     logger.info({ key, durationMs: mixResult.durationMs }, 'Audio mix complete');
+
+    // Persist mixed audio key in the storyboard manifest so render handler can reference it
+    try {
+      const currentSb = await db.storyboard.findUnique({
+        where: { id: data.storyboardId },
+        select: { scriptJson: true },
+      });
+      const manifest = currentSb?.scriptJson as Record<string, unknown> | null;
+      if (manifest?.schemaVersion === '1.0.0') {
+        await db.storyboard.update({
+          where: { id: data.storyboardId },
+          data: {
+            scriptJson: { ...manifest, mixedAudioKey: `${BUCKETS.AUDIO}/${key}` } as any,
+          },
+        });
+        logger.info({ storyboardId: data.storyboardId, mixedAudioKey: key }, 'Updated manifest with mixed audio key');
+      }
+    } catch (persistErr) {
+      logger.warn({ err: persistErr }, 'Failed to persist mixed audio key in manifest — render will use per-shot stems');
+    }
   } catch (err) {
     logger.error({ err }, 'Audio mix failed');
     throw err;
@@ -1452,7 +1495,7 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
     : content.contentType === 'thumbnail' ? 'thumbnail'
     : content.contentType === 'video_long' ? 'long'
     : 'cinema';
-  const qualityTier = ((data as unknown as Record<string, unknown>).qualityPreset as string) ?? 'standard';
+  const qualityTier = ((data as unknown as Record<string, unknown>).qualityTier as string) ?? 'standard';
 
   // Check if agent pipeline state is available from job data (via directives)
   const directives = (data as unknown as Record<string, unknown>).directives as Record<string, unknown> | undefined;
@@ -1480,9 +1523,9 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
       // Map audio plan from sound agent output if available (closes G3)
       const soundLayer = soundOutput?.audioLayers?.find(l => l.shotNumber === shotNumber);
       const audioPlan = soundLayer ? {
-        bg: soundLayer.bg as AssembledShot['audioPlan'] extends { bg?: infer B } ? B : never,
-        mg: soundLayer.mg as AssembledShot['audioPlan'] extends { mg?: infer M } ? M : never,
-        fg: soundLayer.fg as AssembledShot['audioPlan'] extends { fg?: infer F } ? F : never,
+        bg: toAudioLayerSpec(soundLayer.bg as { source: string; volume: number; description: string } | null),
+        mg: toAudioLayerSpec(soundLayer.mg as { source: string; volume: number; description: string } | null),
+        fg: toAudioLayerSpec(soundLayer.fg as { source: string; volume: number; description: string } | null),
       } : undefined;
 
       return {

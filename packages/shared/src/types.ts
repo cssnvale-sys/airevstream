@@ -347,6 +347,8 @@ export interface ColorGradeSpec {
   shadows?: number;
   blacks?: number;
   whites?: number;
+  filmGrain?: number;        // 0-100
+  vignette?: number;         // 0-100
 }
 
 export interface VfxSpec {

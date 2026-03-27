@@ -93,7 +93,7 @@ export interface ProductionRenderVideoJob {
   contentId: string;
   storyboardId: string;
   channelId: string;
-  qualityPreset?: 'draft' | 'standard' | 'cinema';
+  qualityTier?: 'draft' | 'standard' | 'cinema';
   /** If set, renders this specific variant instead of the default */
   exportVariant?: ExportVariant;
   /** If true, automatically queue variant renders after primary render */
@@ -126,7 +126,7 @@ export interface ProductionStoryboardJob {
   /** Resolved preset overrides (visual, camera, audio settings) */
   overrides?: Record<string, unknown>;
   /** Quality preset tier (used by preview pipeline to signal draft mode) */
-  qualityPreset?: 'draft' | 'standard' | 'cinema';
+  qualityTier?: 'draft' | 'standard' | 'cinema';
 }
 
 export interface PostingScheduleJob {
@@ -147,7 +147,7 @@ export interface ProductionGenerateShotsJob {
   storyboardId: string;
   shotIds: string[];
   cinemaBibleId: string;
-  qualityPreset: string;
+  qualityTier: string;
   contentId: string;
   channelId: string;
   /** Resolved preset overrides (visual, camera, audio settings) */

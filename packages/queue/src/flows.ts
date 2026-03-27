@@ -71,7 +71,7 @@ export interface CinemaPipelineParams {
   topic: string;
   contentType: 'short' | 'long' | 'thumbnail' | 'image';
   cinemaBibleId?: string;
-  qualityPreset?: 'draft' | 'standard' | 'cinema';
+  qualityTier?: 'draft' | 'standard' | 'cinema';
   shotIds?: string[];       // If storyboard already exists
   storyboardId?: string;    // If storyboard already exists
   /** Production directives from master bundle recipe (shot count, pacing, etc.) */
@@ -102,7 +102,7 @@ export interface CinemaPipelineParams {
  */
 export async function startCinemaPipeline(params: CinemaPipelineParams) {
   const flow = getFlowProducer();
-  const qualityPreset = params.qualityPreset ?? 'standard';
+  const qualityTier = params.qualityTier ?? 'standard';
 
   const tree: FlowJob = {
     // Step 8: Final review (ROOT — runs last)
@@ -111,7 +111,7 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
     data: {
       contentId: params.contentId,
       storyboardId: params.storyboardId ?? '',
-      autoApprove: qualityPreset === 'draft',
+      autoApprove: qualityTier === 'draft',
     },
     children: [
       {
@@ -122,7 +122,7 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
           contentId: params.contentId,
           storyboardId: params.storyboardId ?? '',
           channelId: params.channelId,
-          qualityPreset,
+          qualityTier,
         },
         children: [
           {
@@ -151,7 +151,7 @@ export async function startCinemaPipeline(params: CinemaPipelineParams) {
                       storyboardId: params.storyboardId ?? '',
                       shotIds: params.shotIds ?? [],
                       cinemaBibleId: params.cinemaBibleId ?? '',
-                      qualityPreset,
+                      qualityTier,
                       contentId: params.contentId,
                       channelId: params.channelId,
                       ...(params.overrides ? { overrides: params.overrides } : {}),
@@ -248,7 +248,7 @@ export async function startPreviewPipeline(params: PreviewPipelineParams) {
       contentId: params.contentId,
       storyboardId: params.storyboardId ?? '',
       channelId: params.channelId,
-      qualityPreset: 'draft',
+      qualityTier: 'draft',
     },
     children: [
       {
@@ -259,7 +259,7 @@ export async function startPreviewPipeline(params: PreviewPipelineParams) {
           storyboardId: params.storyboardId ?? '',
           shotIds: params.shotIds ?? [],
           cinemaBibleId: '',
-          qualityPreset: 'draft',
+          qualityTier: 'draft',
           contentId: params.contentId,
           channelId: params.channelId,
           ...(params.overrides ? { overrides: params.overrides } : {}),
@@ -273,7 +273,7 @@ export async function startPreviewPipeline(params: PreviewPipelineParams) {
               contentId: params.contentId,
               channelId: params.channelId,
               scriptJson: {},
-              qualityPreset: 'draft',
+              qualityTier: 'draft',
             },
           },
         ],

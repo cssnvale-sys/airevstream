@@ -8,7 +8,7 @@
  * cross-package runtime dependency on the remotion/ package.
  */
 
-import type { AssemblyManifest, AssembledShot, ColorGradeSpec } from './types.js';
+import type { AssemblyManifest, AssembledShot, ColorGradeSpec, BeatPreset } from './types.js';
 
 // ─── Minimal Remotion-compatible interfaces ───
 // These mirror the types in remotion/src/types.ts without a runtime import.
@@ -49,7 +49,7 @@ export interface BeatTiming {
   startFrame: number;
   endFrame: number;
   section: 'hook' | 'intro' | 'content' | 'cta';
-  preset?: string;
+  preset?: BeatPreset;
   label: string;
 }
 
@@ -179,7 +179,7 @@ export function toBeatTimings(
     startFrame: Math.round(t.startSec * fps),
     endFrame: Math.round(t.endSec * fps),
     section: t.section,
-    preset: t.preset,
+    preset: t.preset as BeatPreset | undefined,
     label: t.label,
   }));
 }
@@ -265,7 +265,7 @@ export function deriveBeatsFromDirector(
       startFrame,
       endFrame,
       section: section.type,
-      preset: section.beat,
+      preset: section.beat as BeatPreset | undefined,
       label: `${section.type}_${i + 1}`,
     });
 
@@ -328,5 +328,7 @@ function toColorGrade(spec: ColorGradeSpec): Record<string, unknown> {
   if (spec.shadows !== undefined) grade.shadows = spec.shadows;
   if (spec.blacks !== undefined) grade.blacks = spec.blacks;
   if (spec.whites !== undefined) grade.whites = spec.whites;
+  if (spec.filmGrain !== undefined) grade.filmGrain = spec.filmGrain;
+  if (spec.vignette !== undefined) grade.vignette = spec.vignette;
   return grade;
 }

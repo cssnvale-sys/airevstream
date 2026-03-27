@@ -274,7 +274,7 @@ export class AgentOrchestrator {
         return {
           shotSpecOutput: outputs.shotspec as ShotSpecOutput,
           lookDevOutput: outputs.lookdev as LookDevOutput,
-          qualityPreset: 'cinema',
+          qualityTier: 'cinema',
         } satisfies RenderInput;
 
       case 'dialogue':
@@ -301,7 +301,7 @@ export class AgentOrchestrator {
           shots: [],  // Populated by worker with actual QC scores
           renderOutput: outputs.render as RenderOutput,
           lookDevOutput: outputs.lookdev as LookDevOutput,
-          qualityPreset: 'cinema',
+          qualityTier: 'cinema',
         } satisfies QCDecisionInput;
 
       case 'finishing':

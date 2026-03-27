@@ -126,7 +126,7 @@ export interface ShotSpecOutput {
 export interface RenderInput {
   shotSpecOutput: ShotSpecOutput;
   lookDevOutput: LookDevOutput;
-  qualityPreset: 'draft' | 'standard' | 'cinema';
+  qualityTier: 'draft' | 'standard' | 'cinema';
 }
 
 export interface RenderOutput {
@@ -262,7 +262,7 @@ export interface QCDecisionInput {
   shots: QCDecisionShotInput[];
   renderOutput: RenderOutput;
   lookDevOutput: LookDevOutput;
-  qualityPreset: 'draft' | 'standard' | 'cinema';
+  qualityTier: 'draft' | 'standard' | 'cinema';
 }
 
 export interface QCDecisionShotVerdict {

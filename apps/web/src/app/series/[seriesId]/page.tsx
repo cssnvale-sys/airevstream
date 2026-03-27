@@ -52,16 +52,20 @@ export default function SeriesDetailPage() {
   const { seriesId } = useParams<{ seriesId: string }>();
   const { data: rawData, isLoading, mutate } = useSeriesDetail<SeriesDetail>(seriesId);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const series = rawData?.data;
 
   const handleStatusChange = async (newStatus: string) => {
     try {
+      setUpdatingStatus(true);
       await apiPut(`/series/${seriesId}`, { status: newStatus });
       toast.success(`Series status updated to ${newStatus}`);
       mutate();
     } catch (err) {
       console.error('Failed to update series status:', err);
       toast.error('Failed to update series status');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -108,7 +112,8 @@ export default function SeriesDetailPage() {
           <select
             value={series.status}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="input-field text-sm"
+            disabled={updatingStatus}
+            className="input-field text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>

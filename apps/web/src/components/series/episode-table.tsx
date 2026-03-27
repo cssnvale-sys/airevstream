@@ -42,12 +42,14 @@ const STATUS_COLORS: Record<string, string> = {
 export function EpisodeTable({ seriesId }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { data: rawData, isLoading, mutate } = useSeriesEpisodes<Episode[]>(seriesId);
 
   const episodes = rawData?.data ?? [];
 
   const handleDelete = async (episodeId: string) => {
     try {
+      setDeletingId(episodeId);
       await apiDelete(`/series/${seriesId}/episodes/${episodeId}`);
       toast.success('Episode removed');
       setDeleteId(null);
@@ -55,6 +57,8 @@ export function EpisodeTable({ seriesId }: Props) {
     } catch (err) {
       console.error('Failed to remove episode:', err);
       toast.error('Failed to remove episode');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -124,10 +128,17 @@ export function EpisodeTable({ seriesId }: Props) {
                     <button
                       type="button"
                       onClick={() => setDeleteId(ep.id)}
-                      className="text-text-secondary hover:text-accent-red transition-colors"
+                      disabled={deletingId === ep.id}
+                      className="text-text-secondary hover:text-accent-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Remove episode"
                     >
-                      <Trash2 size={14} />
+                      {deletingId === ep.id ? (
+                        <div className="inline-block animate-spin">
+                          <Trash2 size={14} />
+                        </div>
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
                     </button>
                   </td>
                 </tr>

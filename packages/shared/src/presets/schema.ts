@@ -86,7 +86,6 @@ export type RecipeConstraints = z.infer<typeof RecipeConstraintsSchema>;
 // ─── Continuity Lock Levels ───
 
 export const ContinuityLockLevelSchema = z.enum(['off', 'standard', 'strong']);
-export type ContinuityLockLevel = z.infer<typeof ContinuityLockLevelSchema>;
 
 export const ContinuityLocksSchema = z.object({
   characterLock: ContinuityLockLevelSchema.optional(),
@@ -94,7 +93,8 @@ export const ContinuityLocksSchema = z.object({
   environmentLock: ContinuityLockLevelSchema.optional(),
 }).strict();
 
-export type ContinuityLocks = z.infer<typeof ContinuityLocksSchema>;
+// Canonical ContinuityLocks and ContinuityLockLevel types live in types.ts.
+// Use ContinuityLocksSchema / ContinuityLockLevelSchema for runtime validation.
 
 // ─── Recipe Categories ───
 

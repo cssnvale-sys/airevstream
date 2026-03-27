@@ -77,7 +77,7 @@ export function HitlTaskCard({ task, onComplete }: HitlTaskCardProps) {
           )}
           <div className="flex items-center gap-2 mt-1 text-xs text-text-secondary">
             <Clock size={10} />
-            <span>{formatRelativeTime(task.createdAt)}</span>
+            <time dateTime={task.createdAt}>{formatRelativeTime(task.createdAt)}</time>
           </div>
           {Object.keys(links).length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">

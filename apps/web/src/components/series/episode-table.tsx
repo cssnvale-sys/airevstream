@@ -122,7 +122,7 @@ export function EpisodeTable({ seriesId }: Props) {
                     {ep.content.qualityScore != null ? ep.content.qualityScore.toFixed(1) : '-'}
                   </td>
                   <td className="px-3 py-2 text-sm text-text-secondary">
-                    {ep.publishedAt ? formatDate(ep.publishedAt) : '-'}
+                    {ep.publishedAt ? <time dateTime={ep.publishedAt}>{formatDate(ep.publishedAt)}</time> : '-'}
                   </td>
                   <td className="px-3 py-2">
                     <button

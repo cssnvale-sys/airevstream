@@ -1018,9 +1018,9 @@ function SecurityTab() {
                   <div className="flex items-center gap-3 mt-0.5 text-xs text-text-secondary">
                     <span className="font-mono">{key.keyPrefix}...</span>
                     <CopyButton value={key.keyPrefix} label="Copy key prefix" size={12} showToast={false} />
-                    <span>Created {formatDate(key.createdAt)}</span>
-                    {key.lastUsedAt && <span>Last used {formatDate(key.lastUsedAt)}</span>}
-                    {key.expiresAt && <span>Expires {formatDate(key.expiresAt)}</span>}
+                    <span>Created <time dateTime={key.createdAt}>{formatDate(key.createdAt)}</time></span>
+                    {key.lastUsedAt && <span>Last used <time dateTime={key.lastUsedAt}>{formatDate(key.lastUsedAt)}</time></span>}
+                    {key.expiresAt && <span>Expires <time dateTime={key.expiresAt}>{formatDate(key.expiresAt)}</time></span>}
                   </div>
                 </div>
                 <button

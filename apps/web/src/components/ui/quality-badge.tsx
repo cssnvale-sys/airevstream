@@ -30,6 +30,8 @@ export function QualityBadge({ score, size = 'sm', className }: QualityBadgeProp
 
   return (
     <span
+      role="status"
+      aria-label={`Quality: ${score != null ? Math.round(score) : 'N/A'} — ${config.label}`}
       className={cn(
         'inline-flex items-center rounded-full border font-medium',
         config.bg,

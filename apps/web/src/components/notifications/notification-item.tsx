@@ -78,9 +78,9 @@ export function NotificationItem({ notification, onDismiss, onClick }: Notificat
           <p className="text-body text-text-primary font-medium truncate">
             {notification.title}
           </p>
-          <span className="text-caption text-text-secondary whitespace-nowrap shrink-0">
+          <time dateTime={notification.createdAt} className="text-caption text-text-secondary whitespace-nowrap shrink-0">
             {formatRelativeTime(notification.createdAt)}
-          </span>
+          </time>
         </div>
         <p className="text-caption text-text-secondary mt-0.5 line-clamp-2">
           {notification.message}

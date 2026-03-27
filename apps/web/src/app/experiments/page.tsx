@@ -162,7 +162,7 @@ export default function ExperimentsPage() {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right text-text-tertiary">
-                      {formatDate(exp.createdAt)}
+                      <time dateTime={exp.createdAt}>{formatDate(exp.createdAt)}</time>
                     </td>
                   </tr>
                 );

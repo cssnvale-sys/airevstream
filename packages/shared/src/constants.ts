@@ -142,6 +142,16 @@ export const QUALITY_THRESHOLDS = {
 // ─── Storage URL TTL ───
 export const PRESIGNED_URL_TTL_SECONDS = 3600;
 
+// ─── Polling Intervals (ms) ───
+export const POLL_INTERVALS = {
+  FAST: 3_000,
+  STANDARD: 15_000,
+  SLOW: 30_000,
+} as const;
+
+// ─── ComfyUI ───
+export const COMFYUI_POLL_INTERVAL_MS = 2_000;
+
 // ─── Simple Mode Guardrails ───
 export const SIMPLE_MODE_GUARDRAILS = {
   MAX_SHOTS: 9,

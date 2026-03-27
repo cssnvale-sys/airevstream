@@ -1,6 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
-import { composePrompt } from '../comfyui-composer.js';
 import type { ShotSpec, PromptBible } from '../types.js';
+
+// Mock pino logger to capture warn calls (hoisted before imports)
+const { mockWarn } = vi.hoisted(() => {
+  const mockWarn = vi.fn();
+  return { mockWarn };
+});
+vi.mock('../logger.js', () => ({
+  createLogger: () => ({ warn: mockWarn, info: vi.fn(), error: vi.fn(), debug: vi.fn() }),
+}));
+
+import { composePrompt } from '../comfyui-composer.js';
 
 describe('composePrompt — slot substitution', () => {
   it('should substitute {slotName} from promptSlots', () => {
@@ -40,7 +50,7 @@ describe('composePrompt — slot substitution', () => {
   });
 
   it('should warn on slot values outside slotRules', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockWarn.mockClear();
     const spec: ShotSpec = {
       promptBlocks: ['a {mood} scene'],
       promptSlots: { mood: 'chaotic' },
@@ -50,14 +60,14 @@ describe('composePrompt — slot substitution', () => {
       slotRules: { mood: ['calm', 'dramatic', 'tense'] },
     };
     composePrompt(spec, bible);
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('Slot "mood" value "chaotic" not in allowed list'),
+    expect(mockWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ slot: 'mood', value: 'chaotic' }),
+      expect.stringContaining('Slot value not in allowed list'),
     );
-    spy.mockRestore();
   });
 
   it('should not warn when slot value is in allowed list', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockWarn.mockClear();
     const spec: ShotSpec = {
       promptBlocks: ['a {mood} scene'],
       promptSlots: { mood: 'dramatic' },
@@ -67,8 +77,7 @@ describe('composePrompt — slot substitution', () => {
       slotRules: { mood: ['calm', 'dramatic', 'tense'] },
     };
     composePrompt(spec, bible);
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
+    expect(mockWarn).not.toHaveBeenCalled();
   });
 
   it('should leave un-substituted slots as-is if no matching key', () => {

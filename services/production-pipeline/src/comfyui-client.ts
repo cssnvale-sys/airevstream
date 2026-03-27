@@ -1,4 +1,4 @@
-import { createLogger } from '@airevstream/shared';
+import { createLogger, COMFYUI_POLL_INTERVAL_MS } from '@airevstream/shared';
 
 const logger = createLogger('comfyui-client');
 
@@ -70,7 +70,7 @@ export class ComfyUIClient {
           }
         }
       }
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, COMFYUI_POLL_INTERVAL_MS));
     }
     throw new Error(`ComfyUI prompt ${promptId} timed out after ${this.timeout}ms`);
   }

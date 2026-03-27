@@ -2,6 +2,7 @@
 
 import useSWR, { type SWRConfiguration } from 'swr';
 import { getToken, removeToken } from '@/lib/auth';
+import { POLL_INTERVALS } from '@airevstream/shared';
 
 const API_BASE = '/api/v1';
 
@@ -116,15 +117,15 @@ export function useAiServices<T = unknown>() {
 }
 
 export function useSystemHealth<T = unknown>() {
-  return useApi<T>('/system/health', { refreshInterval: 30000 });
+  return useApi<T>('/system/health', { refreshInterval: POLL_INTERVALS.SLOW });
 }
 
 export function useSystemMetrics<T = unknown>() {
-  return useApi<T>('/system/metrics', { refreshInterval: 15000 });
+  return useApi<T>('/system/metrics', { refreshInterval: POLL_INTERVALS.STANDARD });
 }
 
 export function useAlerts<T = unknown>(params?: string, config?: SWRConfiguration) {
-  return useApi<T>(`/system/alerts${params ? `?${params}` : ''}`, { refreshInterval: 30000, ...config });
+  return useApi<T>(`/system/alerts${params ? `?${params}` : ''}`, { refreshInterval: POLL_INTERVALS.SLOW, ...config });
 }
 
 export function useWorkflows<T = unknown>(params?: string, config?: SWRConfiguration) {

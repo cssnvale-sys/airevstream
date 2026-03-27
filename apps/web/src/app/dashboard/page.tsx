@@ -23,6 +23,7 @@ import { QualityBadge } from '@/components/ui/quality-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import Link from 'next/link';
+import { POLL_INTERVALS } from '@airevstream/shared';
 
 function formatCountdown(createdAt: string, gateWindowHrs: number | null): { text: string; urgency: 'normal' | 'amber' | 'red' } | null {
   if (gateWindowHrs == null) return null;
@@ -180,9 +181,9 @@ function activityIcon(type: string) {
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
-  const { data: approvalsRes, isLoading: approvalsLoading, error: approvalsError, mutate: mutateApprovals } = useApprovals<ApprovalItem[]>('status=pending_approval&limit=5', { refreshInterval: 30000 });
+  const { data: approvalsRes, isLoading: approvalsLoading, error: approvalsError, mutate: mutateApprovals } = useApprovals<ApprovalItem[]>('status=pending_approval&limit=5', { refreshInterval: POLL_INTERVALS.SLOW });
   const { data: contentRes, isLoading: contentLoading, error: contentError } = useContent<ContentItem[]>('limit=100');
-  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError } = useWorkflows<WorkflowItem[]>(undefined, { refreshInterval: 15000 });
+  const { data: workflowsRes, isLoading: workflowsLoading, error: workflowsError } = useWorkflows<WorkflowItem[]>(undefined, { refreshInterval: POLL_INTERVALS.STANDARD });
   const { data: healthRes, isLoading: healthLoading, error: healthError } = useSystemHealth<HealthData>();
   const { data: metricsRes, isLoading: metricsLoading, error: metricsError } = useSystemMetrics<MetricsData>();
   const { data: activityRes, isLoading: activityLoading, error: activityError } = useApi<ActivityItem[]>('/activity?limit=10');

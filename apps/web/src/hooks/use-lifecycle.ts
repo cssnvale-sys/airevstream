@@ -1,7 +1,7 @@
 'use client';
 
 import { useApi, apiPost } from '@/hooks/use-api';
-import type { PlatformDiscoveryResult } from '@airevstream/shared';
+import { POLL_INTERVALS, type PlatformDiscoveryResult } from '@airevstream/shared';
 
 interface LifecycleResponse {
   lifecycle: {
@@ -41,7 +41,7 @@ interface ActiveLifecycleItem {
 export function useLifecycle(emailAccountId: string | undefined) {
   const { data, error, isLoading, mutate } = useApi<LifecycleResponse>(
     emailAccountId ? `/accounts/${emailAccountId}/lifecycle` : null,
-    { refreshInterval: 5000 },
+    { refreshInterval: 5_000 },
   );
 
   return {

@@ -10,6 +10,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { HitlTaskCard, type HitlTask } from '@/components/workflows/hitl-task-card';
+import { POLL_INTERVALS } from '@airevstream/shared';
 
 interface WorkflowJob {
   id: string;
@@ -44,7 +45,7 @@ export default function WorkflowsPage() {
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
   // HITL tasks
-  const { data: hitlRes, isLoading: hitlLoading, mutate: hitlMutate } = useApi<HitlTask[]>('/workflows/hitl?limit=50', { refreshInterval: 10000 });
+  const { data: hitlRes, isLoading: hitlLoading, mutate: hitlMutate } = useApi<HitlTask[]>('/workflows/hitl?limit=50', { refreshInterval: POLL_INTERVALS.STANDARD });
   const hitlTasks = hitlRes?.data ?? [];
 
   // Build query params
@@ -55,7 +56,7 @@ export default function WorkflowsPage() {
     return parts.join('&');
   }, [statusFilter, jobTypeFilter, page]);
 
-  const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows<WorkflowJob[]>(queryParams, { refreshInterval: 10000 });
+  const { data: jobsRes, isLoading, error: fetchError, mutate } = useWorkflows<WorkflowJob[]>(queryParams, { refreshInterval: POLL_INTERVALS.STANDARD });
 
   const jobs = jobsRes?.data ?? [];
   const meta = jobsRes?.meta;

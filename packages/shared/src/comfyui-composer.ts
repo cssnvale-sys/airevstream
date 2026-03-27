@@ -22,6 +22,9 @@ import type {
   PromptBible,
   FrameAnchor,
 } from './types.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('comfyui-composer');
 
 // ─── ComfyUI Workflow Types ───
 
@@ -118,7 +121,7 @@ export function composePrompt(
     for (const [slot, value] of Object.entries(spec.promptSlots)) {
       const allowedValues = bible.slotRules[slot];
       if (allowedValues && !allowedValues.includes(value)) {
-        console.warn(`[ComfyUI Composer] Slot "${slot}" value "${value}" not in allowed list: ${allowedValues.join(', ')}`);
+        logger.warn({ slot, value, allowedValues }, 'Slot value not in allowed list');
       }
     }
   }

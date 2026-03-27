@@ -1,7 +1,7 @@
 'use client';
 
 import { useApi } from '@/hooks/use-api';
-import { PIPELINE_SIMPLE_LABELS } from '@airevstream/shared';
+import { PIPELINE_SIMPLE_LABELS, POLL_INTERVALS } from '@airevstream/shared';
 
 interface PipelineStep {
   name: string;
@@ -31,7 +31,7 @@ const STATUS_ICONS: Record<string, string> = {
 export function PipelineProgress({ contentId, simplifiedLabels }: PipelineProgressProps) {
   // Poll for pipeline status
   const { data } = useApi<{ steps: PipelineStep[] }>(`/content/${contentId}/pipeline-status`, {
-    refreshInterval: 3000,
+    refreshInterval: POLL_INTERVALS.FAST,
   });
 
   const defaultSteps: PipelineStep[] = PIPELINE_STEPS.map((name) => ({ name, status: 'pending' }));

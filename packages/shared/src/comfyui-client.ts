@@ -1,6 +1,10 @@
 // packages/shared/src/comfyui-client.ts
 
 import type { ComfyUIWorkflow } from './comfyui-composer.js';
+import { createLogger } from './logger.js';
+import { COMFYUI_POLL_INTERVAL_MS } from './constants.js';
+
+const logger = createLogger('comfyui-client');
 
 export interface OutputImage {
   filename: string;
@@ -45,7 +49,7 @@ export class ComfyUIClient {
       });
       return res.ok;
     } catch (err) {
-      console.warn('[ComfyUI] Health check failed:', err instanceof Error ? err.message : String(err));
+      logger.warn({ error: err instanceof Error ? err.message : String(err) }, 'ComfyUI health check failed');
       return false;
     }
   }
@@ -97,7 +101,7 @@ export class ComfyUIClient {
           }
         }
       }
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, COMFYUI_POLL_INTERVAL_MS));
     }
     throw new Error(`ComfyUI prompt ${promptId} timed out after ${this.timeoutMs}ms`);
   }

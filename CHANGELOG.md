@@ -40,6 +40,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Focus trapping** (Session 48): New `useFocusTrap` hook applied to all 11 modal dialogs. Tab/Shift+Tab cycling, Escape-to-close, auto-focus first element, focus restoration on close.
 - **Modal aria-labelledby** (Session 48): All 11 modals now have aria-labelledby pointing to their title elements.
 - **Viral trend chart key** (Session 48): Replaced index key with stable point.date for deterministic rendering.
+- **autoComplete attributes** (Session 48): 5 inputs (affiliate URLs, settings AI endpoint, webhook URL, proxy password).
+- **ARIA tab panel semantics** (Session 48): All 9 tabbed interfaces now have complete ARIA pattern: id + aria-controls on tabs, role="tabpanel" + aria-labelledby on panels. 10 files updated.
+- **aria-live / role="status"** (Session 48): Dynamic status components (GenerationStatus, LifecycleStatusPanel, PipelineProgress) announce changes to screen readers. LoadingButton uses aria-busy. FileUpload error uses role="alert".
+- **Semantic `<time>` elements** (Session 48): 8 date displays wrapped in `<time dateTime>` across 7 page files.
+- **Unlabeled select elements** (Session 48): 3 selects gained aria-label or htmlFor/id (analytics period, assets category, channels tone).
 - **Progress bar ARIA roles** (Session 47): All 8 progress bars now have role="progressbar" with aria-valuenow/min/max/label (pipeline, workflows, file-upload, system, quality-breakdown, create wizards, seasoning).
 - **Stable React keys** (Session 47): 4 mutable list components fixed: experiment variants (crypto.randomUUID), pipeline steps (step.name), keyframe URLs, LoRA composite keys.
 - **Unbounded query safety** (Session 47): Added take limits to system/metrics and cinema-bible findMany queries.

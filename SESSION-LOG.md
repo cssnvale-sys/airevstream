@@ -74,6 +74,28 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 - Viral trend chart: replaced index key with point.date
 - Verified: backdrop aria-hidden (all clean), React keys (1 real issue fixed, 3 acceptable)
 
+### Iteration 116: autoComplete Attributes
+- 5 inputs: affiliate URLs (2), settings AI endpoint, webhook URL, proxy password
+
+### Iteration 117: ARIA Tab Panel Semantics (All 9 Tabbed Pages)
+- Added id + aria-controls on tab buttons, role="tabpanel" + aria-labelledby on panels
+- Pages: analytics, workflows, affiliate, channels detail, assets, series detail, settings, accounts, bible-editor, preset-picker
+
+### Iteration 118: aria-live / role="status" on Dynamic Components
+- GenerationStatus: role="status" on all 3 states
+- LifecycleStatusPanel: role="status" + aria-live on status label
+- LoadingButton: aria-busy during loading
+- PipelineProgress: aria-live on step list
+- FileUpload: role="alert" on error message
+
+### Iteration 119: Semantic `<time>` Elements
+- 8 date displays wrapped in `<time dateTime={...}>` across workflows, studio, library, approvals, accounts, affiliate, dashboard
+
+### Iteration 120: Unlabeled Select Elements
+- Analytics: aria-label on period selector
+- Assets: aria-label on scenery category filter
+- Channels detail: htmlFor/id pair linking Tone label to select
+
 ### Verification
 - Build: 14/14 ✓
 - Tests: 27/27 tasks ✓

@@ -18,11 +18,11 @@ Tracked bugs, limitations, and technical debt.
 ### KI-085: ~~runPreGenQC Hardcodes Cinema Tier for Cost Estimation~~ — FIXED (Session 46)
 **Status**: Fixed — `runPreGenQC()` now accepts a `qualityTier` parameter (default `'standard'`). Cinema route passes the actual requested tier.
 
-### KI-079: Fastify Service Routes Lack Tenant Scoping
+### KI-079: Fastify Service Routes Lack Tenant Scoping (Partial)
 **Severity**: High
-**Status**: Open (Session 45 — flagged, not fixed)
-**Context**: 3 Fastify service route groups (account, content, workflow in `services/workflow-engine/`) lack tenant scoping. These routes resolve the authenticated user but do not filter queries by tenantId. Requires an architectural decision on a `resolveTenantId` pattern for Fastify services (different from the Next.js `authenticate()` pattern).
-**Action**: Design a Fastify tenant scoping middleware or plugin, then audit all service routes.
+**Status**: Partially Fixed (Session 48 review)
+**Context**: ai-assistant and production-pipeline services have `resolveTenantId()` helper and are properly scoped. However, `services/workflow-engine/` routes for account, content, and most workflow handlers still lack tenant scoping.
+**Action**: Apply `resolveTenantId` pattern to remaining workflow-engine route handlers (account CRUD, content CRUD, workflow list/get/create/cancel).
 
 ### KI-080: ~~ColorGradeSpec Missing filmGrain/vignette Fields~~ — FIXED (Session 46)
 **Status**: Fixed — Same as KI-083. Fields added to `ColorGradeSpec`, `toColorGrade()` updated, `FinishingOutput.postProcess` merged in render path.
@@ -35,10 +35,8 @@ Tracked bugs, limitations, and technical debt.
 **Severity**: Medium
 **Status**: Fixed — All 9 migrations applied via `prisma migrate deploy`.
 
-### KI-076: AccountLifecycle Migration Not Yet Applied
-**Severity**: Medium
-**Status**: Open (Session 42)
-**Context**: Migration `0011_add_account_lifecycle` creates the AccountLifecycle table. Must run `prisma migrate deploy` before lifecycle features work. Required for email account lifecycle pipeline (discovery → signup → seasoning enrollment).
+### KI-076: ~~AccountLifecycle Migration Not Yet Applied~~ — FIXED (Session 48)
+**Status**: Fixed — Migration `0011_add_account_lifecycle` exists and creates the AccountLifecycle table.
 
 ### KI-077: Non-YouTube Discovery Stubs Return Unknown
 **Severity**: Low
@@ -52,10 +50,8 @@ Tracked bugs, limitations, and technical debt.
 **Context**: TikTok, Instagram, Facebook `setProfileAssets()` implementations are stubs that return success without doing anything. Profile setup will be "skipped" on these platforms (lifecycle continues, doesn't block). Only YouTube has real profile upload via YouTube Studio branding page.
 **Action**: Implement real profile upload for each platform as browser automation matures.
 
-### KI-074: Asset Tenant Scoping Migration Not Yet Applied
-**Severity**: Medium
-**Status**: Open (Session 41)
-**Context**: Migration `0010_add_asset_tenant_scoping` adds tenantId to Avatar and SceneryAsset, avatarId to AssetRegistryEntry. Must run `prisma migrate deploy` before asset management features work. Existing rows will be backfilled to the first tenant.
+### KI-074: ~~Asset Tenant Scoping Migration Not Yet Applied~~ — FIXED (Session 48)
+**Status**: Fixed — Migration `0010_add_asset_tenant_scoping` exists and adds tenantId to Avatar and SceneryAsset.
 
 ### KI-075: MinIO CORS Configuration Required for Direct Uploads
 **Severity**: Medium
@@ -76,11 +72,8 @@ The SimpleCreateWizard generates plans using the existing content generation pip
 - `playwright-extra` + `puppeteer-extra-plugin-stealth` removed from packages/browser-automation
 All four packages confirmed to have zero imports before removal.
 
-### KI-067: @types/bcrypt Version Mismatch
-**Severity**: Low
-**Status**: Open (Session 27 Audit — ISSUE_015)
-@types/bcrypt ^5.0.0 declared but bcrypt is ^6.0.0. Types may be incomplete for v6 APIs.
-**Action**: `npm install @types/bcrypt@^6.0.0` in apps/web.
+### KI-067: ~~@types/bcrypt Version Mismatch~~ — RESOLVED (Session 48)
+**Status**: Resolved — bcrypt and @types/bcrypt are no longer used in the codebase. Password hashing uses a custom implementation in `apps/web/src/lib/password.ts`.
 
 ### KI-002: Analytics Endpoints Return Empty Arrays for Missing Data
 **Severity**: Low
@@ -100,11 +93,8 @@ CSV export implemented via `exportToCSV()` utility — all 5 analytics tabs expo
 The `generate-storyboard` API route returns hardcoded placeholder shots rather than AI-generated storyboard frames. The H.I.C.C. section parser exists but isn't connected to real AI output.
 **Action**: Wire storyboard generation to AI service via the content generation pipeline.
 
-### KI-068: Asset Registry + Sequence Prisma Migration Not Yet Applied
-**Severity**: Medium
-**Status**: Open (Session 31)
-3 new Prisma models added to schema (AssetRegistryEntry, Sequence, SequenceItem) but `prisma migrate dev` not yet run. `prisma generate` has been run so types are available. Migration needed before production worker can register assets.
-**Action**: Run `npx prisma migrate dev --name add-asset-registry-and-sequences` from packages/db.
+### KI-068: ~~Asset Registry + Sequence Prisma Migration Not Yet Applied~~ — FIXED (Session 48)
+**Status**: Fixed — Migration `0008_add_seasoning_assets_sequences` exists. Sequence model renamed to Series via `0009_rename_sequence_to_series`.
 
 ### KI-069: VMAF + C2PA CLI Tools Not Installed
 **Severity**: Low

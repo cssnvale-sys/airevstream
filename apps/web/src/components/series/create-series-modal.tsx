@@ -34,8 +34,11 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
       if (e.key === 'Escape' && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
-    setTimeout(() => nameRef.current?.focus(), 50);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => nameRef.current?.focus(), 50);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
   }, [open, submitting, onClose]);
 
   const { data: channelsData } = useApi<ChannelOption[]>('/channels?limit=100');

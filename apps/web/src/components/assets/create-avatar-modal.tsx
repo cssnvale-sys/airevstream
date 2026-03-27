@@ -23,7 +23,9 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) setTimeout(() => nameRef.current?.focus(), 50);
+    if (!open) return;
+    const timer = setTimeout(() => nameRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, [open]);
 
   const resetForm = useCallback(() => {

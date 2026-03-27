@@ -110,8 +110,11 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
       if (e.key === 'Escape' && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
-    setTimeout(() => nameRef.current?.focus(), 50);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => nameRef.current?.focus(), 50);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
   }, [open, submitting, onClose]);
 
   if (!open) return null;

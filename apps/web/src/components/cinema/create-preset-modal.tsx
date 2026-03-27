@@ -58,8 +58,11 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
       if (e.key === 'Escape') handleClose();
     };
     document.addEventListener('keydown', handleKeyDown);
-    setTimeout(() => descriptionRef.current?.focus(), 50);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => descriptionRef.current?.focus(), 50);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
   }, [open]);
 
   if (!open) return null;

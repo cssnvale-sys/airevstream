@@ -84,8 +84,11 @@ export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
-    setTimeout(() => searchRef.current?.focus(), 50);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => searchRef.current?.focus(), 50);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
   }, [open, onClose]);
 
   const { data: avatarData } = useAvatars<AvatarItem[]>(type === 'avatar' ? 'limit=100' : undefined);

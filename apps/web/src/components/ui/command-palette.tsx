@@ -104,11 +104,11 @@ export function CommandPalette() {
 
   // Focus input when opened
   useEffect(() => {
-    if (open) {
-      setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!open) return;
+    setQuery('');
+    setSelectedIndex(0);
+    const timer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, [open]);
 
   // Keyboard navigation inside palette

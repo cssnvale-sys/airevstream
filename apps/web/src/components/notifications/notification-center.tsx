@@ -201,7 +201,7 @@ export function NotificationCenter() {
       >
         <Bell size={18} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-accent-red text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-accent-red text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1" aria-live="polite" aria-label={`${unreadCount} unread notifications`}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}

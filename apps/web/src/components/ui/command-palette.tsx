@@ -152,7 +152,7 @@ export function CommandPalette() {
             aria-label="Search content, channels, accounts"
             className="flex-1 bg-transparent text-text-primary placeholder:text-text-secondary outline-none text-sm"
           />
-          <button type="button" onClick={() => setOpen(false)} className="text-text-secondary hover:text-text-primary" aria-label="Close command palette">
+          <button type="button" onClick={() => setOpen(false)} className="text-text-secondary hover:text-text-primary transition-colors" aria-label="Close command palette">
             <X size={16} />
           </button>
         </div>

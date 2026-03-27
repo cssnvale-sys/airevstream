@@ -295,7 +295,7 @@ export function Sidebar() {
 
       {/* Mobile overlay drawer — visible only below md when open */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"

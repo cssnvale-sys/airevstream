@@ -72,6 +72,7 @@ export function Pagination({
             <button
               key={num}
               onClick={() => onPageChange(num)}
+              aria-current={page === num ? 'page' : undefined}
               className={cn(
                 'btn-sm min-w-[36px] h-9 flex items-center justify-center rounded text-xs',
                 page === num ? 'btn-primary' : 'btn-secondary',

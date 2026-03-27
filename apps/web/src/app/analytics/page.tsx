@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAnalytics } from '@/hooks/use-api';
-import { cn, formatNumber, formatCurrency } from '@/lib/utils';
+import { cn, formatNumber, formatCurrency, formatDate } from '@/lib/utils';
 import {
   TrendingUp,
   TrendingDown,
@@ -865,7 +865,7 @@ export default function AnalyticsPage() {
                                 {log.outcome}
                               </span>
                             </td>
-                            <td className="py-2 text-right text-text-tertiary">{new Date(log.createdAt).toLocaleDateString()}</td>
+                            <td className="py-2 text-right text-text-tertiary">{formatDate(log.createdAt)}</td>
                           </tr>
                         ))}
                       </tbody>

@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost, apiPatch, apiDelete } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingButton } from '@/components/ui/loading-button';
@@ -335,7 +335,7 @@ export default function BudgetsPage() {
                 </div>
 
                 <div className="text-xs text-text-tertiary">
-                  Period: {new Date(budget.periodStart).toLocaleDateString()} — {new Date(budget.periodEnd).toLocaleDateString()}
+                  Period: {formatDate(budget.periodStart)} — {formatDate(budget.periodEnd)}
                 </div>
               </div>
             );

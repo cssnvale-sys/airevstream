@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useExperiments } from '@/hooks/use-experiments';
-import { cn, formatNumber } from '@/lib/utils';
+import { cn, formatNumber, formatDate } from '@/lib/utils';
 import { FlaskConical, Plus, Play, Square, Trophy, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { CreateExperimentModal } from '@/components/experiments/create-experiment-modal';
@@ -162,7 +162,7 @@ export default function ExperimentsPage() {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right text-text-tertiary">
-                      {new Date(exp.createdAt).toLocaleDateString()}
+                      {formatDate(exp.createdAt)}
                     </td>
                   </tr>
                 );

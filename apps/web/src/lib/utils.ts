@@ -15,6 +15,19 @@ export function formatCurrency(n: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
 }
 
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+export function formatDateTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit',
+  });
+}
+
 export function formatRelativeTime(date: Date | string): string {
   const now = new Date();
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -26,7 +39,7 @@ export function formatRelativeTime(date: Date | string): string {
   if (diffHrs < 24) return `${diffHrs}h ago`;
   const diffDays = Math.floor(diffHrs / 24);
   if (diffDays < 30) return `${diffDays}d ago`;
-  return d.toLocaleDateString();
+  return formatDate(d);
 }
 
 export function statusColor(status: string): string {

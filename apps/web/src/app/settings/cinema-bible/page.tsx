@@ -6,6 +6,7 @@ import { useApi, apiPost, apiPut } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { BibleEditor } from '@/components/cinema/bible-editor';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { formatDate } from '@/lib/utils';
 
 interface ChannelInfo {
   id: string;
@@ -128,7 +129,7 @@ export default function CinemaBiblePage() {
                 <select
                   value={newChannelId}
                   onChange={(e) => setNewChannelId(e.target.value)}
-                  className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+                  className="input w-full"
                 >
                   <option value="">Select a channel...</option>
                   {channels.map((ch) => (
@@ -185,7 +186,7 @@ export default function CinemaBiblePage() {
                     {bible.channel.socialAccount.platform} &middot; v{bible.version}
                   </div>
                   <div className="text-xs text-text-tertiary mt-1">
-                    Updated {new Date(bible.updatedAt).toLocaleDateString()}
+                    Updated {formatDate(bible.updatedAt)}
                   </div>
                 </button>
               ))}

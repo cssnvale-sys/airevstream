@@ -339,7 +339,7 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
                   <select
                     value={(lipSync.mode as string) ?? 'subtitle-only'}
                     onChange={(e) => update('lipSync.mode', e.target.value)}
-                    className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+                    className="input w-full"
                   >
                     <option value="subtitle-only">Subtitle Only</option>
                     <option value="character-rig">Character Rig</option>
@@ -365,7 +365,7 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
                     value={(lipSync.characterId as string) ?? ''}
                     onChange={(e) => update('lipSync.characterId', e.target.value)}
                     placeholder="Optional character identifier"
-                    className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+                    className="input w-full"
                   />
                 </div>
               </>

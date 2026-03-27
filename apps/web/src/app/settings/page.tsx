@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, useAiServices, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import {
   Settings,
   Cpu,
@@ -1018,9 +1018,9 @@ function SecurityTab() {
                   <div className="flex items-center gap-3 mt-0.5 text-xs text-text-secondary">
                     <span className="font-mono">{key.keyPrefix}...</span>
                     <CopyButton value={key.keyPrefix} label="Copy key prefix" size={12} showToast={false} />
-                    <span>Created {new Date(key.createdAt).toLocaleDateString()}</span>
-                    {key.lastUsedAt && <span>Last used {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
-                    {key.expiresAt && <span>Expires {new Date(key.expiresAt).toLocaleDateString()}</span>}
+                    <span>Created {formatDate(key.createdAt)}</span>
+                    {key.lastUsedAt && <span>Last used {formatDate(key.lastUsedAt)}</span>}
+                    {key.expiresAt && <span>Expires {formatDate(key.expiresAt)}</span>}
                   </div>
                 </div>
                 <button

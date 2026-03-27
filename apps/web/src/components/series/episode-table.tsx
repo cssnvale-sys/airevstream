@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSeriesEpisodes } from '@/hooks/use-series';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { AddEpisodeModal } from './add-episode-modal';
@@ -122,7 +122,7 @@ export function EpisodeTable({ seriesId }: Props) {
                     {ep.content.qualityScore != null ? ep.content.qualityScore.toFixed(1) : '-'}
                   </td>
                   <td className="px-3 py-2 text-sm text-text-secondary">
-                    {ep.publishedAt ? new Date(ep.publishedAt).toLocaleDateString() : '-'}
+                    {ep.publishedAt ? formatDate(ep.publishedAt) : '-'}
                   </td>
                   <td className="px-3 py-2">
                     <button

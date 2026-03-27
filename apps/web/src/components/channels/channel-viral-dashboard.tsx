@@ -2,7 +2,7 @@
 
 import { useChannelViralStats, useChannelTopicSuggestions } from '@/hooks/use-channel-viral';
 import { useSuggestionStats } from '@/hooks/use-suggestion-stats';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { TrendingUp, Sparkles, Target, BarChart3 } from 'lucide-react';
 
 interface ViralStatsData {
@@ -138,17 +138,17 @@ export function ChannelViralDashboard({ channelId }: ChannelViralDashboardProps)
                   key={i}
                   className={cn('flex-1 rounded-t transition-all', color)}
                   style={{ height: `${height}%` }}
-                  title={`${new Date(point.date).toLocaleDateString()}: ${score}`}
+                  title={`${formatDate(point.date)}: ${score}`}
                 />
               );
             })}
           </div>
           <div className="flex justify-between mt-1">
             <span className="text-caption text-text-tertiary">
-              {stats.trend.length > 0 ? new Date(stats.trend[0].date).toLocaleDateString() : ''}
+              {stats.trend.length > 0 ? formatDate(stats.trend[0].date) : ''}
             </span>
             <span className="text-caption text-text-tertiary">
-              {stats.trend.length > 0 ? new Date(stats.trend[stats.trend.length - 1].date).toLocaleDateString() : ''}
+              {stats.trend.length > 0 ? formatDate(stats.trend[stats.trend.length - 1].date) : ''}
             </span>
           </div>
         </div>

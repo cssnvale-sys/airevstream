@@ -125,7 +125,7 @@ export default function SeriesPage() {
                         {s.name}
                       </Link>
                       {s.description && (
-                        <p className="text-caption text-text-secondary mt-0.5 truncate max-w-xs">{s.description}</p>
+                        <p className="text-caption text-text-secondary mt-0.5 truncate max-w-xs" title={s.description ?? undefined}>{s.description}</p>
                       )}
                     </td>
                     <td className="px-4 py-3 text-body text-text-secondary">{s.channel.name}</td>

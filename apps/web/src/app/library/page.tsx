@@ -205,7 +205,7 @@ function ContentCard({ item }: { item: ContentItem }) {
 
         {/* Info */}
         <div className="p-3 space-y-2">
-          <p className="text-sm font-medium text-text-primary truncate group-hover:text-white transition-colors">
+          <p className="text-sm font-medium text-text-primary truncate group-hover:text-white transition-colors" title={item.title ?? 'Untitled'}>
             {item.title ?? 'Untitled'}
           </p>
           <div className="flex items-center justify-between text-xs text-text-secondary">

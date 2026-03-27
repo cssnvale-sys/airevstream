@@ -95,7 +95,7 @@ export default function StudioIndexPage() {
                 <Film size={18} className="text-accent-blue" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">
+                <p className="text-sm font-medium text-text-primary truncate" title={item.title ?? 'Untitled'}>
                   {item.title ?? 'Untitled'}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">

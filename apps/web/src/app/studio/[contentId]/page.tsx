@@ -269,7 +269,7 @@ export default function StudioPage() {
             Back
           </Link>
           <span className="text-border">|</span>
-          <h1 className="text-sm font-medium text-text-primary truncate max-w-md">{content.title}</h1>
+          <h1 className="text-sm font-medium text-text-primary truncate max-w-md" title={content.title ?? undefined}>{content.title}</h1>
           <span className="text-xs text-text-secondary bg-bg-tertiary px-2 py-0.5 rounded">{content.status}</span>
         </div>
         <div className="flex items-center gap-3">

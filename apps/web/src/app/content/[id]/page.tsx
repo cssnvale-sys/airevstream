@@ -227,7 +227,7 @@ export default function ContentDetailPage() {
             <ArrowLeft size={16} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-text-primary truncate">{item.title ?? 'Untitled'}</h1>
+            <h1 className="text-2xl font-bold text-text-primary truncate" title={item.title ?? 'Untitled'}>{item.title ?? 'Untitled'}</h1>
             <div className="flex items-center gap-2 mt-1">
               <span className={cn('badge text-xs', statusColor(item.status))}>{item.status.replace(/_/g, ' ')}</span>
               <span className="text-xs text-text-secondary">{contentTypeLabel(item.contentType)}</span>

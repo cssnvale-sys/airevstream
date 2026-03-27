@@ -228,7 +228,7 @@ export default function WorkflowsPage() {
                         <span className="mx-1">|</span> Priority: {job.priority} | Retries: {job.retryCount}/{job.maxRetries}
                       </div>
                       {job.error && (
-                        <div className="text-xs text-accent-red mt-1 truncate">{job.error}</div>
+                        <div className="text-xs text-accent-red mt-1 truncate" title={job.error ?? undefined}>{job.error}</div>
                       )}
                     </div>
                     {job.status === 'running' && (

@@ -186,7 +186,7 @@ export default function CinemaBiblePage() {
                     {bible.channel.socialAccount.platform} &middot; v{bible.version}
                   </div>
                   <div className="text-xs text-text-tertiary mt-1">
-                    Updated {formatDate(bible.updatedAt)}
+                    Updated <time dateTime={bible.updatedAt}>{formatDate(bible.updatedAt)}</time>
                   </div>
                 </button>
               ))}

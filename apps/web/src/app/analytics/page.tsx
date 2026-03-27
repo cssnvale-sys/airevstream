@@ -865,7 +865,7 @@ export default function AnalyticsPage() {
                                 {log.outcome}
                               </span>
                             </td>
-                            <td className="py-2 text-right text-text-tertiary">{formatDate(log.createdAt)}</td>
+                            <td className="py-2 text-right text-text-tertiary"><time dateTime={log.createdAt}>{formatDate(log.createdAt)}</time></td>
                           </tr>
                         ))}
                       </tbody>

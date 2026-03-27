@@ -203,6 +203,8 @@ export default function BudgetsPage() {
                 value={form.limitAmount}
                 onChange={(e) => updateField('limitAmount', e.target.value)}
                 placeholder="100.00"
+                min={0}
+                step="0.01"
                 className="input w-full"
               />
             </div>
@@ -335,7 +337,7 @@ export default function BudgetsPage() {
                 </div>
 
                 <div className="text-xs text-text-tertiary">
-                  Period: {formatDate(budget.periodStart)} — {formatDate(budget.periodEnd)}
+                  Period: <time dateTime={budget.periodStart}>{formatDate(budget.periodStart)}</time> — <time dateTime={budget.periodEnd}>{formatDate(budget.periodEnd)}</time>
                 </div>
               </div>
             );

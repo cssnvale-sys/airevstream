@@ -382,7 +382,7 @@ export default function AssetDetailPage() {
             <div>
               <h1 className="text-page-title text-text-primary">{avatar.name}</h1>
               <p className="text-xs text-text-tertiary">
-                Created {formatDate(avatar.createdAt)}
+                Created <time dateTime={avatar.createdAt}>{formatDate(avatar.createdAt)}</time>
               </p>
             </div>
           </div>

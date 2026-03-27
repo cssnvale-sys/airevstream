@@ -205,7 +205,7 @@ function LoraListEditor({
             )}
             <button
               onClick={() => removeLora(i)}
-              className="text-red-400 hover:text-red-300 text-xs px-2 py-1"
+              className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
             >
               Remove
             </button>
@@ -368,7 +368,7 @@ function KeyValueEditor({
           />
           <button
             onClick={() => removePair(key)}
-            className="text-red-400 hover:text-red-300 text-sm px-2"
+            className="text-accent-red hover:text-accent-red/80 text-sm px-2"
           >
             Remove
           </button>
@@ -472,7 +472,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
               />
               <button
                 onClick={() => update('lensKit', lensKit.filter((_, idx) => idx !== i))}
-                className="text-red-400 hover:text-red-300 text-sm px-2"
+                className="text-accent-red hover:text-accent-red/80 text-sm px-2"
               >
                 Remove
               </button>
@@ -513,7 +513,7 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
               />
               <button
                 onClick={() => update('styleRefs', ((data.styleRefs as string[]) ?? []).filter((_, idx) => idx !== i))}
-                className="text-red-400 hover:text-red-300 text-sm px-2"
+                className="text-accent-red hover:text-accent-red/80 text-sm px-2"
               >
                 Remove
               </button>
@@ -590,7 +590,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
               />
               <button
                 onClick={() => update('wardrobe', wardrobe.filter((_, idx) => idx !== i))}
-                className="text-red-400 hover:text-red-300 text-sm px-2"
+                className="text-accent-red hover:text-accent-red/80 text-sm px-2"
               >
                 Remove
               </button>
@@ -648,7 +648,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                 )}
                 <button
                   onClick={() => removeCharacterLora(charKey)}
-                  className="text-red-400 hover:text-red-300 text-xs px-2 py-1"
+                  className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
                 >
                   Remove
                 </button>
@@ -789,7 +789,7 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
                 )}
                 <button
                   onClick={() => removeEnvLora(envKey)}
-                  className="text-red-400 hover:text-red-300 text-xs px-2 py-1"
+                  className="text-accent-red hover:text-accent-red/80 text-xs px-2 py-1"
                 >
                   Remove
                 </button>
@@ -907,7 +907,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                   delete rules[slot];
                   update('slotRules', rules);
                 }}
-                className="text-red-400 hover:text-red-300 text-sm px-2"
+                className="text-accent-red hover:text-accent-red/80 text-sm px-2"
               >
                 Remove
               </button>
@@ -949,7 +949,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                     delete pcb[charKey];
                     update('perCharacterBlocks', pcb);
                   }}
-                  className="text-red-400 hover:text-red-300 text-xs"
+                  className="text-accent-red hover:text-accent-red/80 text-xs"
                 >
                   Remove
                 </button>
@@ -1002,7 +1002,7 @@ function PromptSection({ data, onChange }: { data: Record<string, unknown>; onCh
                     delete peb[envKey];
                     update('perEnvironmentBlocks', peb);
                   }}
-                  className="text-red-400 hover:text-red-300 text-xs"
+                  className="text-accent-red hover:text-accent-red/80 text-xs"
                 >
                   Remove
                 </button>

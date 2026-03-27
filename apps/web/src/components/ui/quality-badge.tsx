@@ -16,7 +16,7 @@ function getQualityConfig(score: number | null) {
   if (score >= QUALITY_THRESHOLDS.AUTO_APPROVE) return { label: 'Excellent', color: 'text-accent-green', bg: 'bg-accent-green/10', border: 'border-accent-green/30' };
   if (score >= QUALITY_THRESHOLDS.REVIEW_REQUIRED) return { label: 'Needs Review', color: 'text-accent-amber', bg: 'bg-accent-amber/10', border: 'border-accent-amber/30' };
   if (score >= QUALITY_THRESHOLDS.AUTO_REJECT) return { label: 'Low Quality', color: 'text-accent-red', bg: 'bg-accent-red/10', border: 'border-accent-red/30' };
-  return { label: 'Rejected', color: 'text-red-600', bg: 'bg-red-600/10', border: 'border-red-600/30' };
+  return { label: 'Rejected', color: 'text-accent-red', bg: 'bg-accent-red/10', border: 'border-accent-red/30' };
 }
 
 const SIZE_CLASSES: Record<QualityBadgeSize, string> = {

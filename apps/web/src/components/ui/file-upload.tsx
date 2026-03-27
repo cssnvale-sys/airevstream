@@ -163,7 +163,7 @@ export function FileUpload({
             ? 'border-accent-blue bg-accent-blue/10'
             : 'border-border bg-bg-secondary hover:bg-bg-tertiary',
           displayError && 'border-accent-red',
-          completedFile && !uploading && !displayError && 'border-green-500',
+          completedFile && !uploading && !displayError && 'border-accent-green',
         )}
       >
         <input
@@ -193,7 +193,7 @@ export function FileUpload({
           </>
         ) : completedFile && !displayError ? (
           <>
-            <Check className="h-8 w-8 text-green-500" />
+            <Check className="h-8 w-8 text-accent-green" />
             <p className="text-sm text-text-primary">{completedFile}</p>
             <p className="text-xs text-text-secondary">
               Click or drag to replace

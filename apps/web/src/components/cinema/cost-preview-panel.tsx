@@ -100,7 +100,7 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
                 <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      budgetStatus.exceeded ? 'bg-red-500' : budgetStatus.status === 'warning' ? 'bg-amber-500' : 'bg-green-500'
+                      budgetStatus.exceeded ? 'bg-accent-red' : budgetStatus.status === 'warning' ? 'bg-accent-amber' : 'bg-accent-green'
                     }`}
                     style={{
                       width: `${Math.min(100, (estimate.totalCost / Math.max(0.01, budgetStatus.remaining)) * 100)}%`,
@@ -108,7 +108,7 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
                   />
                 </div>
                 {budgetStatus.exceeded && (
-                  <p className="text-[10px] text-red-400 mt-1">Estimated cost exceeds remaining budget</p>
+                  <p className="text-[10px] text-accent-red mt-1">Estimated cost exceeds remaining budget</p>
                 )}
               </div>
             )}

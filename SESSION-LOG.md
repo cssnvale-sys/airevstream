@@ -46,15 +46,37 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 | MISMATCH-6 | Low | qualityTier vs qualityPreset naming inconsistency |
 | MISMATCH-7 | Low | runPreGenQC hardcodes 'cinema' tier for cost estimation |
 
+### Post-Audit: Integration Mismatch Fixes (7 mismatches resolved)
+- MISMATCH-1: Added `filmGrain`/`vignette` to `ColorGradeSpec`, updated `toColorGrade()` in assembly-resolver
+- MISMATCH-2: Production worker now merges `FinishingOutput.postProcess` into render color grade
+- MISMATCH-3: `BeatTiming.preset` typed as `BeatPreset` union (was `string`)
+- MISMATCH-4: New `toAudioLayerSpec()` helper maps `SoundOutput` → `AudioLayerSpec` (D128)
+- MISMATCH-5: Mixed audio URL now persisted in storyboard manifest after upload
+- MISMATCH-6: Unified `qualityPreset` → `qualityTier` across 15 files (D127)
+- MISMATCH-7: `runPreGenQC()` now accepts `qualityTier` parameter (default `'standard'`)
+
+### Post-Audit: Next.js Build Error Fix
+- Added `export const dynamic = 'force-dynamic'` to 83 non-parameterized API routes (D129)
+- Root cause: Next.js static rendering probe hits `authenticate()` → reads `request.headers` → throws `DynamicServerError` inside try/catch → logged as error
+- Also fixed 2 silent catch blocks in `ai-services/health-check/route.ts`
+
 ### Key Decisions
 - D124: Pre-deployment audit methodology — 8 waves, 30 agents, fix-as-you-go, verify after each wave
 - D125: PM2 worker path convention — all worker scripts at `workers/dist/<name>.worker.js` from project root
 - D126: Catch regex completeness — audit tests must match both `catch(err) {` and `catch {` syntax
+- D127: Unified `qualityTier` naming convention (was `qualityPreset` in some places)
+- D128: `toAudioLayerSpec()` helper for mapping SoundOutput → AudioLayerSpec at service boundary
+- D129: `force-dynamic` on all 83 non-parameterized API routes to prevent misleading build errors
 
 ### Commits
 1. `fix: backend — pre-deployment audit fixes across packages, services, workers` (34 files)
 2. `fix: frontend — pre-deployment audit fixes across API routes, pages, components` (56 files)
 3. `chore: audit infra + config — stale allowlists, dead imports, PM2 fixes` (21 files)
+4. `docs: update tracking files for Session 46 pre-deployment audit` (5 files)
+5. `fix: backend — resolve 7 cross-boundary integration mismatches` (9 files)
+6. `fix: frontend — qualityPreset→qualityTier rename + pass tier to pre-gen QC` (6 files)
+7. `docs: close KI-080/082/083/084/085 — integration mismatches resolved` (2 files)
+8. `fix: frontend — add force-dynamic to 83 non-parameterized API routes` (83 files)
 
 ---
 

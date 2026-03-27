@@ -640,3 +640,8 @@
 **Date**: 2026-03-26
 **Decision**: The `extractCatchBlocks()` regex in audit-helpers.ts must match both `catch(err) {` and modern `catch {` (paren-less) syntax.
 **Rationale**: The original regex `\bcatch\s*\([^)]*\)\s*\{` only matched `catch(err) {`, missing 7 route files using ES2019 optional catch binding (`catch {`). These routes were invisible to the silent-catch audit test. Updated to `\bcatch\s*(?:\([^)]*\)\s*)?\{`.
+
+## D129: force-dynamic on All Non-Parameterized API Routes
+**Date**: 2026-03-27
+**Decision**: Add `export const dynamic = 'force-dynamic'` to all 83 non-parameterized API route files.
+**Rationale**: During `next build`, Next.js tries to statically pre-render non-parameterized routes. Routes using `authenticate()` read `request.headers`, which throws `DynamicServerError` inside try/catch blocks, producing misleading error log lines in the build output. Adding the explicit `force-dynamic` export tells Next.js to skip static rendering probes entirely, eliminating false error signals.

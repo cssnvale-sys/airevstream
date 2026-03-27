@@ -10,6 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
 
 ### Fixed
+- **Next.js build errors** (Session 46): Added `export const dynamic = 'force-dynamic'` to 83 non-parameterized API routes to prevent misleading error log lines during `next build` static rendering probes (D129)
 - **CRITICAL: Tenant scoping violations** (Session 46): ~15 missing guards across activity, assets, usage, jobs, knowledge base, assistant actions, product analytics, avatar assignment, scenery assets, approvals
 - **CRITICAL: PM2 worker script paths** (Session 46): All 6 worker entries had wrong paths (would crash on `pm2 start`), 2 workers missing from config
 - **CRITICAL: Zod err.message leaks** (Session 46): 13 instances in workflow-engine service routes

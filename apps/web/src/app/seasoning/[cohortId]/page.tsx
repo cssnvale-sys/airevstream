@@ -120,6 +120,7 @@ export default function CohortDetailPage() {
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => setShowEnroll(!showEnroll)}
             className="btn-primary btn-sm flex items-center gap-2"
           >
@@ -140,10 +141,11 @@ export default function CohortDetailPage() {
             className="input w-full h-24 text-caption font-mono"
           />
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowEnroll(false)} className="btn-ghost btn-sm">
+            <button type="button" onClick={() => setShowEnroll(false)} className="btn-ghost btn-sm">
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleEnroll}
               disabled={enrolling || !enrollIds.trim()}
               className="btn-primary btn-sm"

@@ -128,6 +128,7 @@ export default function SeriesDetailPage() {
         <div role="tablist" className="flex gap-6">
           {TABS.map((tab) => (
             <button
+              type="button"
               key={tab.key}
               role="tab"
               aria-selected={activeTab === tab.key}

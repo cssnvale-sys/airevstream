@@ -53,7 +53,7 @@ export default function ExperimentsPage() {
           <h1 className="text-page-title text-text-primary">Experiments</h1>
           <p className="text-text-secondary mt-1">A/B tests and multivariate experiments for content optimization.</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+        <button type="button" onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
           <Plus size={16} />
           New Experiment
         </button>
@@ -103,7 +103,7 @@ export default function ExperimentsPage() {
           <p className="text-sm text-text-secondary mt-1">
             Create your first experiment to start A/B testing content variants.
           </p>
-          <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 flex items-center gap-2">
+          <button type="button" onClick={() => setShowCreate(true)} className="btn-primary mt-4 flex items-center gap-2">
             <Plus size={16} />
             New Experiment
           </button>

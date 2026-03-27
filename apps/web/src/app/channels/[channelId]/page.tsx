@@ -298,7 +298,7 @@ export default function ChannelDetailPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-card-title text-text-primary">Series ({channelSeries.length})</h3>
-          <button onClick={() => setShowCreateSeries(true)} className="btn-primary flex items-center gap-2 text-sm">
+          <button type="button" onClick={() => setShowCreateSeries(true)} className="btn-primary flex items-center gap-2 text-sm">
             <Layers size={14} />
             New Series
           </button>
@@ -307,7 +307,7 @@ export default function ChannelDetailPage() {
           <div className="card text-center py-8">
             <Layers size={32} className="mx-auto text-text-secondary mb-3" />
             <p className="text-text-secondary mb-3">No series for this channel yet.</p>
-            <button onClick={() => setShowCreateSeries(true)} className="btn-primary text-sm">
+            <button type="button" onClick={() => setShowCreateSeries(true)} className="btn-primary text-sm">
               Create First Series
             </button>
           </div>
@@ -341,6 +341,7 @@ export default function ChannelDetailPage() {
       <div role="tablist" aria-label="Channel sections" className="flex gap-1 border-b border-border mb-6">
         {TABS.map((tab) => (
           <button
+            type="button"
             key={tab.key}
             role="tab"
             aria-selected={activeTab === tab.key}

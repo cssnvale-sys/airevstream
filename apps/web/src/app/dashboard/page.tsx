@@ -382,6 +382,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
+                      type="button"
                       disabled={actionInFlight === item.id}
                       onClick={() => handleApproval(item.id, 'approve')}
                       className="btn-success btn-sm flex items-center gap-1"
@@ -391,6 +392,7 @@ export default function DashboardPage() {
                       <span className="hidden sm:inline">Approve</span>
                     </button>
                     <button
+                      type="button"
                       disabled={actionInFlight === item.id}
                       onClick={() => setRejectId(item.id)}
                       className="btn-danger btn-sm flex items-center gap-1"

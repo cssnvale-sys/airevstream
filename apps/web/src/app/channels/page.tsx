@@ -179,6 +179,7 @@ export default function ChannelsPage() {
               <span className="text-caption text-text-tertiary">{total} channel{total !== 1 ? 's' : ''}</span>
               <div className="flex gap-1">
                 <button
+                  type="button"
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className="btn-secondary text-caption px-2 py-1 disabled:opacity-50"
@@ -187,6 +188,7 @@ export default function ChannelsPage() {
                 </button>
                 <span className="text-caption text-text-secondary px-2 py-1">{page} / {totalPages}</span>
                 <button
+                  type="button"
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                   className="btn-secondary text-caption px-2 py-1 disabled:opacity-50"

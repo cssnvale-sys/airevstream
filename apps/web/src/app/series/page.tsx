@@ -48,7 +48,7 @@ export default function SeriesPage() {
           <h1 className="text-page-title text-text-primary">Series</h1>
           <p className="text-text-secondary mt-1">Organize content into themed series within channels.</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+        <button type="button" onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
           <Plus size={16} />
           New Series
         </button>

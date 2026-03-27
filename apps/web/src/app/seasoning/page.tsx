@@ -68,6 +68,7 @@ export default function SeasoningPage() {
             <h1 className="text-h2 text-text-primary">Seasoning Pipeline</h1>
           </div>
           <button
+            type="button"
             onClick={() => setShowCreate(true)}
             className="btn-primary flex items-center gap-2"
           >
@@ -131,6 +132,7 @@ export default function SeasoningPage() {
                 <p className="text-body text-text-secondary mb-2">No seasoning cohorts yet</p>
                 <p className="text-caption text-text-secondary mb-4">Create a cohort to start seasoning your accounts.</p>
                 <button
+                  type="button"
                   onClick={() => setShowCreate(true)}
                   className="btn-primary"
                 >

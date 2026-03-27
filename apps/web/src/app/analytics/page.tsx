@@ -967,6 +967,7 @@ export default function AnalyticsPage() {
           <div role="tablist" aria-label="Analytics sections" className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
             {TABS.map((tab) => (
               <button
+                type="button"
                 key={tab.key}
                 role="tab"
                 aria-selected={activeTab === tab.key}
@@ -988,11 +989,11 @@ export default function AnalyticsPage() {
 
           {/* ---- Export Buttons ---- */}
           <div className="flex gap-3 mt-8 pt-6 border-t border-border">
-            <button onClick={handleExportCSV} className="btn-secondary flex items-center gap-2">
+            <button type="button" onClick={handleExportCSV} className="btn-secondary flex items-center gap-2">
               <Download size={16} />
               Export CSV
             </button>
-            <button onClick={handleExportPDF} className="btn-secondary flex items-center gap-2 opacity-50 cursor-not-allowed" title="PDF export not yet implemented">
+            <button type="button" onClick={handleExportPDF} className="btn-secondary flex items-center gap-2 opacity-50 cursor-not-allowed" title="PDF export not yet implemented">
               <Download size={16} />
               Export PDF
             </button>

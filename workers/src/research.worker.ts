@@ -367,6 +367,10 @@ export function startResearchWorker() {
     logger.error({ jobId: job?.id, err }, 'Research job failed');
   });
 
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Research job stalled — will be retried');
+  });
+
   // Set up repeatable trends research (every 12 hours)
   const researchQueue = getQueue('research');
   researchQueue.add('research:trends', {} as any, {

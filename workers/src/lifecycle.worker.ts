@@ -683,6 +683,10 @@ export function startLifecycleWorker() {
     logger.error({ jobId: job?.id, err }, 'Lifecycle job failed');
   });
 
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Lifecycle job stalled — will be retried');
+  });
+
   logger.info('Lifecycle worker started');
   return worker;
 }

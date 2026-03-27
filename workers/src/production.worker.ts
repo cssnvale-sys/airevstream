@@ -1962,6 +1962,10 @@ export function startProductionWorker() {
     logger.error({ jobId: job?.id, jobName: job?.name, error: err.message }, 'Production job failed');
   });
 
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Production job stalled — will be retried');
+  });
+
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id, jobName: job.name }, 'Production job completed');
   });

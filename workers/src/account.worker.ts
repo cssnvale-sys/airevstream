@@ -1058,6 +1058,10 @@ export function startAccountWorker() {
     logger.error({ jobId: job?.id, err }, 'Account job failed');
   });
 
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Account job stalled — will be retried');
+  });
+
   logger.info('Account worker started');
   return worker;
 }
@@ -1071,6 +1075,10 @@ export function startSeasoningWorker() {
 
   worker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'Seasoning job failed');
+  });
+
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Seasoning job stalled — will be retried');
   });
 
   // Register repeatable check-due job (every 15 minutes)

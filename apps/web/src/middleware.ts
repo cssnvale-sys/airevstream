@@ -20,14 +20,21 @@ const PUBLIC_PATHS = [
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Assign request ID for tracing (use existing header or generate new)
+  const requestId = req.headers.get('x-request-id') || crypto.randomUUID();
+
   // Allow public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set('x-request-id', requestId);
+    return res;
   }
 
   // Allow root — it redirects to dashboard client-side
   if (pathname === '/') {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set('x-request-id', requestId);
+    return res;
   }
 
   // Check for session indicator cookie
@@ -38,7 +45,9 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  res.headers.set('x-request-id', requestId);
+  return res;
 }
 
 export const config = {

@@ -337,6 +337,10 @@ export function startPostingWorker() {
     logger.error({ jobId: job?.id, err }, 'Posting job failed');
   });
 
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Posting job stalled — will be retried');
+  });
+
   logger.info('Posting worker started');
   return worker;
 }

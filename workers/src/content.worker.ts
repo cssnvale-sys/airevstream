@@ -604,6 +604,10 @@ export function startContentWorker() {
     logger.error({ jobId: job?.id, err }, 'Content job failed');
   });
 
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Content job stalled — will be retried');
+  });
+
   // Register repeatable approval timeout check (every 5 minutes)
   const contentQueue = getQueue('content');
   contentQueue.add('content:check-approval-timeouts', { _trigger: 'repeatable' } as any, {

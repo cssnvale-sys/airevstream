@@ -52,6 +52,7 @@ export const KNOWN_INCOMPLETE_STATUS_CHECKS = new Set<string>([
   'experiments/[id]/stop/route.ts:Experiment.status',      // stop only applies to running/evaluating
   'suggestions/[id]/route.ts:SuggestionLog.outcome',       // 'shown' is initial DB default, not a user action
   'storyboard-shots/[shotId]/approve/route.ts:StoryboardShot.status', // approve route only handles pending/approved/rejected, not generating/generated
+  'system/health/route.ts:AiService.status',                         // groupBy captures all statuses; 'disabled' not explicitly referenced
 ]);
 
 /** Minimum number of enum values a handler must reference to trigger the check */

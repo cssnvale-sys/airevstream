@@ -228,6 +228,10 @@ export function startMaintenanceWorker() {
     logger.error({ jobId: job?.id, err }, 'Maintenance job failed');
   });
 
+  worker.on('stalled', (jobId) => {
+    logger.warn({ jobId }, 'Maintenance job stalled — will be retried');
+  });
+
   // Set up repeatable jobs
   const maintenanceQueue = getQueue('maintenance');
   maintenanceQueue.add('maintenance:backup', { target: 'database' } as any, {

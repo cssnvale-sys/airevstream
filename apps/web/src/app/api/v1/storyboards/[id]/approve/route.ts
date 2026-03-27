@@ -88,6 +88,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return success({ id, status: 'approved', pipelineResumed: true });
   } catch (err) {
     console.error('POST /api/v1/storyboards/[id]/approve error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to approve storyboard', 500);
   }
 }

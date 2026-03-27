@@ -70,7 +70,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     return success(converted);
   } catch (err) {
     console.error('GET /api/v1/content/[id]/storyboard error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch storyboard', 500);
   }
 }
 
@@ -149,6 +149,6 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return success(converted);
   } catch (err) {
     console.error('PUT /api/v1/content/[id]/storyboard error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to create storyboard', 500);
   }
 }

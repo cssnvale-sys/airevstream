@@ -74,6 +74,6 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     return success({ versions: converted, total: converted.length });
   } catch (err) {
     console.error('GET /api/v1/content/[id]/versions error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch content versions', 500);
   }
 }

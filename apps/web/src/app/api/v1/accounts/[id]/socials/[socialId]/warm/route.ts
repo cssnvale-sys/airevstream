@@ -60,6 +60,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return success({ jobId: job.id, message: 'Warm-up started' });
   } catch (err) {
     console.error('POST /api/v1/accounts/[id]/socials/[socialId]/warm error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to warm account', 500);
   }
 }

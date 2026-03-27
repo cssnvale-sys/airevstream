@@ -39,6 +39,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return success({ jobId: job.id, message: 'Health check started' });
   } catch (err) {
     console.error('POST /api/v1/accounts/[id]/socials/[socialId]/health-check error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to check account health', 500);
   }
 }

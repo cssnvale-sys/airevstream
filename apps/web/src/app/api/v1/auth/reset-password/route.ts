@@ -62,6 +62,6 @@ export async function POST(req: NextRequest) {
     return success({ message: 'Password has been reset successfully' });
   } catch (err) {
     console.error('POST /api/v1/auth/reset-password failed:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to reset password', 500);
   }
 }

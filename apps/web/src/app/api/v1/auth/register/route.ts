@@ -83,6 +83,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error('POST /api/v1/auth/register failed:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to register', 500);
   }
 }

@@ -59,6 +59,6 @@ export async function POST(req: NextRequest) {
     return success({ message: 'If an account with that email exists, a reset link has been sent.' });
   } catch (err) {
     console.error('POST /api/v1/auth/forgot-password failed:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to process password reset', 500);
   }
 }

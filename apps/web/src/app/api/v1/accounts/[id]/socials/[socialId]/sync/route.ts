@@ -40,6 +40,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return success({ jobId: job.id, message: 'Sync started' });
   } catch (err) {
     console.error('POST /api/v1/accounts/[id]/socials/[socialId]/sync error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to sync social account', 500);
   }
 }

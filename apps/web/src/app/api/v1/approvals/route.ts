@@ -58,6 +58,6 @@ export async function GET(req: NextRequest) {
     return paginated(items, total, page, limit);
   } catch (err) {
     console.error('GET /api/v1/approvals error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch approvals', 500);
   }
 }

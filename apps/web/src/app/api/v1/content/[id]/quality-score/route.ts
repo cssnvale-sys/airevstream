@@ -76,7 +76,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
   } catch (err) {
     console.error('POST /api/v1/content/[id]/quality-score error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to calculate quality score', 500);
   }
 }
 
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     });
   } catch (err) {
     console.error('GET /api/v1/content/[id]/quality-score error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch quality score', 500);
   }
 }
 

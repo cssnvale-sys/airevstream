@@ -78,7 +78,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     });
   } catch (err) {
     console.error('GET /api/v1/content/[id]/variants error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch content variants', 500);
   }
 }
 
@@ -166,6 +166,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     );
   } catch (err) {
     console.error('POST /api/v1/content/[id]/variants error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to create content variant', 500);
   }
 }

@@ -70,6 +70,6 @@ export async function POST(req: NextRequest) {
     return success({ jobId: job.id, type: body.type, message: 'Research job queued' });
   } catch (err) {
     console.error('POST /api/v1/research error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to queue research', 500);
   }
 }

@@ -29,6 +29,6 @@ export async function GET(req: NextRequest) {
     return success(user);
   } catch (err) {
     console.error('GET /api/v1/auth/me failed:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch user profile', 500);
   }
 }

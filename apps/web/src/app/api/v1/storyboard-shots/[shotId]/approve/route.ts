@@ -97,6 +97,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return success({ shotId, action, status: action === 'approve' ? 'approved' : action === 'reject' ? 'failed' : 'pending' });
   } catch (err) {
     console.error('POST /api/v1/storyboard-shots/[shotId]/approve error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to approve shot', 500);
   }
 }

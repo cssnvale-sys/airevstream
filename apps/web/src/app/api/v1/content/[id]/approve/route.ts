@@ -120,6 +120,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
   } catch (err) {
     console.error('POST /api/v1/content/[id]/approve error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to approve content', 500);
   }
 }

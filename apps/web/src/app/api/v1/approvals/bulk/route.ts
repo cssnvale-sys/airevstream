@@ -108,6 +108,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error('POST /api/v1/approvals/bulk error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to process bulk approval', 500);
   }
 }

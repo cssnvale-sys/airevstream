@@ -105,7 +105,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     return success(converted);
   } catch (err) {
     console.error('GET /api/v1/content/[id] error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch content item', 500);
   }
 }
 
@@ -173,7 +173,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     });
   } catch (err) {
     console.error('PUT /api/v1/content/[id] error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to update content item', 500);
   }
 }
 
@@ -239,6 +239,6 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     return success({ deleted: true });
   } catch (err) {
     console.error('DELETE /api/v1/content/[id] error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to delete content item', 500);
   }
 }

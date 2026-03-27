@@ -123,6 +123,6 @@ export async function POST(req: NextRequest) {
     }, { queued: true });
   } catch (err) {
     console.error('POST /api/v1/content/generate error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to generate content', 500);
   }
 }

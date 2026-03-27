@@ -23,6 +23,6 @@ export async function GET(req: NextRequest) {
     return success(scores);
   } catch (err) {
     console.error('GET /api/v1/approvals/trust-scores error:', err);
-    return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);
+    return error('INTERNAL_ERROR', 'Failed to fetch trust scores', 500);
   }
 }

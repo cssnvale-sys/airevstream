@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError, notFound, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
@@ -96,8 +96,7 @@ export async function POST(req: NextRequest) {
     const parsed = createStorefrontSchema.safeParse(body);
 
     if (!parsed.success) {
-      const messages = parsed.error.errors.map((e) => e.message).join(', ');
-      return validationError(messages);
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { channelId, name, slug, description, logoUrl, bannerUrl, theme, customDomain } = parsed.data;

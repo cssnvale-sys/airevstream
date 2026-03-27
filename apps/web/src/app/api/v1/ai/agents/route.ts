@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import {
   AGENT_CONFIGS,
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = RunAgentSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { mode, role, input } = parsed.data;

@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { startAccountLifecyclePipeline } from '@airevstream/queue';
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = CreateAccountSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { email, password, tier, notes, targetPlatforms, avatarId, autoSeasoning, autoPosting } = parsed.data;

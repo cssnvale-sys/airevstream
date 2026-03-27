@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError, notFound, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = CreateLinkSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { productId, shortUrl } = parsed.data;

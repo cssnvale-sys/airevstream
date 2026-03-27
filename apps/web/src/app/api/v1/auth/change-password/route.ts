@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, getJwtSecret } from '@/lib/api-server';
+import { authenticate, success, error, validationError, formatZodErrors, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { hashPassword, verifyPassword } from '@/lib/password';
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = ChangePasswordSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const { currentPassword, newPassword } = parsed.data;
 

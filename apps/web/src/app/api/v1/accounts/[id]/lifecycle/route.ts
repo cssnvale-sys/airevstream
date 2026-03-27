@@ -1,4 +1,4 @@
-import { authenticate, success, error, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, forbidden, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { startAccountLifecyclePipeline } from '@airevstream/queue';
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = await req.json();
     const parsed = StartLifecycleSchema.safeParse(body);
     if (!parsed.success) {
-      return error('VALIDATION_ERROR', parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '), 400);
+      return error('VALIDATION_ERROR', formatZodErrors(parsed.error.errors), 400);
     }
 
     const result = await startAccountLifecyclePipeline({

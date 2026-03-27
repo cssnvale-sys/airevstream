@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { addJob } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = GenerateShotSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { shotId, description, channelId, workflowType } = parsed.data;

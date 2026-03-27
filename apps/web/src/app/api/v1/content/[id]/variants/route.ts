@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const CreateVariantSchema = z.object({
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rawBody = await req.json();
     const parsed = CreateVariantSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const body = parsed.data;
 

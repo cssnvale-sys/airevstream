@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -88,8 +88,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const parsed = addProductSchema.safeParse(body);
 
     if (!parsed.success) {
-      const messages = parsed.error.errors.map((e) => e.message).join(', ');
-      return validationError(messages);
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { affiliateProductId, displayOrder, featured, customTitle, customDescription } = parsed.data;

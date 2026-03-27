@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, paginated, parseQuery, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, paginated, parseQuery, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { NextRequest, NextResponse } from 'next/server';
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = CreateSocialSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { platform, platformUserId, username, credentials } = parsed.data;

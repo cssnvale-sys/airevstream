@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, formatZodErrors, forbidden } from '@/lib/api-server';
 import { sha256 } from '@airevstream/crypto';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = CreateApiKeySchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const rawKey = `ars_${randomBytes(32).toString('hex')}`;

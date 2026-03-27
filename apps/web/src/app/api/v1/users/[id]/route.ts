@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -101,7 +101,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = updateUserSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { name, avatarUrl, role, tenantId } = parsed.data;

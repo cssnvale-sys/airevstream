@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = GenerateScriptSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { channelId, topic, contentType, platforms, duration, affiliateProductId, setting, emotion, hasSpeaking, characterDescription } = parsed.data;

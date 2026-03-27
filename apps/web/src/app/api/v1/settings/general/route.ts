@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, formatZodErrors, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const parsed = GeneralSettingsSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const existing = await ctx.db.systemSetting.findUnique({ where: { key: SETTING_KEY } });
     const current = (existing?.value as Record<string, unknown>) ?? DEFAULTS;

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { success, error, validationError, getJwtSecret } from '@/lib/api-server';
+import { success, error, validationError, formatZodErrors, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { hashPassword } from '@/lib/password';
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const { email, password, name } = parsed.data;
 

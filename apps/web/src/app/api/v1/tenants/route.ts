@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, paginated, parseQuery, validationError, requireAdmin } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, formatZodErrors, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = createTenantSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { name, slug, plan, limits } = parsed.data;

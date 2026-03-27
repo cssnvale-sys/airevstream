@@ -1,4 +1,4 @@
-import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = CreateAiServiceSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const {
       name, provider, serviceType, endpoint, apiKey,

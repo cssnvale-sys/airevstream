@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, forbidden, isUUID } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, forbidden, isUUID, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = UpdateAiServiceSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const {
       name, endpoint, apiKey, capabilities, costPerUnit, rateLimits,

@@ -1,4 +1,4 @@
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -38,8 +38,7 @@ export async function GET(req: NextRequest) {
 
     const parsed = querySchema.safeParse(rawParams);
     if (!parsed.success) {
-      const messages = parsed.error.errors.map((e) => e.message).join(', ');
-      return validationError(messages);
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { period, channelId, productId, groupBy } = parsed.data;

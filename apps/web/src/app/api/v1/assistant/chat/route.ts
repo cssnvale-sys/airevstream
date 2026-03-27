@@ -1,4 +1,4 @@
-import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import type { ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = ChatSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { conversationId, message, contextPage: bodyContextPage } = parsed.data;

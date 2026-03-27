@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
@@ -107,7 +107,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = UpdateAccountSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map((e) => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const { status, tier, notes } = parsed.data;
 

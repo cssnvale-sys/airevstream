@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const HEALTH_CHECK_TIMEOUT_MS = 5_000;
+
 /** Block SSRF by rejecting URLs targeting private/loopback addresses */
 function isPrivateUrl(urlStr: string): boolean {
   try {
@@ -97,7 +99,7 @@ export async function POST(req: NextRequest) {
 
         const start = Date.now();
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
+        const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
 
         try {
           const res = await fetch(healthUrl, { signal: controller.signal });
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
         } catch (fetchErr) {
           clearTimeout(timeout);
           console.error('Health check fetch failed for', healthUrl, fetchErr);
-          errorMsg = fetchErr instanceof Error && fetchErr.name === 'AbortError' ? 'Timeout (5s)' : 'Connection failed';
+          errorMsg = fetchErr instanceof Error && fetchErr.name === 'AbortError' ? `Timeout (${HEALTH_CHECK_TIMEOUT_MS / 1000}s)` : 'Connection failed';
           healthy = false;
         }
 

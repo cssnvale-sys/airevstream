@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -56,8 +56,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const parsed = updateProductSchema.safeParse(body);
 
     if (!parsed.success) {
-      const messages = parsed.error.errors.map((e) => e.message).join(', ');
-      return validationError(messages);
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const updated = await ctx.db.storefrontProduct.update({

@@ -1,4 +1,4 @@
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = AssignAvatarSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
     const { avatarId, isPrimary, role } = parsed.data;
 

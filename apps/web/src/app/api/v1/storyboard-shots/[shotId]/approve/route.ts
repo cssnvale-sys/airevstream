@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ shotId: string }> };
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const parsed = ShotActionSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => e.message).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { action } = parsed.data;

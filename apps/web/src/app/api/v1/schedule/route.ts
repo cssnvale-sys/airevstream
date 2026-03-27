@@ -1,4 +1,4 @@
-import { authenticate, success, error, validationError, paginated, parseQuery, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, paginated, parseQuery, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import type { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = SchedulePostSchema.safeParse(body);
     if (!parsed.success) {
-      return validationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '));
+      return validationError(formatZodErrors(parsed.error.errors));
     }
 
     const { contentId, channelId, scheduledAt, platform, socialAccountId, publishConfig } = parsed.data;

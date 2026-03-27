@@ -275,7 +275,7 @@ export function SimpleCreateWizard() {
           channelId: effectiveChannelId,
           topic: form.topic,
           contentType: 'short',
-          qualityPreset: 'cinema',
+          qualityTier: 'cinema',
           duration: parseInt(form.duration, 10),
           overrides: form.overrides,
           directives: form.directives,

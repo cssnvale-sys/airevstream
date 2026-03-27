@@ -69,7 +69,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         contentId: storyboard.content.id,
         storyboardId: id,
         channelId: storyboard.content.channelId,
-        qualityPreset: 'cinema',
+        qualityTier: 'cinema',
       } as any);
 
       // Queue final review

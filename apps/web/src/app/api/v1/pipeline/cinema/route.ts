@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
       });
       const specs = shots.map(s => (s.shotspec as Record<string, unknown>) ?? { promptBlocks: [] });
       const provider = (body as Record<string, unknown>).provider as string ?? 'comfyui';
-      const qcResult = runPreGenQC(specs as any[], provider as any);
+      const requestedTier = (body.qualityTier ?? 'standard') as 'draft' | 'standard' | 'cinema';
+      const qcResult = runPreGenQC(specs as any[], provider as any, undefined, requestedTier);
 
       const qcErrors = qcResult.violations.filter(v => v.severity === 'error');
       if (qcErrors.length > 0) {
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
       topic: body.topic,
       contentType: body.contentType,
       cinemaBibleId: body.cinemaBibleId,
-      qualityPreset: body.qualityPreset ?? 'standard',
+      qualityTier: body.qualityTier ?? 'standard',
       shotIds: body.shotIds,
       storyboardId: body.storyboardId,
       directives: body.directives,
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
       flowJobId: flowJob.job.id,
       contentId: body.contentId,
       pipelineType: 'cinema',
-      qualityPreset: body.qualityPreset ?? 'standard',
+      qualityTier: body.qualityTier ?? 'standard',
     });
   } catch (err) {
     console.error('POST /api/v1/pipeline/cinema failed:', err);

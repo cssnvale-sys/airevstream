@@ -484,7 +484,7 @@ export default function StudioPage() {
                 channelId={content?.channelId ?? content?.channel?.id ?? ''}
                 topic={content?.title ?? 'Untitled'}
                 contentType={content?.contentType ?? 'short'}
-                qualityPreset="cinema"
+                qualityTier="cinema"
               />
             )}
             {isVisible('advanced', mode) && shots.length > 0 && (

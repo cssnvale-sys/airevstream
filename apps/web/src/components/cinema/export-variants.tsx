@@ -12,7 +12,7 @@ interface ExportVariantsProps {
   channelId: string;
   topic?: string;
   contentType?: string;
-  qualityPreset: string;
+  qualityTier: string;
 }
 
 interface VariantOption {
@@ -57,7 +57,7 @@ const VARIANT_OPTIONS: VariantOption[] = [
   },
 ];
 
-export function ExportVariants({ contentId, storyboardId, channelId, topic, contentType, qualityPreset }: ExportVariantsProps) {
+export function ExportVariants({ contentId, storyboardId, channelId, topic, contentType, qualityTier }: ExportVariantsProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set(['youtube-16:9']));
   const [exporting, setExporting] = useState(false);
 
@@ -91,7 +91,7 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
           channelId,
           topic: topic ?? 'Untitled',
           contentType: contentType ?? 'short',
-          qualityPreset,
+          qualityTier,
           exportVariant: {
             label: variant.label,
             width: variant.width,
@@ -110,7 +110,7 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
     } finally {
       setExporting(false);
     }
-  }, [selected, contentId, storyboardId, channelId, topic, contentType, qualityPreset]);
+  }, [selected, contentId, storyboardId, channelId, topic, contentType, qualityTier]);
 
   return (
     <div className="border border-border rounded-md overflow-hidden">

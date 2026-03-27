@@ -391,13 +391,12 @@ export default function CreatePage() {
 
       // Step 2: For standard/cinema tiers, trigger the cinema pipeline
       if (qualityTier !== 'draft' && contentId) {
-        const qualityPreset = qualityTier === 'cinema' ? 'cinema' : 'standard';
         await apiPost('/pipeline/cinema', {
           contentId,
           channelId: formData.channelId,
           topic: formData.topic,
           contentType: toCinemaContentType(formData.contentType),
-          qualityPreset,
+          qualityTier,
           directives,
         });
       }

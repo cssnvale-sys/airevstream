@@ -513,10 +513,10 @@ export default function DashboardPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { platform: 'youtube', label: 'YouTube', icon: <Youtube size={16} />, color: 'text-red-500' },
-                { platform: 'tiktok', label: 'TikTok', icon: <Music2 size={16} />, color: 'text-cyan-400' },
-                { platform: 'instagram', label: 'Instagram', icon: <Instagram size={16} />, color: 'text-pink-500' },
-                { platform: 'facebook', label: 'Facebook', icon: <Facebook size={16} />, color: 'text-blue-500' },
+                { platform: 'youtube', label: 'YouTube', icon: <Youtube size={16} />, color: 'text-accent-red' },
+                { platform: 'tiktok', label: 'TikTok', icon: <Music2 size={16} />, color: 'text-accent-blue' },
+                { platform: 'instagram', label: 'Instagram', icon: <Instagram size={16} />, color: 'text-accent-purple' },
+                { platform: 'facebook', label: 'Facebook', icon: <Facebook size={16} />, color: 'text-accent-blue' },
               ].map(({ platform, label, icon, color }) => {
                 const dist = accountStats.platformDistribution[platform];
                 const cov = accountStats.platformCoverage[platform];

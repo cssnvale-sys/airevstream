@@ -3,10 +3,10 @@
 import { cn } from '@/lib/utils';
 
 const PLATFORM_OPTIONS = [
-  { value: 'youtube', label: 'YouTube', icon: '▶', color: 'text-red-400 border-red-500/30' },
-  { value: 'tiktok', label: 'TikTok', icon: '♫', color: 'text-cyan-400 border-cyan-500/30' },
-  { value: 'instagram', label: 'Instagram', icon: '📷', color: 'text-pink-400 border-pink-500/30' },
-  { value: 'facebook', label: 'Facebook', icon: 'f', color: 'text-blue-400 border-blue-500/30' },
+  { value: 'youtube', label: 'YouTube', icon: '▶', color: 'text-accent-red border-accent-red/30' },
+  { value: 'tiktok', label: 'TikTok', icon: '♫', color: 'text-accent-blue border-accent-blue/30' },
+  { value: 'instagram', label: 'Instagram', icon: '📷', color: 'text-accent-purple border-accent-purple/30' },
+  { value: 'facebook', label: 'Facebook', icon: 'f', color: 'text-accent-blue border-accent-blue/30' },
 ] as const;
 
 interface PlatformSelectProps {

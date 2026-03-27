@@ -39,10 +39,10 @@ const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
-  youtube: 'text-red-400',
-  tiktok: 'text-cyan-400',
-  instagram: 'text-pink-400',
-  facebook: 'text-blue-400',
+  youtube: 'text-accent-red',
+  tiktok: 'text-accent-blue',
+  instagram: 'text-accent-purple',
+  facebook: 'text-accent-blue',
 };
 
 export default function ChannelsPage() {

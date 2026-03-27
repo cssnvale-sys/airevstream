@@ -6,6 +6,7 @@ import NextImage from 'next/image';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useChannels, useAffiliateProducts, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { cn, platformIcon } from '@/lib/utils';
 import {
   Check,
@@ -1267,9 +1268,10 @@ export default function CreatePage() {
 
       {/* Action buttons */}
       <div className="flex gap-3">
-        <button
+        <LoadingButton
           onClick={handleApproveAndSchedule}
-          disabled={generating}
+          loading={generating}
+          loadingText={qualityTier === 'cinema' ? 'Starting...' : qualityTier === 'standard' ? 'Starting...' : 'Scheduling...'}
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-md text-white font-medium transition-colors',
             qualityTier === 'cinema'
@@ -1277,9 +1279,7 @@ export default function CreatePage() {
               : 'btn-primary',
           )}
         >
-          {generating ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : qualityTier === 'cinema' ? (
+          {qualityTier === 'cinema' ? (
             <Clapperboard size={16} />
           ) : qualityTier === 'standard' ? (
             <Film size={16} />
@@ -1291,7 +1291,7 @@ export default function CreatePage() {
             : qualityTier === 'standard'
               ? 'Start Standard Pipeline'
               : 'Approve & Schedule'}
-        </button>
+        </LoadingButton>
         <button
           onClick={() => setCurrentStep(3)}
           className="btn-secondary"

@@ -201,6 +201,15 @@ function Modal({
   title: string;
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -511,6 +520,7 @@ function ProductsTab({
           value={categoryFilter}
           onChange={(e) => onCategoryChange(e.target.value)}
           className="input"
+          aria-label="Filter by category"
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -522,6 +532,7 @@ function ProductsTab({
           value={statusFilter}
           onChange={(e) => onStatusChange(e.target.value)}
           className="input"
+          aria-label="Filter by status"
         >
           {STATUSES.map((s) => (
             <option key={s} value={s}>

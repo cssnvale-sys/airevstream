@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAccounts, useAccount, apiPost } from '@/hooks/use-api';
@@ -136,6 +136,15 @@ function AddEmailModal({
   const [avatarId, setAvatarId] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -364,6 +373,15 @@ function BulkImportModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ imported: number; skipped: number } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -1022,6 +1040,7 @@ export default function AccountsPage() {
             value={filterStatus}
             onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
             className="input"
+            aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
             {STATUS_OPTIONS.filter(Boolean).map((s) => (
@@ -1032,6 +1051,7 @@ export default function AccountsPage() {
             value={filterPlatform}
             onChange={(e) => { setFilterPlatform(e.target.value); setPage(1); }}
             className="input"
+            aria-label="Filter by platform"
           >
             <option value="">All Platforms</option>
             {PLATFORM_OPTIONS.filter(Boolean).map((p) => (
@@ -1042,6 +1062,7 @@ export default function AccountsPage() {
             value={filterTier}
             onChange={(e) => { setFilterTier(e.target.value); setPage(1); }}
             className="input"
+            aria-label="Filter by tier"
           >
             <option value="">All Tiers</option>
             {TIER_OPTIONS.filter(Boolean).map((t) => (

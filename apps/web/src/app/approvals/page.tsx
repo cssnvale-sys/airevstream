@@ -174,7 +174,7 @@ export default function ApprovalsPage() {
             <LoadingButton
               onClick={() => handleBulkAction('approve')}
               loading={bulkActing}
-              className="btn-primary btn-sm flex items-center gap-1"
+              className="btn-primary btn-sm flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
             >
               <Check size={14} />
               Approve All
@@ -182,7 +182,7 @@ export default function ApprovalsPage() {
             <button
               onClick={() => setBulkRejectOpen(true)}
               disabled={bulkActing}
-              className="btn-danger btn-sm flex items-center gap-1"
+              className="btn-danger btn-sm flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
             >
               <X size={14} />
               Reject All
@@ -190,7 +190,7 @@ export default function ApprovalsPage() {
             <button
               onClick={() => setSelectedIds(new Set())}
               disabled={bulkActing}
-              className="btn-secondary btn-sm ml-auto"
+              className="btn-secondary btn-sm ml-auto focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
             >
               Clear
             </button>
@@ -277,7 +277,7 @@ export default function ApprovalsPage() {
                       <LoadingButton
                         onClick={() => handleAction(item.id, 'approve')}
                         loading={acting === item.id}
-                        className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5"
+                        className="btn-primary flex items-center gap-1.5 text-sm px-3 py-1.5 focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
                       >
                         <Check size={14} />
                         Approve
@@ -285,7 +285,7 @@ export default function ApprovalsPage() {
                       <button
                         onClick={() => setRejectTarget(item.id)}
                         disabled={acting === item.id}
-                        className="btn-secondary flex items-center gap-1.5 text-sm px-3 py-1.5 text-accent-red"
+                        className="btn-secondary flex items-center gap-1.5 text-sm px-3 py-1.5 text-accent-red focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
                       >
                         <X size={14} />
                         Reject
@@ -306,7 +306,7 @@ export default function ApprovalsPage() {
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
-                    className="btn-icon"
+                    className="btn-icon focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
                     aria-label="Previous page"
                   >
                     <ChevronLeft size={16} />
@@ -314,7 +314,7 @@ export default function ApprovalsPage() {
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="btn-icon"
+                    className="btn-icon focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none"
                     aria-label="Next page"
                   >
                     <ChevronRight size={16} />
@@ -329,7 +329,7 @@ export default function ApprovalsPage() {
         <div className="mt-6">
           <button
             onClick={() => setTrustOpen((v) => !v)}
-            className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+            className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none rounded px-2 py-1"
           >
             <Shield size={14} />
             Trust Scores

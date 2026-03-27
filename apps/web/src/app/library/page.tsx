@@ -413,7 +413,7 @@ export default function LibraryPage() {
             <button
               onClick={() => setViewMode('grid')}
               className={cn(
-                'p-2 transition-colors',
+                'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
                 viewMode === 'grid' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
               )}
               title="Grid view"
@@ -423,7 +423,7 @@ export default function LibraryPage() {
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                'p-2 transition-colors',
+                'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
                 viewMode === 'list' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
               )}
               title="List view"

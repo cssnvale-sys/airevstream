@@ -130,7 +130,7 @@ export default function WorkflowsPage() {
           <button
             onClick={() => setActiveTab('jobs')}
             className={cn(
-              'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+              'px-4 py-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
               activeTab === 'jobs' ? 'bg-accent-blue text-white' : 'bg-bg-secondary text-text-secondary hover:text-text-primary',
             )}
           >
@@ -139,7 +139,7 @@ export default function WorkflowsPage() {
           <button
             onClick={() => setActiveTab('hitl')}
             className={cn(
-              'px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5',
+              'px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
               activeTab === 'hitl' ? 'bg-accent-blue text-white' : 'bg-bg-secondary text-text-secondary hover:text-text-primary',
             )}
           >
@@ -181,7 +181,7 @@ export default function WorkflowsPage() {
               key={s}
               onClick={() => updateStatusFilter(s)}
               className={cn(
-                'px-3 py-1.5 rounded-md text-sm capitalize transition-colors',
+                'px-3 py-1.5 rounded-md text-sm capitalize transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
                 statusFilter === s
                   ? 'bg-accent-blue text-white'
                   : 'bg-bg-secondary text-text-secondary hover:text-text-primary',

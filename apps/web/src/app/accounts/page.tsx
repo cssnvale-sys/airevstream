@@ -787,8 +787,8 @@ function DetailPanel({
 
             {/* Timestamps */}
             <div className="text-xs text-text-secondary space-y-1 pt-2 border-t border-border">
-              <p>Created: {formatRelativeTime(account.createdAt)}</p>
-              <p>Updated: {formatRelativeTime(account.updatedAt)}</p>
+              <p>Created: <time dateTime={account.createdAt}>{formatRelativeTime(account.createdAt)}</time></p>
+              <p>Updated: <time dateTime={account.updatedAt}>{formatRelativeTime(account.updatedAt)}</time></p>
             </div>
           </div>
         ) : tab === 'channels' ? (

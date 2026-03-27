@@ -253,7 +253,7 @@ export default function ApprovalsPage() {
                         <span>|</span>
                         <span>{item.contentType}</span>
                         <span>|</span>
-                        <span>{formatRelativeTime(item.createdAt)}</span>
+                        <time dateTime={item.createdAt}>{formatRelativeTime(item.createdAt)}</time>
                         {item.qualityScore != null && (
                           <>
                             <span>|</span>

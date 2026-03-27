@@ -220,7 +220,7 @@ function ContentCard({ item }: { item: ContentItem }) {
                 <span className="truncate max-w-[80px]">{item.aiService.name}</span>
               )}
             </div>
-            <span>{formatRelativeTime(item.createdAt)}</span>
+            <time dateTime={item.createdAt}>{formatRelativeTime(item.createdAt)}</time>
           </div>
         </div>
       </div>
@@ -274,9 +274,9 @@ function ContentRow({ item, onDelete }: { item: ContentItem; onDelete?: (id: str
         </span>
 
         {/* Date */}
-        <span className="text-xs text-text-secondary w-16 text-right flex-shrink-0">
+        <time dateTime={item.createdAt} className="text-xs text-text-secondary w-16 text-right flex-shrink-0">
           {formatRelativeTime(item.createdAt)}
-        </span>
+        </time>
 
         {/* Delete */}
         {onDelete && ['draft', 'archived', 'failed'].includes(item.status) && (

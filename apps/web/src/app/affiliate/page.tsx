@@ -899,7 +899,7 @@ function LinksTab({
                     {formatNumber(link.totalClicks)}
                   </td>
                   <td className="px-4 py-3 text-text-secondary">
-                    {formatRelativeTime(link.createdAt)}
+                    <time dateTime={link.createdAt}>{formatRelativeTime(link.createdAt)}</time>
                   </td>
                 </tr>
               ))

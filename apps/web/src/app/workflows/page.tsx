@@ -267,9 +267,9 @@ export default function WorkflowsPage() {
                         Retry
                       </LoadingButton>
                     )}
-                    <div className="text-xs text-text-secondary whitespace-nowrap">
+                    <time dateTime={job.createdAt} className="text-xs text-text-secondary whitespace-nowrap">
                       {formatRelativeTime(job.createdAt)}
-                    </div>
+                    </time>
                   </div>
                 );
               })}

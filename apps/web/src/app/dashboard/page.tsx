@@ -591,9 +591,9 @@ export default function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-text-primary truncate" title={item.message}>{item.message}</p>
                 </div>
-                <span className="text-xs text-text-secondary whitespace-nowrap shrink-0">
+                <time dateTime={item.timestamp} className="text-xs text-text-secondary whitespace-nowrap shrink-0">
                   {formatRelativeTime(item.timestamp)}
-                </span>
+                </time>
               </div>
             ))}
           </div>

@@ -114,7 +114,7 @@ export default function StudioIndexPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span className="text-xs text-text-tertiary">{formatRelativeTime(item.updatedAt)}</span>
+                <time dateTime={item.updatedAt} className="text-xs text-text-tertiary">{formatRelativeTime(item.updatedAt)}</time>
                 <ArrowRight size={14} className="text-text-tertiary" />
               </div>
             </Link>

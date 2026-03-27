@@ -537,8 +537,10 @@ export default function AssetsPage() {
           <button
             type="button"
             key={key}
+            id={`assets-tab-${key}`}
             role="tab"
             aria-selected={activeTab === key}
+            aria-controls={`assets-panel-${key}`}
             onClick={() => setActiveTab(key)}
             className={cn(
               'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors inline-flex items-center gap-2',
@@ -585,6 +587,7 @@ export default function AssetsPage() {
       </div>
 
       {/* Tab Content */}
+      <div role="tabpanel" id={`assets-panel-${activeTab}`} aria-labelledby={`assets-tab-${activeTab}`}>
       {activeTab === 'characters' && (
         <div>
           {avatarsLoading ? (
@@ -719,6 +722,7 @@ export default function AssetsPage() {
           </Link>
         </div>
       )}
+      </div>
 
       {/* Modals */}
       <CreateAvatarModal

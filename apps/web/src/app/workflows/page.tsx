@@ -133,8 +133,10 @@ export default function WorkflowsPage() {
         <div role="tablist" className="flex gap-2 mb-4">
           <button
             type="button"
+            id="workflows-tab-jobs"
             role="tab"
             aria-selected={activeTab === 'jobs'}
+            aria-controls="workflows-panel-jobs"
             onClick={() => setActiveTab('jobs')}
             className={cn(
               'px-4 py-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
@@ -145,8 +147,10 @@ export default function WorkflowsPage() {
           </button>
           <button
             type="button"
+            id="workflows-tab-hitl"
             role="tab"
             aria-selected={activeTab === 'hitl'}
+            aria-controls="workflows-panel-hitl"
             onClick={() => setActiveTab('hitl')}
             className={cn(
               'px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
@@ -164,25 +168,27 @@ export default function WorkflowsPage() {
         </div>
 
         {activeTab === 'hitl' ? (
-          hitlLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="animate-spin text-text-secondary" size={32} />
-            </div>
-          ) : hitlTasks.length === 0 ? (
-            <EmptyState
-              icon={CheckCircle}
-              title="No human tasks"
-              description="All tasks that require human intervention will appear here."
-            />
-          ) : (
-            <div className="space-y-3">
-              {hitlTasks.map((task) => (
-                <HitlTaskCard key={task.id} task={task} onComplete={() => hitlMutate()} />
-              ))}
-            </div>
-          )
+          <div role="tabpanel" id="workflows-panel-hitl" aria-labelledby="workflows-tab-hitl">
+            {hitlLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="animate-spin text-text-secondary" size={32} />
+              </div>
+            ) : hitlTasks.length === 0 ? (
+              <EmptyState
+                icon={CheckCircle}
+                title="No human tasks"
+                description="All tasks that require human intervention will appear here."
+              />
+            ) : (
+              <div className="space-y-3">
+                {hitlTasks.map((task) => (
+                  <HitlTaskCard key={task.id} task={task} onComplete={() => hitlMutate()} />
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
-          <>
+          <div role="tabpanel" id="workflows-panel-jobs" aria-labelledby="workflows-tab-jobs">
 
         {/* Status filter tabs */}
         <div className="flex gap-2 mb-6">
@@ -299,7 +305,7 @@ export default function WorkflowsPage() {
             )}
           </>
         )}
-          </>
+          </div>
         )}
       </div>
     </AppLayout>

@@ -1686,9 +1686,10 @@ export default function SettingsPage() {
             <button
               type="button"
               key={tab.id}
+              id={`settings-tab-${tab.id}`}
               role="tab"
               aria-selected={isActive}
-              aria-controls={`tabpanel-${tab.id}`}
+              aria-controls={`settings-panel-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
@@ -1705,7 +1706,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab content */}
-      <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-label={TABS.find(t => t.id === activeTab)?.label}>{renderTab()}</div>
+      <div role="tabpanel" id={`settings-panel-${activeTab}`} aria-labelledby={`settings-tab-${activeTab}`}>{renderTab()}</div>
     </AppLayout>
   );
 }

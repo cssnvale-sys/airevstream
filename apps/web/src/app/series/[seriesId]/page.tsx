@@ -130,8 +130,10 @@ export default function SeriesDetailPage() {
             <button
               type="button"
               key={tab.key}
+              id={`series-tab-${tab.key}`}
               role="tab"
               aria-selected={activeTab === tab.key}
+              aria-controls={`series-panel-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
                 'pb-3 text-sm font-medium border-b-2 transition-colors',
@@ -147,6 +149,7 @@ export default function SeriesDetailPage() {
       </div>
 
       {/* Tab content */}
+      <div role="tabpanel" id={`series-panel-${activeTab}`} aria-labelledby={`series-tab-${activeTab}`}>
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
@@ -202,6 +205,7 @@ export default function SeriesDetailPage() {
       {activeTab === 'analytics' && (
         <SeriesAnalytics seriesId={seriesId} />
       )}
+      </div>
     </AppLayout>
   );
 }

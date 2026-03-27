@@ -338,8 +338,10 @@ export default function AffiliatePage() {
           <button
             type="button"
             key={key}
+            id={`affiliate-tab-${key}`}
             role="tab"
             aria-selected={activeTab === key}
+            aria-controls={`affiliate-panel-${key}`}
             onClick={() => setActiveTab(key)}
             className={cn(
               'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
@@ -355,6 +357,7 @@ export default function AffiliatePage() {
       </div>
 
       {/* Tab Content */}
+      <div role="tabpanel" id={`affiliate-panel-${activeTab}`} aria-labelledby={`affiliate-tab-${activeTab}`}>
       {activeTab === 'products' && (
         <ProductsTab
           products={products}
@@ -430,6 +433,7 @@ export default function AffiliatePage() {
           onUpdated={() => mutateStorefronts()}
         />
       )}
+      </div>
 
       {/* Add Product Modal */}
       <AddProductModal

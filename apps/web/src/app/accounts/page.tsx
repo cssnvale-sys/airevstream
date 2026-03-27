@@ -646,13 +646,15 @@ function DetailPanel({
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-border" role="tablist">
         {tabs.map((t) => (
           <button
             type="button"
             key={t.key}
+            id={`account-tab-${t.key}`}
             role="tab"
             aria-selected={tab === t.key}
+            aria-controls={`account-panel-${t.key}`}
             onClick={() => setTab(t.key)}
             className={cn(
               'flex-1 px-4 py-2.5 text-sm font-medium transition-colors',
@@ -667,7 +669,7 @@ function DetailPanel({
       </div>
 
       {/* Content */}
-      <div role="tabpanel" className="flex-1 overflow-auto p-5">
+      <div role="tabpanel" id={`account-panel-${tab}`} aria-labelledby={`account-tab-${tab}`} className="flex-1 overflow-auto p-5">
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 6 }).map((_, i) => (

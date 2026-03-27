@@ -144,8 +144,10 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
             <button
               type="button"
               key={value}
+              id={`preset-tab-${value}`}
               role="tab"
               aria-selected={activeTab === value}
+              aria-controls={`preset-panel-${value}`}
               onClick={() => setActiveTab(value)}
               className={cn(
                 'px-3 py-1.5 text-xs whitespace-nowrap transition-colors',
@@ -163,7 +165,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
         </div>
 
         {/* Content */}
-        <div className="p-2 max-h-64 overflow-y-auto space-y-1.5">
+        <div className="p-2 max-h-64 overflow-y-auto space-y-1.5" role="tabpanel" id={`preset-panel-${activeTab}`} aria-labelledby={`preset-tab-${activeTab}`}>
           {activeTab === 'recipes' ? (
             filteredRecipes.length === 0 ? (
               <p className="text-xs text-text-tertiary text-center py-4">No recipes found</p>

@@ -969,8 +969,10 @@ export default function AnalyticsPage() {
               <button
                 type="button"
                 key={tab.key}
+                id={`analytics-tab-${tab.key}`}
                 role="tab"
                 aria-selected={activeTab === tab.key}
+                aria-controls={`analytics-panel-${tab.key}`}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
                   'px-4 py-2.5 text-body font-medium transition-colors border-b-2 -mb-px',
@@ -985,7 +987,9 @@ export default function AnalyticsPage() {
           </div>
 
           {/* ---- Tab Content ---- */}
-          {renderActiveTab()}
+          <div role="tabpanel" id={`analytics-panel-${activeTab}`} aria-labelledby={`analytics-tab-${activeTab}`}>
+            {renderActiveTab()}
+          </div>
 
           {/* ---- Export Buttons ---- */}
           <div className="flex gap-3 mt-8 pt-6 border-t border-border">

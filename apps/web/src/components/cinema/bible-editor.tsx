@@ -123,8 +123,10 @@ export function BibleEditor({ bible, onSave }: BibleEditorProps) {
           <button
             type="button"
             key={tab.id}
+            id={`bible-tab-${tab.id}`}
             role="tab"
             aria-selected={activeTab === tab.id}
+            aria-controls={`bible-panel-${tab.id}`}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
               activeTab === tab.id
@@ -138,7 +140,7 @@ export function BibleEditor({ bible, onSave }: BibleEditorProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4" role="tabpanel" id={`bible-panel-${activeTab}`} aria-labelledby={`bible-tab-${activeTab}`}>
         {activeTab === 'look' && (
           <LookSection data={look} onChange={setLook} availableLoras={availableLoras} />
         )}

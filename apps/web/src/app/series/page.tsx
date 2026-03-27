@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Layers, Plus, BookOpen, Film, Archive } from 'lucide-react';
 import Link from 'next/link';
 import { CreateSeriesModal } from '@/components/series/create-series-modal';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface SeriesRow {
   id: string;
@@ -93,14 +94,14 @@ export default function SeriesPage() {
           ))}
         </div>
       ) : seriesList.length === 0 ? (
-        <div className="card text-center py-12">
-          <Layers size={48} className="mx-auto text-text-secondary mb-4" />
-          <h3 className="text-lg font-semibold text-text-primary mb-2">No series yet</h3>
-          <p className="text-text-secondary mb-4">Create a series to organize your content into themed collections.</p>
-          <button onClick={() => setShowCreate(true)} className="btn-primary inline-flex items-center gap-2">
-            <Plus size={16} />
-            Create First Series
-          </button>
+        <div className="card">
+          <EmptyState
+            icon={Layers}
+            title="No series yet"
+            description="Create a series to organize your content into themed collections."
+            actionLabel="Create First Series"
+            onAction={() => setShowCreate(true)}
+          />
         </div>
       ) : (
         <div className="card overflow-x-auto">

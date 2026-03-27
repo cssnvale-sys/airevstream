@@ -67,15 +67,15 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
       <table className="w-full text-body">
         <thead>
           <tr className="border-b border-border text-text-secondary text-caption">
-            <th scope="col" className="text-left py-2 px-3">Email</th>
-            <th scope="col" className="text-left py-2 px-3">Platform</th>
-            <th scope="col" className="text-left py-2 px-3">Status</th>
-            <th scope="col" className="text-left py-2 px-3">Phase</th>
-            <th scope="col" className="text-right py-2 px-3">Activities</th>
-            <th scope="col" className="text-right py-2 px-3">Health</th>
-            <th scope="col" className="text-left py-2 px-3">Last Active</th>
-            <th scope="col" className="text-left py-2 px-3">Next Session</th>
-            <th scope="col" className="text-right py-2 px-3">Actions</th>
+            <th scope="col" className="text-left py-2 px-3 font-medium">Email</th>
+            <th scope="col" className="text-left py-2 px-3 font-medium">Platform</th>
+            <th scope="col" className="text-left py-2 px-3 font-medium">Status</th>
+            <th scope="col" className="text-left py-2 px-3 font-medium">Phase</th>
+            <th scope="col" className="text-right py-2 px-3 font-medium">Activities</th>
+            <th scope="col" className="text-right py-2 px-3 font-medium">Health</th>
+            <th scope="col" className="text-left py-2 px-3 font-medium">Last Active</th>
+            <th scope="col" className="text-left py-2 px-3 font-medium">Next Session</th>
+            <th scope="col" className="text-right py-2 px-3 font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>

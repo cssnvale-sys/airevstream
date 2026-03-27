@@ -1398,12 +1398,12 @@ function ProxiesTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left">
-                  <th scope="col" className="pb-2 text-text-secondary font-medium">Name</th>
-                  <th scope="col" className="pb-2 text-text-secondary font-medium">Type</th>
-                  <th scope="col" className="pb-2 text-text-secondary font-medium">Host:Port</th>
-                  <th scope="col" className="pb-2 text-text-secondary font-medium">Status</th>
-                  <th scope="col" className="pb-2 text-text-secondary font-medium text-right">Actions</th>
+                <tr className="border-b border-border text-left text-text-secondary">
+                  <th scope="col" className="py-2 px-3 font-medium">Name</th>
+                  <th scope="col" className="py-2 px-3 font-medium">Type</th>
+                  <th scope="col" className="py-2 px-3 font-medium">Host:Port</th>
+                  <th scope="col" className="py-2 px-3 font-medium">Status</th>
+                  <th scope="col" className="py-2 px-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>

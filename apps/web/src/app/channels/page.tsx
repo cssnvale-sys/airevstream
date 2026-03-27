@@ -6,6 +6,7 @@ import { useChannels } from '@/hooks/use-channels';
 import { cn } from '@/lib/utils';
 import { Radio, Hash, Globe, Film } from 'lucide-react';
 import Link from 'next/link';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface ChannelRow {
   id: string;
@@ -106,15 +107,14 @@ export default function ChannelsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
       ) : channels.length === 0 ? (
-        <div className="card flex flex-col items-center justify-center py-12 text-center">
-          <Radio size={32} className="text-text-secondary mb-3" />
-          <h3 className="text-lg font-medium text-text-primary">No channels yet</h3>
-          <p className="text-sm text-text-secondary mt-1">
-            Channels are created from the Accounts page when you add social accounts.
-          </p>
-          <Link href="/accounts" className="btn-primary mt-4">
-            Go to Accounts
-          </Link>
+        <div className="card">
+          <EmptyState
+            icon={Radio}
+            title="No channels yet"
+            description="Channels are created from the Accounts page when you add social accounts."
+            actionLabel="Go to Accounts"
+            actionHref="/accounts"
+          />
         </div>
       ) : (
         <div className="card overflow-x-auto">

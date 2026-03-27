@@ -325,8 +325,8 @@ export function startPostingWorker() {
   const postingQueue = getQueue('posting');
   postingQueue.add('posting:check-scheduled', {} as any, {
     repeat: { every: 60000 },
-    removeOnComplete: true,
-    removeOnFail: 100,
+    removeOnComplete: 10,
+    removeOnFail: 10,
   }).catch((err: unknown) => logger.error({ err }, 'Failed to register posting:check-scheduled repeatable job'));
 
   worker.on('completed', (job) => {

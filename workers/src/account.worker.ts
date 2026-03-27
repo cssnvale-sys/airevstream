@@ -1096,7 +1096,7 @@ export function startSeasoningWorker() {
   queue.add('seasoning:check-due', { _trigger: 'repeatable' } as any, {
     repeat: { every: 15 * 60 * 1000 }, // 15 minutes
     removeOnComplete: 10,
-    removeOnFail: 50,
+    removeOnFail: 10,
   }).catch((err) => logger.error({ err }, 'Failed to register seasoning:check-due repeatable job'));
 
   logger.info('Seasoning worker started');

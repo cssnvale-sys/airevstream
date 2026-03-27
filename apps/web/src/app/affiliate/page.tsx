@@ -217,7 +217,7 @@ function Modal({
       <div className="relative bg-bg-secondary border border-border rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-          <button onClick={onClose} className="btn-ghost p-1">
+          <button onClick={onClose} aria-label="Close" className="btn-ghost p-1">
             <X size={18} />
           </button>
         </div>
@@ -1903,10 +1903,10 @@ function StorefrontsTab({
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 justify-end">
-                          <button onClick={() => startEdit(sf)} className="btn-secondary btn-sm p-1" title="Edit">
+                          <button onClick={() => startEdit(sf)} className="btn-secondary btn-sm p-1" title="Edit" aria-label="Edit storefront">
                             <Edit2 size={14} />
                           </button>
-                          <button onClick={() => setDeleteTarget(sf)} className="btn-secondary btn-sm p-1 text-accent-red" title="Delete">
+                          <button onClick={() => setDeleteTarget(sf)} className="btn-secondary btn-sm p-1 text-accent-red" title="Delete" aria-label="Delete storefront">
                             <Trash2 size={14} />
                           </button>
                         </div>

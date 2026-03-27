@@ -561,6 +561,7 @@ function AiServicesTab() {
                   disabled={deletingServiceId === svc.id}
                   className={cn('text-text-secondary hover:text-accent-red transition-colors p-1', deletingServiceId === svc.id && 'opacity-50 cursor-not-allowed')}
                   title="Remove service"
+                  aria-label="Remove service"
                 >
                   <Trash2 size={14} className={deletingServiceId === svc.id ? 'animate-pulse' : ''} />
                 </button>
@@ -1455,6 +1456,7 @@ function ProxiesTab() {
                           disabled={deletingProxyId === proxy.id}
                           className={cn('text-text-secondary hover:text-accent-red transition-colors p-1.5', deletingProxyId === proxy.id && 'opacity-50 cursor-not-allowed')}
                           title="Delete proxy"
+                          aria-label="Delete proxy"
                         >
                           <Trash2 size={14} className={deletingProxyId === proxy.id ? 'animate-pulse' : ''} />
                         </button>

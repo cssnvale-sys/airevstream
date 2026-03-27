@@ -246,6 +246,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
                     onClick={() => removeVariant(i)}
                     disabled={variants.length <= 2}
                     className="p-1 text-text-secondary hover:text-accent-red disabled:opacity-30"
+                    aria-label="Remove variant"
                   >
                     <Trash2 size={14} />
                   </button>

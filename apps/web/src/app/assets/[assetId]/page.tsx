@@ -159,6 +159,7 @@ function SlotCard({
               disabled={deleting}
               className="btn-secondary text-xs px-2 text-accent-red hover:bg-accent-red/10"
               title="Remove image"
+              aria-label="Remove image"
             >
               <Trash2 size={12} />
             </button>

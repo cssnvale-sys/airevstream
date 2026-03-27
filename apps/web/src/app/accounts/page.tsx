@@ -197,7 +197,7 @@ function AddEmailModal({
       <div className="card w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">{stepTitles[step - 1]}</h2>
-          <button onClick={handleClose} className="text-text-secondary hover:text-text-primary transition-colors">
+          <button onClick={handleClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -423,7 +423,7 @@ function BulkImportModal({
       <div className="card w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-text-primary">Bulk Import Accounts</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors">
+          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -521,6 +521,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
         onClick={(e) => { e.stopPropagation(); handleAction('sync'); }}
         disabled={acting !== null}
         title="Sync"
+        aria-label="Sync account"
         className="p-1 rounded text-text-secondary hover:text-accent-blue hover:bg-bg-primary transition-colors"
       >
         <RefreshCw size={12} className={acting === 'sync' ? 'animate-spin' : ''} />
@@ -529,6 +530,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
         onClick={(e) => { e.stopPropagation(); handleAction('health-check'); }}
         disabled={acting !== null}
         title="Health Check"
+        aria-label="Run health check"
         className="p-1 rounded text-text-secondary hover:text-accent-green hover:bg-bg-primary transition-colors"
       >
         <HeartPulse size={12} />
@@ -538,6 +540,7 @@ function SocialAccountActions({ accountId, socialId }: { accountId: string; soci
           onClick={(e) => { e.stopPropagation(); setWarmPopoverOpen((v) => !v); }}
           disabled={acting !== null}
           title="Warm Up"
+          aria-label="Warm up account"
           className="p-1 rounded text-text-secondary hover:text-accent-amber hover:bg-bg-primary transition-colors"
         >
           <Flame size={12} />
@@ -627,7 +630,7 @@ function DetailPanel({
         <h3 className="font-semibold text-text-primary truncate">
           {isLoading ? 'Loading...' : account?.email ?? 'Account Detail'}
         </h3>
-        <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors">
+        <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">
           <X size={18} />
         </button>
       </div>

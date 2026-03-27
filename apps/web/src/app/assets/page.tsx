@@ -337,6 +337,7 @@ function AvatarCard({
           disabled={deleting}
           className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all p-1 rounded"
           title="Delete character"
+          aria-label="Delete character"
         >
           <Trash2 size={14} />
         </button>
@@ -422,6 +423,7 @@ function SceneryCard({
           disabled={deleting}
           className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all p-1 rounded"
           title="Delete background"
+          aria-label="Delete background"
         >
           <Trash2 size={14} />
         </button>

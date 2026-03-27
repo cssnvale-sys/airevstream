@@ -414,6 +414,7 @@ export default function LibraryPage() {
                 viewMode === 'grid' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
               )}
               title="Grid view"
+              aria-label="Grid view"
             >
               <LayoutGrid size={16} />
             </button>
@@ -424,6 +425,7 @@ export default function LibraryPage() {
                 viewMode === 'list' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
               )}
               title="List view"
+              aria-label="List view"
             >
               <List size={16} />
             </button>

@@ -99,7 +99,7 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
           <p className="text-sm font-medium text-text-primary">Overall Quality</p>
           <p className="text-xs text-text-secondary">{overall >= QUALITY_THRESHOLDS.AUTO_APPROVE ? 'Excellent' : overall >= QUALITY_THRESHOLDS.REVIEW_REQUIRED ? 'Needs review' : overall >= QUALITY_THRESHOLDS.AUTO_REJECT ? 'Low quality' : 'Rejected'}</p>
         </div>
-        <LoadingButton onClick={handleRecalculate} loading={recalculating} loadingText="" className="btn-secondary btn-sm flex items-center gap-1 ml-auto" title="Recalculate">
+        <LoadingButton onClick={handleRecalculate} loading={recalculating} loadingText="" className="btn-secondary btn-sm flex items-center gap-1 ml-auto" title="Recalculate" aria-label="Recalculate quality score">
           <RefreshCw size={14} />
         </LoadingButton>
       </div>

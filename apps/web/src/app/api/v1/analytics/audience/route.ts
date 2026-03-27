@@ -1,5 +1,5 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`analytics-audience:${ip}:${ctx.userId}`, { maxAttempts: 30, windowMs: 60 * 1000 });
+  const rl = checkRateLimit(`analytics-audience:${ip}:${ctx.userId}`, RATE_LIMITS.standardRead);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {

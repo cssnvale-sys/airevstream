@@ -1,5 +1,5 @@
 import { authenticate, success, error, forbidden } from '@/lib/api-server';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   const ip = getClientIp(req);
-  const rl = checkRateLimit(`ai-services-costs:${ip}:${ctx.userId}`, { maxAttempts: 30, windowMs: 60 * 1000 });
+  const rl = checkRateLimit(`ai-services-costs:${ip}:${ctx.userId}`, RATE_LIMITS.standardRead);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {

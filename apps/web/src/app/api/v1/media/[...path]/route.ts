@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, validationError } from '@/lib/api-server';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { getPresignedUrl } from '@airevstream/storage';
 import { BUCKETS, PRESIGNED_URL_TTL_SECONDS } from '@airevstream/shared';
 
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     if (ctx instanceof NextResponse) return ctx;
 
     const ip = getClientIp(req);
-    const rl = checkRateLimit(`media-url:${ip}:${ctx.userId}`, { maxAttempts: 30, windowMs: 60 * 1000 });
+    const rl = checkRateLimit(`media-url:${ip}:${ctx.userId}`, RATE_LIMITS.standardRead);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     const { searchParams } = new URL(req.url);

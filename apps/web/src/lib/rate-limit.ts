@@ -25,7 +25,7 @@ function ensureCleanup() {
     }
     // Evict oldest entries if store grows too large
     if (store.size > MAX_STORE_SIZE) {
-      console.warn(`Rate limiter store has ${store.size} entries — evicting oldest`);
+      // Rate limiter store overflow — evict oldest entries
       const entries = [...store.entries()].sort(
         (a, b) => (a[1].timestamps[0] ?? 0) - (b[1].timestamps[0] ?? 0),
       );
@@ -105,6 +105,8 @@ export const RATE_LIMITS = {
   standardWrite: { maxAttempts: 60, windowMs: 60 * 1000 },
   /** Admin operations: 30 per minute per user */
   adminWrite: { maxAttempts: 30, windowMs: 60 * 1000 },
+  /** Standard read operations (analytics, aggregations): 30 per minute per user */
+  standardRead: { maxAttempts: 30, windowMs: 60 * 1000 },
 } as const;
 
 const IP_PATTERN = /^[\d.:%a-fA-F]{1,45}$/;

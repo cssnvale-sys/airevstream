@@ -25,6 +25,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!rawProduct) return notFound('Affiliate product not found');
 
+    // Verify tenant ownership via channelPools chain
+    const tenantPool = await ctx.db.channelAffiliatePool.findFirst({
+      where: {
+        affiliateProductId: id,
+        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      },
+      select: { channelId: true },
+    });
+    if (!tenantPool) return notFound('Affiliate product not found');
+
     const product = {
       ...rawProduct,
       totalRevenue: Number(rawProduct.totalRevenue),

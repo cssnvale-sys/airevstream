@@ -49,7 +49,7 @@ interface AffiliateProduct {
 type ContentType = 'video_short' | 'video_long' | 'image' | 'text' | 'voice' | 'thumbnail';
 type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook';
 type AffiliateMode = 'dedicated' | 'commercial_break';
-type QualityTier = 'quick' | 'standard' | 'cinema';
+type QualityTier = 'draft' | 'standard' | 'cinema';
 
 interface ShotCard {
   id: number | string;
@@ -140,8 +140,8 @@ const ADV_DIALOGUE_DENSITY_OPTIONS = [
 
 const QUALITY_TIERS: { value: QualityTier; label: string; icon: typeof Zap; features: string[] }[] = [
   {
-    value: 'quick',
-    label: 'Quick',
+    value: 'draft',
+    label: 'Draft',
     icon: Zap,
     features: ['Image only', 'Single pass', 'Auto-approve'],
   },
@@ -197,7 +197,7 @@ export default function CreatePage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
-  const [qualityTier, setQualityTier] = useState<QualityTier>('quick');
+  const [qualityTier, setQualityTier] = useState<QualityTier>('draft');
   const [directives, setDirectives] = useState<ProductionDirectives>({});
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -384,13 +384,13 @@ export default function CreatePage() {
         shots: formData.shots,
         affiliateProductId: formData.affiliateEnabled ? formData.affiliateProductId : undefined,
         affiliateMode: formData.affiliateEnabled ? formData.affiliateMode : undefined,
-        status: qualityTier === 'quick' ? 'scheduled' : 'generating',
+        status: qualityTier === 'draft' ? 'scheduled' : 'generating',
       });
 
       const contentId = contentRes.data?.id;
 
       // Step 2: For standard/cinema tiers, trigger the cinema pipeline
-      if (qualityTier !== 'quick' && contentId) {
+      if (qualityTier !== 'draft' && contentId) {
         const qualityPreset = qualityTier === 'cinema' ? 'cinema' : 'standard';
         await apiPost('/pipeline/cinema', {
           contentId,
@@ -409,13 +409,13 @@ export default function CreatePage() {
       } else if (qualityTier === 'standard') {
         toast.success('Standard pipeline started — content is generating');
         setFormData(INITIAL_FORM);
-        setQualityTier('quick');
+        setQualityTier('draft');
         setCurrentStep(1);
       } else {
-        // Quick tier — existing behavior
+        // Draft tier — existing behavior
         toast.success('Content approved and scheduled!');
         setFormData(INITIAL_FORM);
-        setQualityTier('quick');
+        setQualityTier('draft');
         setCurrentStep(1);
       }
     } catch (err) {

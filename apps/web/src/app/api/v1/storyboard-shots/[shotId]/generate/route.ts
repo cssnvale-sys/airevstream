@@ -59,6 +59,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     // Queue a production job
     const job = await addJob('production', 'production:generate-image', {
+      tenantId: ctx.tenantId,
       shotId,
       workflowType: 'storyboard-frame',
       params: {

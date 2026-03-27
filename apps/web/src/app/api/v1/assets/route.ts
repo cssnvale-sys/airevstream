@@ -9,6 +9,7 @@ import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-s
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
     const { page, limit, skip, sort, order, params } = parseQuery(req);
@@ -18,7 +19,27 @@ export async function GET(req: NextRequest) {
     const shotId = params.get('shotId') ?? undefined;
     const avatarId = params.get('avatarId') ?? undefined;
 
-    const where: Record<string, unknown> = {};
+    // Tenant scoping: get tenant's channel IDs for filtering via content relation
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
+    // Get tenant's content IDs for scoping assets without a direct tenantId
+    const tenantContentIds = (await ctx.db.contentItem.findMany({
+      where: { channelId: { in: tenantChannelIds } },
+      select: { id: true },
+    })).map((c) => c.id);
+
+    const where: Record<string, unknown> = {
+      // Scope to tenant: assets must belong to tenant's content, avatars, or shots
+      OR: [
+        { contentId: { in: tenantContentIds } },
+        { avatar: { tenantId: ctx.tenantId } },
+        { shot: { storyboard: { contentId: { in: tenantContentIds } } } },
+      ],
+    };
 
     if (type) {
       where.type = type;

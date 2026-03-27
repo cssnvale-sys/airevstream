@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   const status = params.get('status') ?? undefined;
   const tier = params.get('tier') ?? undefined;
 
-  const validStatuses = ['active', 'pending', 'warming', 'cooldown', 'suspended', 'banned'];
+  const validStatuses = ['active', 'pending', 'disabled', 'flagged', 'needs_signup'];
   const validTiers = ['tier1', 'tier2', 'tier3'];
 
   try {

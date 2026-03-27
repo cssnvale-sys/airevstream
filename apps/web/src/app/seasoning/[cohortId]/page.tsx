@@ -20,6 +20,7 @@ interface CohortDetail {
   completedAccounts: number;
   failedAccounts: number;
   phaseCounts: Record<string, number>;
+  _count: { enrollments: number };
   createdAt: string;
   startedAt: string | null;
 }
@@ -60,6 +61,8 @@ export default function CohortDetailPage() {
 
   const cohort = cohortRes?.data;
   const enrollments = enrollmentsRes?.data ?? [];
+  // Prefer live _count.enrollments over denormalized totalAccounts
+  const enrollmentCount = cohort?._count?.enrollments ?? cohort?.totalAccounts ?? 0;
 
   const handleEnrollmentAction = async (enrollmentId: string, action: 'pause' | 'resume' | 'retry') => {
     try {
@@ -111,7 +114,7 @@ export default function CohortDetailPage() {
           <div>
             <h1 className="text-h2 text-text-primary">{cohort.name}</h1>
             <p className="text-caption text-text-secondary">
-              {cohort.platforms.join(', ')} — {cohort.totalAccounts} accounts
+              {cohort.platforms.join(', ')} — {enrollmentCount} accounts
             </p>
           </div>
         </div>
@@ -154,7 +157,7 @@ export default function CohortDetailPage() {
       {/* Phase Pipeline */}
       <div className="bg-bg-secondary border border-border rounded-lg p-4">
         <h3 className="text-body text-text-secondary mb-3">Pipeline Progress</h3>
-        <PhasePipeline phaseCounts={cohort.phaseCounts} total={cohort.totalAccounts} />
+        <PhasePipeline phaseCounts={cohort.phaseCounts} total={enrollmentCount} />
       </div>
 
       {/* Filters */}

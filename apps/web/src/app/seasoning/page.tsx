@@ -164,11 +164,11 @@ export default function SeasoningPage() {
                     )}
                   </div>
                   {/* Mini progress bar */}
-                  {cohort.totalAccounts > 0 && (
+                  {cohort._count.enrollments > 0 && (
                     <div className="mt-2 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-500 rounded-full transition-all"
-                        style={{ width: `${(cohort.completedAccounts / cohort.totalAccounts) * 100}%` }}
+                        style={{ width: `${(cohort.completedAccounts / cohort._count.enrollments) * 100}%` }}
                       />
                     </div>
                   )}

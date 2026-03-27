@@ -58,6 +58,9 @@ export async function POST(req: NextRequest) {
     return forbidden('Viewers cannot perform this action');
   }
 
+  // Unconditional tenant guard (D076)
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   const ip = getClientIp(req);
   const rl = checkRateLimit(`cinema-bible:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) {

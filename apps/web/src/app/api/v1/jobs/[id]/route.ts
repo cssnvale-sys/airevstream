@@ -29,6 +29,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         completedAt: true,
         channelId: true,
         emailAccountId: true,
+        contentId: true,
       },
     });
 
@@ -37,25 +38,31 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // Tenant scoping: verify the job belongs to the requesting tenant
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    if (job.channelId || job.emailAccountId) {
-      let belongsToTenant = false;
+    // Verify job belongs to tenant via channelId, emailAccountId, or contentId
+    let belongsToTenant = false;
 
-      if (job.channelId) {
-        const ch = await ctx.db.channel.findFirst({
-          where: { id: job.channelId, socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
-          select: { id: true },
-        });
-        belongsToTenant = !!ch;
-      } else if (job.emailAccountId) {
-        const ea = await ctx.db.emailAccount.findFirst({
-          where: { id: job.emailAccountId, tenantId: ctx.tenantId },
-          select: { id: true },
-        });
-        belongsToTenant = !!ea;
-      }
-
-      if (!belongsToTenant) return notFound('Job not found');
+    if (job.channelId) {
+      const ch = await ctx.db.channel.findFirst({
+        where: { id: job.channelId, socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        select: { id: true },
+      });
+      belongsToTenant = !!ch;
+    } else if (job.emailAccountId) {
+      const ea = await ctx.db.emailAccount.findFirst({
+        where: { id: job.emailAccountId, tenantId: ctx.tenantId },
+        select: { id: true },
+      });
+      belongsToTenant = !!ea;
+    } else if (job.contentId) {
+      const ci = await ctx.db.contentItem.findFirst({
+        where: { id: job.contentId, channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } },
+        select: { id: true },
+      });
+      belongsToTenant = !!ci;
     }
+
+    // If no FK link to tenant, deny access — jobs must be traceable to a tenant
+    if (!belongsToTenant) return notFound('Job not found');
 
     return success({
       id: job.id,

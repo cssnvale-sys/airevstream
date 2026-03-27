@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 /**
  * GET /api/v1/users
@@ -12,6 +13,10 @@ export async function GET(req: NextRequest) {
   if (ctx.role !== 'admin') {
     return error('FORBIDDEN', 'Admin access required', 403);
   }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`users:GET:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const { page, limit, skip, sort, order, search, params } = parseQuery(req);

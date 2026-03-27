@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 const FallbackChainSchema = z.object({
@@ -18,6 +18,10 @@ export async function GET(req: NextRequest) {
     if (ctx.role !== 'admin') {
       return error('FORBIDDEN', 'Admin access required', 403);
     }
+
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`fallback-chain:GET:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     // Read fallback ordering from SystemSetting
     const setting = await ctx.db.systemSetting.findUnique({
@@ -63,13 +67,8 @@ export async function PUT(req: NextRequest) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
-    if (ctx.role === 'viewer') {
-      return forbidden('Viewers cannot modify fallback chain');
-    }
-
-    if (ctx.role !== 'admin') {
-      return error('FORBIDDEN', 'Admin access required', 403);
-    }
+    const adminCheck = requireAdmin(ctx);
+    if (adminCheck) return adminCheck;
 
     const ip = getClientIp(req);
     const rl = checkRateLimit(`fallback-chain:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);

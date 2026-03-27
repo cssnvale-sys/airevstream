@@ -17,6 +17,10 @@ export async function GET(req: NextRequest) {
     const ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`settings-apikeys:GET:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
     if (!ctx.tenantId) {
       return error('BAD_REQUEST', 'User must belong to a tenant to manage API keys', 400);
     }

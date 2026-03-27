@@ -355,9 +355,7 @@ async function getAlertsContext(ctx: ApiContext) {
  */
 async function getContentQueueStats(ctx: ApiContext) {
   // tenantId is guaranteed non-null by the route handler guard
-  const tenantChannelFilter = ctx.tenantId
-    ? { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } }
-    : {};
+  const tenantChannelFilter = { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId! } } } };
 
   const statusCounts = await ctx.db.contentItem.groupBy({
     by: ['status'],
@@ -383,9 +381,7 @@ async function getContentQueueStats(ctx: ApiContext) {
  * Find knowledge base entries relevant to the user's question.
  * Uses simple keyword matching on title and content fields.
  * Returns top 3 results sorted by relevance score.
- *
- * Note: KnowledgeBaseEntry does not have tenantId (KI-020). Entries are
- * shared across all tenants until the schema is migrated.
+ * Scoped to the current tenant's knowledge base entries.
  */
 async function getRelevantKnowledge(
   ctx: ApiContext,
@@ -419,6 +415,7 @@ async function getRelevantKnowledge(
 
   const entries = await ctx.db.knowledgeBaseEntry.findMany({
     where: {
+      tenantId: ctx.tenantId!,
       isCurrent: true,
       OR: orConditions,
     },

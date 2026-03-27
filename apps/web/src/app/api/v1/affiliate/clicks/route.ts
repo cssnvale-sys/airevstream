@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     const tenantChannelIds = tenantChannels.map((c) => c.id);
 
     const where: Record<string, unknown> = {
-      channelId: channelId && tenantChannelIds.includes(channelId)
-        ? channelId
+      channelId: channelId
+        ? (tenantChannelIds.includes(channelId) ? channelId : '__none__')
         : { in: tenantChannelIds },
     };
     if (productId) where.productId = productId;

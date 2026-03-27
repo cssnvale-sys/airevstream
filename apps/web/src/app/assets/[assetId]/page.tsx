@@ -8,6 +8,7 @@ import { usePresignedUrl } from '@/hooks/use-presigned-url';
 import { FileUpload } from '@/components/ui/file-upload';
 import { apiPost, apiPut, apiDelete } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { BUCKETS } from '@airevstream/shared';
 import { toast } from '@/lib/toast';
 import type { UploadResult } from '@/hooks/use-upload';
@@ -74,6 +75,7 @@ function SlotCard({
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteSlotOpen, setDeleteSlotOpen] = useState(false);
 
   async function handleUploadComplete(result: UploadResult) {
     try {
@@ -109,8 +111,7 @@ function SlotCard({
     }
   }
 
-  async function handleDelete() {
-    if (!confirm(`Remove the ${SLOT_LABELS[slot]} image?`)) return;
+  async function handleDeleteSlot() {
     setDeleting(true);
     try {
       await apiDelete(`/avatars/${avatarId}/images?slot=${slot}`);
@@ -121,6 +122,7 @@ function SlotCard({
       toast.error('Failed to remove image');
     } finally {
       setDeleting(false);
+      setDeleteSlotOpen(false);
     }
   }
 
@@ -152,7 +154,7 @@ function SlotCard({
               Regenerate
             </button>
             <button
-              onClick={handleDelete}
+              onClick={() => setDeleteSlotOpen(true)}
               disabled={deleting}
               className="btn-secondary text-xs px-2 text-accent-red hover:bg-accent-red/10"
               title="Remove image"
@@ -215,6 +217,17 @@ function SlotCard({
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteSlotOpen}
+        title="Remove Image"
+        message={`Remove the ${SLOT_LABELS[slot]} image? This cannot be undone.`}
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={handleDeleteSlot}
+        onCancel={() => setDeleteSlotOpen(false)}
+        loading={deleting}
+      />
     </div>
   );
 }
@@ -235,6 +248,7 @@ export default function AssetDetailPage() {
   const [saving, setSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteAvatarOpen, setDeleteAvatarOpen] = useState(false);
 
   // Initialize form fields when avatar data loads
   if (avatar && !initialized) {
@@ -314,7 +328,6 @@ export default function AssetDetailPage() {
 
   async function handleDeleteAvatar() {
     if (!avatar) return;
-    if (!confirm('Delete this character permanently? All images will be removed.')) return;
     setDeleting(true);
     try {
       await apiDelete(`/avatars/${avatar.id}`);
@@ -324,6 +337,7 @@ export default function AssetDetailPage() {
       console.error('Failed to delete avatar:', err);
       toast.error('Failed to delete character');
       setDeleting(false);
+      setDeleteAvatarOpen(false);
     }
   }
 
@@ -380,7 +394,7 @@ export default function AssetDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleDeleteAvatar}
+              onClick={() => setDeleteAvatarOpen(true)}
               disabled={deleting}
               className="btn-secondary text-sm text-accent-red hover:bg-accent-red/10 inline-flex items-center gap-1"
             >
@@ -581,6 +595,17 @@ export default function AssetDetailPage() {
           </section>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteAvatarOpen}
+        title="Delete Character"
+        message="Delete this character permanently? All images will be removed. This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDeleteAvatar}
+        onCancel={() => setDeleteAvatarOpen(false)}
+        loading={deleting}
+      />
     </AppLayout>
   );
 }

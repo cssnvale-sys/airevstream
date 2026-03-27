@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, parseQuery } from '@/lib/api-server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`activity:GET:${ip}:${ctx.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const { limit } = parseQuery(req);
@@ -28,8 +33,9 @@ export async function GET(req: NextRequest) {
         take: limit,
         select: { id: true, status: true, platform: true, scheduledAt: true, updatedAt: true, channel: { select: { name: true } } },
       }),
-      // Alerts are system-level (no tenant chain in schema)
+      // Alerts have optional tenantId — show tenant's alerts + global (null) alerts
       ctx.db.alert.findMany({
+        where: { OR: [{ tenantId: ctx.tenantId }, { tenantId: null }] },
         orderBy: { createdAt: 'desc' },
         take: Math.min(limit, 5),
         select: { id: true, title: true, severity: true, category: true, createdAt: true },

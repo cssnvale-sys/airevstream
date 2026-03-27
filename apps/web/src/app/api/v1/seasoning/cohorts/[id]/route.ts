@@ -102,6 +102,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const { id } = params;
   if (!isUUID(id)) return notFound('Cohort not found');
 
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`seasoning-cohort-delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
+
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {

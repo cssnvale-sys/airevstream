@@ -30,6 +30,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`tenants:GET:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   // Non-admins can only view their own tenant
   if (ctx.role !== 'admin' && ctx.tenantId !== id) {
     return error('FORBIDDEN', 'You do not have access to this tenant', 403);

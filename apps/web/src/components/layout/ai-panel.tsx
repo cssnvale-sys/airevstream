@@ -44,9 +44,9 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
       if (data.success) {
         setConversationId(data.data.conversationId);
         const aiMsg: Message = {
-          id: crypto.randomUUID(),
+          id: data.data.assistantMessage?.id ?? crypto.randomUUID(),
           role: 'assistant',
-          content: data.data.response,
+          content: data.data.assistantMessage?.content ?? 'No response received.',
         };
         setMessages((prev) => [...prev, aiMsg]);
       } else {

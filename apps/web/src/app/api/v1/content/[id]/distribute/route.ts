@@ -41,6 +41,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         id,
         channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
       },
+      select: { id: true, status: true },
     });
 
     if (!content) return notFound('Content item not found');

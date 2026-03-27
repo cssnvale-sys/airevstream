@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
 
     const { ids, action } = parsed.data;
 
+    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
     // Verify all content items exist and belong to tenant
     const tenantChannels = await ctx.db.channel.findMany({
       where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },

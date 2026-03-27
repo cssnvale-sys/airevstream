@@ -29,11 +29,10 @@ import {
   Menu,
   X,
 } from 'lucide-react';
-import { removeToken } from '@/lib/auth';
+import { removeToken, getToken } from '@/lib/auth';
 import { useState, useEffect, useCallback } from 'react';
 import { KeyboardShortcutsModal } from '@/components/ui/keyboard-shortcuts';
 import useSWR from 'swr';
-import { getToken } from '@/lib/auth';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },

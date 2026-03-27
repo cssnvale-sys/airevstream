@@ -113,7 +113,12 @@ export async function POST(req: NextRequest) {
       return error('QUEUE_ERROR', 'Failed to start content generation', 500);
     }
 
-    return success(contentItem, { queued: true });
+    return success({
+      ...contentItem,
+      qualityScore: contentItem.qualityScore != null ? Number(contentItem.qualityScore) : null,
+      durationSec: contentItem.durationSec != null ? Number(contentItem.durationSec) : null,
+      approvalGateWindowHrs: contentItem.approvalGateWindowHrs != null ? Number(contentItem.approvalGateWindowHrs) : null,
+    }, { queued: true });
   } catch (err) {
     console.error('POST /api/v1/content/generate error:', err);
     return error('INTERNAL_ERROR', 'An unexpected error occurred', 500);

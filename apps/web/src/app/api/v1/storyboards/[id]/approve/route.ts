@@ -57,6 +57,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
       // Queue audio mix
       await productionQueue.add('production:mix-audio', {
+        tenantId: ctx.tenantId,
         contentId: storyboard.content.id,
         storyboardId: id,
         channelId: storyboard.content.channelId,
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
       // Queue video render
       await productionQueue.add('production:render-video', {
+        tenantId: ctx.tenantId,
         contentId: storyboard.content.id,
         storyboardId: id,
         channelId: storyboard.content.channelId,
@@ -73,6 +75,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       // Queue final review
       const contentQueue = getQueue('content');
       await contentQueue.add('content:final-review', {
+        tenantId: ctx.tenantId,
         contentId: storyboard.content.id,
         storyboardId: id,
         autoApprove: false,

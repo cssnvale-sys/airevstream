@@ -85,10 +85,17 @@ export async function GET(req: NextRequest) {
       where: { socialAccount: { emailAccount: { tenantId: user.tenantId } } },
     });
 
-    // Count AI service usage (API calls) in the period
+    // Count AI service usage (API calls) in the period, scoped to tenant channels
+    const tenantChannels = await ctx.db.channel.findMany({
+      where: { socialAccount: { emailAccount: { tenantId: user.tenantId } } },
+      select: { id: true },
+    });
+    const tenantChannelIds = tenantChannels.map((c) => c.id);
+
     const aiUsageCount = await ctx.db.aiServiceUsage.count({
       where: {
         createdAt: { gte: start, lte: end },
+        channelId: { in: tenantChannelIds },
       },
     });
 

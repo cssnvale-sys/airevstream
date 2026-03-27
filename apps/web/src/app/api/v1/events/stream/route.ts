@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateSSE, error } from '@/lib/api-server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import type { ApiContext } from '@/lib/api-server';
 import type { SystemEvent, AlertSeverity, WorkflowStatus, ContentStatus } from '@/lib/event-types';
 
@@ -167,6 +168,11 @@ export async function GET(req: NextRequest) {
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
+  // Rate limit SSE connections: max 10 connections per minute per user
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`events:SSE:${ip}:${ctx.userId}`, { maxAttempts: 10, windowMs: 60 * 1000 });
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many SSE connections. Please try again later.', 429);
+
   // Pre-fetch tenant channel IDs for scoping pollers
   const tenantChannels = await ctx.db.channel.findMany({
     where: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
@@ -193,7 +199,6 @@ export async function GET(req: NextRequest) {
           controller.enqueue(sseComment('ping'));
         } catch {
           // Stream closed by client — clean up heartbeat
-          console.debug('SSE heartbeat: stream closed, stopping heartbeat');
           clearInterval(heartbeatInterval);
         }
       }, 30_000);

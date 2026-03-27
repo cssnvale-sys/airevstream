@@ -90,8 +90,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
     const { avatarId, isPrimary, role } = parsed.data;
 
-    // Verify avatar exists
-    const avatar = await ctx.db.avatar.findUnique({ where: { id: avatarId } });
+    // Verify avatar exists and belongs to tenant
+    const avatar = await ctx.db.avatar.findFirst({
+      where: { id: avatarId, tenantId: ctx.tenantId },
+    });
     if (!avatar) return notFound('Avatar not found');
 
     // Check if already assigned

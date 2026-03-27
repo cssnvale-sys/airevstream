@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { generateC2PAManifest } from '@airevstream/shared';
 import type { ProvenanceRecord } from '@airevstream/shared';
 
@@ -12,13 +13,17 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  if (!ctx.tenantId) return forbidden('No tenant context');
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`content/provenance:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   const { searchParams } = new URL(req.url);
   const parsed = ProvenanceQuerySchema.safeParse({ contentId: searchParams.get('contentId') });
   if (!parsed.success) {
     return validationError('contentId is required');
   }
-
-  if (!ctx.tenantId) return forbidden('No tenant context');
 
   try {
     const { contentId } = parsed.data;

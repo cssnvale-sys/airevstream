@@ -132,7 +132,7 @@ const executors: Record<string, ActionExecutor> = {
     const category = params.category as string | undefined;
     const limit = Math.min(Number(params.limit ?? 10), 50);
 
-    const where: Record<string, unknown> = { isCurrent: true };
+    const where: Record<string, unknown> = { isCurrent: true, tenantId: ctx.tenantId };
     if (domain) where.domain = domain;
     if (category) where.category = category;
 
@@ -356,6 +356,18 @@ const executors: Record<string, ActionExecutor> = {
     const channelId = params.channelId as string | undefined;
     const priority = Number(params.priority ?? 5);
     const jobParams = (params.params as Record<string, unknown>) ?? {};
+
+    // Verify channel belongs to tenant if provided
+    if (channelId) {
+      const channel = await ctx.db.channel.findFirst({
+        where: {
+          id: channelId,
+          socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+        },
+        select: { id: true },
+      });
+      if (!channel) throw new Error('Channel not found');
+    }
 
     const job = await ctx.db.workflowJob.create({
       data: {

@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useAccounts, useAccount, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
+import { useAccounts, useAccount, apiPost } from '@/hooks/use-api';
 import { exportToCSV } from '@/lib/export';
 import { cn, formatRelativeTime, statusColor, platformIcon } from '@/lib/utils';
 import {
@@ -28,7 +28,7 @@ interface SocialAccount {
   platform: string;
   username: string | null;
   status: string;
-  healthScore: number;
+  healthScore: number | null;
 }
 
 interface EmailAccount {
@@ -76,7 +76,9 @@ function tierLabel(tier: string): string {
 
 function accountHealthAvg(socials: SocialAccount[] | undefined): number | null {
   if (!socials || socials.length === 0) return null;
-  return Math.round(socials.reduce((sum, s) => sum + s.healthScore, 0) / socials.length);
+  const withScore = socials.filter((s) => s.healthScore != null);
+  if (withScore.length === 0) return null;
+  return Math.round(withScore.reduce((sum, s) => sum + (s.healthScore ?? 0), 0) / withScore.length);
 }
 
 // ---------------------------------------------------------------------------
@@ -671,8 +673,8 @@ function DetailPanel({
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={cn('text-xs font-medium', healthColor(sa.healthScore))}>
-                            {sa.healthScore}%
+                          <span className={cn('text-xs font-medium', healthColor(sa.healthScore ?? 0))}>
+                            {sa.healthScore != null ? `${sa.healthScore}%` : '--'}
                           </span>
                           <span className={cn('text-xs px-1.5 py-0.5 rounded', statusColor(sa.status))}>
                             {sa.status}

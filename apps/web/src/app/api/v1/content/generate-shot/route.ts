@@ -49,6 +49,16 @@ export async function POST(req: NextRequest) {
       if (!channel) return notFound('Channel not found');
     }
 
+    // Verify the shot exists and belongs to this tenant
+    const shot = await ctx.db.storyboardShot.findFirst({
+      where: {
+        id: shotId,
+        storyboard: { content: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } } },
+      },
+      select: { id: true },
+    });
+    if (!shot) return notFound('Shot not found');
+
     // Queue a ComfyUI image generation job via BullMQ
     const job = await addJob('production', 'production:generate-image', {
       shotId,

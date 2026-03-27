@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useSeriesDetail, useSeriesAnalytics } from '@/hooks/use-series';
+import { useSeriesDetail } from '@/hooks/use-series';
 import { cn } from '@/lib/utils';
-import { Layers, ArrowLeft, Settings } from 'lucide-react';
+import { Layers, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { EpisodeTable } from '@/components/series/episode-table';
 import { SeriesAvatarManager } from '@/components/series/series-avatar-manager';
 import { SeriesAnalytics } from '@/components/series/series-analytics';
 import { apiPut } from '@/hooks/use-api';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface SeriesDetail {
   id: string;
@@ -52,8 +52,6 @@ export default function SeriesDetailPage() {
   const { seriesId } = useParams<{ seriesId: string }>();
   const { data: rawData, isLoading, mutate } = useSeriesDetail<SeriesDetail>(seriesId);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const [editing, setEditing] = useState(false);
-
   const series = rawData?.data;
 
   const handleStatusChange = async (newStatus: string) => {

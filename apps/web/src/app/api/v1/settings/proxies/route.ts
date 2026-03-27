@@ -35,6 +35,10 @@ export async function GET(req: NextRequest) {
     const adminCheck = requireAdmin(ctx);
     if (adminCheck) return adminCheck;
 
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`settings-proxies:GET:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
     const row = await ctx.db.systemSetting.findUnique({ where: { key: SETTING_KEY } });
     const proxies: ProxyEntry[] = row ? (row.value as unknown as ProxyEntry[]) : [];
 

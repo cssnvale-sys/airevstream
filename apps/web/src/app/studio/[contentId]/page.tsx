@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useApi, apiPut, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
@@ -168,20 +168,34 @@ export default function StudioPage() {
     }
   }, [storyboard, mutate]);
 
+  // Derive a stable key for the selected shot's spec to avoid re-triggering
+  // the guidance effect when SWR creates new object references on refetch.
+  // JSON.stringify provides a content-based comparison.
+  const selectedShotSpec = useMemo(() => {
+    const shot = shots.find(s => s.id === selectedShotId);
+    return shot?.shotspec ?? null;
+  }, [selectedShotId, shots]);
+  const selectedShotSpecKey = useMemo(
+    () => selectedShotSpec ? JSON.stringify(selectedShotSpec) : null,
+    [selectedShotSpec],
+  );
+
   // Fetch AI guidance when selected shot changes (debounced)
   useEffect(() => {
     if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current);
 
-    const selectedShot = shots.find(s => s.id === selectedShotId);
-    if (!selectedShot?.shotspec) {
+    if (!selectedShotSpec) {
       setSuggestions([]);
       return;
     }
 
+    // Capture the spec at the time the effect runs
+    const specSnapshot = selectedShotSpec;
+
     guidanceTimerRef.current = setTimeout(async () => {
       try {
         const res = await apiPost<{ success: boolean; data: { suggestions: GuidanceSuggestion[] } }>('/ai/guidance', {
-          shotSpec: selectedShot.shotspec,
+          shotSpec: specSnapshot,
         });
         setSuggestions(res?.data?.suggestions ?? []);
       } catch (err) {
@@ -193,7 +207,8 @@ export default function StudioPage() {
     return () => {
       if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current);
     };
-  }, [selectedShotId, shots]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedShotSpecKey]);
 
   if (isLoading) {
     return (

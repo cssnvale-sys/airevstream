@@ -22,6 +22,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`approvals/[id]/[action]:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
+  if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
   const { id, action } = await params;
   if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
   if (!['approve', 'reject'].includes(action)) {

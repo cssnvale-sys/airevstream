@@ -1,5 +1,6 @@
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 
 /**
  * GET /api/v1/workflows
@@ -10,6 +11,10 @@ export async function GET(req: NextRequest) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`workflows:GET:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const { page, limit, skip, sort, order, params } = parseQuery(req);

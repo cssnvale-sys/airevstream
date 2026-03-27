@@ -35,6 +35,21 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       return validationError('episodeIds array is required');
     }
 
+    // Validate all entries are UUIDs
+    for (const eid of episodeIds) {
+      if (typeof eid !== 'string' || !isUUID(eid)) {
+        return validationError('All episodeIds must be valid UUIDs');
+      }
+    }
+
+    // Verify all episodes belong to this series
+    const episodeCount = await ctx.db.episode.count({
+      where: { id: { in: episodeIds }, seriesId: id },
+    });
+    if (episodeCount !== episodeIds.length) {
+      return validationError('One or more episodeIds do not belong to this series');
+    }
+
     // Batch update positions
     await ctx.db.$transaction(
       episodeIds.map((episodeId: string, index: number) =>

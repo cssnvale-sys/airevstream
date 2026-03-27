@@ -21,6 +21,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`users:GET:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 

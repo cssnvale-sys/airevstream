@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     const { shots, qualityTier, provider } = body as {
       shots?: Array<{ duration?: number; outputType?: string; generation?: { width?: number; height?: number } }>;
-      qualityTier?: 'quick' | 'standard' | 'cinema';
+      qualityTier?: 'draft' | 'standard' | 'cinema';
       provider?: string;
     };
 

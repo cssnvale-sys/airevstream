@@ -47,7 +47,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
       include: {
         storyboard: {
-          select: { id: true, contentId: true },
+          include: {
+            content: { select: { id: true, channelId: true } },
+          },
         },
       },
     });
@@ -81,10 +83,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         const { getQueue } = await import('@airevstream/queue');
         const productionQueue = getQueue('production');
         await productionQueue.add('production:generate-shots', {
-          contentId: shot.storyboard.contentId,
+          tenantId: ctx.tenantId,
+          contentId: shot.storyboard.content.id,
           storyboardId: shot.storyboard.id,
           shotIds: [shotId],
-          channelId: '',
+          channelId: shot.storyboard.content.channelId,
         } as any);
       } catch (queueErr) {
         console.error('Failed to queue shot regeneration:', queueErr);

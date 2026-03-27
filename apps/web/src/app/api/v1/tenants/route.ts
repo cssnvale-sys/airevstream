@@ -28,6 +28,10 @@ export async function GET(req: NextRequest) {
     return error('FORBIDDEN', 'Admin access required', 403);
   }
 
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`tenants:GET:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
   try {
     const { page, limit, skip, sort, order, search } = parseQuery(req);
 

@@ -19,6 +19,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!ctx.tenantId) return forbidden('No tenant context');
 
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(`content/variants:get:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
+    if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 

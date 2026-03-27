@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
 
     if (toCreate.length > 0) {
       await ctx.db.emailAccount.createMany({
-        data: toCreate.map((r) => ({ ...r, tenantId: ctx.tenantId })),
+        data: toCreate.map((r) => ({ ...r, tenantId: ctx.tenantId! })),
       });
     }
 

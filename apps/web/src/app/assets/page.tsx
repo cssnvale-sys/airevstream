@@ -528,10 +528,12 @@ export default function AssetsPage() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex items-center gap-1 border-b border-border mb-4">
+      <div role="tablist" className="flex items-center gap-1 border-b border-border mb-4">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
+            role="tab"
+            aria-selected={activeTab === key}
             onClick={() => setActiveTab(key)}
             className={cn(
               'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors inline-flex items-center gap-2',

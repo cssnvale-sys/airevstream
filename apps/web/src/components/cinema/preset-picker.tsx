@@ -138,10 +138,12 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border overflow-x-auto">
+        <div role="tablist" className="flex border-b border-border overflow-x-auto">
           {tabs.map(({ value, label }) => (
             <button
               key={value}
+              role="tab"
+              aria-selected={activeTab === value}
               onClick={() => setActiveTab(value)}
               className={cn(
                 'px-3 py-1.5 text-xs whitespace-nowrap transition-colors',

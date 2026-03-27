@@ -129,8 +129,10 @@ export default function WorkflowsPage() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex gap-2 mb-4">
+        <div role="tablist" className="flex gap-2 mb-4">
           <button
+            role="tab"
+            aria-selected={activeTab === 'jobs'}
             onClick={() => setActiveTab('jobs')}
             className={cn(
               'px-4 py-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
@@ -140,6 +142,8 @@ export default function WorkflowsPage() {
             All Jobs
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'hitl'}
             onClick={() => setActiveTab('hitl')}
             className={cn(
               'px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',

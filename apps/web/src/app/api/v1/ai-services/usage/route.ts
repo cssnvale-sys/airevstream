@@ -1,4 +1,5 @@
 import { authenticate, success, error, forbidden } from '@/lib/api-server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,10 @@ export async function GET(req: NextRequest) {
   if (ctx.role !== 'admin') {
     return forbidden('Only admins can view usage analytics');
   }
+
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`ai-services-usage:${ip}:${ctx.userId}`, { maxAttempts: 30, windowMs: 60 * 1000 });
+  if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
     const url = new URL(req.url);

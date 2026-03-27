@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { setToken } from '@/lib/auth';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -121,9 +122,9 @@ export default function RegisterPage() {
             )}
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
+          <LoadingButton type="submit" loading={loading} loadingText="Creating account..." className="btn-primary w-full">
+            Create Account
+          </LoadingButton>
 
           <p className="text-center text-body text-text-secondary">
             Already have an account?{' '}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -80,9 +81,9 @@ export default function ForgotPasswordPage() {
               />
             </div>
 
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </button>
+            <LoadingButton type="submit" loading={loading} loadingText="Sending..." className="btn-primary w-full">
+              Send Reset Link
+            </LoadingButton>
 
             <p className="text-center text-body text-text-secondary">
               Remember your password?{' '}

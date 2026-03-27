@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { setToken } from '@/lib/auth';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -100,9 +101,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+          <LoadingButton type="submit" loading={loading} loadingText="Signing in..." className="btn-primary w-full">
+            Sign In
+          </LoadingButton>
 
           <div className="flex items-center justify-between text-body text-text-secondary">
             <Link href="/auth/forgot-password" className="text-accent-blue hover:underline">

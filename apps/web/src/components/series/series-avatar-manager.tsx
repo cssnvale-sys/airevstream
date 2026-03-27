@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Plus, Trash2, Star, UserCircle } from 'lucide-react';
 import { apiPost, apiDelete, useApi } from '@/hooks/use-api';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface SeriesAvatarEntry {
   seriesId: string;
@@ -31,6 +32,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
   const [selectedAvatarId, setSelectedAvatarId] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<string | null>(null);
 
   const { data: allAvatarsData } = useApi<AvatarOption[]>(adding ? '/avatars?limit=100' : null);
   const allAvatars = allAvatarsData?.data ?? [];
@@ -58,15 +60,17 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
     }
   };
 
-  const handleRemove = async (avatarId: string) => {
-    if (!confirm('Remove this avatar from the series?')) return;
+  const handleRemove = async () => {
+    if (!removeTarget) return;
     try {
-      await apiDelete(`/series/${seriesId}/avatars?avatarId=${avatarId}`);
+      await apiDelete(`/series/${seriesId}/avatars?avatarId=${removeTarget}`);
       toast.success('Avatar removed');
       onUpdate();
     } catch (err) {
       console.error('Failed to remove avatar:', err);
       toast.error('Failed to remove avatar');
+    } finally {
+      setRemoveTarget(null);
     }
   };
 
@@ -102,7 +106,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
                 )}
               </div>
               <button
-                onClick={() => handleRemove(a.avatarId)}
+                onClick={() => setRemoveTarget(a.avatarId)}
                 className="text-text-secondary hover:text-accent-red transition-colors shrink-0"
                 title="Remove"
               >
@@ -112,6 +116,16 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        onCancel={() => setRemoveTarget(null)}
+        onConfirm={handleRemove}
+        title="Remove Avatar"
+        message="Remove this avatar from the series? This does not delete the avatar itself."
+        variant="danger"
+        confirmLabel="Remove"
+      />
 
       {/* Add avatar inline form */}
       {adding && (

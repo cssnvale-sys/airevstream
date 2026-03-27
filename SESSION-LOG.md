@@ -208,7 +208,19 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 80**: More progress bars — Added role="progressbar" to quality-breakdown score bars, create wizard, simple-create wizard, and seasoning cohort completion bars.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~94 total. All progress bars have ARIA roles, all tables labeled, all modals keyboard-navigable, all delete operations have loading feedback.
+**Iteration 82**: Title tooltips — Added title attributes to 14 truncated text elements across 12 files (shot dialogue, avatar/scenery names, enrollment emails, channel assets, experiments hypothesis, affiliate URL, accounts email, dashboard alerts, system errors).
+
+**Iteration 83**: setTimeout cleanup — Fixed uncleaned setTimeout in useEffect across 6 modal components (create-series, create-experiment, asset-picker, create-preset, create-avatar, command-palette). Captured timer and added clearTimeout to cleanup.
+
+**Iteration 84**: BullMQ stalledInterval — Configured stalledInterval (default 120s) and maxStalledCount (default 3) in createWorker factory. Production/lifecycle/account workers set to 300s to prevent false stalls on long-running jobs.
+
+**Iteration 85**: Worker progress reporting — Added job.updateProgress() to 6 long-running worker handlers: production (generate-image, render-video, generate-shots, qc-gate), lifecycle (signup, set-profile), account (warm, seasoning:warm). 18+ progress checkpoints total.
+
+**Iteration 86**: Button type + Link — Added type="button" to 3 pagination buttons and niche-tag-input remove button. Converted simple-create-wizard "Open in Studio" button to Link component, removed unused useRouter import.
+
+**Iteration 87**: htmlFor label associations — Added htmlFor/id pairs to 18 form inputs across 4 components (create-series 5, add-episode 3, create-experiment 5, simple-create-wizard 5).
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~100 total.
 
 ---
 

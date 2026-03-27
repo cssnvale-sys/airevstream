@@ -76,6 +76,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Low-contrast fix** (Session 47): 10 same-element text-text-tertiary + bg-bg-tertiary combos upgraded to text-text-secondary for better readability.
 - **ARIA accessibility** (Session 47): Mobile nav drawer role="dialog" + aria-modal, pagination aria-current="page", notification badge aria-live="polite".
 - **Disabled cursor** (Session 47): disabled:cursor-not-allowed added to 5 custom-styled disabled buttons.
+- **Title tooltips** (Session 47): 14 more truncated text elements given title attributes across 12 files (shot dialogue, avatar/scenery names, enrollment emails, channel assets, experiments, affiliate, accounts, dashboard, system).
+- **setTimeout cleanup** (Session 47): Fixed memory leaks in 6 modal components — uncleaned setTimeout in useEffect now captured and cleared on unmount.
+- **BullMQ stall prevention** (Session 47): stalledInterval/maxStalledCount added to createWorker factory (120s default). Production/lifecycle/account workers set to 300s for long-running jobs.
+- **Worker progress reporting** (Session 47): job.updateProgress() added to 6 long-running handlers (18+ checkpoints): generate-image, render-video, generate-shots, qc-gate, lifecycle:signup, lifecycle:set-profile, warm, seasoning:warm.
+- **Pagination type="button"** (Session 47): 3 pagination buttons + niche-tag-input remove button given explicit type="button".
+- **Navigation Link conversion** (Session 47): Simple-create-wizard "Open in Studio" button converted to Next.js Link for proper accessibility and prefetching.
+- **htmlFor label associations** (Session 47): 18 form inputs linked to labels via htmlFor/id across create-series, add-episode, create-experiment, and simple-create-wizard.
 - **Number input constraints** (Session 47): Budget limit input min/step attributes for numeric validation.
 - **Transition polish** (Session 47): transition-colors added to 5 close/zoom/select buttons for smooth hover states.
 - **Sonner import migration** (Session 47): 3 components migrated from direct 'sonner' to '@/lib/toast' wrapper. Toast wrapper extended with optional ExternalToast options.

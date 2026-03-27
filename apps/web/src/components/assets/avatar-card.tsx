@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { User, Users, Layers } from 'lucide-react';
 import { usePresignedUrl } from '@/hooks/use-presigned-url';
-import { BUCKETS } from '@airevstream/shared';
 import { cn } from '@/lib/utils';
 
 interface AvatarCardProps {

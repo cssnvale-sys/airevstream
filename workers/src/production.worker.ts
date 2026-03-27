@@ -1187,13 +1187,13 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
           const hasDrift = shotInput.identityDrift?.detected ?? false;
           let verdict: QCVerdict;
 
-          if (score >= 85 && !hasDrift) {
+          if (score >= QUALITY_THRESHOLDS.AUTO_APPROVE && !hasDrift) {
             verdict = 'approve';
-          } else if (score >= 60 && !hasDrift) {
+          } else if (score >= QUALITY_THRESHOLDS.REVIEW_REQUIRED && !hasDrift) {
             verdict = 'soft-fix';
-          } else if (score >= 60 && hasDrift) {
+          } else if (score >= QUALITY_THRESHOLDS.REVIEW_REQUIRED && hasDrift) {
             verdict = 'regenerate';
-          } else if (score < 60) {
+          } else if (score < QUALITY_THRESHOLDS.REVIEW_REQUIRED) {
             verdict = 'regenerate';
           } else {
             verdict = 'escalate';

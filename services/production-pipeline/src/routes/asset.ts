@@ -1,7 +1,7 @@
 import { type FastifyInstance, type FastifyRequest, type FastifyReply } from 'fastify';
 import { getDb } from '@airevstream/db';
 import { getPresignedUrl } from '@airevstream/storage';
-import { createLogger } from '@airevstream/shared';
+import { createLogger, PRESIGNED_URL_TTL_SECONDS } from '@airevstream/shared';
 
 const assetLogger = createLogger('production-pipeline:asset');
 
@@ -83,8 +83,8 @@ export async function assetRoutes(app: FastifyInstance) {
     }
 
     try {
-      const url = await getPresignedUrl(bucket, key, 3600);
-      return reply.send({ success: true, data: { url, expiresIn: 3600 } });
+      const url = await getPresignedUrl(bucket, key, PRESIGNED_URL_TTL_SECONDS);
+      return reply.send({ success: true, data: { url, expiresIn: PRESIGNED_URL_TTL_SECONDS } });
     } catch (err) {
       assetLogger.error({ err, bucket, key }, 'Failed to generate presigned URL');
       return reply.status(500).send({

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { apiPost } from '@/hooks/use-api';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { CheckCircle, ExternalLink, AlertTriangle, Clock, User } from 'lucide-react';
+import { CheckCircle, ExternalLink, Clock, User } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/components/ui/loading-button';
 import Link from 'next/link';

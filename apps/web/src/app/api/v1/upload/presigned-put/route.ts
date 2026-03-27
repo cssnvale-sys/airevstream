@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { authenticate, success, error, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { getPresignedPutUrl, ensureBucket } from '@airevstream/storage';
-import { BUCKETS } from '@airevstream/shared';
+import { BUCKETS, PRESIGNED_URL_TTL_SECONDS } from '@airevstream/shared';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,9 +48,9 @@ export async function POST(req: NextRequest) {
     const key = `${ctx.tenantId}/${assetType}/${crypto.randomUUID()}/${fileName}`;
 
     await ensureBucket(bucket);
-    const url = await getPresignedPutUrl(bucket, key, 3600);
+    const url = await getPresignedPutUrl(bucket, key, PRESIGNED_URL_TTL_SECONDS);
 
-    return success({ url, bucket, key, expiresIn: 3600 });
+    return success({ url, bucket, key, expiresIn: PRESIGNED_URL_TTL_SECONDS });
   } catch (err) {
     console.error('POST /api/v1/upload/presigned-put failed:', err);
     return error('INTERNAL_ERROR', 'Failed to generate presigned URL', 500);

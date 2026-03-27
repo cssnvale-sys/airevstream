@@ -6,6 +6,7 @@
  */
 
 import { extractFingerprint, compareFingerprints, type ImageFingerprint, type DriftResult } from './identity-drift.js';
+import { QUALITY_THRESHOLDS } from './constants.js';
 
 // ─── Score Types ───
 
@@ -127,9 +128,9 @@ export function quickScore(imageBuffer: Buffer, width: number, height: number): 
  * Get the recommendation string for a given score.
  */
 export function getRecommendation(score: number): QCScoreResult['recommendation'] {
-  if (score >= 85) return 'approve';
-  if (score >= 60) return 'review';
-  if (score >= 30) return 'reject';
+  if (score >= QUALITY_THRESHOLDS.AUTO_APPROVE) return 'approve';
+  if (score >= QUALITY_THRESHOLDS.REVIEW_REQUIRED) return 'review';
+  if (score >= QUALITY_THRESHOLDS.AUTO_REJECT) return 'reject';
   return 'regenerate';
 }
 

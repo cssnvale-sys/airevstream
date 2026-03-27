@@ -7,7 +7,7 @@ import { useAvatar } from '@/hooks/use-assets';
 import { usePresignedUrl } from '@/hooks/use-presigned-url';
 import { FileUpload } from '@/components/ui/file-upload';
 import { apiPost, apiPut, apiDelete } from '@/hooks/use-api';
-import { cn, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { BUCKETS } from '@airevstream/shared';

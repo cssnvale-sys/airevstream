@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     if (ctx instanceof NextResponse) return ctx;
 
     const ip = getClientIp(req);
-    const rl = checkRateLimit(`search:${ip}:${ctx.userId}`, { maxAttempts: 60, windowMs: 60000 });
+    const rl = checkRateLimit(`search:${ip}:${ctx.userId}`, { maxAttempts: 60, windowMs: 60 * 1000 });
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);

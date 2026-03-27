@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useJobStatus } from '@/hooks/use-job-status';
-import { cn } from '@/lib/utils';
 
 interface GenerationStatusProps {
   jobId: string | null;

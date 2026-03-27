@@ -1,7 +1,7 @@
 import { createWorker, getQueue, addJob, type PostingScheduleJob, type PostingPublishJob, type SeriesPlaylistSyncJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { decrypt } from '@airevstream/crypto';
-import { getConfig, createLogger, type ActivityLock } from '@airevstream/shared';
+import { getConfig, createLogger, PRESIGNED_URL_TTL_SECONDS, type ActivityLock } from '@airevstream/shared';
 import { getPresignedUrl } from '@airevstream/storage';
 import type { Job } from 'bullmq';
 import { getAdapter, type PostContent, type PlatformCredentials } from './platform-adapters.js';
@@ -119,7 +119,7 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
       const isImage = content.contentType === 'image' || content.contentType === 'thumbnail';
       const presignedUrl = content.fileUrl.startsWith('http')
         ? content.fileUrl
-        : await getPresignedUrl('content', content.fileUrl, 3600);
+        : await getPresignedUrl('content', content.fileUrl, PRESIGNED_URL_TTL_SECONDS);
 
       if (isVideo) videoUrl = presignedUrl;
       if (isImage) imageUrl = presignedUrl;
@@ -128,7 +128,7 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     if (content.thumbnailUrl) {
       thumbnailUrl = content.thumbnailUrl.startsWith('http')
         ? content.thumbnailUrl
-        : await getPresignedUrl('content', content.thumbnailUrl, 3600);
+        : await getPresignedUrl('content', content.thumbnailUrl, PRESIGNED_URL_TTL_SECONDS);
     }
 
     const postContent: PostContent = {

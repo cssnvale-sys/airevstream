@@ -139,6 +139,9 @@ export const QUALITY_THRESHOLDS = {
   AUTO_REJECT: 30,
 } as const;
 
+// ─── Storage URL TTL ───
+export const PRESIGNED_URL_TTL_SECONDS = 3600;
+
 // ─── Simple Mode Guardrails ───
 export const SIMPLE_MODE_GUARDRAILS = {
   MAX_SHOTS: 9,

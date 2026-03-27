@@ -135,17 +135,17 @@ export default function BudgetsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-emerald-400 bg-emerald-500/10';
-      case 'paused': return 'text-yellow-400 bg-yellow-500/10';
-      case 'exceeded': return 'text-red-400 bg-red-500/10';
+      case 'active': return 'text-accent-green bg-accent-green/10';
+      case 'paused': return 'text-accent-amber bg-accent-amber/10';
+      case 'exceeded': return 'text-accent-red bg-accent-red/10';
       default: return 'text-text-tertiary bg-bg-tertiary';
     }
   };
 
   const getUsageColor = (percent: number) => {
-    if (percent >= 100) return 'bg-red-500';
-    if (percent >= 80) return 'bg-yellow-500';
-    return 'bg-emerald-500';
+    if (percent >= 100) return 'bg-accent-red';
+    if (percent >= 80) return 'bg-accent-amber';
+    return 'bg-accent-green';
   };
 
   return (
@@ -278,7 +278,7 @@ export default function BudgetsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {overThreshold && (
-                      <AlertTriangle size={14} className="text-yellow-400" />
+                      <AlertTriangle size={14} className="text-accent-amber" />
                     )}
                     <button
                       onClick={() => handleToggleStatus(budget)}
@@ -295,7 +295,7 @@ export default function BudgetsPage() {
                     </button>
                     <button
                       onClick={() => setDeleteTarget(budget)}
-                      className="p-1.5 text-text-tertiary hover:text-red-400 transition-colors"
+                      className="p-1.5 text-text-tertiary hover:text-accent-red transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -310,7 +310,7 @@ export default function BudgetsPage() {
                     </span>
                     <span className={cn(
                       'font-medium',
-                      percentUsed >= 100 ? 'text-red-400' : percentUsed >= 80 ? 'text-yellow-400' : 'text-text-secondary',
+                      percentUsed >= 100 ? 'text-accent-red' : percentUsed >= 80 ? 'text-accent-amber' : 'text-text-secondary',
                     )}>
                       {percentUsed.toFixed(1)}%
                     </span>

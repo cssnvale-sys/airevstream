@@ -61,9 +61,9 @@ const PER_PAGE_OPTIONS = [10, 25, 50];
 // ---------------------------------------------------------------------------
 
 function healthColor(score: number): string {
-  if (score >= 80) return 'text-green-400';
-  if (score >= 50) return 'text-yellow-400';
-  return 'text-red-400';
+  if (score >= 80) return 'text-accent-green';
+  if (score >= 50) return 'text-accent-amber';
+  return 'text-accent-red';
 }
 
 function tierLabel(tier: string): string {
@@ -325,7 +325,7 @@ function AddEmailModal({
                 This takes ~21 days to fully season accounts.
               </p>
             )}
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && <p className="text-sm text-accent-red">{error}</p>}
             <div className="flex gap-2 pt-2">
               <button onClick={() => setStep(targetPlatforms.length > 0 ? 3 : 2)} className="btn-secondary flex items-center gap-1.5">
                 <ArrowLeft size={16} /> Back
@@ -421,9 +421,9 @@ function BulkImportModal({
               required
             />
           </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-accent-red">{error}</p>}
           {result && (
-            <p className="text-sm text-green-400">
+            <p className="text-sm text-accent-green">
               Imported {result.imported}, skipped {result.skipped}.
             </p>
           )}
@@ -1081,7 +1081,7 @@ export default function AccountsPage() {
         {isLoading ? (
           <TableSkeleton />
         ) : error ? (
-          <div className="text-center py-12 text-red-400">
+          <div className="text-center py-12 text-accent-red">
             <p>Failed to load accounts.</p>
             <button onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
           </div>

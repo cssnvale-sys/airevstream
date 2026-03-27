@@ -80,7 +80,7 @@ const STATUS_DOT_COLOR: Record<string, string> = {
   failed: 'bg-accent-red',
   error: 'bg-accent-red',
   generating: 'bg-accent-blue',
-  draft: 'bg-gray-500',
+  draft: 'bg-text-tertiary',
 };
 
 const LEGEND_ITEMS = [
@@ -421,7 +421,7 @@ export default function CalendarPage() {
           title={`${item.content?.title ?? 'Untitled'} (${item.channel?.name ?? 'Unknown'}) - ${format(new Date(item.scheduledAt), 'h:mm a')}`}
           className={cn(
             'w-2.5 h-2.5 rounded-full shrink-0 cursor-grab active:cursor-grabbing transition-opacity',
-            STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-gray-500',
+            STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-text-tertiary',
             isDragging && 'opacity-40',
           )}
         />
@@ -446,7 +446,7 @@ export default function CalendarPage() {
         <span
           className={cn(
             'w-2 h-2 rounded-full shrink-0',
-            STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-gray-500',
+            STATUS_DOT_COLOR[item.content?.status ?? item.status] ?? 'bg-text-tertiary',
           )}
         />
         <span className="shrink-0">{platformIcon(item.platform)}</span>

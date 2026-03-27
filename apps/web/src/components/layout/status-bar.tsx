@@ -16,7 +16,7 @@ export function StatusBar() {
   return (
     <footer className="h-statusbar bg-bg-secondary border-t border-border flex items-center px-6 text-caption text-text-secondary gap-6 z-30">
       <div className="flex items-center gap-1.5">
-        <span className={cn('w-2 h-2 rounded-full', online ? 'bg-accent-green' : 'bg-gray-500')} />
+        <span className={cn('w-2 h-2 rounded-full', online ? 'bg-accent-green' : 'bg-text-tertiary')} />
         <span>{online ? 'Online' : 'Connecting...'}</span>
       </div>
       <div>CPU: {cpu ?? '—'}%</div>

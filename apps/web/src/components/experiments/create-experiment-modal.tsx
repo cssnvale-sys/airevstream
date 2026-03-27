@@ -120,7 +120,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
       <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">New Experiment</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-secondary">
+          <button type="button" onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-secondary" aria-label="Close">
             <X size={18} />
           </button>
         </div>

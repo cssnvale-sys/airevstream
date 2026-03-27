@@ -20,7 +20,7 @@ interface ShotTableProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-bg-tertiary text-text-tertiary border-border',
+  pending: 'bg-bg-tertiary text-text-secondary border-border',
   generating: 'bg-accent-blue/20 text-accent-blue border-accent-blue/30',
   generated: 'bg-accent-green/20 text-accent-green border-accent-green/30',
   approved: 'bg-accent-green/20 text-accent-green border-accent-green/30',

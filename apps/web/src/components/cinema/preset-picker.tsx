@@ -283,7 +283,7 @@ function RecipeCard({ recipe, onApply, mode }: { recipe: Recipe; onApply: (recip
       )}
       <div className="flex gap-1 mt-1.5 flex-wrap">
         {recipe.tags.map((tag) => (
-          <span key={tag} className="text-[10px] bg-bg-tertiary text-text-tertiary px-1 rounded">
+          <span key={tag} className="text-[10px] bg-bg-tertiary text-text-secondary px-1 rounded">
             {tag}
           </span>
         ))}

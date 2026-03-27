@@ -92,7 +92,7 @@ function contentTypeColor(type: string): string {
     case 'video_long': return 'bg-accent-red/20 text-accent-red';
     case 'voice': return 'bg-accent-green/20 text-accent-green';
     case 'thumbnail': return 'bg-accent-amber/20 text-accent-amber';
-    default: return 'bg-bg-tertiary text-text-tertiary';
+    default: return 'bg-bg-tertiary text-text-secondary';
   }
 }
 

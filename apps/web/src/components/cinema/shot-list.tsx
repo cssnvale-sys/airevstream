@@ -34,7 +34,7 @@ export function ShotList({ shots, selectedId, onSelect }: ShotListProps) {
         >
           <div className="flex items-center justify-between">
             <span className="font-medium">Shot {shot.shotNumber}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded ${STATUS_COLORS[shot.status] ?? 'bg-bg-tertiary text-text-tertiary'}`}>
+            <span className={`text-xs px-1.5 py-0.5 rounded ${STATUS_COLORS[shot.status] ?? 'bg-bg-tertiary text-text-secondary'}`}>
               {shot.status}
             </span>
           </div>

@@ -100,7 +100,7 @@ export function ProjectTypePicker({ onSelect, selectedType }: ProjectTypePickerP
             <div className="text-2xl mb-2">{pt.icon}</div>
             <div className="text-sm font-medium text-text-primary">{pt.name}</div>
             <div className="text-xs text-text-tertiary mt-0.5">{pt.description}</div>
-            <div className="text-[10px] text-text-tertiary mt-1.5 bg-bg-tertiary rounded px-1.5 py-0.5 inline-block">
+            <div className="text-[10px] text-text-secondary mt-1.5 bg-bg-tertiary rounded px-1.5 py-0.5 inline-block">
               {pt.format}
             </div>
           </button>

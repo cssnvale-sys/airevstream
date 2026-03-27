@@ -374,7 +374,7 @@ function KeyValueEditor({
           </button>
         </div>
       ))}
-      <button onClick={addPair} className="text-accent-blue text-sm hover:underline">
+      <button type="button" onClick={addPair} className="text-accent-blue text-sm hover:underline">
         + Add entry
       </button>
     </div>
@@ -684,7 +684,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
               />
             </div>
           ))}
-          <button onClick={addCharacterLora} className="text-accent-blue text-sm hover:underline">
+          <button type="button" onClick={addCharacterLora} className="text-accent-blue text-sm hover:underline">
             + Add character LoRA
           </button>
         </div>
@@ -816,7 +816,7 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
               </div>
             </div>
           ))}
-          <button onClick={addEnvLora} className="text-accent-blue text-sm hover:underline">
+          <button type="button" onClick={addEnvLora} className="text-accent-blue text-sm hover:underline">
             + Add environment LoRA
           </button>
         </div>

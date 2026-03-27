@@ -82,7 +82,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-card-title text-text-primary">Series Avatars ({avatars.length})</h3>
-        <button onClick={() => setAdding(true)} className="btn-primary flex items-center gap-2 text-sm">
+        <button type="button" onClick={() => setAdding(true)} className="btn-primary flex items-center gap-2 text-sm">
           <Plus size={14} />
           Assign Avatar
         </button>
@@ -167,7 +167,7 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
             <LoadingButton onClick={handleAdd} loading={submitting} disabled={!selectedAvatarId} loadingText="Adding..." className="btn-primary text-sm">
               Add
             </LoadingButton>
-            <button onClick={() => setAdding(false)} className="btn-secondary text-sm">Cancel</button>
+            <button type="button" onClick={() => setAdding(false)} className="btn-secondary text-sm">Cancel</button>
           </div>
         </div>
       )}

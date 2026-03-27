@@ -37,7 +37,7 @@ export function EmptyState({
         </Link>
       )}
       {actionLabel && onAction && !actionHref && (
-        <button onClick={onAction} className="btn-primary text-sm">
+        <button type="button" onClick={onAction} className="btn-primary text-sm">
           {actionLabel}
         </button>
       )}

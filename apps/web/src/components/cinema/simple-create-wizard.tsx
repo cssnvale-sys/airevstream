@@ -688,7 +688,7 @@ export function SimpleCreateWizard() {
           </div>
         </div>
       ) : (
-        <button onClick={startPipeline} className="btn-primary flex items-center gap-2">
+        <button type="button" onClick={startPipeline} className="btn-primary flex items-center gap-2">
           <Sparkles size={16} />
           Start Making
         </button>

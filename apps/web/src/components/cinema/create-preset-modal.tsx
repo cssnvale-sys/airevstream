@@ -237,7 +237,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
               {preview.tags.length > 0 && (
                 <div className="flex gap-1 flex-wrap">
                   {preview.tags.map((tag) => (
-                    <span key={tag} className="text-[10px] bg-bg-tertiary text-text-tertiary px-1.5 py-0.5 rounded">
+                    <span key={tag} className="text-[10px] bg-bg-tertiary text-text-secondary px-1.5 py-0.5 rounded">
                       {tag}
                     </span>
                   ))}
@@ -254,7 +254,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
                   Overrides
                 </button>
                 {showOverrides && (
-                  <pre className="mt-1 text-[10px] text-text-tertiary bg-bg-tertiary rounded p-2 overflow-x-auto max-h-32 overflow-y-auto">
+                  <pre className="mt-1 text-[10px] text-text-secondary bg-bg-tertiary rounded p-2 overflow-x-auto max-h-32 overflow-y-auto">
                     {JSON.stringify(preview.overrides, null, 2)}
                   </pre>
                 )}

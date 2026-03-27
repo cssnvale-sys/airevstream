@@ -38,9 +38,9 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
       <div className="flex items-center justify-between px-4 py-1.5 border-b border-border">
         <span className="text-xs text-text-secondary font-medium">Timeline</span>
         <div className="flex items-center gap-2">
-          <button onClick={() => handleZoom(-10)} className="text-xs text-text-secondary hover:text-text-primary px-1">&minus;</button>
+          <button type="button" onClick={() => handleZoom(-10)} className="text-xs text-text-secondary hover:text-text-primary px-1" aria-label="Zoom out">&minus;</button>
           <span className="text-xs text-text-tertiary">{pixelsPerSecond}px/s</span>
-          <button onClick={() => handleZoom(10)} className="text-xs text-text-secondary hover:text-text-primary px-1">+</button>
+          <button type="button" onClick={() => handleZoom(10)} className="text-xs text-text-secondary hover:text-text-primary px-1" aria-label="Zoom in">+</button>
         </div>
       </div>
 

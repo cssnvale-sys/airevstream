@@ -112,6 +112,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
                   <div className="flex gap-1 justify-end">
                     {(e.status === 'phase_1' || e.status === 'phase_2' || e.status === 'phase_3' || e.status === 'phase_4') && (
                       <button
+                        type="button"
                         onClick={() => onAction(e.id, 'pause')}
                         className="text-caption text-accent-amber hover:text-accent-amber px-1"
                       >
@@ -120,6 +121,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
                     )}
                     {e.status === 'paused' && (
                       <button
+                        type="button"
                         onClick={() => onAction(e.id, 'resume')}
                         className="text-caption text-accent-blue hover:text-accent-blue px-1"
                       >
@@ -128,6 +130,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
                     )}
                     {e.status === 'failed' && (
                       <button
+                        type="button"
                         onClick={() => onAction(e.id, 'retry')}
                         className="text-caption text-accent-green hover:text-accent-green px-1"
                       >

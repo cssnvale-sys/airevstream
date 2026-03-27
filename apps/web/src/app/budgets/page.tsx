@@ -143,7 +143,7 @@ export default function BudgetsPage() {
       case 'active': return 'text-accent-green bg-accent-green/10';
       case 'paused': return 'text-accent-amber bg-accent-amber/10';
       case 'exceeded': return 'text-accent-red bg-accent-red/10';
-      default: return 'text-text-tertiary bg-bg-tertiary';
+      default: return 'text-text-secondary bg-bg-tertiary';
     }
   };
 
@@ -284,7 +284,7 @@ export default function BudgetsPage() {
                     </span>
                     <span className="text-xs text-text-tertiary capitalize">{budget.budgetType}</span>
                     {budget.category && (
-                      <span className="text-xs text-text-tertiary bg-bg-tertiary px-2 py-0.5 rounded">
+                      <span className="text-xs text-text-secondary bg-bg-tertiary px-2 py-0.5 rounded">
                         {budget.category}
                       </span>
                     )}

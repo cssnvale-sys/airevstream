@@ -74,7 +74,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
       <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4" role="dialog" aria-modal="true">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Add Episode</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+          <button type="button" onClick={onClose} className="text-text-secondary hover:text-text-primary" aria-label="Close">
             <X size={18} />
           </button>
         </div>

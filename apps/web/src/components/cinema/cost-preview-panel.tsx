@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { apiPost } from '@/hooks/use-api';
+import { toast } from '@/lib/toast';
 import { formatCost } from '@airevstream/shared';
 
 interface CostBreakdownItem {
@@ -24,11 +25,11 @@ interface CostPreviewPanelProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  text: 'bg-blue-500',
-  image: 'bg-purple-500',
-  video: 'bg-green-500',
-  audio: 'bg-amber-500',
-  upscale: 'bg-cyan-500',
+  text: 'bg-accent-blue',
+  image: 'bg-accent-purple',
+  video: 'bg-accent-green',
+  audio: 'bg-accent-amber',
+  upscale: 'bg-accent-red',
 };
 
 export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPanelProps) {
@@ -57,6 +58,7 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
       }
     } catch (err) {
       console.error('Cost preview estimate failed:', err);
+      toast.error('Failed to estimate cost');
     } finally {
       setLoading(false);
     }

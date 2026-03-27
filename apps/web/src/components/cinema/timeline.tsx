@@ -69,7 +69,7 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
                 top: 0,
                 bottom: 0,
                 width: 2,
-                backgroundColor: '#ef4444',
+                backgroundColor: 'rgb(var(--accent-red))',
                 zIndex: 20,
               }}
             />

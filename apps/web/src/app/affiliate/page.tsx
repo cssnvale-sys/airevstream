@@ -536,13 +536,13 @@ function ProductsTab({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-bg-tertiary text-text-secondary text-left">
-              <th className="px-4 py-3 font-medium w-10" />
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Commission</th>
-              <th className="px-4 py-3 font-medium text-right">Clicks</th>
-              <th className="px-4 py-3 font-medium text-right">Revenue</th>
-              <th className="px-4 py-3 font-medium">Status</th>
+              <th scope="col" className="px-4 py-3 font-medium w-10" />
+              <th scope="col" className="px-4 py-3 font-medium">Name</th>
+              <th scope="col" className="px-4 py-3 font-medium">Category</th>
+              <th scope="col" className="px-4 py-3 font-medium">Commission</th>
+              <th scope="col" className="px-4 py-3 font-medium text-right">Clicks</th>
+              <th scope="col" className="px-4 py-3 font-medium text-right">Revenue</th>
+              <th scope="col" className="px-4 py-3 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -825,11 +825,11 @@ function LinksTab({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-bg-tertiary text-text-secondary text-left">
-              <th className="px-4 py-3 font-medium">Original URL</th>
-              <th className="px-4 py-3 font-medium">Short URL</th>
-              <th className="px-4 py-3 font-medium">Product</th>
-              <th className="px-4 py-3 font-medium text-right">Clicks</th>
-              <th className="px-4 py-3 font-medium">Created</th>
+              <th scope="col" className="px-4 py-3 font-medium">Original URL</th>
+              <th scope="col" className="px-4 py-3 font-medium">Short URL</th>
+              <th scope="col" className="px-4 py-3 font-medium">Product</th>
+              <th scope="col" className="px-4 py-3 font-medium text-right">Clicks</th>
+              <th scope="col" className="px-4 py-3 font-medium">Created</th>
             </tr>
           </thead>
           <tbody>
@@ -978,15 +978,15 @@ function PerformanceTab({
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-bg-tertiary text-text-secondary text-left">
-                <th className="px-4 py-3 font-medium">Product</th>
+                <th scope="col" className="px-4 py-3 font-medium">Product</th>
                 {matrix.channelNames.length > 0 ? (
                   matrix.channelNames.map((name) => (
-                    <th key={name} className="px-4 py-3 font-medium text-center">
+                    <th scope="col" key={name} className="px-4 py-3 font-medium text-center">
                       {name}
                     </th>
                   ))
                 ) : (
-                  <th className="px-4 py-3 font-medium text-center">Revenue</th>
+                  <th scope="col" className="px-4 py-3 font-medium text-center">Revenue</th>
                 )}
               </tr>
             </thead>
@@ -1770,13 +1770,13 @@ function StorefrontsTab({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-bg-tertiary text-text-secondary text-left">
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Slug</th>
-              <th className="px-4 py-3 font-medium">Channel</th>
-              <th className="px-4 py-3 font-medium text-center">Products</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Domain</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
+              <th scope="col" className="px-4 py-3 font-medium">Name</th>
+              <th scope="col" className="px-4 py-3 font-medium">Slug</th>
+              <th scope="col" className="px-4 py-3 font-medium">Channel</th>
+              <th scope="col" className="px-4 py-3 font-medium text-center">Products</th>
+              <th scope="col" className="px-4 py-3 font-medium">Status</th>
+              <th scope="col" className="px-4 py-3 font-medium">Domain</th>
+              <th scope="col" className="px-4 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody>

@@ -113,13 +113,13 @@ export default function ExperimentsPage() {
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Name</th>
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Status</th>
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Metric</th>
-                <th className="text-center py-3 px-4 text-text-secondary font-medium">Variants</th>
-                <th className="text-right py-3 px-4 text-text-secondary font-medium">Significance</th>
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Winner</th>
-                <th className="text-right py-3 px-4 text-text-secondary font-medium">Created</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Name</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Status</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Metric</th>
+                <th scope="col" className="text-center py-3 px-4 text-text-secondary font-medium">Variants</th>
+                <th scope="col" className="text-right py-3 px-4 text-text-secondary font-medium">Significance</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Winner</th>
+                <th scope="col" className="text-right py-3 px-4 text-text-secondary font-medium">Created</th>
               </tr>
             </thead>
             <tbody>

@@ -107,11 +107,11 @@ export default function SeriesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border text-left text-caption text-text-secondary">
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Channel</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Episodes</th>
-                <th className="px-4 py-3 font-medium">Tags</th>
+                <th scope="col" className="px-4 py-3 font-medium">Name</th>
+                <th scope="col" className="px-4 py-3 font-medium">Channel</th>
+                <th scope="col" className="px-4 py-3 font-medium">Status</th>
+                <th scope="col" className="px-4 py-3 font-medium">Episodes</th>
+                <th scope="col" className="px-4 py-3 font-medium">Tags</th>
               </tr>
             </thead>
             <tbody>

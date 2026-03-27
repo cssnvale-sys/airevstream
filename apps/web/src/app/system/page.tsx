@@ -488,11 +488,11 @@ export default function SystemPage() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-bg-primary">
                 <tr className="border-b border-border text-text-secondary text-left">
-                  <th className="pb-2 pr-3 font-medium">Severity</th>
-                  <th className="pb-2 pr-3 font-medium">Job Type</th>
-                  <th className="pb-2 pr-3 font-medium">Error</th>
-                  <th className="pb-2 pr-3 font-medium">Time</th>
-                  <th className="pb-2 font-medium text-right">Action</th>
+                  <th scope="col" className="pb-2 pr-3 font-medium">Severity</th>
+                  <th scope="col" className="pb-2 pr-3 font-medium">Job Type</th>
+                  <th scope="col" className="pb-2 pr-3 font-medium">Error</th>
+                  <th scope="col" className="pb-2 pr-3 font-medium">Time</th>
+                  <th scope="col" className="pb-2 font-medium text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

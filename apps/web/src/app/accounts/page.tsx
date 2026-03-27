@@ -1093,7 +1093,7 @@ export default function AccountsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-text-secondary text-left">
-                    <th className="px-4 py-3 w-10">
+                    <th scope="col" className="px-4 py-3 w-10">
                       <input
                         type="checkbox"
                         checked={selectedIds.size === filteredAccounts.length && filteredAccounts.length > 0}
@@ -1102,18 +1102,18 @@ export default function AccountsPage() {
                         aria-label="Select all accounts"
                       />
                     </th>
-                    <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('email')}>
+                    <th scope="col" className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('email')}>
                       <span className="flex items-center gap-1">Email <SortIcon field="email" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
-                    <th className="px-4 py-3">Socials</th>
-                    <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('socialAccountsCount')}>
+                    <th scope="col" className="px-4 py-3">Socials</th>
+                    <th scope="col" className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('socialAccountsCount')}>
                       <span className="flex items-center gap-1">Channels <SortIcon field="socialAccountsCount" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
-                    <th className="px-4 py-3">Health</th>
-                    <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('status')}>
+                    <th scope="col" className="px-4 py-3">Health</th>
+                    <th scope="col" className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('status')}>
                       <span className="flex items-center gap-1">Status <SortIcon field="status" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
-                    <th className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('tier')}>
+                    <th scope="col" className="px-4 py-3 cursor-pointer select-none" onClick={() => handleSort('tier')}>
                       <span className="flex items-center gap-1">Tier <SortIcon field="tier" sortField={sortField} sortOrder={sortOrder} /></span>
                     </th>
                   </tr>

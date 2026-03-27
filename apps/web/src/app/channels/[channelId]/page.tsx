@@ -249,10 +249,10 @@ export default function ChannelDetailPage() {
             <table className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-2 px-4 text-text-secondary font-medium">Title</th>
-                  <th className="text-left py-2 px-4 text-text-secondary font-medium">Type</th>
-                  <th className="text-right py-2 px-4 text-text-secondary font-medium">Score</th>
-                  <th className="text-left py-2 px-4 text-text-secondary font-medium">Tier</th>
+                  <th scope="col" className="text-left py-2 px-4 text-text-secondary font-medium">Title</th>
+                  <th scope="col" className="text-left py-2 px-4 text-text-secondary font-medium">Type</th>
+                  <th scope="col" className="text-right py-2 px-4 text-text-secondary font-medium">Score</th>
+                  <th scope="col" className="text-left py-2 px-4 text-text-secondary font-medium">Tier</th>
                 </tr>
               </thead>
               <tbody>

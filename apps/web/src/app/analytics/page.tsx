@@ -356,9 +356,9 @@ export default function AnalyticsPage() {
             <table className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-2 text-text-secondary font-medium">Channel</th>
-                  <th className="text-right py-2 text-text-secondary font-medium">Revenue</th>
-                  <th className="text-right py-2 text-text-secondary font-medium">Content</th>
+                  <th scope="col" className="text-left py-2 text-text-secondary font-medium">Channel</th>
+                  <th scope="col" className="text-right py-2 text-text-secondary font-medium">Revenue</th>
+                  <th scope="col" className="text-right py-2 text-text-secondary font-medium">Content</th>
                 </tr>
               </thead>
               <tbody>
@@ -383,9 +383,9 @@ export default function AnalyticsPage() {
             <table className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-2 text-text-secondary font-medium">Product</th>
-                  <th className="text-right py-2 text-text-secondary font-medium">Revenue</th>
-                  <th className="text-right py-2 text-text-secondary font-medium">Clicks</th>
+                  <th scope="col" className="text-left py-2 text-text-secondary font-medium">Product</th>
+                  <th scope="col" className="text-right py-2 text-text-secondary font-medium">Revenue</th>
+                  <th scope="col" className="text-right py-2 text-text-secondary font-medium">Clicks</th>
                 </tr>
               </thead>
               <tbody>
@@ -617,9 +617,9 @@ export default function AnalyticsPage() {
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-2 text-text-secondary font-medium">Category</th>
-                <th className="text-right py-2 text-text-secondary font-medium">Amount</th>
-                <th className="text-right py-2 text-text-secondary font-medium">% of Total</th>
+                <th scope="col" className="text-left py-2 text-text-secondary font-medium">Category</th>
+                <th scope="col" className="text-right py-2 text-text-secondary font-medium">Amount</th>
+                <th scope="col" className="text-right py-2 text-text-secondary font-medium">% of Total</th>
               </tr>
             </thead>
             <tbody>
@@ -763,10 +763,10 @@ export default function AnalyticsPage() {
               <table className="w-full text-body">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2 text-text-secondary font-medium">Name</th>
-                    <th className="text-left py-2 text-text-secondary font-medium">Metric</th>
-                    <th className="text-right py-2 text-text-secondary font-medium">Significance</th>
-                    <th className="text-center py-2 text-text-secondary font-medium">Winner</th>
+                    <th scope="col" className="text-left py-2 text-text-secondary font-medium">Name</th>
+                    <th scope="col" className="text-left py-2 text-text-secondary font-medium">Metric</th>
+                    <th scope="col" className="text-right py-2 text-text-secondary font-medium">Significance</th>
+                    <th scope="col" className="text-center py-2 text-text-secondary font-medium">Winner</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -842,11 +842,11 @@ export default function AnalyticsPage() {
                     <table className="w-full text-body">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="text-left py-2 text-text-secondary font-medium">Preset</th>
-                          <th className="text-left py-2 text-text-secondary font-medium">Dimension</th>
-                          <th className="text-left py-2 text-text-secondary font-medium">Content</th>
-                          <th className="text-left py-2 text-text-secondary font-medium">Outcome</th>
-                          <th className="text-right py-2 text-text-secondary font-medium">Date</th>
+                          <th scope="col" className="text-left py-2 text-text-secondary font-medium">Preset</th>
+                          <th scope="col" className="text-left py-2 text-text-secondary font-medium">Dimension</th>
+                          <th scope="col" className="text-left py-2 text-text-secondary font-medium">Content</th>
+                          <th scope="col" className="text-left py-2 text-text-secondary font-medium">Outcome</th>
+                          <th scope="col" className="text-right py-2 text-text-secondary font-medium">Date</th>
                         </tr>
                       </thead>
                       <tbody>

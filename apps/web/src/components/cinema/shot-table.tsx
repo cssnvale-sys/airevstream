@@ -40,14 +40,14 @@ export function ShotTable({ shots, selectedShotId, onSelectShot }: ShotTableProp
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-bg-tertiary border-b border-border">
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-10">#</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-16">Thumb</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary">Duration</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary">Camera</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary">Dialogue</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-24">Status</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-16">QC</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-20">Timecode</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-10">#</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-16">Thumb</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary">Duration</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary">Camera</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary">Dialogue</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-24">Status</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-16">QC</th>
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-tertiary w-20">Timecode</th>
           </tr>
         </thead>
         <tbody>

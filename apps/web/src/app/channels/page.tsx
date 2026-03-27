@@ -121,12 +121,12 @@ export default function ChannelsPage() {
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Name</th>
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Platform</th>
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Niches</th>
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Tone</th>
-                <th className="text-left py-3 px-4 text-text-secondary font-medium">Status</th>
-                <th className="text-right py-3 px-4 text-text-secondary font-medium">Content</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Name</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Platform</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Niches</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Tone</th>
+                <th scope="col" className="text-left py-3 px-4 text-text-secondary font-medium">Status</th>
+                <th scope="col" className="text-right py-3 px-4 text-text-secondary font-medium">Content</th>
               </tr>
             </thead>
             <tbody>

@@ -67,15 +67,15 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
       <table className="w-full text-body">
         <thead>
           <tr className="border-b border-border text-text-secondary text-caption">
-            <th className="text-left py-2 px-3">Email</th>
-            <th className="text-left py-2 px-3">Platform</th>
-            <th className="text-left py-2 px-3">Status</th>
-            <th className="text-left py-2 px-3">Phase</th>
-            <th className="text-right py-2 px-3">Activities</th>
-            <th className="text-right py-2 px-3">Health</th>
-            <th className="text-left py-2 px-3">Last Active</th>
-            <th className="text-left py-2 px-3">Next Session</th>
-            <th className="text-right py-2 px-3">Actions</th>
+            <th scope="col" className="text-left py-2 px-3">Email</th>
+            <th scope="col" className="text-left py-2 px-3">Platform</th>
+            <th scope="col" className="text-left py-2 px-3">Status</th>
+            <th scope="col" className="text-left py-2 px-3">Phase</th>
+            <th scope="col" className="text-right py-2 px-3">Activities</th>
+            <th scope="col" className="text-right py-2 px-3">Health</th>
+            <th scope="col" className="text-left py-2 px-3">Last Active</th>
+            <th scope="col" className="text-left py-2 px-3">Next Session</th>
+            <th scope="col" className="text-right py-2 px-3">Actions</th>
           </tr>
         </thead>
         <tbody>

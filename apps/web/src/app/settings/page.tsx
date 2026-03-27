@@ -1377,11 +1377,11 @@ function ProxiesTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
-                  <th className="pb-2 text-text-secondary font-medium">Name</th>
-                  <th className="pb-2 text-text-secondary font-medium">Type</th>
-                  <th className="pb-2 text-text-secondary font-medium">Host:Port</th>
-                  <th className="pb-2 text-text-secondary font-medium">Status</th>
-                  <th className="pb-2 text-text-secondary font-medium text-right">Actions</th>
+                  <th scope="col" className="pb-2 text-text-secondary font-medium">Name</th>
+                  <th scope="col" className="pb-2 text-text-secondary font-medium">Type</th>
+                  <th scope="col" className="pb-2 text-text-secondary font-medium">Host:Port</th>
+                  <th scope="col" className="pb-2 text-text-secondary font-medium">Status</th>
+                  <th scope="col" className="pb-2 text-text-secondary font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>

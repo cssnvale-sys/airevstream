@@ -87,13 +87,13 @@ export function EpisodeTable({ seriesId }: Props) {
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-bg-primary">
               <tr className="border-b border-border text-left text-caption text-text-secondary">
-                <th className="px-3 py-2 font-medium w-10">#</th>
-                <th className="px-3 py-2 font-medium">Title</th>
-                <th className="px-3 py-2 font-medium">Type</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">Score</th>
-                <th className="px-3 py-2 font-medium">Published</th>
-                <th className="px-3 py-2 font-medium w-10"></th>
+                <th scope="col" className="px-3 py-2 font-medium w-10">#</th>
+                <th scope="col" className="px-3 py-2 font-medium">Title</th>
+                <th scope="col" className="px-3 py-2 font-medium">Type</th>
+                <th scope="col" className="px-3 py-2 font-medium">Status</th>
+                <th scope="col" className="px-3 py-2 font-medium">Score</th>
+                <th scope="col" className="px-3 py-2 font-medium">Published</th>
+                <th scope="col" className="px-3 py-2 font-medium w-10"></th>
               </tr>
             </thead>
             <tbody>

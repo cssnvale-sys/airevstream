@@ -125,8 +125,9 @@ export default function CinemaBiblePage() {
             <h3 className="text-sm font-medium text-text-primary mb-3">Create Cinema Bible</h3>
             <div className="flex items-end gap-3">
               <div className="flex-1">
-                <label className="block text-xs text-text-secondary mb-1">Channel</label>
+                <label htmlFor="settings-bible-channel" className="block text-xs text-text-secondary mb-1">Channel</label>
                 <select
+                  id="settings-bible-channel"
                   value={newChannelId}
                   onChange={(e) => setNewChannelId(e.target.value)}
                   className="input w-full"

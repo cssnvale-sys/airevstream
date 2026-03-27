@@ -139,8 +139,9 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
           <h4 className="text-sm font-medium text-text-primary mb-3">Assign Avatar</h4>
           <div className="flex gap-3 items-end">
             <div className="flex-1">
-              <label className="block text-xs text-text-secondary mb-1">Avatar</label>
+              <label htmlFor="series-avatar-select" className="block text-xs text-text-secondary mb-1">Avatar</label>
               <select
+                id="series-avatar-select"
                 value={selectedAvatarId}
                 onChange={(e) => setSelectedAvatarId(e.target.value)}
                 className="input w-full text-sm"
@@ -152,8 +153,9 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
               </select>
             </div>
             <div className="w-40">
-              <label className="block text-xs text-text-secondary mb-1">Role</label>
+              <label htmlFor="series-avatar-role" className="block text-xs text-text-secondary mb-1">Role</label>
               <select
+                id="series-avatar-role"
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
                 className="input w-full text-sm"

@@ -159,10 +159,12 @@ function LoraListEditor({
   loras,
   onChange,
   availableLoras,
+  idPrefix = 'bible-lora',
 }: {
   loras: LoraEntry[];
   onChange: (loras: LoraEntry[]) => void;
   availableLoras: string[];
+  idPrefix?: string;
 }) {
   const addLora = () => {
     onChange([...loras, { name: '', strength: 1.0, clipStrength: 1.0, triggerWords: [] }]);
@@ -212,8 +214,9 @@ function LoraListEditor({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-text-tertiary">Strength ({lora.strength.toFixed(2)})</label>
+              <label htmlFor={`${idPrefix}-strength-${i}`} className="text-xs text-text-tertiary">Strength ({lora.strength.toFixed(2)})</label>
               <input
+                id={`${idPrefix}-strength-${i}`}
                 type="range"
                 min="0"
                 max="2"
@@ -224,8 +227,9 @@ function LoraListEditor({
               />
             </div>
             <div>
-              <label className="text-xs text-text-tertiary">CLIP Strength ({(lora.clipStrength ?? 1.0).toFixed(2)})</label>
+              <label htmlFor={`${idPrefix}-clip-strength-${i}`} className="text-xs text-text-tertiary">CLIP Strength ({(lora.clipStrength ?? 1.0).toFixed(2)})</label>
               <input
+                id={`${idPrefix}-clip-strength-${i}`}
                 type="range"
                 min="0"
                 max="2"
@@ -280,8 +284,9 @@ function ColorPipelineEditor({
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs text-text-tertiary">LUT File</label>
+        <label htmlFor="bible-lut-file" className="text-xs text-text-tertiary">LUT File</label>
         <input
+          id="bible-lut-file"
           type="text"
           value={pipeline.lut ?? ''}
           onChange={(e) => onChange({ ...pipeline, lut: e.target.value })}
@@ -655,8 +660,9 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs text-text-tertiary">Strength ({lora.strength.toFixed(2)})</label>
+                  <label htmlFor={`bible-char-lora-strength-${charKey}`} className="text-xs text-text-tertiary">Strength ({lora.strength.toFixed(2)})</label>
                   <input
+                    id={`bible-char-lora-strength-${charKey}`}
                     type="range"
                     min="0" max="2" step="0.05"
                     value={lora.strength}
@@ -665,8 +671,9 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-text-tertiary">CLIP ({(lora.clipStrength ?? 1.0).toFixed(2)})</label>
+                  <label htmlFor={`bible-char-lora-clip-${charKey}`} className="text-xs text-text-tertiary">CLIP ({(lora.clipStrength ?? 1.0).toFixed(2)})</label>
                   <input
+                    id={`bible-char-lora-clip-${charKey}`}
                     type="range"
                     min="0" max="2" step="0.05"
                     value={lora.clipStrength ?? 1.0}
@@ -796,8 +803,9 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs text-text-tertiary">Strength ({lora.strength.toFixed(2)})</label>
+                  <label htmlFor={`bible-env-lora-strength-${envKey}`} className="text-xs text-text-tertiary">Strength ({lora.strength.toFixed(2)})</label>
                   <input
+                    id={`bible-env-lora-strength-${envKey}`}
                     type="range" min="0" max="2" step="0.05"
                     value={lora.strength}
                     onChange={(e) => updateEnvLora(envKey, envKey, { ...lora, strength: parseFloat(e.target.value) })}
@@ -805,8 +813,9 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-text-tertiary">CLIP ({(lora.clipStrength ?? 1.0).toFixed(2)})</label>
+                  <label htmlFor={`bible-env-lora-clip-${envKey}`} className="text-xs text-text-tertiary">CLIP ({(lora.clipStrength ?? 1.0).toFixed(2)})</label>
                   <input
+                    id={`bible-env-lora-clip-${envKey}`}
                     type="range" min="0" max="2" step="0.05"
                     value={lora.clipStrength ?? 1.0}
                     onChange={(e) => updateEnvLora(envKey, envKey, { ...lora, clipStrength: parseFloat(e.target.value) })}

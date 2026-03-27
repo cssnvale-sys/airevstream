@@ -286,8 +286,9 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
         <CollapsibleSection title="Audio Plan">
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Background</label>
+              <label htmlFor="shot-audio-background" className="block text-xs text-text-secondary mb-1">Background</label>
               <input
+                id="shot-audio-background"
                 type="text"
                 value={(audioPlan.background as string) ?? ''}
                 onChange={(e) => update('audioPlan.background', e.target.value)}
@@ -296,8 +297,9 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
               />
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Midground</label>
+              <label htmlFor="shot-audio-midground" className="block text-xs text-text-secondary mb-1">Midground</label>
               <input
+                id="shot-audio-midground"
                 type="text"
                 value={(audioPlan.midground as string) ?? ''}
                 onChange={(e) => update('audioPlan.midground', e.target.value)}
@@ -306,8 +308,9 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
               />
             </div>
             <div>
-              <label className="block text-xs text-text-secondary mb-1">Foreground</label>
+              <label htmlFor="shot-audio-foreground" className="block text-xs text-text-secondary mb-1">Foreground</label>
               <input
+                id="shot-audio-foreground"
                 type="text"
                 value={(audioPlan.foreground as string) ?? ''}
                 onChange={(e) => update('audioPlan.foreground', e.target.value)}
@@ -335,8 +338,9 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
             {!!lipSync.enabled && (
               <>
                 <div>
-                  <label className="block text-xs text-text-secondary mb-1">Mode</label>
+                  <label htmlFor="shot-lip-sync-mode" className="block text-xs text-text-secondary mb-1">Mode</label>
                   <select
+                    id="shot-lip-sync-mode"
                     value={(lipSync.mode as string) ?? 'subtitle-only'}
                     onChange={(e) => update('lipSync.mode', e.target.value)}
                     className="input w-full"
@@ -359,8 +363,9 @@ export function ShotProperties({ spec, onChange, onFieldTouched }: ShotPropertie
                   onChange={(v) => update('lipSync.exaggeration', v)}
                 />
                 <div>
-                  <label className="block text-xs text-text-secondary mb-1">Character ID</label>
+                  <label htmlFor="shot-lip-sync-character-id" className="block text-xs text-text-secondary mb-1">Character ID</label>
                   <input
+                    id="shot-lip-sync-character-id"
                     type="text"
                     value={(lipSync.characterId as string) ?? ''}
                     onChange={(e) => update('lipSync.characterId', e.target.value)}
@@ -431,10 +436,12 @@ function CollapsibleSection({ title, defaultOpen, children }: { title: string; d
 }
 
 function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+  const fieldId = `shot-${label.toLowerCase().replace(/\s+/g, '-')}`;
   return (
     <div>
-      <label className="block text-xs text-text-secondary mb-1">{label}</label>
+      <label htmlFor={fieldId} className="block text-xs text-text-secondary mb-1">{label}</label>
       <select
+        id={fieldId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
@@ -447,12 +454,14 @@ function SelectField({ label, value, options, onChange }: { label: string; value
 }
 
 function SliderField({ label, value, min, max, step, onChange }: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void }) {
+  const fieldId = `shot-${label.toLowerCase().replace(/\s+/g, '-')}`;
   return (
     <div>
-      <label className="block text-xs text-text-secondary mb-1">
+      <label htmlFor={fieldId} className="block text-xs text-text-secondary mb-1">
         {label}: <span className="text-text-primary">{value}</span>
       </label>
       <input
+        id={fieldId}
         type="range"
         value={value}
         min={min} max={max} step={step}
@@ -464,10 +473,12 @@ function SliderField({ label, value, min, max, step, onChange }: { label: string
 }
 
 function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  const fieldId = `shot-${label.toLowerCase().replace(/[()]+/g, '').replace(/\s+/g, '-')}`;
   return (
     <div>
-      <label className="block text-xs text-text-secondary mb-1">{label}</label>
+      <label htmlFor={fieldId} className="block text-xs text-text-secondary mb-1">{label}</label>
       <input
+        id={fieldId}
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}

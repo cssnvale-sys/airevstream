@@ -142,10 +142,11 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
         <div className="p-4 space-y-4">
           {/* Description input */}
           <div>
-            <label className="block text-xs text-text-secondary mb-1">
+            <label htmlFor="preset-description" className="block text-xs text-text-secondary mb-1">
               Describe the style you want
             </label>
             <textarea
+              id="preset-description"
               ref={descriptionRef}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -202,8 +203,9 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
 
               {/* Name */}
               <div>
-                <label className="block text-[10px] text-text-tertiary mb-0.5">Name</label>
+                <label htmlFor="preset-name" className="block text-[10px] text-text-tertiary mb-0.5">Name</label>
                 <input
+                  id="preset-name"
                   type="text"
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
@@ -224,8 +226,9 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
 
               {/* Description */}
               <div>
-                <label className="block text-[10px] text-text-tertiary mb-0.5">Description</label>
+                <label htmlFor="preset-edit-description" className="block text-[10px] text-text-tertiary mb-0.5">Description</label>
                 <input
+                  id="preset-edit-description"
                   type="text"
                   value={editedDescription}
                   onChange={(e) => setEditedDescription(e.target.value)}

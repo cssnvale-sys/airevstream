@@ -432,8 +432,9 @@ export default function AssetDetailPage() {
         <div className="space-y-6">
           {/* Name */}
           <section>
-            <label className="block text-sm font-medium text-text-secondary mb-1">Name</label>
+            <label htmlFor="asset-name" className="block text-sm font-medium text-text-secondary mb-1">Name</label>
             <input
+              id="asset-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

@@ -199,23 +199,16 @@ function SlotCard({
             rows={3}
             autoFocus
           />
-          <button
+          <LoadingButton
             onClick={handleGenerate}
-            disabled={!prompt.trim() || generating}
+            loading={generating}
+            disabled={!prompt.trim()}
+            loadingText="Queuing..."
             className="btn-primary text-xs w-full mt-2 disabled:opacity-50 inline-flex items-center justify-center gap-1"
           >
-            {generating ? (
-              <>
-                <Loader2 size={12} className="animate-spin" />
-                Queuing...
-              </>
-            ) : (
-              <>
-                <Sparkles size={12} />
-                Generate
-              </>
-            )}
-          </button>
+            <Sparkles size={12} />
+            Generate
+          </LoadingButton>
         </div>
       )}
 

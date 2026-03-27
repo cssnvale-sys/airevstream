@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { X, Search, User, ImageIcon } from 'lucide-react';
 import { useAvatars, useSceneryAssets } from '@/hooks/use-assets';
 import { usePresignedUrl } from '@/hooks/use-presigned-url';
@@ -76,6 +76,7 @@ function SceneryPickerItem({ scenery, onSelect }: { scenery: SceneryItem; onSele
 export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [] }: AssetPickerModalProps) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -83,6 +84,7 @@ export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
+    setTimeout(() => searchRef.current?.focus(), 50);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
@@ -142,6 +144,7 @@ export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [
         <div className="relative mb-4">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
           <input
+            ref={searchRef}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

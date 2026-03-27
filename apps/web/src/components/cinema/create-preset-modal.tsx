@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useGeneratePreset, savePreset } from '@/hooks/use-user-presets';
 import { LoadingButton } from '@/components/ui/loading-button';
@@ -48,6 +48,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
   const [editedDescription, setEditedDescription] = useState('');
   const [showOverrides, setShowOverrides] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   const { generate, isGenerating, error: genError, reset: resetGen } = useGeneratePreset();
 
@@ -57,6 +58,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
       if (e.key === 'Escape') handleClose();
     };
     document.addEventListener('keydown', handleKeyDown);
+    setTimeout(() => descriptionRef.current?.focus(), 50);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
@@ -141,6 +143,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
               Describe the style you want
             </label>
             <textarea
+              ref={descriptionRef}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. warm sunset look with soft focus and film grain"

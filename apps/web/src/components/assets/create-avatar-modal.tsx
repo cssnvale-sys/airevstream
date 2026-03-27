@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
@@ -20,6 +20,11 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
   const [description, setDescription] = useState('');
   const [faceUpload, setFaceUpload] = useState<UploadResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) setTimeout(() => nameRef.current?.focus(), 50);
+  }, [open]);
 
   const resetForm = useCallback(() => {
     setName('');
@@ -106,6 +111,7 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
               Name <span className="text-accent-red">*</span>
             </label>
             <input
+              ref={nameRef}
               id="avatar-name"
               type="text"
               value={name}

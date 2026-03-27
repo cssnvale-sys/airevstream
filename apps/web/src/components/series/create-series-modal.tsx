@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from 'sonner';
@@ -26,6 +26,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
   const [targetAudience, setTargetAudience] = useState('');
   const [tags, setTags] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -33,6 +34,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
       if (e.key === 'Escape' && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
+    setTimeout(() => nameRef.current?.focus(), 50);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, submitting, onClose]);
 
@@ -97,6 +99,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Name</label>
             <input
+              ref={nameRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

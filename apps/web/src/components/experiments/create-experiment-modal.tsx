@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { X, Plus, Trash2 } from 'lucide-react';
@@ -31,6 +31,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
     { label: 'Variant B', trafficPercent: 50 },
   ]);
   const [submitting, setSubmitting] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const addVariant = () => {
     if (variants.length >= 10) return;
@@ -107,6 +108,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
       if (e.key === 'Escape' && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
+    setTimeout(() => nameRef.current?.focus(), 50);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, submitting, onClose]);
 
@@ -128,6 +130,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
           <div>
             <label className="block text-sm text-text-secondary mb-1">Name</label>
             <input
+              ref={nameRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

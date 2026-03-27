@@ -58,7 +58,7 @@ export function Breadcrumbs() {
         <span key={crumb.href} className="flex items-center gap-1">
           <ChevronRight size={10} className="opacity-50" />
           {crumb.isLast ? (
-            <span className="text-text-primary font-medium">{crumb.label}</span>
+            <span className="text-text-primary font-medium" aria-current="page">{crumb.label}</span>
           ) : (
             <Link href={crumb.href} className="hover:text-text-primary transition-colors">
               {crumb.label}

@@ -130,10 +130,11 @@ async function renderTemplate(
 
 // ─── Image Generation Handler ───
 
-async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<void> {
+async function handleGenerateImage(data: ProductionGenerateImageJob, job: Job<any>): Promise<void> {
   const db = getDb();
   logger.info({ workflowType: data.workflowType, shotId: data.shotId }, 'Processing image generation job');
 
+  await job.updateProgress(5);
   const healthy = await comfyClient.isHealthy();
 
   if (!healthy) {
@@ -182,12 +183,14 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
 
   // Render the template
   const workflow = await renderTemplate(templateName, params);
+  await job.updateProgress(20);
 
   // Generate images via ComfyUI
   try {
     const promptId = await comfyClient.queuePrompt(workflow as ComfyUIWorkflow);
     await comfyClient.waitForCompletion(promptId);
     const outputImages = await comfyClient.getOutputImages(promptId);
+    await job.updateProgress(60);
 
     // Download and upload to storage
     await ensureBucket(BUCKET);
@@ -251,6 +254,8 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
       logger.debug({ err }, 'C2PA embedding skipped for images');
     }
 
+    await job.updateProgress(80);
+
     // Update storyboard shot if shotId provided
     if (data.shotId) {
       await db.storyboardShot.update({
@@ -276,6 +281,7 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
       });
     }
 
+    await job.updateProgress(100);
     logger.info({ imageCount: outputImages.length, uploadedUrls }, 'Image generation complete');
   } catch (err) {
     logger.error({ err, workflowType: data.workflowType, shotId: data.shotId }, 'ComfyUI image generation failed');
@@ -300,9 +306,10 @@ async function handleGenerateImage(data: ProductionGenerateImageJob): Promise<vo
 const execFileAsync = promisify(execFile);
 const REMOTION_DIR = resolve(__dirname, '../../remotion');
 
-async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> {
+async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>): Promise<void> {
   const db = getDb();
   logger.info({ contentId: data.contentId, storyboardId: data.storyboardId }, 'Processing video render job');
+  await job.updateProgress(5);
 
   // Update storyboard status
   await db.storyboard.update({
@@ -448,6 +455,8 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     });
   }
 
+  await job.updateProgress(15);
+
   const outputDir = '/tmp/airevstream/renders';
   await mkdir(outputDir, { recursive: true });
   const useProres = variant?.codec === 'prores' || (!variant && isCinema);
@@ -477,6 +486,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
     if (stderr && !stderr.includes('Rendered')) {
       logger.warn({ stderr: stderr.slice(0, 500) }, 'Remotion render warnings');
     }
+    await job.updateProgress(60);
 
     // Upload rendered video to storage
     await ensureBucket(BUCKET);
@@ -525,6 +535,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
 
     // Clean up temp file after successful upload
     await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
+    await job.updateProgress(80);
 
     // Update storyboard with result
     await db.storyboard.update({
@@ -598,6 +609,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob): Promise<void> 
         );
       }
     }
+    await job.updateProgress(100);
   } catch (error) {
     // Clean up temp file on failure
     await unlink(outputPath).catch((e) => logger.debug({ err: e, path: outputPath }, 'Temp file cleanup failed'));
@@ -700,9 +712,10 @@ async function handleGenerateAudio(data: ProductionGenerateAudioJob): Promise<vo
 
 // ─── Cinema Shot Generation Handler ───
 
-async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<void> {
+async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<any>): Promise<void> {
   const db = getDb();
   logger.info({ storyboardId: data.storyboardId, shotCount: data.shotIds.length }, 'Processing cinema shot generation');
+  await job.updateProgress(5);
 
   const healthy = await comfyClient.isHealthy();
   if (!healthy) {
@@ -715,7 +728,11 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
   const promptBible = (bible?.promptBible as PromptBible | null) ?? undefined;
 
   // Process each shot
-  for (const shotId of data.shotIds) {
+  const totalShots = data.shotIds.length;
+  for (let shotIdx = 0; shotIdx < totalShots; shotIdx++) {
+    const shotId = data.shotIds[shotIdx];
+    // Report progress: 10–90 range spread across shots
+    await job.updateProgress(10 + Math.round((shotIdx / totalShots) * 80));
     const shot = await db.storyboardShot.findUnique({ where: { id: shotId } });
     if (!shot) {
       logger.warn({ shotId }, 'Shot not found, skipping');
@@ -926,15 +943,17 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob): Promise<v
       await db.storyboardShot.update({ where: { id: shotId }, data: { status: 'failed' } });
     }
   }
+  await job.updateProgress(100);
 }
 
 // ─── QC Gate Handler ───
 
 const MAX_QC_RETRIES = 2;
 
-async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
+async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<void> {
   const db = getDb();
   logger.info({ storyboardId: data.storyboardId }, 'Processing QC gate');
+  await job.updateProgress(5);
 
   const shots = await db.storyboardShot.findMany({
     where: { storyboardId: data.storyboardId },
@@ -968,12 +987,18 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
     logger.debug({ err }, 'Could not load character reference — skipping identity drift detection');
   }
 
+  await job.updateProgress(15);
+
   let allApproved = true;
   let previousShotBuffer: Buffer | undefined;
   const allShotBuffers: Buffer[] = [];
   const qcDecisionInputs: QCDecisionShotInput[] = [];
 
-  for (const shot of shots) {
+  const totalQCShots = shots.length;
+  for (let qcIdx = 0; qcIdx < totalQCShots; qcIdx++) {
+    const shot = shots[qcIdx];
+    // Report progress: 15–75 range spread across shots
+    await job.updateProgress(15 + Math.round((qcIdx / totalQCShots) * 60));
     const keyframeUrls = shot.keyframeUrls as string[] | null;
 
     // No keyframes = automatic failure
@@ -1116,6 +1141,8 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
     previousShotBuffer = imageBuffer;
   }
 
+  await job.updateProgress(80);
+
   // Temporal flicker detection across all shots
   if (allShotBuffers.length >= 3) {
     const flickerResult = detectFlicker(allShotBuffers);
@@ -1252,6 +1279,7 @@ async function handleQCGate(data: ProductionQCGateJob): Promise<void> {
   } else {
     logger.info({ storyboardId: data.storyboardId }, 'QC gate — some shots need review or regeneration');
   }
+  await job.updateProgress(100);
 }
 
 // ─── Audio Mix Handler ───
@@ -1925,10 +1953,10 @@ export function startProductionWorker() {
 
       switch (job.name) {
         case 'production:generate-image':
-          await handleGenerateImage(job.data as ProductionGenerateImageJob);
+          await handleGenerateImage(job.data as ProductionGenerateImageJob, job);
           break;
         case 'production:render-video':
-          await handleRenderVideo(job.data as ProductionRenderVideoJob);
+          await handleRenderVideo(job.data as ProductionRenderVideoJob, job);
           break;
         case 'production:generate-audio':
           await handleGenerateAudio(job.data as ProductionGenerateAudioJob);
@@ -1937,10 +1965,10 @@ export function startProductionWorker() {
           await handleGenerateStoryboard(job.data as ProductionStoryboardJob);
           break;
         case 'production:generate-shots':
-          await handleShotGeneration(job.data as ProductionGenerateShotsJob);
+          await handleShotGeneration(job.data as ProductionGenerateShotsJob, job);
           break;
         case 'production:qc-gate':
-          await handleQCGate(job.data as ProductionQCGateJob);
+          await handleQCGate(job.data as ProductionQCGateJob, job);
           break;
         case 'production:mix-audio':
           await handleMixAudio(job.data as ProductionMixAudioJob);

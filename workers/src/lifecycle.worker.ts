@@ -73,9 +73,9 @@ async function processLifecycleJob(job: Job) {
     case 'lifecycle:plan':
       return handlePlan(job.data as LifecyclePlanJob);
     case 'lifecycle:signup':
-      return handleSignup(job.data as LifecycleSignupJob);
+      return handleSignup(job.data as LifecycleSignupJob, job);
     case 'lifecycle:set-profile':
-      return handleSetProfile(job.data as LifecycleSetProfileJob);
+      return handleSetProfile(job.data as LifecycleSetProfileJob, job);
     case 'lifecycle:enroll':
       return handleEnroll(job.data as LifecycleEnrollJob);
     default:
@@ -351,8 +351,9 @@ async function handlePlan(data: LifecyclePlanJob) {
 // HANDLER: SIGNUP
 // ═══════════════════════════════════════════════════════════════════
 
-async function handleSignup(data: LifecycleSignupJob) {
+async function handleSignup(data: LifecycleSignupJob, job: Job) {
   const db = getDb();
+  await job.updateProgress(5);
 
   const lifecycle = await db.accountLifecycle.findUnique({ where: { id: data.lifecycleId } });
   if (!lifecycle) return;
@@ -364,6 +365,7 @@ async function handleSignup(data: LifecycleSignupJob) {
     where: { id: data.lifecycleId },
     data: { currentStep: `signup:${data.platform}` },
   });
+  await job.updateProgress(10);
 
   const automationAvailable = await loadBrowserAutomation();
 
@@ -392,6 +394,7 @@ async function handleSignup(data: LifecycleSignupJob) {
   } as any);
 
   try {
+    await job.updateProgress(25);
     const workflow = createWorkflow(data.platform as Platform, contextEntry.context);
     const password = decryptCredential(emailAccount.passwordEnc);
 
@@ -400,6 +403,7 @@ async function handleSignup(data: LifecycleSignupJob) {
       password,
       platform: data.platform as Platform,
     });
+    await job.updateProgress(70);
 
     if (result.needsHuman) {
       await db.workflowJob.create({
@@ -439,6 +443,7 @@ async function handleSignup(data: LifecycleSignupJob) {
         await queueEnrollIfReady(data.lifecycleId, data.emailAccountId, data.tenantId);
       }
 
+      await job.updateProgress(100);
       logger.info({ socialAccountId: social.id, platform: data.platform }, 'Signup successful');
       return { socialAccountId: social.id, status: 'created' };
     }
@@ -461,8 +466,9 @@ async function handleSignup(data: LifecycleSignupJob) {
 // HANDLER: SET PROFILE
 // ═══════════════════════════════════════════════════════════════════
 
-async function handleSetProfile(data: LifecycleSetProfileJob) {
+async function handleSetProfile(data: LifecycleSetProfileJob, job: Job) {
   const db = getDb();
+  await job.updateProgress(5);
 
   const lifecycle = await db.accountLifecycle.findUnique({ where: { id: data.lifecycleId } });
   if (!lifecycle) return;
@@ -492,6 +498,7 @@ async function handleSetProfile(data: LifecycleSetProfileJob) {
     }
   }
 
+  await job.updateProgress(20);
   const automationAvailable = await loadBrowserAutomation();
 
   if (automationAvailable && createWorkflow && BrowserContextManager) {
@@ -499,6 +506,7 @@ async function handleSetProfile(data: LifecycleSetProfileJob) {
     const sessMgr = await getSessionManager();
     if (mgr) {
       const contextEntry = await mgr.createContext({ headless: true });
+      await job.updateProgress(35);
 
       try {
         // Restore session
@@ -507,6 +515,7 @@ async function handleSetProfile(data: LifecycleSetProfileJob) {
         }
 
         const workflow = createWorkflow(data.platform as Platform, contextEntry.context);
+        await job.updateProgress(50);
         const result = await workflow.setProfileAssets({
           profileImagePath,
           bannerImagePath,
@@ -524,6 +533,7 @@ async function handleSetProfile(data: LifecycleSetProfileJob) {
           });
         }
 
+        await job.updateProgress(80);
         logger.info({ socialAccountId: data.socialAccountId, platform: data.platform, success: result.success }, 'Profile setup completed');
       } catch (err) {
         logger.error({ err, platform: data.platform }, 'Profile setup automation failed');
@@ -541,6 +551,7 @@ async function handleSetProfile(data: LifecycleSetProfileJob) {
 
   // Check if all profiles are done, then enroll
   await queueEnrollIfReady(data.lifecycleId, lifecycle.emailAccountId, data.tenantId);
+  await job.updateProgress(100);
 }
 
 // ═══════════════════════════════════════════════════════════════════

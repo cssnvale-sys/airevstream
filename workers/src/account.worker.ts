@@ -147,7 +147,7 @@ async function processAccountJob(job: Job) {
     return handleSeasoningSignup(job.data as SeasoningSignupJob);
   }
   if (job.name === 'seasoning:warm') {
-    return handleSeasoningWarm(job.data as SeasoningWarmJob);
+    return handleSeasoningWarm(job.data as SeasoningWarmJob, job);
   }
   if (job.name === 'seasoning:check-due') {
     return handleSeasoningCheckDue();
@@ -412,6 +412,7 @@ async function handleHealthCheck(data: AccountHealthCheckJob, job: Job) {
 
 async function handleWarm(data: AccountWarmJob, job: Job) {
   const db = getDb();
+  await job.updateProgress(5);
   const account = await db.socialAccount.findUnique({
     where: { id: data.socialAccountId },
     include: {
@@ -426,6 +427,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
   }
 
   const durationMinutes = data.durationMinutes ?? Math.floor(Math.random() * (60 - 5 + 1)) + 5;
+  await job.updateProgress(10);
   const automationAvailable = await loadBrowserAutomation();
 
   if (automationAvailable && createWorkflow && BrowserContextManager) {
@@ -455,6 +457,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
         // Collect niche tags from channels for targeted warming
         const nicheTags = account.channels.flatMap((ch) => ch.niches);
 
+        await job.updateProgress(25);
         const warmResult = await workflow.warmAccount({
           platform: account.platform as any,
           durationMinutes,
@@ -462,6 +465,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
           nicheTags: nicheTags.length > 0 ? nicheTags : undefined,
           intensity: 'low',
         });
+        await job.updateProgress(80);
 
         // Save session after warming
         if (sessMgr) {
@@ -506,6 +510,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
           flagged: warmResult.flagged,
         }, 'Account warmed');
 
+        await job.updateProgress(100);
         return { socialAccountId: data.socialAccountId, status: 'warmed', durationMinutes, flagged: warmResult.flagged };
       } catch (err) {
         logger.error({ err, socialAccountId: data.socialAccountId }, 'Account warming automation failed');
@@ -701,8 +706,9 @@ async function handleSeasoningSignup(data: SeasoningSignupJob) {
   }
 }
 
-async function handleSeasoningWarm(data: SeasoningWarmJob) {
+async function handleSeasoningWarm(data: SeasoningWarmJob, job: Job) {
   const db = getDb();
+  await job.updateProgress(5);
   const automationAvailable = await loadBrowserAutomation();
 
   const enrollment = await db.seasoningEnrollment.findUnique({
@@ -795,6 +801,7 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
         }
 
         const workflow = createWorkflow(data.platform as any, contextEntry.context);
+        await job.updateProgress(20);
 
         // Login if no session
         if (!sessMgr?.hasSession(data.socialAccountId, enrollment.socialAccount.platform as any)) {
@@ -805,6 +812,7 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
             platform: data.platform as any,
           });
         }
+        await job.updateProgress(30);
 
         const warmResult = await workflow.warmAccount({
           platform: data.platform as any,
@@ -812,6 +820,7 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
           activities: selectedActivities,
           intensity: phaseConfig.intensity,
         });
+        await job.updateProgress(80);
 
         // Save session
         if (sessMgr) {
@@ -909,6 +918,7 @@ async function handleSeasoningWarm(data: SeasoningWarmJob) {
     nextScheduledAt: nextScheduledAt.toISOString(),
   }, 'Seasoning warm completed');
 
+  await job.updateProgress(100);
   return { status: newStatus, success, nextScheduledAt };
 }
 

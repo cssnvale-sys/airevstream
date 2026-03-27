@@ -1,17 +1,17 @@
-import { toast as sonnerToast } from 'sonner';
+import { toast as sonnerToast, type ExternalToast } from 'sonner';
 
 export const toast = {
-  success(message: string) {
-    sonnerToast.success(message);
+  success(message: string, options?: ExternalToast) {
+    sonnerToast.success(message, options);
   },
-  error(message: string) {
-    sonnerToast.error(message);
+  error(message: string, options?: ExternalToast) {
+    sonnerToast.error(message, options);
   },
-  info(message: string) {
-    sonnerToast.info(message);
+  info(message: string, options?: ExternalToast) {
+    sonnerToast.info(message, options);
   },
-  warning(message: string) {
-    sonnerToast.warning(message);
+  warning(message: string, options?: ExternalToast) {
+    sonnerToast.warning(message, options);
   },
   /**
    * Show a toast that tracks a promise lifecycle:

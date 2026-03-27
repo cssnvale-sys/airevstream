@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, Star, UserCircle } from 'lucide-react';
 import { apiPost, apiDelete, useApi } from '@/hooks/use-api';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { LoadingButton } from '@/components/ui/loading-button';
 

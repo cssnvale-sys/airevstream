@@ -26,6 +26,7 @@ export default function ForgotPasswordPage() {
         const msg = data?.error?.message;
         const safeMessages = [
           'Too many requests. Please try again later.',
+          'Failed to process password reset',
         ];
         throw new Error(msg && safeMessages.includes(msg) ? msg : 'Request failed');
       }

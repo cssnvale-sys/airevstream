@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useApi } from '@/hooks/use-api';
 import { LoadingButton } from '@/components/ui/loading-button';
 

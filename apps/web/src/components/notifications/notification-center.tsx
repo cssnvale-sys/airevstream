@@ -5,7 +5,7 @@ import { Bell, CheckCheck, ExternalLink, Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getToken } from '@/lib/auth';
 import useSWR from 'swr';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { NotificationItem, type Notification } from './notification-item';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useRouter } from 'next/navigation';

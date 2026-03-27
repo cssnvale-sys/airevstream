@@ -36,6 +36,7 @@ export default function RegisterPage() {
           'Password must be at least 8 characters',
           'Registration is currently closed',
           'Too many registration attempts. Please try again later.',
+          'Failed to register',
         ];
         throw new Error(msg && safeMessages.includes(msg) ? msg : 'Registration failed');
       }

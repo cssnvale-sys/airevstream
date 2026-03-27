@@ -32,6 +32,7 @@ export default function LoginPage() {
         const safeMessages = [
           'Invalid email or password',
           'Too many login attempts. Please try again later.',
+          'Failed to log in',
         ];
         throw new Error(msg && safeMessages.includes(msg) ? msg : 'Login failed');
       }

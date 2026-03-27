@@ -50,6 +50,7 @@ function ResetPasswordForm() {
           'Invalid reset token',
           'Password must be at least 8 characters',
           'Too many attempts. Please try again later.',
+          'Failed to reset password',
         ];
         throw new Error(msg && safeMessages.includes(msg) ? msg : 'Password reset failed');
       }

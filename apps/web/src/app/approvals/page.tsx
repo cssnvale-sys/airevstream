@@ -188,6 +188,7 @@ export default function ApprovalsPage() {
             </button>
             <button
               onClick={() => setSelectedIds(new Set())}
+              disabled={bulkActing}
               className="btn-secondary btn-sm ml-auto"
             >
               Clear
@@ -370,7 +371,7 @@ export default function ApprovalsPage() {
           title="Reject Content"
           message="This content will be rejected and moved back to draft. The creator will need to revise it."
           confirmLabel="Reject"
-          variant="warning"
+          variant="danger"
           onConfirm={() => rejectTarget && handleAction(rejectTarget, 'reject')}
           onCancel={() => setRejectTarget(null)}
           loading={acting === rejectTarget}

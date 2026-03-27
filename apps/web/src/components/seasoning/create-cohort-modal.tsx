@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CreateCohortModalProps {
   open: boolean;
@@ -19,6 +19,15 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
   const [name, setName] = useState('');
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !submitting) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, submitting, onClose]);
 
   if (!open) return null;
 

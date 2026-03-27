@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from 'sonner';
@@ -9,7 +9,7 @@ import { useApi } from '@/hooks/use-api';
 interface Props {
   open: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (id?: string) => void;
   defaultChannelId?: string;
 }
 
@@ -26,6 +26,15 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
   const [tags, setTags] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !submitting) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, submitting, onClose]);
+
   const { data: channelsData } = useApi<ChannelOption[]>('/channels?limit=100');
   const channels = channelsData?.data ?? [];
 
@@ -35,7 +44,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
 
     setSubmitting(true);
     try {
-      await apiPost('/series', {
+      const res = await apiPost<{ success: boolean; data: { id: string } }>('/series', {
         channelId,
         name: name.trim(),
         description: description.trim() || null,
@@ -43,7 +52,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
         tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
       });
       toast.success('Series created');
-      onCreated();
+      onCreated(res.data?.id);
       onClose();
       setName('');
       setDescription('');
@@ -61,7 +70,7 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={() => !submitting && onClose()} />
       <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Create Series</h2>

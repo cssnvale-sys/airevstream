@@ -28,11 +28,11 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+  }, [open, submitting, onClose]);
 
   const { data: contentData } = useApi<ContentOption[]>(
     open ? `/content?limit=50${search ? `&search=${encodeURIComponent(search)}` : ''}` : null,
@@ -67,7 +67,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={() => !submitting && onClose()} />
       <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg mx-4" role="dialog" aria-modal="true">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-card-title text-text-primary">Add Episode</h2>

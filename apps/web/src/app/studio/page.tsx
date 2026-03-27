@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi } from '@/hooks/use-api';
 import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
-import { Film, Search, ArrowRight, Clapperboard } from 'lucide-react';
+import { Film, Search, ArrowRight, Clapperboard, AlertTriangle, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useDebounce } from '@/hooks/use-debounce';
 
@@ -32,7 +32,7 @@ export default function StudioIndexPage() {
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
   });
 
-  const { data, isLoading } = useApi<StudioItem[]>(`/content?${query.toString()}`);
+  const { data, isLoading, error, mutate } = useApi<StudioItem[]>(`/content?${query.toString()}`);
 
   const items: StudioItem[] = data?.data ?? [];
 
@@ -58,7 +58,17 @@ export default function StudioIndexPage() {
       </div>
 
       {/* Content list */}
-      {isLoading ? (
+      {error ? (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-8 text-center">
+          <AlertTriangle size={32} className="text-red-400 mx-auto mb-3" />
+          <p className="text-red-400 font-medium mb-1">Failed to load content</p>
+          <p className="text-sm text-text-secondary mb-4">Something went wrong. Please try again.</p>
+          <button onClick={() => mutate()} className="btn-secondary btn-sm inline-flex items-center gap-2">
+            <RefreshCw size={14} />
+            Retry
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="card animate-pulse h-20" />

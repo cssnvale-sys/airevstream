@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAvatars, useSceneryAssets } from '@/hooks/use-assets';
 import { apiPost, apiDelete } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Palette,
   Plus,
@@ -75,6 +76,15 @@ function CreateAvatarModal({
 }) {
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !saving) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, saving, onClose]);
 
   if (!open) return null;
 
@@ -149,6 +159,15 @@ function CreateSceneryModal({
   const [imageUrl, setImageUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !saving) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, saving, onClose]);
+
   if (!open) return null;
 
   async function handleCreate() {
@@ -215,6 +234,9 @@ function CreateSceneryModal({
           onChange={(e) => setImageUrl(e.target.value)}
           placeholder="https://... or minio://bucket/key"
           className="input w-full mb-4"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleCreate();
+          }}
         />
 
         <div className="flex justify-end gap-2">
@@ -244,6 +266,7 @@ function AvatarCard({
   onDeleted: () => void;
 }) {
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   // Find the first image slot that has data for the thumbnail
   const firstImage = useMemo(() => {
@@ -261,10 +284,7 @@ function AvatarCard({
     return Object.values(avatar.images).filter((v) => v?.bucket && v?.key).length;
   }, [avatar.images]);
 
-  async function handleDelete(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirm('Delete this character? This cannot be undone.')) return;
+  async function handleDelete() {
     setDeleting(true);
     try {
       await apiDelete(`/avatars/${avatar.id}`);
@@ -275,6 +295,7 @@ function AvatarCard({
       toast.error('Failed to delete character');
     } finally {
       setDeleting(false);
+      setDeleteOpen(false);
     }
   }
 
@@ -311,7 +332,7 @@ function AvatarCard({
           </p>
         </div>
         <button
-          onClick={handleDelete}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteOpen(true); }}
           disabled={deleting}
           className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all p-1 rounded"
           title="Delete character"
@@ -319,6 +340,17 @@ function AvatarCard({
           <Trash2 size={14} />
         </button>
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete Character"
+        message="Delete this character? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteOpen(false)}
+        loading={deleting}
+      />
     </Link>
   );
 }
@@ -333,11 +365,9 @@ function SceneryCard({
   onDeleted: () => void;
 }) {
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
-  async function handleDelete(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirm('Delete this background? This cannot be undone.')) return;
+  async function handleDelete() {
     setDeleting(true);
     try {
       await apiDelete(`/scenery/${scenery.id}`);
@@ -348,6 +378,7 @@ function SceneryCard({
       toast.error('Failed to delete background');
     } finally {
       setDeleting(false);
+      setDeleteOpen(false);
     }
   }
 
@@ -386,7 +417,7 @@ function SceneryCard({
           </div>
         </div>
         <button
-          onClick={handleDelete}
+          onClick={() => setDeleteOpen(true)}
           disabled={deleting}
           className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-accent-red transition-all p-1 rounded"
           title="Delete background"
@@ -394,6 +425,17 @@ function SceneryCard({
           <Trash2 size={14} />
         </button>
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete Background"
+        message="Delete this background? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteOpen(false)}
+        loading={deleting}
+      />
     </div>
   );
 }

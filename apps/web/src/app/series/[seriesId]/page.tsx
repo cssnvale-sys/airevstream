@@ -113,6 +113,7 @@ export default function SeriesDetailPage() {
             value={series.status}
             onChange={(e) => handleStatusChange(e.target.value)}
             disabled={updatingStatus}
+            aria-label="Series status"
             className="input-field text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {STATUS_OPTIONS.map((s) => (

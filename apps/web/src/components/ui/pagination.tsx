@@ -51,6 +51,7 @@ export function Pagination({
           <select
             value={limit}
             onChange={(e) => onLimitChange(Number(e.target.value))}
+            aria-label="Items per page"
             className="input text-xs py-1 px-2"
           >
             {limitOptions.map((n) => (

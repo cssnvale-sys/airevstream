@@ -445,6 +445,7 @@ export default function LibraryPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search titles and prompts..."
+              aria-label="Search titles and prompts"
               className="input w-full pl-9"
             />
           </div>
@@ -513,6 +514,7 @@ export default function LibraryPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                aria-label="From date"
                 className="input text-xs py-1 px-2"
               />
               <span>to</span>
@@ -520,6 +522,7 @@ export default function LibraryPage() {
                 type="date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                aria-label="To date"
                 className="input text-xs py-1 px-2"
               />
             </div>

@@ -153,6 +153,7 @@ export default function ApprovalsPage() {
             <select
               value={typeFilter}
               onChange={(e) => updateTypeFilter(e.target.value)}
+              aria-label="Filter by content type"
               className="input text-caption"
             >
               {CONTENT_TYPES.map((t) => (

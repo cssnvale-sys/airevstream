@@ -53,6 +53,7 @@ export default function StudioIndexPage() {
           placeholder="Search content..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search content"
           className="input pl-9 w-full max-w-md"
         />
       </div>

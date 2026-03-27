@@ -513,6 +513,7 @@ function ProductsTab({
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            aria-label="Search products"
             className="input w-full pl-9"
           />
         </div>

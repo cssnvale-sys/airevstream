@@ -97,6 +97,7 @@ export function NotificationItem({ notification, onDismiss, onClick }: Notificat
           'opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5',
         )}
         title="Dismiss"
+        aria-label="Dismiss notification"
       >
         <X size={14} />
       </button>

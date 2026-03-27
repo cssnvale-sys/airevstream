@@ -252,6 +252,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
                           onClick={() => handleOutcome(s.presetId, 'accepted')}
                           className="p-0.5 rounded hover:bg-accent-green/20 text-text-tertiary hover:text-accent-green transition-colors"
                           title="Accept suggestion"
+                          aria-label="Accept suggestion"
                         >
                           <Check size={12} />
                         </button>
@@ -259,6 +260,7 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
                           onClick={() => handleOutcome(s.presetId, 'rejected')}
                           className="p-0.5 rounded hover:bg-accent-red/20 text-text-tertiary hover:text-accent-red transition-colors"
                           title="Reject suggestion"
+                          aria-label="Reject suggestion"
                         >
                           <XIcon size={12} />
                         </button>

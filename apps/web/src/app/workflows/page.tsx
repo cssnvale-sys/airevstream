@@ -120,6 +120,7 @@ export default function WorkflowsPage() {
               onClick={() => activeTab === 'jobs' ? mutate() : hitlMutate()}
               className="btn-icon"
               title="Refresh"
+              aria-label="Refresh"
             >
               <RefreshCw size={16} />
             </button>

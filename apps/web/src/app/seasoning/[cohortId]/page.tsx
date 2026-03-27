@@ -165,6 +165,7 @@ export default function CohortDetailPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
+          aria-label="Filter by status"
           className="px-3 py-1.5 rounded-md bg-bg-secondary border border-border text-text-primary text-caption"
         >
           <option value="">All Statuses</option>
@@ -183,6 +184,7 @@ export default function CohortDetailPage() {
         <select
           value={platformFilter}
           onChange={(e) => setPlatformFilter(e.target.value)}
+          aria-label="Filter by platform"
           className="px-3 py-1.5 rounded-md bg-bg-secondary border border-border text-text-primary text-caption"
         >
           <option value="">All Platforms</option>

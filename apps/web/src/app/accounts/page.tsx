@@ -1033,6 +1033,7 @@ export default function AccountsPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search by email or notes..."
+              aria-label="Search by email or notes"
               className="input w-full pl-9"
             />
           </div>

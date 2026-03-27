@@ -132,6 +132,7 @@ export function PresetPicker({ onApplyPreset, onApplyRecipe }: PresetPickerProps
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search presets..."
+            aria-label="Search presets"
             className="w-full bg-bg-primary text-text-primary border border-border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-accent-blue outline-none"
           />
         </div>

@@ -79,7 +79,7 @@ export function AiPanel({ open, onClose }: { open: boolean; onClose: () => void 
           <Sparkles size={18} className="text-accent-purple" />
           <span className="text-card-title text-text-primary">AI Assistant</span>
         </div>
-        <button onClick={onClose} className="btn-icon">
+        <button onClick={onClose} className="btn-icon" aria-label="Close AI assistant">
           <X size={16} />
         </button>
       </div>

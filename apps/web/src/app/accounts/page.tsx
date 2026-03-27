@@ -184,7 +184,7 @@ function AddEmailModal({
   const stepTitles = ['Email & Password', 'Select Platforms', 'Assign Avatar', 'Review'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={handleClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true" onClick={handleClose}>
       <div className="card w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">{stepTitles[step - 1]}</h2>

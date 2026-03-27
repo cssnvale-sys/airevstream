@@ -53,7 +53,7 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true">
       <div className="bg-bg-secondary border border-border rounded-lg w-full max-w-md p-6">
         <h2 className="text-h3 text-text-primary mb-4">New Seasoning Cohort</h2>
         <form noValidate onSubmit={handleSubmit} className="space-y-4">

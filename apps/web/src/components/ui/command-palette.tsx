@@ -132,6 +132,8 @@ export function CommandPalette() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/60"
+      role="dialog"
+      aria-modal="true"
       onClick={() => setOpen(false)}
     >
       <div

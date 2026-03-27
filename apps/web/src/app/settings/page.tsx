@@ -721,6 +721,7 @@ function NotificationsTab() {
                 className="input w-full"
                 placeholder="admin@example.com"
                 type="email"
+                autoComplete="email"
               />
             </div>
           )}

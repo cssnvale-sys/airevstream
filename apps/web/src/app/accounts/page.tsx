@@ -226,6 +226,7 @@ function AddEmailModal({
                 onChange={(e) => setEmail(e.target.value)}
                 className="input w-full"
                 placeholder="user@example.com"
+                autoComplete="email"
               />
             </div>
             <div>
@@ -237,6 +238,7 @@ function AddEmailModal({
                 className="input w-full"
                 placeholder="Account password"
                 minLength={8}
+                autoComplete="new-password"
               />
               <p className="text-xs text-text-secondary mt-1">Minimum 8 characters</p>
             </div>

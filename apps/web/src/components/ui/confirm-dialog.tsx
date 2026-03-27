@@ -102,7 +102,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             disabled={loading}
             aria-label="Close dialog"
-            className="text-text-secondary hover:text-text-primary transition-colors shrink-0"
+            className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded shrink-0"
           >
             <X size={16} />
           </button>

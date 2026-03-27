@@ -133,7 +133,7 @@ export function AssetPickerModal({ open, onClose, type, onSelect, excludeIds = [
           </h2>
           <button
             onClick={onClose}
-            className="text-text-secondary hover:text-text-primary transition-colors"
+            className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded"
             aria-label="Close"
           >
             <X size={18} />

@@ -83,7 +83,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
           <button
             onClick={onClose}
             aria-label="Close shortcuts modal"
-            className="text-text-secondary hover:text-text-primary transition-colors"
+            className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded"
           >
             <X size={18} />
           </button>

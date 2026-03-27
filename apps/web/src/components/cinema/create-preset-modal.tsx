@@ -130,7 +130,7 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
           <h2 className="text-sm font-semibold text-text-primary">Create a Preset</h2>
           <button
             onClick={handleClose}
-            className="text-text-tertiary hover:text-text-primary transition-colors text-lg leading-none"
+            className="text-text-tertiary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded text-lg leading-none"
           >
             &times;
           </button>

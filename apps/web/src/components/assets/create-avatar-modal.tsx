@@ -97,7 +97,7 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
           <button
             onClick={handleClose}
             disabled={submitting}
-            className="text-text-secondary hover:text-text-primary transition-colors"
+            className="text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 rounded"
             aria-label="Close"
           >
             <X size={18} />

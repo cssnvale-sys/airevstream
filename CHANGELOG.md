@@ -37,6 +37,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Worker timing constants** (Session 48): 20+ constants extracted across 5 workers — posting retry/rate-limit, lifecycle stagger/backoff, maintenance intervals, research update.
 - **API route constants** (Session 48): 15+ constants extracted across 9 routes — search/calendar/viral-score/versions/api-keys/cinema-bible/SSE/chat/trending limits and timeouts.
 - **KNOWN-ISSUES cleanup** (Session 48): 4 stale issues marked fixed (KI-076, KI-074, KI-068, KI-067), KI-079 updated with partial fix.
+- **Focus trapping** (Session 48): New `useFocusTrap` hook applied to all 11 modal dialogs. Tab/Shift+Tab cycling, Escape-to-close, auto-focus first element, focus restoration on close.
+- **Modal aria-labelledby** (Session 48): All 11 modals now have aria-labelledby pointing to their title elements.
+- **Viral trend chart key** (Session 48): Replaced index key with stable point.date for deterministic rendering.
 - **Progress bar ARIA roles** (Session 47): All 8 progress bars now have role="progressbar" with aria-valuenow/min/max/label (pipeline, workflows, file-upload, system, quality-breakdown, create wizards, seasoning).
 - **Stable React keys** (Session 47): 4 mutable list components fixed: experiment variants (crypto.randomUUID), pipeline steps (step.name), keyframe URLs, LoRA composite keys.
 - **Unbounded query safety** (Session 47): Added take limits to system/metrics and cinema-bible findMany queries.

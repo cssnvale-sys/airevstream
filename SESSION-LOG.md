@@ -61,6 +61,19 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 - KI-067 resolved (bcrypt no longer used)
 - KI-079 updated with partial fix status
 
+### Iteration 113: Focus Trap for All Modals
+- New `useFocusTrap` hook: Tab/Shift+Tab cycling, Escape-to-close, auto-focus, focus restoration
+- Applied to all 11 modal components, replacing manual useEffect patterns
+- Net -32 lines while adding new functionality
+
+### Iteration 114: Modal aria-labelledby
+- Added aria-labelledby + title id to 7 modals (create-preset, create-experiment, create-cohort, create-series, add-episode, command-palette, keyboard-shortcuts)
+- All 11 modals now have proper dialog labeling
+
+### Iteration 115: React Key Fix + Verification
+- Viral trend chart: replaced index key with point.date
+- Verified: backdrop aria-hidden (all clean), React keys (1 real issue fixed, 3 acceptable)
+
 ### Verification
 - Build: 14/14 ✓
 - Tests: 27/27 tasks ✓

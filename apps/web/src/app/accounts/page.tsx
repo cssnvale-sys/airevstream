@@ -200,7 +200,7 @@ function AddEmailModal({
               key={s}
               className={cn(
                 'h-1 flex-1 rounded-full transition-colors',
-                s <= step ? 'bg-violet-500' : 'bg-zinc-700',
+                s <= step ? 'bg-accent-purple' : 'bg-bg-tertiary',
               )}
             />
           ))}

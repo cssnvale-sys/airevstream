@@ -117,7 +117,7 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
             <div className="space-y-1.5">
               {estimate.breakdown.map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs">
-                  <div className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[item.category] ?? 'bg-gray-500'}`} />
+                  <div className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[item.category] ?? 'bg-text-tertiary'}`} />
                   <span className="flex-1 text-text-secondary">{item.description}</span>
                   <span className="text-text-tertiary">{formatCost(item.estimatedCost)}</span>
                 </div>

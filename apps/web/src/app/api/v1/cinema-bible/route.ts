@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     const bibles = await ctx.db.cinemaBible.findMany({
       where: { channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } } },
       orderBy: { updatedAt: 'desc' },
+      take: 100,
       include: {
         channel: {
           select: {

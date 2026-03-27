@@ -34,10 +34,11 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Fetch all metrics at once and group by type in JS
+    // Fetch all metrics at once and group by type in JS (capped at historyLimit per type)
     const allMetrics = await ctx.db.systemMetric.findMany({
       where: { metricType: { in: validMetricTypes } },
       orderBy: { createdAt: 'desc' },
+      take: validMetricTypes.length * historyLimit,
     });
 
     const latest: Record<string, unknown> = {};

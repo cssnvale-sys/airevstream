@@ -39,6 +39,7 @@ export function NicheTagInput({ value, onChange, maxTags = 10 }: NicheTagInputPr
         >
           {tag}
           <button
+            type="button"
             onClick={() => removeTag(tag)}
             className="hover:text-accent-red transition-colors"
             aria-label={`Remove ${tag}`}

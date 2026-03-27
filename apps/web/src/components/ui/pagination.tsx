@@ -61,6 +61,7 @@ export function Pagination({
         )}
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={() => onPageChange(Math.max(1, page - 1))}
             disabled={page <= 1}
             className="btn-secondary btn-sm p-2 disabled:opacity-30"
@@ -70,6 +71,7 @@ export function Pagination({
           </button>
           {pageNumbers.map((num) => (
             <button
+              type="button"
               key={num}
               onClick={() => onPageChange(num)}
               aria-current={page === num ? 'page' : undefined}
@@ -82,6 +84,7 @@ export function Pagination({
             </button>
           ))}
           <button
+            type="button"
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
             className="btn-secondary btn-sm p-2 disabled:opacity-30"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Check,
   ChevronLeft,
@@ -103,7 +103,6 @@ const DIALOGUE_DENSITY_OPTIONS = [
 ] as const;
 
 export function SimpleCreateWizard() {
-  const router = useRouter();
   const { mode } = useComplexityMode();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<SimpleFormData>(INITIAL_SIMPLE_FORM);
@@ -672,13 +671,13 @@ export function SimpleCreateWizard() {
       {contentId ? (
         <>
           <PipelineProgress contentId={contentId} simplifiedLabels />
-          <button
-            onClick={() => router.push(`/studio/${contentId}`)}
+          <Link
+            href={`/studio/${contentId}`}
             className="btn-primary flex items-center gap-2"
           >
             <Clapperboard size={16} />
             Open in Studio
-          </button>
+          </Link>
         </>
       ) : generating ? (
         <div className="flex items-center justify-center py-16">

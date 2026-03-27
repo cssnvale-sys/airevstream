@@ -454,7 +454,7 @@ export default function SystemPage() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="text-xs text-text-secondary">{wf.progress}%</span>
-                      <div className="w-24 h-1.5 rounded-full bg-bg-tertiary overflow-hidden">
+                      <div className="w-24 h-1.5 rounded-full bg-bg-tertiary overflow-hidden" role="progressbar" aria-valuenow={wf.progress} aria-valuemin={0} aria-valuemax={100} aria-label="Workflow progress">
                         <div
                           className="h-full rounded-full bg-accent-blue transition-all"
                           style={{ width: `${wf.progress}%` }}

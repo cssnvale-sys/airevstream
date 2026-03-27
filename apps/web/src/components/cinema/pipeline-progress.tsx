@@ -48,7 +48,14 @@ export function PipelineProgress({ contentId, simplifiedLabels }: PipelineProgre
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-bg-tertiary rounded-full mb-4 overflow-hidden">
+      <div
+        className="h-1.5 bg-bg-tertiary rounded-full mb-4 overflow-hidden"
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Pipeline progress"
+      >
         <div
           className="h-full bg-accent-blue rounded-full transition-all duration-500"
           style={{ width: `${progress}%` }}

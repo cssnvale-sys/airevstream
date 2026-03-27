@@ -180,7 +180,7 @@ export function FileUpload({
             <Loader2 className="h-8 w-8 animate-spin text-accent-blue" />
             <p className="text-sm text-text-secondary">Uploading...</p>
             <div className="w-full max-w-xs">
-              <div className="h-2 w-full rounded-full bg-bg-tertiary">
+              <div className="h-2 w-full rounded-full bg-bg-tertiary" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label="Upload progress">
                 <div
                   className="h-2 rounded-full bg-accent-blue transition-all duration-200"
                   style={{ width: `${progress}%` }}

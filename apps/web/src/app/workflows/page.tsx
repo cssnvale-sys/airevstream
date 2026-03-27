@@ -233,7 +233,7 @@ export default function WorkflowsPage() {
                     </div>
                     {job.status === 'running' && (
                       <div className="w-32">
-                        <div className="h-2 rounded-full bg-bg-tertiary overflow-hidden">
+                        <div className="h-2 rounded-full bg-bg-tertiary overflow-hidden" role="progressbar" aria-valuenow={job.progress} aria-valuemin={0} aria-valuemax={100} aria-label="Job progress">
                           <div
                             className="h-full rounded-full bg-accent-blue transition-all"
                             style={{ width: `${job.progress}%` }}

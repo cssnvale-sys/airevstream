@@ -42,7 +42,7 @@ export function Pagination({
   }
 
   return (
-    <div className={cn('flex items-center justify-between text-sm text-text-secondary', className)}>
+    <nav aria-label="Pagination" className={cn('flex items-center justify-between text-sm text-text-secondary', className)}>
       <span>
         Showing {startItem}-{endItem} of {total}
       </span>
@@ -91,6 +91,6 @@ export function Pagination({
           </button>
         </div>
       </div>
-    </div>
+    </nav>
   );
 }

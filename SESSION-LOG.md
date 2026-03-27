@@ -142,7 +142,19 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 47**: KI-059 fix — Added `aiServiceId` query param to GET `/api/v1/content` route. Library page sends AI model filter server-side instead of client-side post-pagination filtering.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~57 total. WCAG coverage comprehensive. Worker resilience improved. Health monitoring expanded.
+**Iteration 48**: Tracking files update — KNOWN-ISSUES.md (KI-059 fixed), SESSION-LOG.md, CHANGELOG.md updated.
+
+**Iteration 49**: Responsive design — notification dropdown viewport-aware width, 5 loading skeleton grids matched to page breakpoints (series, experiments, channels, seasoning, calendar), accounts avatar grid 2-col mobile, settings pool stats 1-col mobile.
+
+**Iteration 50**: SEO metadata — Viewport export added to root layout (width, initialScale, themeColor). Descriptions added to 18 segment layouts. Assets layout title deduplicated (removed redundant suffix handled by template).
+
+**Iteration 51**: Not-found pages + form accessibility — 6 contextual not-found.tsx files for dynamic routes (series, content, channels, experiments, studio, seasoning). 14 buttons given explicit type="button". AI panel input/send got aria-labels. Settings + reset-password password inputs got htmlFor/id associations and autoComplete attributes.
+
+**Iteration 52**: Table header consistency + EmptyState adoption — System, settings proxy, and enrollment tables standardized to consistent py/px padding + font-medium. Series and channels pages now use EmptyState component instead of inline markup.
+
+**Iteration 53**: SWR auto-refresh — Added refreshInterval to approvals (30s), workflows/HITL (10s), dashboard approvals (30s) + workflows (15s). useAlerts default 30s refresh. Config passthrough added to useContent, useApprovals, useCalendar, useWorkflows hooks.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~63 total. Full SEO metadata, responsive design, SWR live refresh, comprehensive form accessibility.
 
 ---
 

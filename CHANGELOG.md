@@ -38,11 +38,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **aria-label coverage** (Session 47): Added aria-labels to 3 icon-only close buttons in assets pages.
 - **Touch targets** (Session 47): Increased min touch target size for pagination, sidebar mobile, studio shot actions.
 - **Missing toast feedback** (Session 47): Added toast.error for failed cost preview estimates.
-- **WCAG aria-labels** (Session 47): 20+ aria-labels added to filter selects, icon-only buttons, search/date inputs, password visibility toggles, pagination per-page, command palette.
+- **WCAG aria-labels** (Session 47): 20+ aria-labels added to filter selects, icon-only buttons, search/date inputs, password visibility toggles, pagination per-page, command palette. 14 buttons given explicit type="button". AI panel input/send aria-labels. Password form htmlFor/id + autoComplete.
 - **Worker resilience** (Session 47): 6 unprotected handler functions wrapped with try/catch (account, experiment, lifecycle workers).
 - **Redis health check** (Session 47): Health API checks Redis via raw RESP PING over TCP. System page shows per-service status with latency.
 - **KI-059 fix** (Session 47): AI model filter moved from client-side to server-side query param on GET /api/v1/content.
 - **KI-081 fix** (Session 47): Removed duplicate ContinuityLocks type export.
+- **Responsive design** (Session 47): Notification dropdown viewport-aware width, 5 loading skeleton grids matched to page responsive breakpoints, accounts avatar + settings pool stats mobile grids.
+- **SEO metadata** (Session 47): Viewport export on root layout, descriptions on all 21 segment layouts, assets title dedup.
+- **Not-found pages** (Session 47): 6 contextual 404 pages for dynamic routes (series, content, channels, experiments, studio, seasoning).
+- **Table header consistency** (Session 47): Standardized padding/font-weight across system, settings proxy, and enrollment tables.
+- **EmptyState adoption** (Session 47): Series and channels pages now use reusable EmptyState component.
+- **SWR auto-refresh** (Session 47): Approvals (30s), workflows/HITL (10s), dashboard (30s/15s), alerts (30s). Config passthrough for useContent, useApprovals, useCalendar, useWorkflows.
 - **KI-066 fix** (Session 47): Removed 4 unused dependencies (class-variance-authority, @fastify/websocket, playwright-extra, puppeteer-extra-plugin-stealth).
 - **15 API routes missing force-dynamic** (Session 47): Analytics, auth, calendar, events/stream, suggestions/stats, system/metrics routes now export force-dynamic.
 - **22 inline button styles** (Session 47): Replaced with utility classes (btn-primary, btn-secondary, btn-ghost) across 10 components.

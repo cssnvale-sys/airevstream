@@ -134,7 +134,7 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setSelected(new Set(VARIANT_OPTIONS.map(v => v.id)))}
-            className="text-xs px-2 py-1 text-text-secondary hover:text-text-primary border border-border rounded"
+            className="text-xs px-2 py-1 text-text-secondary hover:text-text-primary border border-border rounded transition-colors"
           >
             All
           </button>

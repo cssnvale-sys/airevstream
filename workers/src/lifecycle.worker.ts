@@ -16,6 +16,17 @@ import * as os from 'node:os';
 
 const logger = createLogger('worker:lifecycle');
 
+// ─── Constants ───
+const LIFECYCLE_STAGGER_BASE_MS = 30_000;
+const LIFECYCLE_STAGGER_JITTER_MS = 60_000;
+const LIFECYCLE_BACKOFF_DELAY_MS = 15_000;
+const LIFECYCLE_JOB_BACKOFF_DELAY_MS = 10_000;
+const LIFECYCLE_ENROLLMENT_STAGGER_BASE_MS = 60_000;
+const LIFECYCLE_ENROLLMENT_STAGGER_JITTER_MS = 120_000;
+const LIFECYCLE_ENROLLMENT_BACKOFF_DELAY_MS = 30_000;
+const LIFECYCLE_GRADUATION_DELAY_MS = 5_000;
+const LIFECYCLE_JOB_MAX_ATTEMPTS = 2;
+
 // Lazy imports for browser automation (heavy dependency)
 let BrowserContextManager: typeof import('@airevstream/browser-automation').BrowserContextManager | null = null;
 let SessionManager: typeof import('@airevstream/browser-automation').SessionManager | null = null;
@@ -138,7 +149,7 @@ async function handleInit(data: LifecycleInitJob) {
     // Queue discovery jobs with stagger
     const queue = getQueue('lifecycle');
     for (let i = 0; i < data.targetPlatforms.length; i++) {
-      const delay = i * (30000 + Math.floor(Math.random() * 60000)); // 30-90s stagger
+      const delay = i * (LIFECYCLE_STAGGER_BASE_MS + Math.floor(Math.random() * LIFECYCLE_STAGGER_JITTER_MS)); // 30-90s stagger
       await queue.add('lifecycle:discover', {
         lifecycleId: lifecycle.id,
         emailAccountId: data.emailAccountId,
@@ -146,8 +157,8 @@ async function handleInit(data: LifecycleInitJob) {
         tenantId: data.tenantId,
       } as any, {
         delay,
-        attempts: 2,
-        backoff: { type: 'exponential', delay: 15000 },
+        attempts: LIFECYCLE_JOB_MAX_ATTEMPTS,
+        backoff: { type: 'exponential', delay: LIFECYCLE_BACKOFF_DELAY_MS },
       });
     }
 
@@ -245,7 +256,7 @@ async function handleDiscover(data: LifecycleDiscoverJob) {
       lifecycleId: data.lifecycleId,
       emailAccountId: data.emailAccountId,
       tenantId: data.tenantId,
-    }, { attempts: 2, backoff: { type: 'exponential', delay: 10000 } });
+    }, { attempts: LIFECYCLE_JOB_MAX_ATTEMPTS, backoff: { type: 'exponential', delay: LIFECYCLE_JOB_BACKOFF_DELAY_MS } });
   }
 
   return { platform: data.platform, result: discoveryResult };
@@ -320,14 +331,14 @@ async function handlePlan(data: LifecyclePlanJob) {
 
       const queue = getQueue('lifecycle');
       for (let i = 0; i < signupsNeeded.length; i++) {
-        const delay = i * (60000 + Math.floor(Math.random() * 120000)); // 1-3 min stagger
+        const delay = i * (LIFECYCLE_ENROLLMENT_STAGGER_BASE_MS + Math.floor(Math.random() * LIFECYCLE_ENROLLMENT_STAGGER_JITTER_MS)); // 1-3 min stagger
         await queue.add('lifecycle:signup', {
           lifecycleId: data.lifecycleId,
           emailAccountId: data.emailAccountId,
           platform: signupsNeeded[i],
           tenantId: data.tenantId,
           avatarId: lifecycle.avatarId ?? undefined,
-        } as any, { delay, attempts: 2, backoff: { type: 'exponential', delay: 30000 } });
+        } as any, { delay, attempts: LIFECYCLE_JOB_MAX_ATTEMPTS, backoff: { type: 'exponential', delay: LIFECYCLE_ENROLLMENT_BACKOFF_DELAY_MS } });
       }
     } else {
       // No signups needed — skip to enroll
@@ -438,7 +449,7 @@ async function handleSignup(data: LifecycleSignupJob, job: Job) {
           platform: data.platform,
           avatarId: data.avatarId,
           tenantId: data.tenantId,
-        }, { delay: 5000, attempts: 2 });
+        }, { delay: LIFECYCLE_GRADUATION_DELAY_MS, attempts: LIFECYCLE_JOB_MAX_ATTEMPTS });
       } else {
         await queueEnrollIfReady(data.lifecycleId, data.emailAccountId, data.tenantId);
       }
@@ -675,7 +686,7 @@ async function queueEnrollIfReady(lifecycleId: string, emailAccountId: string, t
     tenantId,
     socialAccountIds: socialAccounts.map((sa) => sa.id),
     platforms: allPlatforms,
-  }, { attempts: 2 });
+  }, { attempts: LIFECYCLE_JOB_MAX_ATTEMPTS });
 }
 
 /**

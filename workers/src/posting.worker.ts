@@ -7,7 +7,16 @@ import type { Job } from 'bullmq';
 import { getAdapter, type PostContent, type PlatformCredentials } from './platform-adapters.js';
 
 const logger = createLogger('worker:posting');
+
+// ─── Constants ───
 const POSTING_BATCH_SIZE = 100;
+const POSTING_EXPIRATION_BUFFER_MS = 5 * 60 * 1000;
+const POSTING_TOKEN_EXPIRATION_MS = 30 * 60 * 1000;
+const POSTING_JOB_MAX_ATTEMPTS = 3;
+const POSTING_JOB_BACKOFF_DELAY_MS = 60_000;
+const POSTING_RATE_LIMIT_MAX = 5;
+const POSTING_RATE_LIMIT_WINDOW_MS = 60_000;
+const POSTING_SCHEDULER_INTERVAL_MS = 60_000;
 
 async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob | SeriesPlaylistSyncJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing posting job');
@@ -41,7 +50,7 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     if (lock?.lockedAt && lock?.expiresAt && new Date(lock.expiresAt).getTime() > Date.now()) {
       if (lock.type === 'warming') {
         const timeLeft = new Date(lock.expiresAt).getTime() - Date.now();
-        if (timeLeft < 5 * 60 * 1000) {
+        if (timeLeft < POSTING_EXPIRATION_BUFFER_MS) {
           // Warming lock expiring soon (<5 min) — short retry
           logger.info({ socialAccountId: socialId, timeLeftMs: timeLeft }, 'Warming lock expiring soon — short retry');
           throw new Error('Activity lock held by warming — retry shortly');
@@ -52,7 +61,7 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     }
     // Acquire posting lock (30 min TTL)
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
+    const expiresAt = new Date(now.getTime() + POSTING_TOKEN_EXPIRATION_MS);
     await db.socialAccount.update({
       where: { id: socialId },
       data: {
@@ -204,7 +213,7 @@ async function processPostingJob(job: Job<PostingScheduleJob | PostingPublishJob
     };
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    const maxAttempts = job.opts.attempts ?? 3;
+    const maxAttempts = job.opts.attempts ?? POSTING_JOB_MAX_ATTEMPTS;
 
     await db.scheduledPost.update({
       where: { id: scheduledPost.id },
@@ -266,8 +275,8 @@ async function checkScheduledPosts() {
         channelId: post.channelId,
         platform: post.platform,
       } as PostingPublishJob, {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 60000 },
+        attempts: POSTING_JOB_MAX_ATTEMPTS,
+        backoff: { type: 'exponential', delay: POSTING_JOB_BACKOFF_DELAY_MS },
       });
 
       await db.scheduledPost.update({
@@ -319,13 +328,13 @@ async function handlePlaylistSync(data: SeriesPlaylistSyncJob) {
 export function startPostingWorker() {
   const worker = createWorker('posting', processPostingJob, {
     concurrency: 1,
-    limiter: { max: 5, duration: 60000 },
+    limiter: { max: POSTING_RATE_LIMIT_MAX, duration: POSTING_RATE_LIMIT_WINDOW_MS },
   });
 
   // Set up scheduled post checker — runs every 60 seconds
   const postingQueue = getQueue('posting');
   postingQueue.add('posting:check-scheduled', {} as any, {
-    repeat: { every: 60000 },
+    repeat: { every: POSTING_SCHEDULER_INTERVAL_MS },
     removeOnComplete: 10,
     removeOnFail: 10,
   }).catch((err: unknown) => logger.error({ err }, 'Failed to register posting:check-scheduled repeatable job'));

@@ -14,7 +14,10 @@ function getRegistry() {
 }
 
 const logger = createLogger('worker:content');
+
+// ─── Constants ───
 const TRENDS_PAGE_SIZE = 20;
+const CONTENT_RESCORE_INTERVAL_MS = 5 * 60 * 1000;
 
 async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob | ContentViralScoreJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing content job');
@@ -612,7 +615,7 @@ export function startContentWorker() {
   // Register repeatable approval timeout check (every 5 minutes)
   const contentQueue = getQueue('content');
   contentQueue.add('content:check-approval-timeouts', { _trigger: 'repeatable' } as any, {
-    repeat: { every: 5 * 60 * 1000 }, // 5 minutes
+    repeat: { every: CONTENT_RESCORE_INTERVAL_MS }, // 5 minutes
     removeOnComplete: true,
     removeOnFail: 10,
   }).catch((err: unknown) => logger.error({ err }, 'Failed to register approval timeout repeatable job'));

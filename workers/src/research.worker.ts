@@ -14,6 +14,10 @@ function getRegistry() {
 
 const logger = createLogger('worker:research');
 
+// ─── Constants ───
+const RESEARCH_CONTENT_SUMMARY_MAX_CHARS = 2000;
+const RESEARCH_UPDATE_INTERVAL_MS = 12 * 60 * 60 * 1000;
+
 async function processResearchJob(job: Job<ResearchTrendsJob | ResearchTopicsJob | ResearchKnowledgeUpdateJob | ResearchPopulateKnowledgeJob>) {
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing research job');
 
@@ -235,7 +239,7 @@ async function handlePopulateKnowledge(data: ResearchPopulateKnowledgeJob, job: 
           domain,
           category: `research:${topic}`,
           title,
-          content: contentSummary.substring(0, 2000),
+          content: contentSummary.substring(0, RESEARCH_CONTENT_SUMMARY_MAX_CHARS),
           sourceUrl: url,
           relevanceScore,
           isCurrent: true,
@@ -330,7 +334,7 @@ Return a JSON array of objects with: title, content (informative summary, max 50
         domain,
         category: `research:${topic}`,
         title: entry.title,
-        content: (entry.content ?? '').substring(0, 2000),
+        content: (entry.content ?? '').substring(0, RESEARCH_CONTENT_SUMMARY_MAX_CHARS),
         sourceUrl: entry.sourceUrl ?? null,
         relevanceScore,
         isCurrent: true,
@@ -374,7 +378,7 @@ export function startResearchWorker() {
   // Set up repeatable trends research (every 12 hours)
   const researchQueue = getQueue('research');
   researchQueue.add('research:trends', {} as any, {
-    repeat: { every: 12 * 60 * 60 * 1000 }, // every 12 hours
+    repeat: { every: RESEARCH_UPDATE_INTERVAL_MS }, // every 12 hours
     removeOnComplete: true,
     removeOnFail: 10,
   }).catch((err: unknown) => logger.error({ err }, 'Failed to register research:trends repeatable job'));

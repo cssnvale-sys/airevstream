@@ -23,6 +23,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
 
 ### Fixed
+- **LoadingButton mass adoption** (Session 47): 35 buttons across 22 files converted from manual loading patterns to LoadingButton component for consistent UX.
+- **Search debounce** (Session 47): Added useDebounce(300ms) to affiliate, assets, add-episode-modal, and asset-picker-modal search inputs.
+- **Table overflow** (Session 47): Added overflow-x-auto to 9 tables across analytics, channels, experiments, series pages.
+- **Theme token consistency** (Session 47): Replaced hardcoded hex colors with design system tokens in timeline and cost-preview-panel.
+- **Modal Escape handlers** (Session 47): Added Escape key listeners to create-preset-modal and asset-picker-modal.
+- **Form autoComplete** (Session 47): Added autoComplete attributes to all auth form inputs (email, password, name).
+- **Stable list keys** (Session 47): Fixed index key anti-pattern in channel-viral-dashboard topic suggestions.
+- **aria-label coverage** (Session 47): Added aria-labels to 3 icon-only close buttons in assets pages.
+- **Touch targets** (Session 47): Increased min touch target size for pagination, sidebar mobile, studio shot actions.
+- **Missing toast feedback** (Session 47): Added toast.error for failed cost preview estimates.
+- **KI-081 fix** (Session 47): Removed duplicate ContinuityLocks type export.
+- **KI-066 fix** (Session 47): Removed 4 unused dependencies (class-variance-authority, @fastify/websocket, playwright-extra, puppeteer-extra-plugin-stealth).
 - **15 API routes missing force-dynamic** (Session 47): Analytics, auth, calendar, events/stream, suggestions/stats, system/metrics routes now export force-dynamic.
 - **22 inline button styles** (Session 47): Replaced with utility classes (btn-primary, btn-secondary, btn-ghost) across 10 components.
 - **Health check expansion** (Session 47): Infrastructure checks for Ollama, ComfyUI, MinIO with degraded status support.

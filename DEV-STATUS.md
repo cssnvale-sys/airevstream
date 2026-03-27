@@ -409,11 +409,12 @@
 
 ## Test Summary
 - **Unit tests**: 349 shared + 158 other = 507+ (all passing via Vitest)
-- **Audit tests**: 33 (13 files scanning 133+ API routes + monorepo-wide for 13 bug classes, <1s)
+- **Audit tests**: 37 (15 files scanning 133+ API routes + monorepo-wide for 13+ bug classes, <1s)
 - **E2E tests**: 181 (30 spec files via Playwright, all 17 pages, **100% pass rate** — Session 16)
 - **Test tasks**: 27 (all passing via Turbo)
 - **14 packages all building successfully** (including audio-engine, browser-automation, Remotion)
 - **Pre-deployment audit (Session 46)**: 8-wave, 30-agent audit across 450+ files. ~160 issues fixed. PM2 config corrected. 7 integration mismatches documented (KI-082 through KI-085). 3 decisions (D124-D126). 0 regressions.
+- **Iterative improvement (Session 47)**: 20 iterations — 19 presets, 4 recipes, 2 Remotion compositions, 3 shot classes, 4 audit tests, 35 LoadingButton adoptions, 9 table overflow fixes, 4 search debounces, autoComplete on auth forms, theme token consistency, modal Escape handlers, touch target increases. 20 commits, 0 regressions.
 - Integration audit (Session 8): All components verified wired, 2 EmptyState gaps fixed
 - Codebase audit (Session 12→17): 9 bug classes automated, known violation sets for viewer checks and rate limiting emptied to 0
 - Full codebase audit (Session 19): 302 files scanned, 16 fixes applied (2 bugs, 4 silent catches, 9 type safety, 1 config), 0 silent catches remaining

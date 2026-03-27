@@ -26,7 +26,7 @@ export default function StudioEditorError({
           Failed to load the studio editor. You can try again or go back to the library.
         </p>
         <div className="flex gap-3 justify-center">
-          <button onClick={reset} className="btn-primary inline-flex items-center gap-2">
+          <button type="button" onClick={reset} className="btn-primary inline-flex items-center gap-2">
             <RefreshCw size={16} />
             Try Again
           </button>

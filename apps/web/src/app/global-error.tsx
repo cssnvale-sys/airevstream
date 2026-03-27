@@ -22,7 +22,7 @@ export default function GlobalError({
             <p style={{ fontSize: '0.875rem', color: '#9a9aa0', marginBottom: '1.5rem' }}>
               An unexpected error occurred. This has been logged for investigation.
             </p>
-            <button
+            <button type="button"
               onClick={reset}
               style={{
                 backgroundColor: '#3b82f6',

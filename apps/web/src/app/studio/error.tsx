@@ -24,7 +24,7 @@ export default function StudioError({
         <p className="text-sm text-text-secondary mb-6">
           The studio encountered an error. You can try again or go back to the library.
         </p>
-        <button onClick={reset} className="btn-primary inline-flex items-center gap-2">
+        <button type="button" onClick={reset} className="btn-primary inline-flex items-center gap-2">
           <RefreshCw size={16} />
           Try again
         </button>

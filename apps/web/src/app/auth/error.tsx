@@ -26,7 +26,7 @@ export default function AuthError({
           Something went wrong during authentication. Please try again or return to the login page.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <button onClick={reset} className="btn-primary inline-flex items-center gap-2">
+          <button type="button" onClick={reset} className="btn-primary inline-flex items-center gap-2">
             <RefreshCw size={16} />
             Try again
           </button>

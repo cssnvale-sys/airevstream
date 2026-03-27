@@ -24,7 +24,7 @@ export default function GlobalError({
         <p className="text-sm text-text-secondary mb-6">
           An unexpected error occurred. This has been logged for investigation.
         </p>
-        <button onClick={reset} className="btn-primary inline-flex items-center gap-2">
+        <button type="button" onClick={reset} className="btn-primary inline-flex items-center gap-2">
           <RefreshCw size={16} />
           Try again
         </button>

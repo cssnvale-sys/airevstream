@@ -26,7 +26,7 @@ export default function ChannelDetailError({
           Something went wrong loading this channel. It may not exist or there was a server error.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <button onClick={reset} className="btn-primary inline-flex items-center gap-2">
+          <button type="button" onClick={reset} className="btn-primary inline-flex items-center gap-2">
             <RefreshCw size={16} />
             Try again
           </button>

@@ -26,7 +26,7 @@ export default function AssetsError({
           Something went wrong loading assets. You can try again or go back to the dashboard.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <button onClick={reset} className="btn-primary inline-flex items-center gap-2">
+          <button type="button" onClick={reset} className="btn-primary inline-flex items-center gap-2">
             <RefreshCw size={16} />
             Try again
           </button>

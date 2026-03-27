@@ -186,7 +186,19 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 69**: Title tooltips — 6 truncated text elements (content titles, descriptions, error messages) given title attributes for hover tooltips across studio, library, content detail, series, and workflows pages.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~82 total. Design tokens complete, WCAG accessibility comprehensive, consistent date formatting, all loading/disabled states, all error messages specific.
+**Iteration 70**: Pagination nav landmark — Wrapped pagination in `<nav aria-label="Pagination">` semantic element.
+
+**Iteration 71**: Worker cleanup config — Standardized removeOnComplete/removeOnFail to 10 across account and posting workers.
+
+**Iteration 72**: Series card accessibility — sr-only status label for color-only dot, title tooltips on truncated name and description.
+
+**Iteration 73**: Table aria-labels — Added aria-label to all 19 data tables across 12 files (series, experiments, system, accounts, channels, affiliate, analytics, settings, episodes, shots, enrollments).
+
+**Iteration 74**: Focus-visible + autocomplete — Focus-visible rings added to 7 modal close buttons. autocomplete attributes added to 3 form inputs (settings email, accounts email/password).
+
+**Iteration 75**: Experiment modal form + backdrop a11y — Wrapped experiment modal in `<form>` element for Enter-key submission. Added aria-hidden="true" to 4 modal backdrop divs. Added type="button" to variant add/remove buttons.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~88 total. Design tokens complete, WCAG accessibility comprehensive, consistent date formatting, all loading/disabled states, all error messages specific, all tables labeled, all modals keyboard-navigable.
 
 ---
 

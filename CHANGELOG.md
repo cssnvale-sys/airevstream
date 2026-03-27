@@ -23,6 +23,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Pre-deployment full system audit** (Session 46): 8-wave parallel-agent audit across 450+ files, 30 agents, ~160 issues found and fixed with 0 regressions. 3 decisions (D124-D126). 7 integration mismatches documented.
 
 ### Fixed
+- **Table aria-labels** (Session 47): All 19 data tables across 12 files now have descriptive aria-label attributes for screen readers.
+- **Modal close button focus rings** (Session 47): 7 modal close buttons now show focus-visible ring for keyboard navigation.
+- **Form autocomplete** (Session 47): 3 more inputs (settings email, accounts email/password) given autocomplete attributes.
+- **Experiment modal form** (Session 47): Wrapped in `<form>` element so Enter key submits. Variant add/remove buttons given type="button".
+- **Modal backdrop aria-hidden** (Session 47): 4 decorative backdrop divs marked aria-hidden="true" to hide from screen readers.
+- **Pagination nav landmark** (Session 47): Pagination component wrapped in `<nav>` element with aria-label.
+- **Series card sr-only** (Session 47): Added screen-reader-only status label for color-only status dot indicator.
+- **Worker cleanup config** (Session 47): Standardized removeOnComplete/removeOnFail to 10 across account and posting workers.
+- **Sonner import migration** (Session 47): 3 components migrated from direct 'sonner' import to '@/lib/toast' wrapper. Wrapper extended with ExternalToast options.
+- **Generic error messages** (Session 47): 32 "An unexpected error occurred" messages replaced with specific operation context across 26 API routes.
+- **Title tooltips** (Session 47): 6+ truncated text elements given title attributes for hover tooltips.
 - **LoadingButton 100% adoption** (Session 47): 55+ buttons across 30+ files converted from manual Loader2 patterns to LoadingButton component. All mutation buttons in the codebase now use consistent loading UX.
 - **Search debounce** (Session 47): Added useDebounce(300ms) to affiliate, assets, add-episode-modal, and asset-picker-modal search inputs.
 - **Table overflow** (Session 47): Added overflow-x-auto to 9 tables across analytics, channels, experiments, series pages.

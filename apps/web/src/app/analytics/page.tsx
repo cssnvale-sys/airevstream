@@ -362,7 +362,7 @@ export default function AnalyticsPage() {
             </thead>
             <tbody>
               {revenueByChannel.slice(0, 5).map((row) => (
-                <tr key={row.channel} className="border-b border-border last:border-b-0">
+                <tr key={row.channel} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
                   <td className="py-2.5 text-text-primary">{row.channel}</td>
                   <td className="py-2.5 text-right text-accent-green font-medium">
                     {formatCurrency(row.revenue)}
@@ -387,7 +387,7 @@ export default function AnalyticsPage() {
             </thead>
             <tbody>
               {revenueByProduct.slice(0, 5).map((row) => (
-                <tr key={row.product} className="border-b border-border last:border-b-0">
+                <tr key={row.product} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
                   <td className="py-2.5 text-text-primary">{row.product}</td>
                   <td className="py-2.5 text-right text-accent-green font-medium">
                     {formatCurrency(row.revenue)}
@@ -622,7 +622,7 @@ export default function AnalyticsPage() {
               const total = costByService.reduce((sum, i) => sum + i.cost, 0);
               const pct = total > 0 ? ((item.cost / total) * 100).toFixed(1) : '0.0';
               return (
-                <tr key={item.service} className="border-b border-border last:border-b-0">
+                <tr key={item.service} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
                   <td className="py-2.5 text-text-primary">{item.service}</td>
                   <td className="py-2.5 text-right text-accent-amber font-medium">
                     {formatCurrency(item.cost)}
@@ -764,7 +764,7 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 {completedExps.slice(0, 10).map((exp) => (
-                  <tr key={exp.id} className="border-b border-border last:border-b-0">
+                  <tr key={exp.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
                     <td className="py-2.5 text-text-primary">{exp.name}</td>
                     <td className="py-2.5 text-text-secondary capitalize">{exp.primaryMetric}</td>
                     <td className="py-2.5 text-right font-mono text-text-secondary">
@@ -842,7 +842,7 @@ export default function AnalyticsPage() {
                     </thead>
                     <tbody>
                       {sugStats.recent.map((log) => (
-                        <tr key={log.id} className="border-b border-border last:border-b-0">
+                        <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
                           <td className="py-2 text-text-primary font-mono text-caption">{log.presetId}</td>
                           <td className="py-2 text-text-secondary capitalize">{log.dimension}</td>
                           <td className="py-2 text-text-secondary truncate max-w-[150px]">{log.content?.title ?? '-'}</td>

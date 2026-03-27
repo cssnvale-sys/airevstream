@@ -497,7 +497,7 @@ export default function SystemPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {errors.map((err) => (
-                  <tr key={err.id} className="text-text-primary">
+                  <tr key={err.id} className="text-text-primary hover:bg-bg-tertiary/50 transition-colors">
                     <td className="py-2 pr-3">
                       <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium', severityBadgeClass('error'))}>
                         {severityIcon('error')}

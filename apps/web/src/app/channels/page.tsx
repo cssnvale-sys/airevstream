@@ -117,7 +117,7 @@ export default function ChannelsPage() {
           </Link>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="card overflow-x-auto">
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">

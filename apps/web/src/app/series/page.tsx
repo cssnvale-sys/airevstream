@@ -103,7 +103,7 @@ export default function SeriesPage() {
           </button>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="card overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border text-left text-caption text-text-secondary">

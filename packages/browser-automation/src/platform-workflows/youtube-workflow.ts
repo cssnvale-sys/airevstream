@@ -8,7 +8,7 @@ import type {
   WarmingActivityResult,
   WorkflowResult,
 } from '../types';
-import { BasePlatformWorkflow } from './base-workflow';
+import { BasePlatformWorkflow, MAX_WARM_FAILURES } from './base-workflow';
 
 /**
  * YouTube / Google account workflow.
@@ -347,7 +347,7 @@ export class YouTubeWorkflow extends BasePlatformWorkflow {
           this.logger.warn({ activity, error }, 'Warming activity failed');
           // If too many failures, flag the session
           const failCount = activityResults.filter((r) => r.count === 0).length;
-          if (failCount > 5) {
+          if (failCount > MAX_WARM_FAILURES) {
             flagged = true;
             break;
           }

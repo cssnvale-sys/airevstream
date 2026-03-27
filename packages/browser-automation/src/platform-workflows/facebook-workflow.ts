@@ -8,7 +8,7 @@ import type {
   WarmingActivityResult,
   WorkflowResult,
 } from '../types';
-import { BasePlatformWorkflow } from './base-workflow';
+import { BasePlatformWorkflow, MAX_WARM_FAILURES } from './base-workflow';
 
 /**
  * Facebook account workflow.
@@ -377,7 +377,7 @@ export class FacebookWorkflow extends BasePlatformWorkflow {
             break;
           }
           const failCount = activityResults.filter((r) => r.count === 0).length;
-          if (failCount > 5) {
+          if (failCount > MAX_WARM_FAILURES) {
             flagged = true;
             break;
           }

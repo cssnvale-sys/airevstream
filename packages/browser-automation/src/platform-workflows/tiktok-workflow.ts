@@ -8,7 +8,7 @@ import type {
   WarmingActivityResult,
   WorkflowResult,
 } from '../types';
-import { BasePlatformWorkflow } from './base-workflow';
+import { BasePlatformWorkflow, MAX_WARM_FAILURES } from './base-workflow';
 
 /**
  * TikTok account workflow.
@@ -326,7 +326,7 @@ export class TikTokWorkflow extends BasePlatformWorkflow {
         } catch (error) {
           this.logger.warn({ activity, error }, 'TikTok warming activity failed');
           const failCount = activityResults.filter((r) => r.count === 0).length;
-          if (failCount > 5) {
+          if (failCount > MAX_WARM_FAILURES) {
             flagged = true;
             break;
           }

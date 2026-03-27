@@ -26,6 +26,9 @@ export interface WorkflowOptions {
  * implement its own login, createAccount, warmAccount, and checkAccountHealth
  * methods using the helpers defined here.
  */
+/** Maximum failed warming activities before flagging a session */
+export const MAX_WARM_FAILURES = 5;
+
 export abstract class BasePlatformWorkflow {
   protected context: BrowserContext;
   protected page!: Page;

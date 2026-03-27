@@ -60,9 +60,11 @@ const PER_PAGE_OPTIONS = [10, 25, 50];
 // Helpers
 // ---------------------------------------------------------------------------
 
+const HEALTH_SCORE_THRESHOLDS = { GOOD: 80, WARNING: 50 } as const;
+
 function healthColor(score: number): string {
-  if (score >= 80) return 'text-accent-green';
-  if (score >= 50) return 'text-accent-amber';
+  if (score >= HEALTH_SCORE_THRESHOLDS.GOOD) return 'text-accent-green';
+  if (score >= HEALTH_SCORE_THRESHOLDS.WARNING) return 'text-accent-amber';
   return 'text-accent-red';
 }
 

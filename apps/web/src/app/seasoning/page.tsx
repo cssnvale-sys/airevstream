@@ -165,7 +165,7 @@ export default function SeasoningPage() {
                   </div>
                   {/* Mini progress bar */}
                   {cohort._count.enrollments > 0 && (
-                    <div className="mt-2 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
+                    <div className="mt-2 h-1.5 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={Math.round((cohort.completedAccounts / cohort._count.enrollments) * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Cohort completion">
                       <div
                         className="h-full bg-accent-green rounded-full transition-all"
                         style={{ width: `${(cohort.completedAccounts / cohort._count.enrollments) * 100}%` }}

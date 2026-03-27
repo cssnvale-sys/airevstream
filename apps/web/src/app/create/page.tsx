@@ -455,7 +455,7 @@ export default function CreatePage() {
         <span className="text-caption text-text-secondary font-medium">
           Step {currentStep} of {STEPS.length}
         </span>
-        <div className="h-1.5 flex-1 mx-4 bg-bg-tertiary rounded-full overflow-hidden">
+        <div className="h-1.5 flex-1 mx-4 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={Math.round((currentStep / STEPS.length) * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Wizard progress">
           <div
             className="h-full bg-accent-blue rounded-full transition-all duration-300"
             style={{ width: `${(currentStep / STEPS.length) * 100}%` }}

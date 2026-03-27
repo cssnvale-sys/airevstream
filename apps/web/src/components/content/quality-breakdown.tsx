@@ -119,7 +119,7 @@ export function QualityBreakdown({ contentId }: { contentId: string }) {
                 <span className="text-text-secondary">{LABELS[key] ?? key}</span>
                 <span className={scoreLabelColor(score)}>{score}</span>
               </div>
-              <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
+              <div className="h-1.5 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100} aria-label={`${LABELS[key] ?? key} score`}>
                 <div className={cn('h-full rounded-full transition-all', scoreColor(score))} style={{ width: `${Math.min(score, 100)}%` }} />
               </div>
             </div>

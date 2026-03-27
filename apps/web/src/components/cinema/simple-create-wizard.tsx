@@ -714,7 +714,7 @@ export function SimpleCreateWizard() {
         <span className="text-caption text-text-secondary font-medium">
           Step {step} of {STEPS_SIMPLE.length}
         </span>
-        <div className="h-1.5 flex-1 mx-4 bg-bg-tertiary rounded-full overflow-hidden">
+        <div className="h-1.5 flex-1 mx-4 bg-bg-tertiary rounded-full overflow-hidden" role="progressbar" aria-valuenow={Math.round((step / STEPS_SIMPLE.length) * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Wizard progress">
           <div
             className="h-full bg-accent-blue rounded-full transition-all duration-300"
             style={{ width: `${(step / STEPS_SIMPLE.length) * 100}%` }}

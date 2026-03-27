@@ -4,10 +4,10 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
-## Session 48 — Autonomous Iterative Improvement (Iterations 102-104)
+## Session 48 — Autonomous Iterative Improvement (Iterations 102-112)
 
 **Date**: 2026-03-27
-**Focus**: Accessibility sweep, code consistency, Zod error standardization, worker constants.
+**Focus**: Accessibility sweep, type="button" complete sweep, constant extraction, Zod error standardization, KNOWN-ISSUES cleanup.
 
 ### Iteration 102: Bible-Editor Accessibility + Worker Batch Constants
 - Bible-editor: 31 aria-labels, 15 htmlFor/id pairs, role="tablist"/role="tab"/aria-selected on tabs, FieldGroup htmlFor prop
@@ -45,6 +45,21 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 - 34 error boundary reset buttons across all error.tsx files
 - 49 buttons across 30 component/page files (cinema, notifications, assets, UI primitives)
 - **Result: 0 buttons without explicit type= remain in entire codebase**
+
+### Iteration 110: Form Control Accessibility
+- aria-label on shot-properties prompt textarea and lighting input
+- aria-label on seasoning cohort enrollment textarea, affiliate inline select, content rejection textarea
+- htmlFor/id on channels personality/audience textareas, asset description/traits/voice textareas
+
+### Iteration 111: Constant Extraction (Workers + API Routes)
+- Workers (5 files): 20+ constants — posting timing/retry, lifecycle stagger/backoff, maintenance intervals, research/content
+- API Routes (9 files): 15+ constants — search/calendar/viral-score/versions/api-keys/cinema-bible/SSE/chat/trending
+- Updated silent-catch audit known set for SSE route line shift
+
+### Iteration 112: KNOWN-ISSUES Cleanup
+- KI-076, KI-074, KI-068 marked fixed (migrations exist)
+- KI-067 resolved (bcrypt no longer used)
+- KI-079 updated with partial fix status
 
 ### Verification
 - Build: 14/14 ✓

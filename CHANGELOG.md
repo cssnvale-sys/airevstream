@@ -33,6 +33,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Zod error formatting** (Session 48): New formatZodErrors() helper standardizes validation error messages across 63 API routes (was 5 different inline patterns).
 - **Worker batch size constants** (Session 48): POSTING_BATCH_SIZE, TRENDS_PAGE_SIZE, ENROLLMENT_BATCH_SIZE, GRADUATION_SAMPLE_SIZE replace hardcoded values.
 - **Platform adapter constants** (Session 48): TIKTOK_POLL_INTERVAL_MS, INSTAGRAM_CONTAINER_WAIT_MS, INSTAGRAM_IMAGE_WAIT_MS, HEALTH_CHECK_TIMEOUT_MS named constants.
+- **Form control accessibility** (Session 48): aria-label/htmlFor on 10+ unlabeled inputs/selects/textareas across shot-properties, seasoning, affiliate, channels, assets, content pages.
+- **Worker timing constants** (Session 48): 20+ constants extracted across 5 workers — posting retry/rate-limit, lifecycle stagger/backoff, maintenance intervals, research update.
+- **API route constants** (Session 48): 15+ constants extracted across 9 routes — search/calendar/viral-score/versions/api-keys/cinema-bible/SSE/chat/trending limits and timeouts.
+- **KNOWN-ISSUES cleanup** (Session 48): 4 stale issues marked fixed (KI-076, KI-074, KI-068, KI-067), KI-079 updated with partial fix.
 - **Progress bar ARIA roles** (Session 47): All 8 progress bars now have role="progressbar" with aria-valuenow/min/max/label (pipeline, workflows, file-upload, system, quality-breakdown, create wizards, seasoning).
 - **Stable React keys** (Session 47): 4 mutable list components fixed: experiment variants (crypto.randomUUID), pipeline steps (step.name), keyframe URLs, LoRA composite keys.
 - **Unbounded query safety** (Session 47): Added take limits to system/metrics and cinema-bible findMany queries.

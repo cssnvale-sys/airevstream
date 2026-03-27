@@ -23,16 +23,16 @@ interface EnrollmentTableProps {
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'text-text-secondary',
-  signing_up: 'text-yellow-400',
-  needs_human: 'text-orange-400',
-  phase_1: 'text-blue-400',
-  phase_2: 'text-blue-500',
-  phase_3: 'text-indigo-400',
-  phase_4: 'text-purple-400',
-  seasoned: 'text-green-400',
-  graduated: 'text-emerald-400',
-  failed: 'text-red-400',
-  paused: 'text-yellow-400',
+  signing_up: 'text-accent-amber',
+  needs_human: 'text-accent-amber',
+  phase_1: 'text-accent-blue',
+  phase_2: 'text-accent-blue',
+  phase_3: 'text-accent-purple',
+  phase_4: 'text-accent-purple',
+  seasoned: 'text-accent-green',
+  graduated: 'text-accent-green',
+  failed: 'text-accent-red',
+  paused: 'text-accent-amber',
 };
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -98,8 +98,8 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
                 {e.socialAccount ? (
                   <span className={cn(
                     'text-caption font-medium',
-                    e.socialAccount.healthScore >= 70 ? 'text-green-400' :
-                    e.socialAccount.healthScore >= 40 ? 'text-yellow-400' : 'text-red-400',
+                    e.socialAccount.healthScore >= 70 ? 'text-accent-green' :
+                    e.socialAccount.healthScore >= 40 ? 'text-accent-amber' : 'text-accent-red',
                   )}>
                     {e.socialAccount.healthScore}
                   </span>
@@ -113,7 +113,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
                     {(e.status === 'phase_1' || e.status === 'phase_2' || e.status === 'phase_3' || e.status === 'phase_4') && (
                       <button
                         onClick={() => onAction(e.id, 'pause')}
-                        className="text-caption text-yellow-400 hover:text-yellow-300 px-1"
+                        className="text-caption text-accent-amber hover:text-accent-amber px-1"
                       >
                         Pause
                       </button>
@@ -121,7 +121,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
                     {e.status === 'paused' && (
                       <button
                         onClick={() => onAction(e.id, 'resume')}
-                        className="text-caption text-blue-400 hover:text-blue-300 px-1"
+                        className="text-caption text-accent-blue hover:text-accent-blue px-1"
                       >
                         Resume
                       </button>
@@ -129,7 +129,7 @@ export function EnrollmentTable({ enrollments, onAction }: EnrollmentTableProps)
                     {e.status === 'failed' && (
                       <button
                         onClick={() => onAction(e.id, 'retry')}
-                        className="text-caption text-green-400 hover:text-green-300 px-1"
+                        className="text-caption text-accent-green hover:text-accent-green px-1"
                       >
                         Retry
                       </button>

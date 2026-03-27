@@ -1,14 +1,14 @@
 'use client';
 
 const PHASES = [
-  { key: 'pending', label: 'Pending', color: 'bg-gray-500' },
-  { key: 'signing_up', label: 'Signup', color: 'bg-yellow-500' },
-  { key: 'phase_1', label: 'Phase 1', color: 'bg-blue-400' },
-  { key: 'phase_2', label: 'Phase 2', color: 'bg-blue-500' },
-  { key: 'phase_3', label: 'Phase 3', color: 'bg-indigo-500' },
-  { key: 'phase_4', label: 'Phase 4', color: 'bg-purple-500' },
-  { key: 'seasoned', label: 'Seasoned', color: 'bg-green-500' },
-  { key: 'graduated', label: 'Graduated', color: 'bg-emerald-500' },
+  { key: 'pending', label: 'Pending', color: 'bg-text-tertiary' },
+  { key: 'signing_up', label: 'Signup', color: 'bg-accent-amber' },
+  { key: 'phase_1', label: 'Phase 1', color: 'bg-accent-blue' },
+  { key: 'phase_2', label: 'Phase 2', color: 'bg-accent-blue' },
+  { key: 'phase_3', label: 'Phase 3', color: 'bg-accent-purple' },
+  { key: 'phase_4', label: 'Phase 4', color: 'bg-accent-purple' },
+  { key: 'seasoned', label: 'Seasoned', color: 'bg-accent-green' },
+  { key: 'graduated', label: 'Graduated', color: 'bg-accent-green' },
 ];
 
 interface PhasePipelineProps {
@@ -51,17 +51,17 @@ export function PhasePipeline({ phaseCounts, total }: PhasePipelineProps) {
       {/* Status badges */}
       <div className="flex gap-3 text-caption">
         {needsHuman > 0 && (
-          <span className="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400">
+          <span className="px-2 py-0.5 rounded bg-accent-amber/20 text-accent-amber">
             {needsHuman} needs human
           </span>
         )}
         {paused > 0 && (
-          <span className="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400">
+          <span className="px-2 py-0.5 rounded bg-accent-amber/20 text-accent-amber">
             {paused} paused
           </span>
         )}
         {failed > 0 && (
-          <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400">
+          <span className="px-2 py-0.5 rounded bg-accent-red/20 text-accent-red">
             {failed} failed
           </span>
         )}

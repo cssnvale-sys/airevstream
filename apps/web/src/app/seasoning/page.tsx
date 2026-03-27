@@ -64,7 +64,7 @@ export default function SeasoningPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Sprout className="text-green-400" size={24} />
+            <Sprout className="text-accent-green" size={24} />
             <h1 className="text-h2 text-text-primary">Seasoning Pipeline</h1>
           </div>
           <button
@@ -78,9 +78,9 @@ export default function SeasoningPage() {
 
         {/* Error banner */}
         {hasError && (
-          <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-            <AlertTriangle className="text-red-400 shrink-0" size={20} />
-            <p className="text-body text-red-400">Failed to load seasoning data. Please try again later.</p>
+          <div className="flex items-center gap-3 p-4 bg-accent-red/10 border border-accent-red/30 rounded-lg">
+            <AlertTriangle className="text-accent-red shrink-0" size={20} />
+            <p className="text-body text-accent-red">Failed to load seasoning data. Please try again later.</p>
           </div>
         )}
 
@@ -109,8 +109,8 @@ export default function SeasoningPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard icon={<Users size={18} />} label="Total Enrollments" value={stats.totalEnrollments} />
             <StatCard icon={<Clock size={18} />} label="Active Cohorts" value={stats.activeCohorts} />
-            <StatCard icon={<CheckCircle size={18} />} label="Graduated (7d)" value={stats.graduatedLast7Days} color="text-green-400" />
-            <StatCard icon={<XCircle size={18} />} label="Failed (7d)" value={stats.failedLast7Days} color="text-red-400" />
+            <StatCard icon={<CheckCircle size={18} />} label="Graduated (7d)" value={stats.graduatedLast7Days} color="text-accent-green" />
+            <StatCard icon={<XCircle size={18} />} label="Failed (7d)" value={stats.failedLast7Days} color="text-accent-red" />
           </div>
         )}
 
@@ -147,9 +147,9 @@ export default function SeasoningPage() {
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-card-title text-text-primary">{cohort.name}</h3>
                     <span className={`text-caption px-2 py-0.5 rounded ${
-                      cohort.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                      cohort.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-                      cohort.status === 'paused' ? 'bg-yellow-500/20 text-yellow-400' :
+                      cohort.status === 'active' ? 'bg-accent-green/20 text-accent-green' :
+                      cohort.status === 'completed' ? 'bg-accent-green/20 text-accent-green' :
+                      cohort.status === 'paused' ? 'bg-accent-amber/20 text-accent-amber' :
                       'bg-bg-tertiary text-text-secondary'
                     }`}>
                       {cohort.status}
@@ -160,14 +160,14 @@ export default function SeasoningPage() {
                     <span>{cohort._count.enrollments} accounts</span>
                     <span>{cohort.completedAccounts} graduated</span>
                     {cohort.failedAccounts > 0 && (
-                      <span className="text-red-400">{cohort.failedAccounts} failed</span>
+                      <span className="text-accent-red">{cohort.failedAccounts} failed</span>
                     )}
                   </div>
                   {/* Mini progress bar */}
                   {cohort._count.enrollments > 0 && (
                     <div className="mt-2 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-green-500 rounded-full transition-all"
+                        className="h-full bg-accent-green rounded-full transition-all"
                         style={{ width: `${(cohort.completedAccounts / cohort._count.enrollments) * 100}%` }}
                       />
                     </div>

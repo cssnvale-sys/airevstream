@@ -86,25 +86,25 @@ function contentTypeIcon(type: string): typeof FileText {
 
 function contentTypeColor(type: string): string {
   switch (type) {
-    case 'text': return 'bg-blue-500/20 text-blue-400';
-    case 'image': return 'bg-purple-500/20 text-purple-400';
-    case 'video_short': return 'bg-pink-500/20 text-pink-400';
-    case 'video_long': return 'bg-red-500/20 text-red-400';
-    case 'voice': return 'bg-green-500/20 text-green-400';
-    case 'thumbnail': return 'bg-amber-500/20 text-amber-400';
-    default: return 'bg-gray-500/20 text-gray-400';
+    case 'text': return 'bg-accent-blue/20 text-accent-blue';
+    case 'image': return 'bg-accent-purple/20 text-accent-purple';
+    case 'video_short': return 'bg-accent-purple/20 text-accent-purple';
+    case 'video_long': return 'bg-accent-red/20 text-accent-red';
+    case 'voice': return 'bg-accent-green/20 text-accent-green';
+    case 'thumbnail': return 'bg-accent-amber/20 text-accent-amber';
+    default: return 'bg-bg-tertiary text-text-tertiary';
   }
 }
 
 function contentTypeBgColor(type: string): string {
   switch (type) {
-    case 'text': return 'bg-blue-900/30';
-    case 'image': return 'bg-purple-900/30';
-    case 'video_short': return 'bg-pink-900/30';
-    case 'video_long': return 'bg-red-900/30';
-    case 'voice': return 'bg-green-900/30';
-    case 'thumbnail': return 'bg-amber-900/30';
-    default: return 'bg-gray-900/30';
+    case 'text': return 'bg-accent-blue/15';
+    case 'image': return 'bg-accent-purple/15';
+    case 'video_short': return 'bg-accent-purple/15';
+    case 'video_long': return 'bg-accent-red/15';
+    case 'voice': return 'bg-accent-green/15';
+    case 'thumbnail': return 'bg-accent-amber/15';
+    default: return 'bg-bg-tertiary/50';
   }
 }
 
@@ -122,9 +122,9 @@ function contentTypeLabel(type: string): string {
 
 function qualityColor(score: number | null): string {
   if (score === null) return 'text-text-secondary';
-  if (score >= 8) return 'text-green-400';
-  if (score >= 5) return 'text-yellow-400';
-  return 'text-red-400';
+  if (score >= 8) return 'text-accent-green';
+  if (score >= 5) return 'text-accent-amber';
+  return 'text-accent-red';
 }
 
 // ---------------------------------------------------------------------------
@@ -531,7 +531,7 @@ export default function LibraryPage() {
       {isLoading ? (
         viewMode === 'grid' ? <GridSkeleton /> : <div className="card overflow-hidden"><ListSkeleton /></div>
       ) : error ? (
-        <div className="card text-center py-12 text-red-400">
+        <div className="card text-center py-12 text-accent-red">
           <p>Failed to load content.</p>
           <button onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
         </div>

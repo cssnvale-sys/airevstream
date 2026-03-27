@@ -126,7 +126,11 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 39**: Table accessibility — scope="col" added to 103 `<th>` elements across 12 files.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 48 (9 original + 39 continuation). Color migration: ~130 classes → tokens. WCAG: modals, tables, focus rings addressed.
+**Iteration 40**: Missing loading states — episode-table delete (deletingId), series detail status change (updatingStatus). Both prevent double-clicks.
+
+**Iteration 41**: Settings loading states — deletingServiceId, revokingKeyId, deletingProxyId. Per-ID tracking for precise button disabling. ConfirmDialog loading prop connected.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 51 (9 original + 42 continuation). Color: ~130 → tokens. WCAG: modals, tables, focus rings. Loading: all mutations covered.
 
 ---
 

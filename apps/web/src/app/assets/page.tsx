@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useDebounce } from '@/hooks/use-debounce';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAvatars, useSceneryAssets } from '@/hooks/use-assets';
 import { apiPost, apiDelete } from '@/hooks/use-api';
@@ -445,6 +446,7 @@ function SceneryCard({
 export default function AssetsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('characters');
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [avatarPage, setAvatarPage] = useState(1);
   const [sceneryPage, setSceneryPage] = useState(1);
   const [sceneryCategory, setSceneryCategory] = useState('all');
@@ -456,19 +458,19 @@ export default function AssetsPage() {
     const p = new URLSearchParams();
     p.set('page', String(avatarPage));
     p.set('limit', '12');
-    if (search) p.set('search', search);
+    if (debouncedSearch) p.set('search', debouncedSearch);
     return p.toString();
-  }, [avatarPage, search]);
+  }, [avatarPage, debouncedSearch]);
 
   // Build scenery query params
   const sceneryParams = useMemo(() => {
     const p = new URLSearchParams();
     p.set('page', String(sceneryPage));
     p.set('limit', '12');
-    if (search) p.set('search', search);
+    if (debouncedSearch) p.set('search', debouncedSearch);
     if (sceneryCategory !== 'all') p.set('category', sceneryCategory);
     return p.toString();
-  }, [sceneryPage, search, sceneryCategory]);
+  }, [sceneryPage, debouncedSearch, sceneryCategory]);
 
   const { data: avatarRaw, isLoading: avatarsLoading, mutate: mutateAvatars } =
     useAvatars<AvatarListItem[]>(avatarParams);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useDebounce } from '@/hooks/use-debounce';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, useAffiliateProducts, useChannels, apiPost, apiPut, apiPatch, apiDelete } from '@/hooks/use-api';
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
@@ -226,6 +227,7 @@ export default function AffiliatePage() {
 
   // --- Products state ---
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -243,12 +245,12 @@ export default function AffiliatePage() {
   // Build query params for products
   const productParams = useMemo(() => {
     const p = new URLSearchParams();
-    if (searchQuery) p.set('search', searchQuery);
+    if (debouncedSearch) p.set('search', debouncedSearch);
     if (categoryFilter !== 'All') p.set('category', categoryFilter);
     if (statusFilter !== 'All') p.set('status', statusFilter);
     p.set('limit', '50');
     return p.toString();
-  }, [searchQuery, categoryFilter, statusFilter]);
+  }, [debouncedSearch, categoryFilter, statusFilter]);
 
   // Data hooks
   const {

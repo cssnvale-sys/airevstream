@@ -63,6 +63,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Disabled cursor** (Session 47): disabled:cursor-not-allowed added to 5 custom-styled disabled buttons.
 - **Number input constraints** (Session 47): Budget limit input min/step attributes for numeric validation.
 - **Transition polish** (Session 47): transition-colors added to 5 close/zoom/select buttons for smooth hover states.
+- **Sonner import migration** (Session 47): 3 components migrated from direct 'sonner' to '@/lib/toast' wrapper. Toast wrapper extended with optional ExternalToast options.
+- **Generic error messages** (Session 47): 32 'An unexpected error occurred' messages replaced with specific operation context across 26 API routes (e.g., 'Failed to fetch content', 'Failed to approve storyboard').
+- **Title tooltips** (Session 47): 6 truncated text elements given title attribute for hover disclosure (content titles, descriptions, error messages).
 - **KI-066 fix** (Session 47): Removed 4 unused dependencies (class-variance-authority, @fastify/websocket, playwright-extra, puppeteer-extra-plugin-stealth).
 - **15 API routes missing force-dynamic** (Session 47): Analytics, auth, calendar, events/stream, suggestions/stats, system/metrics routes now export force-dynamic.
 - **22 inline button styles** (Session 47): Replaced with utility classes (btn-primary, btn-secondary, btn-ghost) across 10 components.

@@ -180,7 +180,13 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 66**: Transition polish — Export variants "All" button transition-colors.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~76 total. Design tokens complete, WCAG accessibility comprehensive, consistent date formatting, all loading/disabled states.
+**Iteration 67**: Tracking files update for iterations 61-66.
+
+**Iteration 68**: Sonner import migration + generic error messages — 3 components migrated from direct 'sonner' to '@/lib/toast' wrapper. Toast wrapper extended with optional ExternalToast options. 32 generic 'An unexpected error occurred' messages replaced with specific operation context across 26 API routes. Auth page safeMessages allowlists updated.
+
+**Iteration 69**: Title tooltips — 6 truncated text elements (content titles, descriptions, error messages) given title attributes for hover tooltips across studio, library, content detail, series, and workflows pages.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: ~82 total. Design tokens complete, WCAG accessibility comprehensive, consistent date formatting, all loading/disabled states, all error messages specific.
 
 ---
 

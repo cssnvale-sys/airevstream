@@ -60,7 +60,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Keyboard shortcuts"
+      aria-labelledby="keyboard-shortcuts-title"
     >
       <div
         ref={trapRef}
@@ -68,7 +68,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-text-primary">Keyboard Shortcuts</h2>
+          <h2 id="keyboard-shortcuts-title" className="text-lg font-semibold text-text-primary">Keyboard Shortcuts</h2>
           <button
             type="button"
             onClick={onClose}

@@ -131,6 +131,7 @@ export function CommandPalette() {
       className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/60"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="command-palette-title"
       onClick={() => setOpen(false)}
     >
       <div
@@ -139,6 +140,7 @@ export function CommandPalette() {
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
+        <h2 id="command-palette-title" className="sr-only">Command Palette</h2>
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search size={18} className="text-text-secondary shrink-0" />

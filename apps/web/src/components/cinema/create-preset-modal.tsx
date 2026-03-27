@@ -115,11 +115,11 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="create-preset-modal-title">
       <div ref={trapRef} className="bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-semibold text-text-primary">Create a Preset</h2>
+          <h2 id="create-preset-modal-title" className="text-sm font-semibold text-text-primary">Create a Preset</h2>
           <button
             type="button"
             onClick={handleClose}

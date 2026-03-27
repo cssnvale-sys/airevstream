@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface CreateExperimentModalProps {
   open: boolean;
@@ -242,13 +243,15 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
         <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
           <button onClick={onClose} className="btn-secondary">Cancel</button>
-          <button
+          <LoadingButton
             onClick={handleSubmit}
-            disabled={submitting || !name.trim() || totalTraffic !== 100}
+            loading={submitting}
+            disabled={!name.trim() || totalTraffic !== 100}
+            loadingText="Creating..."
             className="btn-primary disabled:opacity-50"
           >
-            {submitting ? 'Creating...' : 'Create Experiment'}
-          </button>
+            Create Experiment
+          </LoadingButton>
         </div>
       </div>
     </div>

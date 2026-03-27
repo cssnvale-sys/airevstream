@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from 'sonner';
 import { useApi } from '@/hooks/use-api';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface Props {
   open: boolean;
@@ -136,9 +137,9 @@ export function CreateSeriesModal({ open, onClose, onCreated, defaultChannelId }
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-            <button type="submit" disabled={submitting || !channelId || !name.trim()} className="btn-primary">
-              {submitting ? 'Creating...' : 'Create Series'}
-            </button>
+            <LoadingButton type="submit" loading={submitting} disabled={!channelId || !name.trim()} loadingText="Creating..." className="btn-primary">
+              Create Series
+            </LoadingButton>
           </div>
         </form>
       </div>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -119,9 +120,9 @@ function ResetPasswordForm() {
             />
           </div>
 
-          <button type="submit" disabled={loading || !token} className="btn-primary w-full">
-            {loading ? 'Resetting...' : 'Reset Password'}
-          </button>
+          <LoadingButton type="submit" loading={loading} disabled={!token} loadingText="Resetting..." className="btn-primary w-full">
+            Reset Password
+          </LoadingButton>
 
           <p className="text-center text-body text-text-secondary">
             <Link href="/auth/login" className="text-accent-blue hover:underline">

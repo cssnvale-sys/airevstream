@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { FileUpload } from '@/components/ui/file-upload';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { BUCKETS } from '@airevstream/shared';
 import type { UploadResult } from '@/hooks/use-upload';
 
@@ -159,13 +160,15 @@ export function CreateSceneryModal({ open, onClose, onCreated }: CreateSceneryMo
             >
               Cancel
             </button>
-            <button
+            <LoadingButton
               type="submit"
-              disabled={submitting || !canSubmit}
+              loading={submitting}
+              disabled={!canSubmit}
+              loadingText="Creating..."
               className="btn-primary"
             >
-              {submitting ? 'Creating...' : 'Create Scenery'}
-            </button>
+              Create Scenery
+            </LoadingButton>
           </div>
         </form>
       </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Save, Sparkles, Loader2, ImageIcon } from 'lucide-react';
+import { Save, Sparkles, ImageIcon } from 'lucide-react';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { apiPut, apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { FileUpload } from '@/components/ui/file-upload';
@@ -221,30 +222,26 @@ export function BrandingEditor({ channelId, branding, onUpdated }: BrandingEdito
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-2">
-        <button
+        <LoadingButton
           onClick={handleSave}
-          disabled={saving || generating}
+          loading={saving}
+          loadingText="Saving..."
+          disabled={generating}
           className="flex items-center gap-2 px-4 py-2 rounded-md text-body bg-accent-blue text-white hover:bg-accent-blue/80 disabled:opacity-50"
         >
-          {saving ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Save size={16} />
-          )}
-          {saving ? 'Saving...' : 'Save Branding'}
-        </button>
-        <button
+          <Save size={16} />
+          Save Branding
+        </LoadingButton>
+        <LoadingButton
           onClick={handleGenerate}
-          disabled={saving || generating}
+          loading={generating}
+          loadingText="Generating..."
+          disabled={saving}
           className="flex items-center gap-2 px-4 py-2 rounded-md text-body border border-border text-text-secondary hover:bg-bg-tertiary disabled:opacity-50"
         >
-          {generating ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Sparkles size={16} />
-          )}
-          {generating ? 'Generating...' : 'Auto-generate'}
-        </button>
+          <Sparkles size={16} />
+          Auto-generate
+        </LoadingButton>
       </div>
     </div>
   );

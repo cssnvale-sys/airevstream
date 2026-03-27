@@ -110,7 +110,7 @@ function CreateAvatarModal({
       <div className="bg-bg-secondary border border-border rounded-xl w-full max-w-md p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">New Character</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary">
             <X size={20} />
           </button>
         </div>
@@ -198,7 +198,7 @@ function CreateSceneryModal({
       <div className="bg-bg-secondary border border-border rounded-xl w-full max-w-md p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">New Background</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+          <button onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary">
             <X size={20} />
           </button>
         </div>

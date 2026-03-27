@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useApi } from '@/hooks/use-api';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface ChannelInfo {
   id: string;
@@ -106,13 +107,14 @@ export function BibleEditor({ bible, onSave }: BibleEditorProps) {
             {bible.channel.socialAccount.platform} &middot; @{bible.channel.socialAccount.username} &middot; v{bible.version}
           </div>
         </div>
-        <button
+        <LoadingButton
           onClick={handleSave}
-          disabled={saving}
+          loading={saving}
+          loadingText="Saving..."
           className="btn-primary btn-sm"
         >
-          {saving ? 'Saving...' : 'Save'}
-        </button>
+          Save
+        </LoadingButton>
       </div>
 
       {/* Tabs */}

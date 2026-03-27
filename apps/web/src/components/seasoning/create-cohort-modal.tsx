@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface CreateCohortModalProps {
   open: boolean;
@@ -99,13 +100,15 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
             >
               Cancel
             </button>
-            <button
+            <LoadingButton
               type="submit"
-              disabled={submitting || !name.trim() || platforms.length === 0}
+              loading={submitting}
+              disabled={!name.trim() || platforms.length === 0}
+              loadingText="Creating..."
               className="btn-primary"
             >
-              {submitting ? 'Creating...' : 'Create Cohort'}
-            </button>
+              Create Cohort
+            </LoadingButton>
           </div>
         </form>
       </div>

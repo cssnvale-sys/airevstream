@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useChannel } from '@/hooks/use-channels';
 import { useChannelViralStats } from '@/hooks/use-channel-viral';
 import { apiPut } from '@/hooks/use-api';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { NicheTagInput } from '@/components/channels/niche-tag-input';
 import { ChannelViralDashboard } from '@/components/channels/channel-viral-dashboard';
 import { cn } from '@/lib/utils';
@@ -207,14 +208,15 @@ export default function ChannelDetailPage() {
           />
         </div>
 
-        <button
+        <LoadingButton
           onClick={handleSaveProfile}
-          disabled={saving}
+          loading={saving}
+          loadingText="Saving..."
           className="btn-primary flex items-center gap-2"
         >
           <Save size={16} />
-          {saving ? 'Saving...' : 'Save Profile'}
-        </button>
+          Save Profile
+        </LoadingButton>
       </div>
     </div>
   );

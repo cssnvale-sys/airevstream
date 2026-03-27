@@ -5,6 +5,7 @@ import { Plus, Trash2, Star, UserCircle } from 'lucide-react';
 import { apiPost, apiDelete, useApi } from '@/hooks/use-api';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface SeriesAvatarEntry {
   seriesId: string;
@@ -158,9 +159,9 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
                 ))}
               </select>
             </div>
-            <button onClick={handleAdd} disabled={!selectedAvatarId || submitting} className="btn-primary text-sm">
-              {submitting ? 'Adding...' : 'Add'}
-            </button>
+            <LoadingButton onClick={handleAdd} loading={submitting} disabled={!selectedAvatarId} loadingText="Adding..." className="btn-primary text-sm">
+              Add
+            </LoadingButton>
             <button onClick={() => setAdding(false)} className="btn-secondary text-sm">Cancel</button>
           </div>
         </div>

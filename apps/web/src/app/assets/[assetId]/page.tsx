@@ -186,7 +186,7 @@ function SlotCard({
         <div className="mt-2 p-3 bg-bg-tertiary border border-border rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-text-secondary">Generation Prompt</span>
-            <button onClick={() => setShowGenerate(false)} className="text-text-tertiary hover:text-text-primary">
+            <button onClick={() => setShowGenerate(false)} aria-label="Close" className="text-text-tertiary hover:text-text-primary">
               <X size={14} />
             </button>
           </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
 import { apiPost, useApi } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface Props {
   open: boolean;
@@ -117,9 +118,9 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-            <button type="submit" disabled={submitting || !selectedContentId} className="btn-primary">
-              {submitting ? 'Adding...' : 'Add Episode'}
-            </button>
+            <LoadingButton type="submit" loading={submitting} disabled={!selectedContentId} loadingText="Adding..." className="btn-primary">
+              Add Episode
+            </LoadingButton>
           </div>
         </form>
       </div>

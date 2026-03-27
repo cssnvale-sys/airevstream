@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { apiPost } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { FileUpload } from '@/components/ui/file-upload';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { BUCKETS } from '@airevstream/shared';
 import type { UploadResult } from '@/hooks/use-upload';
 
@@ -156,13 +157,15 @@ export function CreateAvatarModal({ open, onClose, onCreated }: CreateAvatarModa
             >
               Cancel
             </button>
-            <button
+            <LoadingButton
               type="submit"
-              disabled={submitting || !name.trim()}
+              loading={submitting}
+              disabled={!name.trim()}
+              loadingText="Creating..."
               className="btn-primary"
             >
-              {submitting ? 'Creating...' : 'Create Avatar'}
-            </button>
+              Create Avatar
+            </LoadingButton>
           </div>
         </form>
       </div>

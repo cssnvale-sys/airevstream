@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApi, apiPost, apiPatch } from '@/hooks/use-api';
 import { FlaskConical, Sparkles, ChevronDown, ChevronUp, Check, X as XIcon } from 'lucide-react';
+import { LoadingButton } from '@/components/ui/loading-button';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
 
@@ -227,14 +228,15 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
 
         {/* Preset suggestions */}
         {suggestions === null ? (
-          <button
+          <LoadingButton
             onClick={handleGetSuggestions}
-            disabled={loadingSuggestions}
+            loading={loadingSuggestions}
+            loadingText="Loading..."
             className="w-full py-1.5 px-2 rounded border border-border hover:bg-bg-tertiary text-text-secondary flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
           >
             <Sparkles size={12} />
-            {loadingSuggestions ? 'Loading...' : 'Improve with Presets'}
-          </button>
+            Improve with Presets
+          </LoadingButton>
         ) : suggestions.length > 0 ? (
           <div className="space-y-1">
             <span className="text-text-secondary font-medium">Suggested Presets</span>

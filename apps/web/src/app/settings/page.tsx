@@ -35,6 +35,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { getToken } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
@@ -270,14 +271,15 @@ function GeneralTab() {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
+        <LoadingButton
           onClick={handleSave}
-          disabled={saving}
+          loading={saving}
+          loadingText="Saving..."
           className="btn-primary flex items-center gap-2"
         >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+          {saved ? <Check size={16} /> : <Save size={16} />}
           {saved ? 'Saved' : 'Save Changes'}
-        </button>
+        </LoadingButton>
         {dirty && <span className="text-xs text-accent-amber">Unsaved changes</span>}
       </div>
     </div>
@@ -559,14 +561,15 @@ function AiServicesTab() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-text-primary">Fallback Chains</h3>
           {orderDirty && (
-            <button
+            <LoadingButton
               onClick={handleSaveOrder}
-              disabled={savingOrder}
+              loading={savingOrder}
+              loadingText="Saving..."
               className="btn-primary btn-sm flex items-center gap-1"
             >
-              {savingOrder ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              <Save size={14} />
               Save Order
-            </button>
+            </LoadingButton>
           )}
         </div>
         {chainsError ? (
@@ -732,14 +735,15 @@ function NotificationsTab() {
         </div>
       ))}
 
-      <button
+      <LoadingButton
         onClick={handleSave}
-        disabled={saving}
+        loading={saving}
+        loadingText="Saving..."
         className="btn-primary flex items-center gap-2"
       >
-        {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+        {saved ? <Check size={16} /> : <Save size={16} />}
         {saved ? 'Saved' : 'Save Changes'}
-      </button>
+      </LoadingButton>
     </div>
   );
 }
@@ -1129,14 +1133,15 @@ function AppearanceTab() {
         </div>
       </div>
 
-      <button
+      <LoadingButton
         onClick={handleSave}
-        disabled={saving}
+        loading={saving}
+        loadingText="Saving..."
         className="btn-primary flex items-center gap-2"
       >
-        {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+        {saved ? <Check size={16} /> : <Save size={16} />}
         {saved ? 'Saved' : 'Save Changes'}
-      </button>
+      </LoadingButton>
     </div>
   );
 }
@@ -1556,14 +1561,15 @@ function DataTab() {
           </select>
         </div>
         <div className="flex items-center gap-3 mt-4">
-          <button
+          <LoadingButton
             onClick={handleSaveRetention}
-            disabled={saving}
+            loading={saving}
+            loadingText="Saving..."
             className="btn-primary flex items-center gap-2"
           >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+            {saved ? <Check size={16} /> : <Save size={16} />}
             {saved ? 'Saved' : 'Save Changes'}
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>

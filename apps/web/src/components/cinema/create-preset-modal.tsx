@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useGeneratePreset, savePreset } from '@/hooks/use-user-presets';
+import { LoadingButton } from '@/components/ui/loading-button';
 import type { Preset, PresetFamily } from '@airevstream/shared';
 
 interface CreatePresetModalProps {
@@ -257,9 +258,11 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
             Cancel
           </button>
           {preview && (
-            <button
+            <LoadingButton
               onClick={handleSave}
-              disabled={state === 'saving' || state === 'done'}
+              disabled={state === 'done'}
+              loading={state === 'saving'}
+              loadingText="Saving..."
               className={cn(
                 'px-4 py-1.5 text-xs rounded font-medium transition-colors',
                 state === 'saving' || state === 'done'
@@ -267,8 +270,8 @@ export function CreatePresetModal({ open, onClose, onSaved }: CreatePresetModalP
                   : 'bg-accent-blue text-white hover:bg-accent-blue/90',
               )}
             >
-              {state === 'saving' ? 'Saving...' : state === 'done' ? 'Saved!' : 'Save Preset'}
-            </button>
+              {state === 'done' ? 'Saved!' : 'Save Preset'}
+            </LoadingButton>
           )}
         </div>
       </div>

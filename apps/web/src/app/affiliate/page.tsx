@@ -23,6 +23,7 @@ import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CopyButton } from '@/components/ui/copy-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1272,9 +1273,9 @@ function AddProductModal({
         </div>
 
         <div className="flex gap-2 pt-2">
-          <button type="submit" disabled={submitting} className="btn-primary flex-1">
-            {submitting ? 'Adding...' : 'Add Product'}
-          </button>
+          <LoadingButton type="submit" loading={submitting} loadingText="Adding..." className="btn-primary flex-1">
+            Add Product
+          </LoadingButton>
           <button
             type="button"
             onClick={() => {
@@ -1433,13 +1434,14 @@ function ProductDetailModal({
                 </select>
               </div>
               <div className="flex gap-2 pt-2">
-                <button
+                <LoadingButton
                   onClick={handleSave}
-                  disabled={submitting}
+                  loading={submitting}
+                  loadingText="Saving..."
                   className="btn-primary flex-1"
                 >
-                  {submitting ? 'Saving...' : 'Save Changes'}
-                </button>
+                  Save Changes
+                </LoadingButton>
                 <button
                   onClick={() => {
                     populateForm(product);
@@ -1651,9 +1653,9 @@ function CreateLinkModal({
         </div>
 
         <div className="flex gap-2 pt-2">
-          <button type="submit" disabled={submitting} className="btn-primary flex-1">
-            {submitting ? 'Creating...' : 'Create Link'}
-          </button>
+          <LoadingButton type="submit" loading={submitting} loadingText="Creating..." className="btn-primary flex-1">
+            Create Link
+          </LoadingButton>
           <button
             type="button"
             onClick={() => {
@@ -1865,9 +1867,9 @@ function StorefrontsTab({
                     <td className="px-4 py-3 text-right">
                       {isEditing ? (
                         <div className="flex items-center gap-1 justify-end">
-                          <button onClick={handleSave} disabled={saving} className="btn-primary btn-sm text-xs">
-                            {saving ? 'Saving...' : 'Save'}
-                          </button>
+                          <LoadingButton onClick={handleSave} loading={saving} loadingText="Saving..." className="btn-primary btn-sm text-xs">
+                            Save
+                          </LoadingButton>
                           <button onClick={cancelEdit} className="btn-secondary btn-sm text-xs">
                             Cancel
                           </button>
@@ -2044,9 +2046,9 @@ function CreateStorefrontModal({
         </div>
 
         <div className="flex gap-2 pt-2">
-          <button type="submit" disabled={submitting} className="btn-primary flex-1">
-            {submitting ? 'Creating...' : 'Create Storefront'}
-          </button>
+          <LoadingButton type="submit" loading={submitting} loadingText="Creating..." className="btn-primary flex-1">
+            Create Storefront
+          </LoadingButton>
           <button
             type="button"
             onClick={() => {

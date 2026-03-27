@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useApi, apiPost, apiPut } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { BibleEditor } from '@/components/cinema/bible-editor';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface ChannelInfo {
   id: string;
@@ -137,13 +138,15 @@ export default function CinemaBiblePage() {
                   ))}
                 </select>
               </div>
-              <button
+              <LoadingButton
                 onClick={handleCreate}
-                disabled={creating || !newChannelId}
+                disabled={!newChannelId}
+                loading={creating}
+                loadingText="Creating..."
                 className="btn-primary"
               >
-                {creating ? 'Creating...' : 'Create'}
-              </button>
+                Create
+              </LoadingButton>
               <button
                 onClick={() => { setShowCreate(false); setNewChannelId(''); }}
                 className="btn-secondary"

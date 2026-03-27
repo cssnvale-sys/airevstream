@@ -9,6 +9,7 @@ import { FileUpload } from '@/components/ui/file-upload';
 import { apiPost, apiPut, apiDelete } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { LoadingButton } from '@/components/ui/loading-button';
 import { BUCKETS } from '@airevstream/shared';
 import { toast } from '@/lib/toast';
 import type { UploadResult } from '@/hooks/use-upload';
@@ -393,31 +394,24 @@ export default function AssetDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <LoadingButton
               onClick={() => setDeleteAvatarOpen(true)}
-              disabled={deleting}
+              loading={deleting}
+              loadingText="Deleting..."
               className="btn-secondary text-sm text-accent-red hover:bg-accent-red/10 inline-flex items-center gap-1"
             >
               <Trash2 size={14} />
-              {deleting ? 'Deleting...' : 'Delete'}
-            </button>
-            <button
+              Delete
+            </LoadingButton>
+            <LoadingButton
               onClick={handleSave}
-              disabled={saving}
+              loading={saving}
+              loadingText="Saving..."
               className="btn-primary text-sm inline-flex items-center gap-1 disabled:opacity-50"
             >
-              {saving ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save size={14} />
-                  Save
-                </>
-              )}
-            </button>
+              <Save size={14} />
+              Save
+            </LoadingButton>
           </div>
         </div>
       </div>

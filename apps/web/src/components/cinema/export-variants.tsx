@@ -126,7 +126,7 @@ export function ExportVariants({ contentId, storyboardId, channelId, topic, cont
           <button
             onClick={handleExport}
             disabled={exporting || selected.size === 0}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-accent-blue text-white rounded text-xs hover:bg-accent-blue/90 disabled:opacity-50"
+            className="btn-primary btn-sm flex items-center gap-1.5"
           >
             {exporting ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
             Export ({selected.size})

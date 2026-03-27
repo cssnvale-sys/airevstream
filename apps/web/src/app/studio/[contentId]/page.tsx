@@ -293,7 +293,7 @@ export default function StudioPage() {
           )}
           <button
             onClick={handleGenerateAll}
-            className="px-3 py-1.5 bg-accent-blue text-white rounded-md text-sm hover:bg-accent-blue/90"
+            className="btn-primary btn-sm"
           >
             Render
           </button>
@@ -441,7 +441,7 @@ export default function StudioPage() {
                   <p className="text-text-secondary">No storyboard yet</p>
                   <button
                     onClick={handleGenerateAll}
-                    className="mt-3 px-4 py-2 bg-accent-blue text-white rounded-md text-sm"
+                    className="btn-primary mt-3"
                   >
                     Generate Storyboard
                   </button>

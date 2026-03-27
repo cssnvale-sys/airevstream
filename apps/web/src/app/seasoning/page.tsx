@@ -69,7 +69,7 @@ export default function SeasoningPage() {
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-md bg-accent-blue text-white hover:bg-accent-blue/80 text-body"
+            className="btn-primary flex items-center gap-2"
           >
             <Plus size={16} />
             New Cohort
@@ -132,7 +132,7 @@ export default function SeasoningPage() {
                 <p className="text-caption text-text-secondary mb-4">Create a cohort to start seasoning your accounts.</p>
                 <button
                   onClick={() => setShowCreate(true)}
-                  className="px-4 py-2 rounded-md bg-accent-blue text-white hover:bg-accent-blue/80 text-body"
+                  className="btn-primary"
                 >
                   Create First Cohort
                 </button>

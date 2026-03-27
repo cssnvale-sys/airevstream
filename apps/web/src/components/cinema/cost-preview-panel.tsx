@@ -69,7 +69,7 @@ export function CostPreviewPanel({ shots, qualityTier, provider }: CostPreviewPa
         <button
           onClick={fetchEstimate}
           disabled={loading || shots.length === 0}
-          className="text-xs px-2 py-1 bg-accent-blue text-white rounded hover:bg-accent-blue/90 disabled:opacity-50"
+          className="btn-primary btn-sm"
         >
           {loading ? 'Estimating...' : 'Estimate'}
         </button>

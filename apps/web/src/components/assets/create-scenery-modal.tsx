@@ -155,14 +155,14 @@ export function CreateSceneryModal({ open, onClose, onCreated }: CreateSceneryMo
               type="button"
               onClick={handleClose}
               disabled={submitting}
-              className="px-4 py-2 rounded-md text-body text-text-secondary hover:bg-bg-tertiary"
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !canSubmit}
-              className="px-4 py-2 rounded-md text-body bg-accent-blue text-white hover:bg-accent-blue/80 disabled:opacity-50"
+              className="btn-primary"
             >
               {submitting ? 'Creating...' : 'Create Scenery'}
             </button>

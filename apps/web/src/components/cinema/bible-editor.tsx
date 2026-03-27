@@ -109,7 +109,7 @@ export function BibleEditor({ bible, onSave }: BibleEditorProps) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-4 py-1.5 bg-accent-blue text-white rounded-md hover:bg-accent-blue/90 disabled:opacity-50 text-sm font-medium"
+          className="btn-primary btn-sm"
         >
           {saving ? 'Saving...' : 'Save'}
         </button>

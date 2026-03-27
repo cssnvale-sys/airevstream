@@ -121,7 +121,7 @@ export default function CohortDetailPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowEnroll(!showEnroll)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-accent-blue text-white hover:bg-accent-blue/80 text-caption"
+            className="btn-primary btn-sm flex items-center gap-2"
           >
             <UserPlus size={14} />
             Enroll Accounts
@@ -140,13 +140,13 @@ export default function CohortDetailPage() {
             className="w-full h-24 px-3 py-2 rounded-md bg-bg-primary border border-border text-text-primary text-caption font-mono focus:outline-none focus:ring-1 focus:ring-accent-blue"
           />
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowEnroll(false)} className="px-3 py-1.5 text-caption text-text-secondary hover:text-text-primary">
+            <button onClick={() => setShowEnroll(false)} className="btn-ghost btn-sm">
               Cancel
             </button>
             <button
               onClick={handleEnroll}
               disabled={enrolling || !enrollIds.trim()}
-              className="px-3 py-1.5 rounded-md text-caption bg-accent-blue text-white hover:bg-accent-blue/80 disabled:opacity-50"
+              className="btn-primary btn-sm"
             >
               {enrolling ? 'Enrolling...' : 'Enroll'}
             </button>

@@ -111,7 +111,7 @@ export default function CinemaBiblePage() {
           </div>
           <button
             onClick={() => setShowCreate(!showCreate)}
-            className="px-4 py-2 bg-accent-blue text-white rounded-md hover:bg-accent-blue/90 text-sm font-medium"
+            className="btn-primary"
           >
             New Bible
           </button>
@@ -140,13 +140,13 @@ export default function CinemaBiblePage() {
               <button
                 onClick={handleCreate}
                 disabled={creating || !newChannelId}
-                className="px-4 py-2 bg-accent-blue text-white rounded-md hover:bg-accent-blue/90 disabled:opacity-50 text-sm font-medium"
+                className="btn-primary"
               >
                 {creating ? 'Creating...' : 'Create'}
               </button>
               <button
                 onClick={() => { setShowCreate(false); setNewChannelId(''); }}
-                className="px-4 py-2 bg-bg-tertiary text-text-secondary rounded-md hover:bg-border text-sm"
+                className="btn-secondary"
               >
                 Cancel
               </button>

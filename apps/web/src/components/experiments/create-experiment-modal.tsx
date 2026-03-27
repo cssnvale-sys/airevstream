@@ -67,7 +67,8 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
   const totalTraffic = variants.reduce((sum, v) => sum + v.trafficPercent, 0);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!name.trim()) { toast.error('Name is required'); return; }
     if (variants.length < 2) { toast.error('At least 2 variants required'); return; }
     if (totalTraffic !== 100) { toast.error(`Traffic must sum to 100% (currently ${totalTraffic}%)`); return; }
@@ -116,8 +117,8 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-black/60" onClick={() => !submitting && onClose()} />
-      <div className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="absolute inset-0 bg-black/60" onClick={() => !submitting && onClose()} aria-hidden="true" />
+      <form noValidate onSubmit={handleSubmit} className="relative bg-bg-secondary border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">New Experiment</h2>
           <button type="button" onClick={onClose} className="p-1 rounded hover:bg-bg-tertiary text-text-secondary" aria-label="Close">
@@ -204,6 +205,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
                 )}
               </label>
               <button
+                type="button"
                 onClick={addVariant}
                 disabled={variants.length >= 10}
                 className="text-accent-blue hover:text-accent-blue/80 text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -232,6 +234,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
                   />
                   <span className="text-text-tertiary text-sm">%</span>
                   <button
+                    type="button"
                     onClick={() => removeVariant(i)}
                     disabled={variants.length <= 2}
                     className="p-1 text-text-secondary hover:text-accent-red disabled:opacity-30"
@@ -245,9 +248,9 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
         </div>
 
         <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
-          <button onClick={onClose} className="btn-secondary">Cancel</button>
+          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
           <LoadingButton
-            onClick={handleSubmit}
+            type="submit"
             loading={submitting}
             disabled={!name.trim() || totalTraffic !== 100}
             loadingText="Creating..."
@@ -256,7 +259,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
             Create Experiment
           </LoadingButton>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

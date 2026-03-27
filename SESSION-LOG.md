@@ -118,7 +118,15 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 **Iteration 35**: noValidate on 14 forms — auth (4), settings password, accounts import, affiliate (3), 5 modals. Legacy 'quick' tier reference removed from cost-preview-panel.
 
-**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 40+ (9 original + 31 continuation). Color migration: ~130 hardcoded Tailwind classes → design system tokens.
+**Iteration 36**: Sticky table headers — episode-table, system errors, library list. type="button" on episode-table (3) + confirm-dialog (3).
+
+**Iteration 37**: Keyboard focus rings — library view toggle, workflows tabs/filters, approvals action buttons. Uses focus-visible: prefix.
+
+**Iteration 38**: Modal ARIA — role="dialog" aria-modal="true" added to 6 modals (accounts, create-experiment, create-series, create-cohort, create-preset, command-palette).
+
+**Iteration 39**: Table accessibility — scope="col" added to 103 `<th>` elements across 12 files.
+
+**Build**: 14/14 packages. **Tests**: 507+ unit + 37 audit. **Commits**: 48 (9 original + 39 continuation). Color migration: ~130 classes → tokens. WCAG: modals, tables, focus rings addressed.
 
 ---
 

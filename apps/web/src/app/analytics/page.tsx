@@ -910,6 +910,7 @@ export default function AnalyticsPage() {
           value={period}
           onChange={(e) => setPeriod(e.target.value as Period)}
           className="input"
+          aria-label="Time period"
         >
           {PERIOD_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>

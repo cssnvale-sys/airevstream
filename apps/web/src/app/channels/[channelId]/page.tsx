@@ -174,8 +174,9 @@ export default function ChannelDetailPage() {
         </div>
 
         <div>
-          <label className="text-caption text-text-secondary block mb-1">Tone</label>
+          <label htmlFor="channel-tone" className="text-caption text-text-secondary block mb-1">Tone</label>
           <select
+            id="channel-tone"
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             className="input w-full"

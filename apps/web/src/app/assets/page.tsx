@@ -576,6 +576,7 @@ export default function AssetsPage() {
               setSceneryPage(1);
             }}
             className="input"
+            aria-label="Filter by category"
           >
             {SCENERY_CATEGORIES.map((c) => (
               <option key={c} value={c}>

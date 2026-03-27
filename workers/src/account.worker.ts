@@ -1058,7 +1058,7 @@ async function handleSeasoningGraduate(data: SeasoningGraduateJob) {
 }
 
 export function startAccountWorker() {
-  const worker = createWorker('account', processAccountJob, { concurrency: 3 });
+  const worker = createWorker('account', processAccountJob, { concurrency: 3, stalledInterval: 300_000 });
 
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id }, 'Account job completed');
@@ -1077,7 +1077,7 @@ export function startAccountWorker() {
 }
 
 export function startSeasoningWorker() {
-  const worker = createWorker('seasoning', processAccountJob as any, { concurrency: 3 });
+  const worker = createWorker('seasoning', processAccountJob as any, { concurrency: 3, stalledInterval: 300_000 });
 
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id }, 'Seasoning job completed');

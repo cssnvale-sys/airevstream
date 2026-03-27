@@ -1955,7 +1955,7 @@ export function startProductionWorker() {
           logger.warn({ jobName: job.name }, 'Unknown production job type');
       }
     },
-    { concurrency: 2 },
+    { concurrency: 2, stalledInterval: 300_000 },
   );
 
   worker.on('failed', (job, err) => {

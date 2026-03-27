@@ -688,7 +688,7 @@ async function downloadToTemp(url: string, filename: string): Promise<string> {
 // ═══════════════════════════════════════════════════════════════════
 
 export function startLifecycleWorker() {
-  const worker = createWorker('lifecycle', processLifecycleJob, { concurrency: 2 });
+  const worker = createWorker('lifecycle', processLifecycleJob, { concurrency: 2, stalledInterval: 300_000 });
 
   worker.on('completed', (job) => {
     logger.info({ jobId: job.id }, 'Lifecycle job completed');

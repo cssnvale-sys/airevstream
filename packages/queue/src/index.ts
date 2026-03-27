@@ -398,6 +398,8 @@ export function createWorker<N extends QueueName>(
   options?: {
     concurrency?: number;
     limiter?: { max: number; duration: number };
+    stalledInterval?: number;
+    maxStalledCount?: number;
     redisUrl?: string;
   },
 ): Worker<QueueJobMap[N]> {
@@ -406,6 +408,8 @@ export function createWorker<N extends QueueName>(
     connection,
     concurrency: options?.concurrency ?? 1,
     limiter: options?.limiter,
+    stalledInterval: options?.stalledInterval ?? 120_000,
+    maxStalledCount: options?.maxStalledCount ?? 3,
   });
   return worker as Worker<QueueJobMap[N]>;
 }

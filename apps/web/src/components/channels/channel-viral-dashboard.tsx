@@ -135,7 +135,7 @@ export function ChannelViralDashboard({ channelId }: ChannelViralDashboardProps)
               const color = score >= 70 ? 'bg-accent-green' : score >= 50 ? 'bg-accent-blue' : score >= 30 ? 'bg-accent-orange' : 'bg-accent-red';
               return (
                 <div
-                  key={i}
+                  key={point.date}
                   className={cn('flex-1 rounded-t transition-all', color)}
                   style={{ height: `${height}%` }}
                   title={`${formatDate(point.date)}: ${score}`}

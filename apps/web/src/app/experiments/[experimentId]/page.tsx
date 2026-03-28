@@ -51,7 +51,7 @@ const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
 
 export default function ExperimentDetailPage({ params }: { params: Promise<{ experimentId: string }> }) {
   const { experimentId } = use(params);
-  const { data: experimentData, isLoading, mutate } = useExperiment<ExperimentData>(experimentId);
+  const { data: experimentData, isLoading, error: fetchError, mutate } = useExperiment<ExperimentData>(experimentId);
 
   const exp = experimentData?.data;
   const [stopOpen, setStopOpen] = useState(false);
@@ -99,12 +99,12 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
     );
   }
 
-  if (!exp) {
+  if (fetchError || !exp) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <FlaskConical size={32} className="text-text-secondary mb-3" />
-          <h2 className="text-lg font-medium text-text-primary">Experiment not found</h2>
+          <h2 className="text-lg font-medium text-text-primary">{fetchError ? 'Failed to load experiment' : 'Experiment not found'}</h2>
           <Link href="/experiments" className="btn-secondary mt-4 inline-flex items-center gap-2">
             <ArrowLeft size={16} />
             Back to Experiments

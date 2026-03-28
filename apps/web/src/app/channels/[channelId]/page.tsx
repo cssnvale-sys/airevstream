@@ -76,7 +76,7 @@ const TONE_OPTIONS = [
 
 export default function ChannelDetailPage() {
   const { channelId } = useParams<{ channelId: string }>();
-  const { data: rawData, isLoading, mutate } = useChannel<ChannelDetail>(channelId);
+  const { data: rawData, isLoading, error: fetchError, mutate } = useChannel<ChannelDetail>(channelId);
   const { data: viralRaw } = useChannelViralStats<ViralStatsData>(channelId);
   const { data: seriesRaw, mutate: mutateSeries } = useChannelSeries<Array<{ id: string; name: string; description: string | null; status: string; tags: string[]; _count: { episodes: number } }>>(channelId);
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -137,7 +137,7 @@ export default function ChannelDetailPage() {
     );
   }
 
-  if (!channel) {
+  if (fetchError || !channel) {
     return (
       <AppLayout>
         <div className="card flex flex-col items-center justify-center py-12 text-center">

@@ -39,6 +39,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **KNOWN-ISSUES cleanup** (Session 48): 4 stale issues marked fixed (KI-076, KI-074, KI-068, KI-067), KI-079 updated with partial fix.
 - **Focus trapping** (Session 48): New `useFocusTrap` hook applied to all 11 modal dialogs. Tab/Shift+Tab cycling, Escape-to-close, auto-focus first element, focus restoration on close.
 - **Modal aria-labelledby** (Session 48): All 11 modals now have aria-labelledby pointing to their title elements.
+- **Budget disabled states** (Session 48): Toggle/edit/delete buttons disabled during status change to prevent double-click.
+- **Responsive grids** (Session 48): 8 fixed grids across 7 files given responsive breakpoints for mobile compatibility.
+- **SWR error handling sweep** (Session 48): 14 useApi/SWR calls across 10 files gained error destructuring + error UI. Covers: budgets, channels, experiments, series list+detail, assets, settings (6 tabs), create, workflows HITL, series analytics.
+- **Content detail modal focus traps** (Session 48): 3 inline modals (reject, repurpose, distribute) gained useFocusTrap + aria-labelledby. Notification center gained focus trap.
+- **Interactive element aria-labels** (Session 48): Shot gallery card (aria-expanded + aria-label), notification item (severity + title), file upload drop zone.
 - **Viral trend chart key** (Session 48): Replaced index key with stable point.date for deterministic rendering.
 - **autoComplete attributes** (Session 48): 5 inputs (affiliate URLs, settings AI endpoint, webhook URL, proxy password).
 - **ARIA tab panel semantics** (Session 48): All 9 tabbed interfaces now have complete ARIA pattern: id + aria-controls on tabs, role="tabpanel" + aria-labelledby on panels. 10 files updated.

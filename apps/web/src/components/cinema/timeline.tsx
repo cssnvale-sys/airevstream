@@ -93,7 +93,7 @@ export function Timeline({ shots, totalDurationSec, selectedShotId, onSelectShot
                       : 'bg-accent-blue/15 border border-accent-blue/30 text-text-secondary hover:bg-accent-blue/25'
                   }`}
                 >
-                  <span className="truncate px-1">S{shot.shotNumber}</span>
+                  <span className="truncate px-1" title={`Shot ${shot.shotNumber}`}>S{shot.shotNumber}</span>
                 </button>
               );
             })}

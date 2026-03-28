@@ -54,7 +54,7 @@ export function AvatarAssignPicker({ selectedId, onChange }: AvatarAssignPickerP
           <div className="w-12 h-12 rounded-full bg-zinc-800 mx-auto mb-2 flex items-center justify-center">
             <User className="h-6 w-6 text-zinc-500" />
           </div>
-          <div className="text-xs font-medium text-zinc-300 truncate">{avatar.name}</div>
+          <div className="text-xs font-medium text-zinc-300 truncate" title={avatar.name}>{avatar.name}</div>
         </button>
       ))}
     </div>

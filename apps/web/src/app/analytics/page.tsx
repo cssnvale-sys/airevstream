@@ -831,7 +831,7 @@ export default function AnalyticsPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-caption text-text-secondary">Top Preset</span>
                   </div>
-                  <p className="text-body text-accent-blue font-medium truncate">{sugStats.topPreset?.presetId ?? '-'}</p>
+                  <p className="text-body text-accent-blue font-medium truncate" title={sugStats.topPreset?.presetId ?? undefined}>{sugStats.topPreset?.presetId ?? '-'}</p>
                 </div>
               </div>
 
@@ -854,7 +854,7 @@ export default function AnalyticsPage() {
                           <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-bg-tertiary/50 transition-colors">
                             <td className="py-2 text-text-primary font-mono text-caption">{log.presetId}</td>
                             <td className="py-2 text-text-secondary capitalize">{log.dimension}</td>
-                            <td className="py-2 text-text-secondary truncate max-w-[150px]">{log.content?.title ?? '-'}</td>
+                            <td className="py-2 text-text-secondary truncate max-w-[150px]" title={log.content?.title ?? undefined}>{log.content?.title ?? '-'}</td>
                             <td className="py-2">
                               <span className={cn(
                                 'px-2 py-0.5 rounded-full text-caption font-medium capitalize',

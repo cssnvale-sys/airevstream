@@ -66,11 +66,11 @@ export function PlanReviewCard({ plan, onRevise, onRegenerate, regenerating }: P
             <div className="text-[10px] text-text-tertiary uppercase tracking-wider">Length</div>
           </div>
           <div className="bg-bg-tertiary rounded-md p-3 text-center">
-            <div className="text-sm font-semibold text-text-primary truncate">{plan.visualStyle}</div>
+            <div className="text-sm font-semibold text-text-primary truncate" title={plan.visualStyle}>{plan.visualStyle}</div>
             <div className="text-[10px] text-text-tertiary uppercase tracking-wider">Style</div>
           </div>
           <div className="bg-bg-tertiary rounded-md p-3 text-center">
-            <div className="text-sm font-semibold text-text-primary truncate">{plan.characterType}</div>
+            <div className="text-sm font-semibold text-text-primary truncate" title={plan.characterType}>{plan.characterType}</div>
             <div className="text-[10px] text-text-tertiary uppercase tracking-wider">Character</div>
           </div>
         </div>

@@ -179,7 +179,7 @@ export function CommandPalette() {
                     )}
                   >
                     <Icon size={16} className="shrink-0 opacity-60" />
-                    <span className="flex-1 truncate">{item.label}</span>
+                    <span className="flex-1 truncate" title={item.label}>{item.label}</span>
                     <span className="text-xs opacity-50 capitalize">{item.type}</span>
                   </button>
                 );

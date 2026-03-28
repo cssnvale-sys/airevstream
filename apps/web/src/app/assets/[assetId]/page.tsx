@@ -561,7 +561,7 @@ export default function AssetDetailPage() {
                         </span>
                       )}
                       {typeof entry.prompt === 'string' && (
-                        <p className="mt-0.5 text-text-tertiary truncate">{entry.prompt}</p>
+                        <p className="mt-0.5 text-text-tertiary truncate" title={entry.prompt}>{entry.prompt}</p>
                       )}
                     </div>
                   ))}

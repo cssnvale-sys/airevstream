@@ -846,9 +846,9 @@ function DetailPanel({
                       <div className="w-full aspect-square bg-bg-primary rounded-md mb-1.5 flex items-center justify-center">
                         <User className="text-text-secondary opacity-30" size={24} />
                       </div>
-                      <p className="text-xs font-medium text-text-primary truncate">{avatar.name}</p>
+                      <p className="text-xs font-medium text-text-primary truncate" title={avatar.name}>{avatar.name}</p>
                       {avatar.role && (
-                        <p className="text-xs text-text-secondary truncate">{avatar.role}</p>
+                        <p className="text-xs text-text-secondary truncate" title={avatar.role}>{avatar.role}</p>
                       )}
                     </div>
                   ))}

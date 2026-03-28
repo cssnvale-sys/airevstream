@@ -89,7 +89,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-text-secondary w-20 text-right truncate">{label}</span>
+      <span className="text-text-secondary w-20 text-right truncate" title={label}>{label}</span>
       <div className="flex-1 bg-bg-tertiary rounded-full h-1.5 overflow-hidden">
         <div className={`${color} h-full rounded-full`} style={{ width: `${score}%` }} />
       </div>

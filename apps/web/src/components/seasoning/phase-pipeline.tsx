@@ -32,7 +32,7 @@ export function PhasePipeline({ phaseCounts, total }: PhasePipelineProps) {
             <div key={phase.key} className="flex-1 min-w-0">
               <div className="flex items-center gap-1 mb-1">
                 {i > 0 && <div className="w-2 h-px bg-border" />}
-                <span className="text-caption text-text-secondary truncate">{phase.label}</span>
+                <span className="text-caption text-text-secondary truncate" title={phase.label}>{phase.label}</span>
               </div>
               <div className="h-8 bg-bg-tertiary rounded relative overflow-hidden">
                 <div

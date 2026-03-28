@@ -608,6 +608,10 @@ export function startContentWorker() {
     logger.error({ jobId: job?.id, err }, 'Content job failed');
   });
 
+  worker.on('error', (err) => {
+    console.error('[Content] Worker error:', err);
+  });
+
   worker.on('stalled', (jobId) => {
     logger.warn({ jobId }, 'Content job stalled — will be retried');
   });

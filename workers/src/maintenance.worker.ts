@@ -233,6 +233,10 @@ export function startMaintenanceWorker() {
     logger.error({ jobId: job?.id, err }, 'Maintenance job failed');
   });
 
+  worker.on('error', (err) => {
+    console.error('[Maintenance] Worker error:', err);
+  });
+
   worker.on('stalled', (jobId) => {
     logger.warn({ jobId }, 'Maintenance job stalled — will be retried');
   });

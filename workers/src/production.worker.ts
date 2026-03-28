@@ -1990,6 +1990,10 @@ export function startProductionWorker() {
     logger.error({ jobId: job?.id, jobName: job?.name, error: err.message }, 'Production job failed');
   });
 
+  worker.on('error', (err) => {
+    console.error('[Production] Worker error:', err);
+  });
+
   worker.on('stalled', (jobId) => {
     logger.warn({ jobId }, 'Production job stalled — will be retried');
   });

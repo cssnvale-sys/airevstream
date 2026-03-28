@@ -371,6 +371,10 @@ export function startResearchWorker() {
     logger.error({ jobId: job?.id, err }, 'Research job failed');
   });
 
+  worker.on('error', (err) => {
+    console.error('[Research] Worker error:', err);
+  });
+
   worker.on('stalled', (jobId) => {
     logger.warn({ jobId }, 'Research job stalled — will be retried');
   });

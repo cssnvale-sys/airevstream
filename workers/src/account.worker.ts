@@ -1080,6 +1080,10 @@ export function startAccountWorker() {
     logger.error({ jobId: job?.id, err }, 'Account job failed');
   });
 
+  worker.on('error', (err) => {
+    console.error('[Account] Worker error:', err);
+  });
+
   worker.on('stalled', (jobId) => {
     logger.warn({ jobId }, 'Account job stalled — will be retried');
   });
@@ -1097,6 +1101,10 @@ export function startSeasoningWorker() {
 
   worker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'Seasoning job failed');
+  });
+
+  worker.on('error', (err) => {
+    console.error('[Seasoning] Worker error:', err);
   });
 
   worker.on('stalled', (jobId) => {

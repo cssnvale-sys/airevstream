@@ -210,6 +210,10 @@ export function startExperimentWorker() {
     logger.error({ jobId: job?.id, err }, 'Experiment job failed');
   });
 
+  worker.on('error', (err) => {
+    console.error('[Experiment] Worker error:', err);
+  });
+
   worker.on('stalled', (jobId) => {
     logger.warn({ jobId }, 'Experiment job stalled — will be retried');
   });

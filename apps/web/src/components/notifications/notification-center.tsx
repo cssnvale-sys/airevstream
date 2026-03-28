@@ -10,6 +10,7 @@ import { NotificationItem, type Notification } from './notification-item';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useRouter } from 'next/navigation';
 import { useSystemEvents } from '@/lib/sse';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 
 type AlertsResponse = {
   success: boolean;
@@ -30,7 +31,7 @@ const fetcher = async (url: string): Promise<AlertsResponse> => {
 export function NotificationCenter() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useFocusTrap(open, { onEscape: () => setOpen(false) });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const prevAlertIdsRef = useRef<Set<string>>(new Set());
 

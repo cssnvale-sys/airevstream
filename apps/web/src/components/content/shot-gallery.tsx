@@ -79,6 +79,8 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
         className="flex items-center justify-between cursor-pointer"
         role="button"
         tabIndex={0}
+        aria-expanded={expanded}
+        aria-label={`Shot ${shot.shotNumber}: ${(shot.shotspec as Record<string, unknown>)?.section ?? 'details'}. ${expanded ? 'Collapse' : 'Expand'}`}
         onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(!expanded); } }}
       >

@@ -62,6 +62,7 @@ export function NotificationItem({ notification, onDismiss, onClick }: Notificat
       onClick={() => onClick?.(notification)}
       role="button"
       tabIndex={0}
+      aria-label={`${notification.severity} notification: ${notification.title}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();

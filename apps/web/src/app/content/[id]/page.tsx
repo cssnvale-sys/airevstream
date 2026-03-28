@@ -14,6 +14,7 @@ import { ShotGallery } from '@/components/content/shot-gallery';
 import { MediaPreview } from '@/components/ui/media-preview';
 import { QualityBadge } from '@/components/ui/quality-badge';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { useFocusTrap } from '@/hooks/use-focus-trap';
 import {
   ArrowLeft, Check, X, Clock, Send, Archive,
   FileText, Film, Video, Image, Mic, ImageIcon,
@@ -138,6 +139,9 @@ export default function ContentDetailPage() {
   const [distributeSchedule, setDistributeSchedule] = useState('');
   const { data: channelsData } = useApi<{ id: string; name: string; socialAccount: { platform: string } | null }[]>('/channels?limit=100');
   const channels = channelsData?.data ?? [];
+  const rejectTrapRef = useFocusTrap(rejectOpen, { onEscape: () => { if (!acting) { setRejectOpen(false); setRejectReason(''); } }, disabled: acting });
+  const repurposeTrapRef = useFocusTrap(repurposeOpen, { onEscape: () => setRepurposeOpen(false), disabled: acting });
+  const distributeTrapRef = useFocusTrap(distributeOpen, { onEscape: () => setDistributeOpen(false), disabled: acting });
 
   // Close More menu on outside click
   useEffect(() => {
@@ -563,14 +567,15 @@ export default function ContentDetailPage() {
             onClick={() => !acting && (setRejectOpen(false), setRejectReason(''))}
             role="dialog"
             aria-modal="true"
+            aria-labelledby="reject-dialog-title"
           >
-            <div className="card w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+            <div ref={rejectTrapRef} className="card w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start gap-3 mb-4">
                 <div className="p-2 rounded-lg shrink-0 bg-accent-amber/10">
                   <X size={18} className="text-accent-amber" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-text-primary">Reject Content</h3>
+                  <h3 id="reject-dialog-title" className="text-sm font-semibold text-text-primary">Reject Content</h3>
                   <p className="text-sm text-text-secondary mt-1">
                     This content will be rejected and moved back to draft.
                   </p>
@@ -614,9 +619,10 @@ export default function ContentDetailPage() {
             onClick={() => setRepurposeOpen(false)}
             role="dialog"
             aria-modal="true"
+            aria-labelledby="repurpose-dialog-title"
           >
-            <div className="card w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-sm font-semibold text-text-primary mb-4">Repurpose Content</h3>
+            <div ref={repurposeTrapRef} className="card w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+              <h3 id="repurpose-dialog-title" className="text-sm font-semibold text-text-primary mb-4">Repurpose Content</h3>
               <div className="space-y-3">
                 <div>
                   <label htmlFor="content-target-format" className="block text-xs text-text-secondary mb-1">Target Format</label>
@@ -670,9 +676,10 @@ export default function ContentDetailPage() {
             onClick={() => setDistributeOpen(false)}
             role="dialog"
             aria-modal="true"
+            aria-labelledby="distribute-dialog-title"
           >
-            <div className="card w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-sm font-semibold text-text-primary mb-4">Distribute to Channels</h3>
+            <div ref={distributeTrapRef} className="card w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+              <h3 id="distribute-dialog-title" className="text-sm font-semibold text-text-primary mb-4">Distribute to Channels</h3>
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-text-secondary mb-1">Select Channels</label>

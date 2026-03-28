@@ -144,6 +144,7 @@ export function FileUpload({
       <div
         role="button"
         tabIndex={disabled || uploading ? -1 : 0}
+        aria-label={uploading ? 'Uploading file' : 'Click to upload or drag and drop a file'}
         onClick={handleClick}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {

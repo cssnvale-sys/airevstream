@@ -4,10 +4,10 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
-## Session 48 — Autonomous Iterative Improvement (Iterations 129-133)
+## Session 48 — Autonomous Iterative Improvement (Iterations 129-136)
 
 **Date**: 2026-03-27
-**Focus**: Undefined Tailwind colors, truncated text tooltips, channel unsaved changes, stale comment fix.
+**Focus**: Undefined Tailwind colors, truncated text tooltips, channel unsaved changes, worker resilience, SWR audit test.
 
 ### Iteration 130: Undefined accent-yellow + Truncated Text Titles
 - Replaced undefined `accent-yellow` with `accent-amber` across 3 files (affiliate, series-analytics, series-avatar-manager).
@@ -23,6 +23,15 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 ### Iteration 133: Channel Profile Unsaved Changes + Stale Comment
 - Added `useUnsavedChanges()` to channel detail profile editor (4 form fields track dirty state).
 - Fixed stale comment in assistant chat route about Alert model tenantId.
+
+### Iteration 135: Worker on('error') Handlers
+- Added `worker.on('error', ...)` to all 9 workers (8 files) for connection-level failure observability.
+
+### Iteration 136: SWR Error Destructuring Audit Test
+- Created `swr-error-handling.audit.test.ts` — scans all page/component files for SWR hooks missing error destructuring.
+- 36 known exceptions for legitimate cases (dropdowns, pickers, presigned URLs).
+- Fixed 2 page-level violations: channels detail and experiment detail pages.
+- Audit suite now at 16 test files, 39 tests.
 
 ---
 

@@ -49,6 +49,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Icon-only back links** (Session 48): 2 ArrowLeft-only links gained aria-label (seasoning cohort, channel detail).
 - **Channel profile unsaved changes** (Session 48): useUnsavedChanges() hook on channel detail editor warns before navigating away with dirty form.
 - **Stale comment fix** (Session 48): Assistant chat route comment about Alert tenantId updated to match actual schema.
+- **Worker on('error') handlers** (Session 48): All 9 BullMQ workers now log connection-level errors via `worker.on('error')`.
+- **SWR error destructuring audit test** (Session 48): New regression-prevention test scans all pages/components for SWR hooks missing error destructuring (36 known exceptions, 2 violations fixed).
 - **Viral trend chart key** (Session 48): Replaced index key with stable point.date for deterministic rendering.
 - **autoComplete attributes** (Session 48): 5 inputs (affiliate URLs, settings AI endpoint, webhook URL, proxy password).
 - **ARIA tab panel semantics** (Session 48): All 9 tabbed interfaces now have complete ARIA pattern: id + aria-controls on tabs, role="tabpanel" + aria-labelledby on panels. 10 files updated.

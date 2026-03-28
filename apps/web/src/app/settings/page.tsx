@@ -180,7 +180,7 @@ function SkeletonCard() {
 // ---------------------------------------------------------------------------
 
 function GeneralTab() {
-  const { data: settingsRes, isLoading } = useApi<GeneralSettings>('/settings/general');
+  const { data: settingsRes, isLoading, error: fetchError } = useApi<GeneralSettings>('/settings/general');
   const [form, setForm] = useState<GeneralSettings>({
     systemName: 'AiRevStream',
     timezone: 'UTC',
@@ -232,6 +232,10 @@ function GeneralTab() {
         ))}
       </div>
     );
+  }
+
+  if (fetchError) {
+    return <div className="card text-center py-8 text-text-secondary">Failed to load general settings. Please try again later.</div>;
   }
 
   return (
@@ -654,7 +658,7 @@ function AiServicesTab() {
 }
 
 function NotificationsTab() {
-  const { data: notifRes, isLoading } = useApi<NotificationChannel[]>('/settings/notifications');
+  const { data: notifRes, isLoading, error: fetchError } = useApi<NotificationChannel[]>('/settings/notifications');
   const [channels, setChannels] = useState<NotificationChannel[]>([
     { type: 'dashboard', enabled: true, config: {} },
     { type: 'email', enabled: false, config: { address: '' } },
@@ -702,6 +706,10 @@ function NotificationsTab() {
         ))}
       </div>
     );
+  }
+
+  if (fetchError) {
+    return <div className="card text-center py-8 text-text-secondary">Failed to load notification settings. Please try again later.</div>;
   }
 
   return (
@@ -791,7 +799,7 @@ function SecurityTab() {
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // API keys
-  const { data: keysRes, isLoading: keysLoading, mutate: mutateKeys } = useApi<ApiKey[]>('/settings/api-keys');
+  const { data: keysRes, isLoading: keysLoading, error: keysError, mutate: mutateKeys } = useApi<ApiKey[]>('/settings/api-keys');
   const [newKeyName, setNewKeyName] = useState('');
   const [creatingKey, setCreatingKey] = useState(false);
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
@@ -1018,6 +1026,8 @@ function SecurityTab() {
               <div key={i} className="h-14 bg-bg-tertiary rounded-lg" />
             ))}
           </div>
+        ) : keysError ? (
+          <div className="card text-center py-8 text-text-secondary">Failed to load API keys.</div>
         ) : apiKeys.length === 0 ? (
           <EmptyState
             icon={Shield}
@@ -1076,7 +1086,7 @@ function SecurityTab() {
 }
 
 function AppearanceTab() {
-  const { data: appearanceRes, isLoading } = useApi<AppearanceSettings>('/settings/appearance');
+  const { data: appearanceRes, isLoading, error: fetchError } = useApi<AppearanceSettings>('/settings/appearance');
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
   const [sidebarPosition, setSidebarPosition] = useState<'left' | 'right'>('left');
   const [saving, setSaving] = useState(false);
@@ -1115,6 +1125,10 @@ function AppearanceTab() {
         </div>
       </div>
     );
+  }
+
+  if (fetchError) {
+    return <div className="card text-center py-8 text-text-secondary">Failed to load appearance settings. Please try again later.</div>;
   }
 
   const themeOptions: { value: 'dark' | 'light' | 'system'; label: string; icon: typeof Moon }[] = [
@@ -1198,7 +1212,7 @@ function AppearanceTab() {
 }
 
 function ProxiesTab() {
-  const { data: proxiesRes, isLoading, mutate } = useApi<ProxyEntry[]>('/settings/proxies');
+  const { data: proxiesRes, isLoading, error: fetchError, mutate } = useApi<ProxyEntry[]>('/settings/proxies');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newProxy, setNewProxy] = useState({
     name: '',
@@ -1287,6 +1301,10 @@ function ProxiesTab() {
         ))}
       </div>
     );
+  }
+
+  if (fetchError) {
+    return <div className="card text-center py-8 text-text-secondary">Failed to load proxy settings. Please try again later.</div>;
   }
 
   return (
@@ -1504,7 +1522,7 @@ function ProxiesTab() {
 }
 
 function DataTab() {
-  const { data: retentionRes, isLoading } = useApi<RetentionSettings>('/settings/data/retention');
+  const { data: retentionRes, isLoading, error: fetchError } = useApi<RetentionSettings>('/settings/data/retention');
   const [retentionDays, setRetentionDays] = useState(90);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -1571,6 +1589,10 @@ function DataTab() {
         ))}
       </div>
     );
+  }
+
+  if (fetchError) {
+    return <div className="card text-center py-8 text-text-secondary">Failed to load data settings. Please try again later.</div>;
   }
 
   const exportOptions = [

@@ -17,6 +17,7 @@ import { useChannelSeries } from '@/hooks/use-series';
 import { SeriesCard } from '@/components/series/series-card';
 import { CreateSeriesModal } from '@/components/series/create-series-modal';
 import { ChannelAssetsTab } from '@/components/channels/channel-assets-tab';
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 
 interface ChannelDetail {
   id: string;
@@ -81,6 +82,9 @@ export default function ChannelDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [saving, setSaving] = useState(false);
   const [showCreateSeries, setShowCreateSeries] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedChanges(dirty);
 
   // Editable profile state
   const channel = rawData?.data;
@@ -96,6 +100,7 @@ export default function ChannelDetailPage() {
       setTone(channel.tone ?? '');
       setPersonality(channel.personality ?? '');
       setTargetAudience(channel.targetAudience ?? '');
+      setDirty(false);
     }
   }, [channel]);
 
@@ -112,6 +117,7 @@ export default function ChannelDetailPage() {
         targetAudience: targetAudience || null,
       });
       toast.success('Channel profile updated');
+      setDirty(false);
       mutate();
     } catch (err) {
       console.error('Failed to update channel:', err);
@@ -169,7 +175,7 @@ export default function ChannelDetailPage() {
 
         <div>
           <label className="text-caption text-text-secondary block mb-1">Niches</label>
-          <NicheTagInput value={niches} onChange={setNiches} />
+          <NicheTagInput value={niches} onChange={(v) => { setNiches(v); setDirty(true); }} />
           <p className="text-caption text-text-tertiary mt-1">Press Enter to add a niche tag</p>
         </div>
 
@@ -178,7 +184,7 @@ export default function ChannelDetailPage() {
           <select
             id="channel-tone"
             value={tone}
-            onChange={(e) => setTone(e.target.value)}
+            onChange={(e) => { setTone(e.target.value); setDirty(true); }}
             className="input w-full"
           >
             {TONE_OPTIONS.map((t) => (
@@ -192,7 +198,7 @@ export default function ChannelDetailPage() {
           <textarea
             id="channel-personality"
             value={personality}
-            onChange={(e) => setPersonality(e.target.value)}
+            onChange={(e) => { setPersonality(e.target.value); setDirty(true); }}
             className="input w-full resize-none"
             rows={3}
             placeholder="Describe the channel's personality and voice..."
@@ -204,7 +210,7 @@ export default function ChannelDetailPage() {
           <textarea
             id="channel-target-audience"
             value={targetAudience}
-            onChange={(e) => setTargetAudience(e.target.value)}
+            onChange={(e) => { setTargetAudience(e.target.value); setDirty(true); }}
             className="input w-full resize-none"
             rows={3}
             placeholder="Describe the target audience..."

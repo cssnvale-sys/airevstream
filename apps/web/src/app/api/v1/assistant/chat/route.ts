@@ -331,8 +331,8 @@ async function buildSystemContext(
 
 /**
  * Get alert context: total open count and top 3 recent alerts.
- * Alerts are system-level (no tenantId on Alert model) — intentional.
- * All tenants see system health alerts (e.g. service outages, resource issues).
+ * Alert model has nullable tenantId — null means system-level (visible to all).
+ * Queries here intentionally omit tenantId filter to include both system and tenant alerts.
  */
 async function getAlertsContext(ctx: ApiContext) {
   const [totalOpen, topAlerts] = await Promise.all([

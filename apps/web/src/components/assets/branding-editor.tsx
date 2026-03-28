@@ -159,7 +159,7 @@ export function BrandingEditor({ channelId, branding, onUpdated }: BrandingEdito
       {/* Colors */}
       <div>
         <label className="block text-body text-text-secondary mb-2">Colors</label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {(['primary', 'secondary', 'accent'] as const).map((colorKey) => (
             <div key={colorKey} className="flex items-center gap-2">
               <input
@@ -191,7 +191,7 @@ export function BrandingEditor({ channelId, branding, onUpdated }: BrandingEdito
       {/* Fonts */}
       <div>
         <label className="block text-body text-text-secondary mb-2">Fonts</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="font-heading" className="block text-xs text-text-tertiary mb-1">
               Heading

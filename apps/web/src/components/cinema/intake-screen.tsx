@@ -178,7 +178,7 @@ export function IntakeScreen({ onComplete }: IntakeScreenProps) {
           <p className="text-text-secondary text-caption mb-3">
             Simple uses the recipe as-is. Advanced and Complex unlock more settings.
           </p>
-          <div className="grid grid-cols-3 gap-3 max-w-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-lg">
             {COMPLEXITY_OPTIONS.map((opt) => {
               const isSelected = localComplexity === opt.value;
               return (

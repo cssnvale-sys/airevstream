@@ -467,7 +467,7 @@ export default function SystemPage() {
 
                   {isExpanded && (
                     <div className="px-3 pb-3 pt-1 border-t border-border bg-bg-secondary/50">
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-text-secondary">Started:</span>{' '}
                           <span className="text-text-primary">{formatRelativeTime(wf.createdAt)}</span>

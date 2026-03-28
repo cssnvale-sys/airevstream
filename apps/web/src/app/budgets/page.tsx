@@ -183,7 +183,7 @@ export default function BudgetsPage() {
           <h3 className="text-card-title text-text-primary mb-4">
             {editingId ? 'Edit Budget' : 'New Budget'}
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="budget-name" className="block text-caption text-text-secondary mb-1.5">Name</label>
               <input

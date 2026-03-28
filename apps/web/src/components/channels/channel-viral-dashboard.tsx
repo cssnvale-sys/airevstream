@@ -208,7 +208,7 @@ export function ChannelViralDashboard({ channelId }: ChannelViralDashboardProps)
       {suggestionStats && suggestionStats.totalShown > 0 && (
         <div className="card">
           <h3 className="text-card-title text-text-primary mb-4">Suggestion Performance</h3>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <div className="text-center">
               <p className="text-page-title text-text-primary">{suggestionStats.totalShown}</p>
               <p className="text-caption text-text-secondary">Shown</p>

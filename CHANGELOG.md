@@ -44,6 +44,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **SWR error handling sweep** (Session 48): 14 useApi/SWR calls across 10 files gained error destructuring + error UI. Covers: budgets, channels, experiments, series list+detail, assets, settings (6 tabs), create, workflows HITL, series analytics.
 - **Content detail modal focus traps** (Session 48): 3 inline modals (reject, repurpose, distribute) gained useFocusTrap + aria-labelledby. Notification center gained focus trap.
 - **Interactive element aria-labels** (Session 48): Shot gallery card (aria-expanded + aria-label), notification item (severity + title), file upload drop zone.
+- **Undefined accent-yellow** (Session 48): Replaced with accent-amber in 3 files (affiliate, series-analytics, series-avatar-manager). Color was not defined in tailwind config.
+- **Truncated text tooltips** (Session 48): 27 truncated dynamic text elements gained `title` attributes across 20+ files for hover tooltips.
+- **Icon-only back links** (Session 48): 2 ArrowLeft-only links gained aria-label (seasoning cohort, channel detail).
+- **Channel profile unsaved changes** (Session 48): useUnsavedChanges() hook on channel detail editor warns before navigating away with dirty form.
+- **Stale comment fix** (Session 48): Assistant chat route comment about Alert tenantId updated to match actual schema.
 - **Viral trend chart key** (Session 48): Replaced index key with stable point.date for deterministic rendering.
 - **autoComplete attributes** (Session 48): 5 inputs (affiliate URLs, settings AI endpoint, webhook URL, proxy password).
 - **ARIA tab panel semantics** (Session 48): All 9 tabbed interfaces now have complete ARIA pattern: id + aria-controls on tabs, role="tabpanel" + aria-labelledby on panels. 10 files updated.

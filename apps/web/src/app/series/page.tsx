@@ -31,7 +31,7 @@ const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
 export default function SeriesPage() {
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
-  const { data: rawData, isLoading, mutate } = useSeries<SeriesRow[]>();
+  const { data: rawData, isLoading, error: fetchError, mutate } = useSeries<SeriesRow[]>();
 
   const seriesList = rawData?.data ?? [];
   const total = rawData?.meta?.total ?? seriesList.length;
@@ -93,6 +93,8 @@ export default function SeriesPage() {
             <div key={i} className="h-16 bg-bg-tertiary rounded-lg animate-pulse" />
           ))}
         </div>
+      ) : fetchError ? (
+        <div className="card text-center py-8 text-text-secondary">Failed to load series. Please try again later.</div>
       ) : seriesList.length === 0 ? (
         <div className="card">
           <EmptyState

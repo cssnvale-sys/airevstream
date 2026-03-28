@@ -50,7 +50,7 @@ const STATUS_OPTIONS = ['draft', 'active', 'archived'];
 
 export default function SeriesDetailPage() {
   const { seriesId } = useParams<{ seriesId: string }>();
-  const { data: rawData, isLoading, mutate } = useSeriesDetail<SeriesDetail>(seriesId);
+  const { data: rawData, isLoading, error: fetchError, mutate } = useSeriesDetail<SeriesDetail>(seriesId);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const series = rawData?.data;
@@ -80,12 +80,12 @@ export default function SeriesDetailPage() {
     );
   }
 
-  if (!series) {
+  if (fetchError || !series) {
     return (
       <AppLayout>
         <div className="text-center py-20">
           <Layers size={48} className="mx-auto text-text-secondary mb-4" />
-          <h2 className="text-lg font-semibold text-text-primary">Series not found</h2>
+          <h2 className="text-lg font-semibold text-text-primary">{fetchError ? 'Failed to load series' : 'Series not found'}</h2>
           <Link href="/series" className="text-accent-blue hover:underline mt-2 inline-block">Back to series</Link>
         </div>
       </AppLayout>

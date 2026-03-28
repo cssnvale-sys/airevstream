@@ -48,7 +48,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 
 export default function ChannelsPage() {
   const [page, setPage] = useState(1);
-  const { data: rawData, isLoading } = useChannels<ChannelRow[]>(`page=${page}&limit=20`);
+  const { data: rawData, isLoading, error: fetchError } = useChannels<ChannelRow[]>(`page=${page}&limit=20`);
 
   // Cast to access the full API response shape (paginated helper returns { data, meta })
   const response = rawData as unknown as ChannelsRawResponse | undefined;
@@ -106,6 +106,8 @@ export default function ChannelsPage() {
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
+      ) : fetchError ? (
+        <div className="card text-center py-8 text-text-secondary">Failed to load channels. Please try again later.</div>
       ) : channels.length === 0 ? (
         <div className="card">
           <EmptyState

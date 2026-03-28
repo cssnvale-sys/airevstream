@@ -36,7 +36,7 @@ const STATUS_BADGES: Record<string, { bg: string; text: string }> = {
 
 export default function ExperimentsPage() {
   const [showCreate, setShowCreate] = useState(false);
-  const { data: rawData, isLoading, mutate } = useExperiments<ExperimentRow[]>();
+  const { data: rawData, isLoading, error: fetchError, mutate } = useExperiments<ExperimentRow[]>();
 
   const experiments = rawData?.data ?? [];
   const total = rawData?.meta?.total ?? 0;
@@ -96,6 +96,8 @@ export default function ExperimentsPage() {
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
+      ) : fetchError ? (
+        <div className="card text-center py-8 text-text-secondary">Failed to load experiments. Please try again later.</div>
       ) : experiments.length === 0 ? (
         <div className="card flex flex-col items-center justify-center py-12 text-center">
           <FlaskConical size={32} className="text-text-secondary mb-3" />

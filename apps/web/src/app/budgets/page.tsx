@@ -53,7 +53,7 @@ const INITIAL_FORM: FormState = {
 // ---------------------------------------------------------------------------
 
 export default function BudgetsPage() {
-  const { data, isLoading, mutate } = useApi<Budget[]>('/budgets?limit=50');
+  const { data, isLoading, error: fetchError, mutate } = useApi<Budget[]>('/budgets?limit=50');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -271,6 +271,8 @@ export default function BudgetsPage() {
       {/* Budget List */}
       {isLoading ? (
         <div className="animate-pulse text-text-secondary">Loading budgets...</div>
+      ) : fetchError ? (
+        <div className="card text-center py-8 text-text-secondary">Failed to load budgets. Please try again later.</div>
       ) : budgets.length === 0 ? (
         <EmptyState
           icon={Wallet}

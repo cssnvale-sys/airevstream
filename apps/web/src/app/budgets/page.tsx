@@ -60,6 +60,7 @@ export default function BudgetsPage() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const budgets: Budget[] = data?.data ?? [];
 
@@ -132,6 +133,7 @@ export default function BudgetsPage() {
 
   const handleToggleStatus = useCallback(async (budget: Budget) => {
     const newStatus = budget.status === 'active' ? 'paused' : 'active';
+    setTogglingId(budget.id);
     try {
       await apiPatch(`/budgets/${budget.id}`, { status: newStatus });
       toast.success(`Budget ${newStatus}`);
@@ -139,6 +141,8 @@ export default function BudgetsPage() {
     } catch (err) {
       console.error('Failed to update budget status:', err);
       toast.error('Failed to update status');
+    } finally {
+      setTogglingId(null);
     }
   }, [mutate]);
 
@@ -307,7 +311,8 @@ export default function BudgetsPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleStatus(budget)}
-                      className="p-1.5 text-text-tertiary hover:text-text-primary transition-colors"
+                      disabled={togglingId === budget.id}
+                      className="p-1.5 text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-50"
                       title={budget.status === 'active' ? 'Pause' : 'Resume'}
                       aria-label={budget.status === 'active' ? 'Pause budget' : 'Resume budget'}
                     >
@@ -316,14 +321,16 @@ export default function BudgetsPage() {
                     <button
                       type="button"
                       onClick={() => handleEdit(budget)}
-                      className="text-xs text-text-secondary hover:text-text-primary"
+                      disabled={saving || deleting}
+                      className="text-xs text-text-secondary hover:text-text-primary disabled:opacity-50"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(budget)}
-                      className="p-1.5 text-text-tertiary hover:text-accent-red transition-colors"
+                      disabled={saving || deleting}
+                      className="p-1.5 text-text-tertiary hover:text-accent-red transition-colors disabled:opacity-50"
                       aria-label="Delete budget"
                     >
                       <Trash2 size={14} />

@@ -482,9 +482,9 @@ export default function AssetsPage() {
     return p.toString();
   }, [sceneryPage, debouncedSearch, sceneryCategory]);
 
-  const { data: avatarRaw, isLoading: avatarsLoading, mutate: mutateAvatars } =
+  const { data: avatarRaw, isLoading: avatarsLoading, error: avatarError, mutate: mutateAvatars } =
     useAvatars<AvatarListItem[]>(avatarParams);
-  const { data: sceneryRaw, isLoading: sceneryLoading, mutate: mutateScenery } =
+  const { data: sceneryRaw, isLoading: sceneryLoading, error: sceneryError, mutate: mutateScenery } =
     useSceneryAssets<SceneryListItem[]>(sceneryParams);
 
   // Paginated response shape: { data: T[], meta: { total, page, limit, pages } }
@@ -595,6 +595,8 @@ export default function AssetsPage() {
             <div className="flex items-center justify-center py-16">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
             </div>
+          ) : avatarError ? (
+            <div className="card text-center py-8 text-text-secondary">Failed to load characters. Please try again later.</div>
           ) : avatars.length === 0 ? (
             <div className="card flex flex-col items-center justify-center py-16 text-center">
               <Users size={40} className="text-text-tertiary mb-3" />
@@ -655,6 +657,8 @@ export default function AssetsPage() {
             <div className="flex items-center justify-center py-16">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
             </div>
+          ) : sceneryError ? (
+            <div className="card text-center py-8 text-text-secondary">Failed to load backgrounds. Please try again later.</div>
           ) : sceneryAssets.length === 0 ? (
             <div className="card flex flex-col items-center justify-center py-16 text-center">
               <Mountain size={40} className="text-text-tertiary mb-3" />

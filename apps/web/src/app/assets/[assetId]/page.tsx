@@ -573,7 +573,7 @@ export default function AssetDetailPage() {
           {/* Stats */}
           <section>
             <h3 className="text-sm font-medium text-text-secondary mb-2">Stats</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="card bg-bg-tertiary text-center py-3">
                 <p className="text-lg font-semibold text-text-primary">{avatar.channelAvatarsCount}</p>
                 <p className="text-xs text-text-tertiary">Channels</p>

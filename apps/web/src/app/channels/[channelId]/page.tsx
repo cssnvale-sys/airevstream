@@ -329,7 +329,7 @@ export default function ChannelDetailPage() {
     <AppLayout>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/channels" className="p-1.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors">
+        <Link href="/channels" className="p-1.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors" aria-label="Back to channels">
           <ArrowLeft size={20} />
         </Link>
         <div>

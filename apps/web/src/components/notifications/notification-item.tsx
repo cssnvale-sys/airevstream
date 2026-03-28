@@ -76,7 +76,7 @@ export function NotificationItem({ notification, onDismiss, onClick }: Notificat
 
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-body text-text-primary font-medium truncate">
+          <p className="text-body text-text-primary font-medium truncate" title={notification.title}>
             {notification.title}
           </p>
           <time dateTime={notification.createdAt} className="text-caption text-text-secondary whitespace-nowrap shrink-0">

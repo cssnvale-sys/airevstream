@@ -637,7 +637,7 @@ function DetailPanel({
     <div className="fixed inset-y-0 right-0 z-40 w-full max-w-md bg-bg-secondary border-l border-border shadow-2xl flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <h3 className="font-semibold text-text-primary truncate">
+        <h3 className="font-semibold text-text-primary truncate" title={account?.email ?? 'Account Detail'}>
           {isLoading ? 'Loading...' : account?.email ?? 'Account Detail'}
         </h3>
         <button type="button" onClick={onClose} aria-label="Close" className="text-text-secondary hover:text-text-primary transition-colors">

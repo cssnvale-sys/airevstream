@@ -108,7 +108,7 @@ export default function CohortDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/seasoning" className="text-text-secondary hover:text-text-primary">
+          <Link href="/seasoning" className="text-text-secondary hover:text-text-primary" aria-label="Back to seasoning cohorts">
             <ArrowLeft size={20} />
           </Link>
           <div>

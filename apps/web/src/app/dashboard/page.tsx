@@ -362,7 +362,7 @@ export default function DashboardPage() {
               return (
                 <div key={item.id} className="flex items-center gap-3 py-3">
                   <div className="flex-1 min-w-0">
-                    <Link href={`/content/${item.id}`} className="text-sm font-medium text-text-primary truncate hover:text-accent-blue hover:underline block">{item.title ?? item.channel?.name ?? 'No channel'}</Link>
+                    <Link href={`/content/${item.id}`} className="text-sm font-medium text-text-primary truncate hover:text-accent-blue hover:underline block" title={item.title ?? item.channel?.name ?? 'No channel'}>{item.title ?? item.channel?.name ?? 'No channel'}</Link>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={cn('badge text-xs', statusColor(item.status))}>{item.contentType}</span>
                       {item.qualityScore != null && (

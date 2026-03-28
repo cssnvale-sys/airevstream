@@ -453,7 +453,7 @@ export default function CalendarPage() {
           )}
         />
         <span className="shrink-0">{platformIcon(item.platform)}</span>
-        <span className="truncate text-text-primary group-hover:text-accent-blue">
+        <span className="truncate text-text-primary group-hover:text-accent-blue" title={item.channel?.name ?? 'Unknown'}>
           {abbreviate(item.channel?.name ?? 'Unknown')}
         </span>
       </button>

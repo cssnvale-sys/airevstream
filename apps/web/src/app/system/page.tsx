@@ -448,9 +448,9 @@ export default function SystemPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-text-primary truncate">{wf.jobType}</span>
+                        <span className="text-sm font-medium text-text-primary truncate" title={wf.jobType}>{wf.jobType}</span>
                         {wf.content?.title && (
-                          <span className="text-xs text-text-secondary truncate">{wf.content.title}</span>
+                          <span className="text-xs text-text-secondary truncate" title={wf.content.title}>{wf.content.title}</span>
                         )}
                       </div>
                     </div>

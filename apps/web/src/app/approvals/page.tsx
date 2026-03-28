@@ -245,7 +245,7 @@ export default function ApprovalsPage() {
                       <Icon size={18} className="text-accent-amber" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-text-primary truncate">
+                      <div className="font-medium text-text-primary truncate" title={item.title ?? 'Untitled content'}>
                         {item.title ?? 'Untitled content'}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-text-secondary mt-0.5">

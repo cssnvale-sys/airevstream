@@ -324,7 +324,7 @@ function AvatarCard({
       {/* Info */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-sm font-medium text-text-primary truncate group-hover:text-accent-blue transition-colors">
+          <h3 className="text-sm font-medium text-text-primary truncate group-hover:text-accent-blue transition-colors" title={avatar.name}>
             {avatar.name}
           </h3>
           <p className="text-xs text-text-tertiary mt-0.5">
@@ -409,7 +409,7 @@ function SceneryCard({
       {/* Info */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-sm font-medium text-text-primary truncate">
+          <h3 className="text-sm font-medium text-text-primary truncate" title={scenery.name}>
             {scenery.name}
           </h3>
           <div className="flex items-center gap-2 mt-0.5">

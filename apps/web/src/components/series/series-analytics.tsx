@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function SeriesAnalytics({ seriesId }: Props) {
-  const { data: rawData, isLoading } = useSeriesAnalytics<AnalyticsData>(seriesId);
+  const { data: rawData, isLoading, error: fetchError } = useSeriesAnalytics<AnalyticsData>(seriesId);
   const analytics = rawData?.data;
 
   if (isLoading) {
@@ -30,6 +30,10 @@ export function SeriesAnalytics({ seriesId }: Props) {
         </div>
       </div>
     );
+  }
+
+  if (fetchError) {
+    return <div className="card text-center py-8 text-text-secondary">Failed to load analytics data. Please try again later.</div>;
   }
 
   if (!analytics) {

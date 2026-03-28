@@ -45,7 +45,7 @@ export default function WorkflowsPage() {
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
   // HITL tasks
-  const { data: hitlRes, isLoading: hitlLoading, mutate: hitlMutate } = useApi<HitlTask[]>('/workflows/hitl?limit=50', { refreshInterval: POLL_INTERVALS.STANDARD });
+  const { data: hitlRes, isLoading: hitlLoading, error: hitlError, mutate: hitlMutate } = useApi<HitlTask[]>('/workflows/hitl?limit=50', { refreshInterval: POLL_INTERVALS.STANDARD });
   const hitlTasks = hitlRes?.data ?? [];
 
   // Build query params
@@ -173,6 +173,8 @@ export default function WorkflowsPage() {
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="animate-spin text-text-secondary" size={32} />
               </div>
+            ) : hitlError ? (
+              <div className="card text-center py-8 text-text-secondary">Failed to load tasks. Please try again later.</div>
             ) : hitlTasks.length === 0 ? (
               <EmptyState
                 icon={CheckCircle}

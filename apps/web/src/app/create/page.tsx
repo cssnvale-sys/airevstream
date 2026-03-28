@@ -205,7 +205,7 @@ export default function CreatePage() {
   const { mode } = useComplexityMode();
 
   // API hooks
-  const { data: channelsData, isLoading: channelsLoading } = useChannels<Channel[]>();
+  const { data: channelsData, isLoading: channelsLoading, error: channelsError } = useChannels<Channel[]>();
   const { data: productsData } = useAffiliateProducts<AffiliateProduct[]>();
 
   const channels = channelsData?.data ?? [];
@@ -520,6 +520,8 @@ export default function CreatePage() {
         <div className="flex items-center justify-center py-12">
           <Loader2 size={24} className="animate-spin text-accent-blue" />
         </div>
+      ) : channelsError ? (
+        <div className="card text-center py-8 text-text-secondary">Failed to load channels. Please try again later.</div>
       ) : (
         <div>
           <label htmlFor="create-channel" className="block text-caption text-text-secondary mb-1.5">Channel</label>

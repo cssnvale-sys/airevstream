@@ -1044,20 +1044,20 @@ function PerformanceTab({
                               key={channelName}
                               className={cn(
                                 'px-4 py-3 text-center',
-                                isBest && 'bg-accent-yellow/10',
+                                isBest && 'bg-accent-amber/10',
                               )}
                             >
                               <div className="flex items-center justify-center gap-1">
                                 {isBest && (
                                   <Star
                                     size={14}
-                                    className="text-accent-yellow fill-accent-yellow"
+                                    className="text-accent-amber fill-accent-amber"
                                   />
                                 )}
                                 <span
                                   className={cn(
                                     'font-medium',
-                                    isBest ? 'text-accent-yellow' : 'text-accent-green',
+                                    isBest ? 'text-accent-amber' : 'text-accent-green',
                                   )}
                                 >
                                   {formatCurrency(Number(row.totalRevenue))}
@@ -1072,13 +1072,13 @@ function PerformanceTab({
                             {isBestProduct && (
                               <Star
                                 size={14}
-                                className="text-accent-yellow fill-accent-yellow"
+                                className="text-accent-amber fill-accent-amber"
                               />
                             )}
                             <span
                               className={cn(
                                 'font-medium',
-                                isBestProduct ? 'text-accent-yellow' : 'text-accent-green',
+                                isBestProduct ? 'text-accent-amber' : 'text-accent-green',
                               )}
                             >
                               {formatCurrency(Number(row.totalRevenue))}

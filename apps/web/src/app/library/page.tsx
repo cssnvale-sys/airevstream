@@ -217,7 +217,7 @@ function ContentCard({ item }: { item: ContentItem }) {
                 </span>
               )}
               {item.aiService && (
-                <span className="truncate max-w-[80px]">{item.aiService.name}</span>
+                <span className="truncate max-w-[80px]" title={item.aiService.name}>{item.aiService.name}</span>
               )}
             </div>
             <time dateTime={item.createdAt}>{formatRelativeTime(item.createdAt)}</time>
@@ -245,7 +245,7 @@ function ContentRow({ item, onDelete }: { item: ContentItem; onDelete?: (id: str
 
         {/* Title */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-text-primary truncate">{item.title ?? 'Untitled'}</p>
+          <p className="text-sm font-medium text-text-primary truncate" title={item.title ?? 'Untitled'}>{item.title ?? 'Untitled'}</p>
         </div>
 
         {/* Type */}
@@ -254,12 +254,12 @@ function ContentRow({ item, onDelete }: { item: ContentItem; onDelete?: (id: str
         </span>
 
         {/* Channel */}
-        <span className="text-xs text-text-secondary truncate max-w-[100px] flex-shrink-0">
+        <span className="text-xs text-text-secondary truncate max-w-[100px] flex-shrink-0" title={item.channel?.name ?? undefined}>
           {item.channel?.name ?? '--'}
         </span>
 
         {/* AI Model */}
-        <span className="text-xs text-text-secondary truncate max-w-[80px] flex-shrink-0">
+        <span className="text-xs text-text-secondary truncate max-w-[80px] flex-shrink-0" title={item.aiService?.name ?? undefined}>
           {item.aiService?.name ?? '--'}
         </span>
 

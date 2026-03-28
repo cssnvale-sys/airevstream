@@ -562,7 +562,7 @@ function AiServicesTab() {
                     <span className="text-sm font-medium text-text-primary">{svc.name}</span>
                     <span className="badge badge-idle text-xs">{svc.serviceType}</span>
                   </div>
-                  <p className="text-xs text-text-secondary mt-0.5 font-mono truncate">
+                  <p className="text-xs text-text-secondary mt-0.5 font-mono truncate" title={svc.endpoint}>
                     {svc.endpoint}
                   </p>
                 </div>

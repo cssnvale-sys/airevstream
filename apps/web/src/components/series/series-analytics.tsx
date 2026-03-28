@@ -65,7 +65,7 @@ export function SeriesAnalytics({ seriesId }: Props) {
         <div className="card">
           <div className="flex items-center justify-between mb-2">
             <span className="text-caption text-text-secondary">Avg Quality</span>
-            <Star size={18} className="text-accent-yellow" />
+            <Star size={18} className="text-accent-amber" />
           </div>
           <p className="text-page-title text-text-primary">{analytics.avgQualityScore}</p>
         </div>

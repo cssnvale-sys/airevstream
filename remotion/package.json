@@ -12,7 +12,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "remotion studio src/Root.tsx",
+    "dev": "tsc --watch --preserveWatchOutput",
+    "studio": "remotion studio src/Root.tsx",
     "render": "remotion render src/Root.tsx",
     "render:short": "remotion render src/Root.tsx ShortFormVideo --output=out/short.mp4",
     "render:long": "remotion render src/Root.tsx LongFormVideo --output=out/long.mp4",

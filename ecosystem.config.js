@@ -26,7 +26,7 @@ module.exports = {
       cwd: './services/workflow-engine',
       script: 'dist/index.js',
       ...COMMON_PM2,
-      env: { ...COMMON_PM2.env, PORT: 3001 },
+      env: { ...COMMON_PM2.env, PORT: 3011 },
       max_memory_restart: '256M',
       error_file: './logs/workflow-engine-error.log',
       out_file: './logs/workflow-engine-out.log',

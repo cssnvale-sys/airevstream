@@ -4,6 +4,124 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 49 — Fresh-Machine Bootstrap Infrastructure + First Successful Bringup
+
+**Date**: 2026-04-20
+**Focus**: Operator reported "never gotten it to work." Diagnosed the cause, built missing bootstrap tooling, and walked the operator through a successful first bringup on a machine with pre-existing port conflicts.
+
+### Root cause of "never worked"
+The project was architecturally sound (14 packages build cleanly, 11 migrations, 507+ tests) but had operational gaps on a fresh machine:
+- **Silent env fallbacks**: `JWT_SECRET`, `JWT_REFRESH_SECRET`, and `ENCRYPTION_KEY` defaulted to `'dev-secret-change-me'` / `'dev-jwt-secret-change-in-production'` when missing. Services would start but every authenticated API call produced opaque 500s, with no indication which secret was missing.
+- **No preflight checks**: nothing verified Docker was running, required ports were free, or Ollama was installed before attempting bringup.
+- **No idempotent bootstrap**: setup required manually running 6+ commands with no health-wait between steps.
+- **Broken minio-init**: the CORS setup heredoc in `docker-compose.yml` had a latent YAML bug — `entrypoint: >` (folded scalar) collapsed all newlines into spaces, so the `<<'CORS'` heredoc delimiter never appeared on its own line. The container exited 1 with `cat: '{': No such file or directory`.
+
+### Fail-fast env validation (`packages/shared/src/config.ts`)
+New `assertRequiredSecrets(context)` function validates `JWT_SECRET`, `JWT_REFRESH_SECRET`, `ENCRYPTION_KEY` at startup (≥32 chars each). Throws with a formatted banner listing exactly which secrets are missing and the exact `openssl` command to generate them. Skips check when `NODE_ENV=test` so existing tests still pass.
+
+Removed silent dev fallbacks from:
+- `apps/web/src/lib/api-server.ts` (`getJwtSecret()` — keeps test-mode accepting `'test-secret'`)
+- `services/workflow-engine/src/app.ts`
+- `services/ai-assistant/src/app.ts`
+- `services/production-pipeline/src/app.ts`
+
+Each now throws a clear error if the secret is missing or under 32 chars.
+
+### New scripts
+- **`scripts/doctor.sh`** — Full environment diagnostic. Checks: Node ≥20, npm, docker daemon, curl, openssl; optional ffmpeg+libvmaf and c2patool; required ports (3000-3003, 5432, 6379, 9000, 9001, 11434); `.env` secrets with length validation; infrastructure TCP reachability; Ollama + `qwen3:8b` presence. Color-coded output with actionable fix suggestions. Exit 0 on clean, 1 on required failures.
+- **`scripts/bootstrap.sh`** — 7-step idempotent setup: doctor → .env verify → `docker compose up -d` → wait for container health via `docker inspect` (60s timeout per service) → `npm install` → `prisma generate` → `prisma migrate deploy` → `turbo build`. Prints green "ready" banner with next steps.
+
+### Makefile + docs
+- **`Makefile`** rewritten with `help` (default), `bootstrap`, `doctor`, `reset`, `logs`, `logs-web`, `logs-workers` plus existing dev/build/test/db/docker targets.
+- **`OPERATOR-TODO.md`** rewritten with 3-command TL;DR, generate-secrets block, optional-services matrix, troubleshooting table.
+- **`.env.example`** rewritten with clear REQUIRED markers and inline `openssl rand -hex …` commands.
+
+### docker-compose.yml bugfixes
+- **minio-init CORS heredoc** (fixed): replaced broken `cat > … <<'CORS' … CORS` heredoc with single-line `echo '{...}' > /tmp/cors.json`. Immune to YAML scalar-folding.
+- **Redis host port** (operator-specific workaround): changed mapping from `6379:6379` to `6389:6379` so Homebrew Redis or other projects can keep `:6379`. Operator's `.env` REDIS_URL updated to `redis://localhost:6389` to match.
+
+### Operator-side port reassignments
+Operator had multiple other Next.js dev servers and agent processes running:
+- `openclaw` mission-control (next-server v16.2.4) on `:3001` — conflicted with workflow-engine.
+- `delegayt-dashboard` (next-server v16.1.6) on `:3000` — managed by LaunchAgent `com.delegayt.dashboard` (auto-respawns children). Had to `launchctl bootout gui/$UID/com.delegayt.dashboard` to free `:3000` for the web app.
+- `hermes` Python agent (no port conflict).
+- Homebrew Redis and/or Docker airevstream-redis on `:6379`.
+
+Moved AiRevStream's workflow-engine port from 3001 → 3011 in operator's `.env`; updated `apps/web/src/app/system/page.tsx` DEFAULT_SERVICES display labels for Workflow Engine (3011) and Redis (6389).
+
+### Remotion dev script split
+`remotion/package.json`: `dev` was `remotion studio src/Root.tsx` which auto-opened a browser tab on the first free port (3004 in operator's case, since 3000-3003 were taken). Changed `dev` to `tsc --watch --preserveWatchOutput` (rebuilds compositions for consumers, no browser hijack); moved Studio UI to a new `studio` script for opt-in use via `npm -w @airevstream/remotion run studio`.
+
+### Bringup verification
+Operator successfully completed `make bootstrap` end-to-end: all 3 Docker containers healthy, 11 migrations applied (already-applied from prior state), all 14 workspaces compiled in 26s. `npm run dev` started; logged in with existing admin credentials (DB data persisted). Dashboard at `http://localhost:3000` loaded.
+
+### Decisions
+- D130: Fail-fast env validation at startup (see DECISIONS.md).
+
+### Ollama default model override (end-of-session follow-up)
+Operator's smoke test showed `qwen3.5:122b` already pulled on their Mac Studio, but the ai-client was hardcoded to request `qwen3:8b`, which Ollama would have 404'd on first content-gen call. Fix spans three files so all call paths behave the same:
+
+- `packages/ai-client/src/providers/ollama.ts` — `FALLBACK_MODEL='qwen3:8b'` and new `getDefaultModel()` reads `process.env.OLLAMA_DEFAULT_MODEL?.trim()` at request time (not module load). All three provider entry points (`generateText`, `generateChat`, `streamChat`) now use `request.model ?? getDefaultModel()`.
+- `packages/ai-client/src/index.ts` — legacy top-level `generateText`/`chat`/`streamText`/`generateJSON` functions got the same `defaultModel()` treatment so backward-compatible consumers (ai-assistant, workers) pick up the env without code changes.
+- `packages/ai-client/src/registry.ts::getModelFromCapabilities()` — the critical fix. Registry is the path the API uses, and it was reading the seeded `AiService.capabilities.defaultModel = 'qwen3:8b'` from the DB and winning over the provider-level fallback. Now: if `service.provider === 'ollama'` and the env var is set, env wins. Other providers (OpenAI, Anthropic, Google) still honor the DB row as before — those are API-side models that shouldn't shift silently.
+- `scripts/doctor.sh` — uses the same `OLLAMA_DEFAULT_MODEL` env to decide which tag to check for in the installed-models probe. Previously it only verified `qwen3:8b` which caused a spurious warning on any machine running a different tag.
+- `.env.example` — documents the override with a note pointing at `curl -s localhost:11434/api/tags | jq '.models[].name'` for discovering what's actually installed.
+
+See D131 for the resolution order and rationale (env-wins is Ollama-specific because tags are local-machine state the operator controls). KI-089 tracks the bug.
+
+### Issues surfaced / resolved
+- KI-087 (new, FIXED same session): minio-init CORS heredoc broken by YAML folded-scalar.
+- KI-088 (new, FIXED same session): Multi-project port collisions on single-operator machine — workflow-engine moved to 3011, Redis host mapping 6389, all services now read named port env vars.
+- KI-089 (new, FIXED same session): Ollama default model hardcoded to `qwen3:8b` — now env-overridable via `OLLAMA_DEFAULT_MODEL`.
+- KI-056 (existing): delegayt-dashboard on `:3000` was managed by LaunchAgent, not a bare dev server as previously documented.
+
+### Decisions
+- D130: Fail-fast env validation + scripted bootstrap.
+- D131: `OLLAMA_DEFAULT_MODEL` env override trumps code + DB defaults for Ollama only.
+- D132: Ollama `think: false` is the default; callers opt into reasoning mode explicitly per request.
+
+### End-to-end runtime verification (follow-up, 2026-04-21)
+
+After the D130/D131 fixes, exercised the complete real-user-flow to prove the system is functional — not just bootable — with every layer online and talking to the next.
+
+**Baseline checks (all green)**
+- `turbo build --force`: 14/14 packages compile in 26.9s.
+- `turbo test`: 400+ tests / 27 suites pass in 10.1s.
+- `npm run audit`: 39 regression tests / 16 files pass in 1.24s.
+- Infra: Postgres :5432, Redis :6389, MinIO :9000/:9001, Ollama :11434 all reachable.
+- Services: web :3000 returns 200, workflow-engine :3011, ai-assistant :3003, production-pipeline :3002 all report `{success:true,data:{status:"healthy"}}` on `/api/health`.
+- Auth: `admin@airevstream.local` logs in via POST `/api/v1/auth/login`, JWT returned. Unauthenticated routes return 401 (correct).
+- Workers: all 9 BullMQ workers (content, account, posting, research, maintenance, production, seasoning, experiment, lifecycle) start and log activity. Repeatable jobs (`content:check-approval-timeouts`, `posting:check-scheduled`, `seasoning:check-due`) drain cleanly.
+
+**Real-user-flow exercise**
+1. POST `/api/v1/content/generate` with TechVerse channelId + contentType=short + a short prompt → 200 `{success:true, data:{id,...,status:'generating'}, meta:{queued:true}}`.
+2. Redis: new `bull:content:<jobId>` hash + `:lock` + `bull:content:active` entry appear within 2 ms — enqueue path confirmed.
+3. Content worker consumed the job: `processedOn` timestamp set within 2 ms of enqueue, `progress=10` immediately, then `registry.generate` called with the HICC system prompt and channel context.
+4. Ollama (qwen3:8b, thinking mode on first pass) generated a compliant HICC-framework script with beat tags [TENSION], [INTIMATE], [POWER], [PSYCHOLOGICAL], [MOMENTUM].
+5. Worker updated ContentItem to `status='pending_approval'` with `approvalGateWindowHrs=24` (default trust-score gate), stored script in `platformMetadata.script`, logged `aiModel` + `generatedAt` in `generationParams`.
+6. Alert row created (`Alert.category='content'`, `source='content-worker'`, `tenantId` resolved via channel→socialAccount→emailAccount chain).
+7. Job finished at `finishedOn`, `returnvalue={"contentId":"…","status":"pending_approval"}` stored in Redis, job hash moved to `bull:content:completed` ZSET.
+
+**Caveats surfaced during verification**
+- First attempt with qwen3.5:122b took so long (>3 min) the operator's 3-minute poll window missed the completion. Second attempt on qwen3:8b still took ~4 min because qwen3 runs an internal thinking pass by default that can dwarf the useful output time. Pino async flush masked the `"Processing content job"` log line in one `tail -f` sample; Redis `processedOn`/`finishedOn` are the authoritative truth and both agreed the worker worked end-to-end.
+- An earlier workers-process crash (on qwen3.5:122b, same session) produced zero log output because Node's default `uncaughtException` handler exits silently when no listener is registered. Jobs stranded in `active` with stale locks.
+- Workers boot logged `MaxListenersExceededWarning` (11 exit listeners on `process` vs. default limit of 10) from nine BullMQ Worker instances each installing a shutdown hook.
+
+**Fixes committed in follow-up (this session)**
+- `packages/ai-client/src/types.ts` — added `think?: boolean` to `TextRequest` and `ChatRequest` with doc comments explaining the latency/quality tradeoff.
+- `packages/ai-client/src/providers/ollama.ts` — defaults `think: false` on all three chat paths (`generateText`, `generateChat`, `streamChat`) and passes the flag through to `ollama-js`. Added `stripThinkingTags()` helper that removes `<think>…</think>` blocks from the response content defensively, in case a model ignores the flag. `streamChat` uses a cross-chunk state machine so partial tags don't leak mid-stream.
+- `workers/src/index.ts` — `process.setMaxListeners(20)` silences the boot warning while keeping a ceiling that catches real leaks. Registered top-level `uncaughtException` and `unhandledRejection` handlers that log full stack via Pino before exit, so the next silent crash leaves evidence. `uncaughtException` calls `process.exit(1)` with a 100 ms pino-flush delay; `unhandledRejection` only logs (BullMQ job failures should surface through per-queue `on('failed')`, not kill the host).
+
+**Issues surfaced / resolved in follow-up**
+- KI-090 (new, FIXED same session): qwen3 thinking mode made content:generate take 4+ min per short script by default — now `think: false` by default.
+- KI-091 (new, FIXED same session): workers process exited silently on unhandled exception, stranding jobs with stale locks — now logged with stack via Pino before exit.
+- KI-092 (new, FIXED same session): `MaxListenersExceededWarning` on workers boot (cosmetic, masked real leaks) — now bumped to 20.
+
+**Decisions in follow-up**
+- D132: `think: false` is the Ollama provider default; callers opt in to reasoning mode per request for complex tasks (planning, multi-step analysis).
+
+---
+
 ## Session 48 — Autonomous Iterative Improvement (Iterations 129-136)
 
 **Date**: 2026-03-27

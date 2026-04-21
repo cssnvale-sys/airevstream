@@ -11,7 +11,7 @@ apps/
     src/lib/              → api-server.ts (authenticate), utils
 
 services/
-  workflow-engine/        → Fastify REST API (port 3001)
+  workflow-engine/        → Fastify REST API (port 3011)
   ai-assistant/           → AI chat + content gen (port 3003)
   production-pipeline/    → Video/image production (port 3002)
 

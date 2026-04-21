@@ -1,284 +1,180 @@
 # Operator TODO
 
-Items that need your action before the system is fully operational.
+Actions needed from the operator to bring AiRevStream online and keep it running.
 
 ---
 
-## Audit Cleanup — Dependency Housekeeping (Session 27)
+## 🚀 First-time setup (fresh machine)
 
-### Unused Dependencies (remove to reduce bundle/install size)
+**TL;DR** — three commands, in this order:
+
 ```bash
-# Remove unused class-variance-authority from web
-cd apps/web && npm uninstall class-variance-authority && cd ../..
-
-# Remove unused @fastify/websocket from ai-assistant
-cd services/ai-assistant && npm uninstall @fastify/websocket && cd ../..
-
-# Remove unused stealth libraries from browser-automation
-cd packages/browser-automation && npm uninstall playwright-extra puppeteer-extra-plugin-stealth && cd ../..
+cp .env.example .env        # then edit: fill in ENCRYPTION_KEY, JWT_SECRET, JWT_REFRESH_SECRET
+make doctor                 # verifies Docker, ports, secrets, Ollama
+make bootstrap              # infra + install + migrate + build (idempotent)
+npm run dev                 # start everything
 ```
 
-### Version Update
+Then open <http://localhost:3000> and register. You become the admin of a new tenant.
+
+### Generate the three required secrets
+
 ```bash
-# Update bcrypt types to match v6
-cd apps/web && npm install @types/bcrypt@^6.0.0 && cd ../..
+# Paste the outputs into your .env file.
+echo "JWT_SECRET=$(openssl rand -hex 64)"
+echo "JWT_REFRESH_SECRET=$(openssl rand -hex 64)"
+echo "ENCRYPTION_KEY=$(openssl rand -hex 32)"
 ```
 
-### Database Migration (Tenant isolation — DONE in Session 30, migration pending apply)
-Migration `0004_add_tenant_scoping` adds tenantId to Alert (nullable), Conversation, KnowledgeBaseEntry, PromptTemplate, CostBudget (required). Apply when database is available:
-```bash
-npx prisma migrate deploy
-```
+All three are now **required at startup** (no silent dev fallback). If they're missing or too short, every service will refuse to start with a clear, actionable message.
 
-### Database Migration — Suggestion Logs (Session 37)
-Migration `0007_add_suggestion_logs` adds the `SuggestionLog` table for tracking suggestion accept/reject outcomes and viral score feedback. Apply when database is available:
-```bash
-cd packages/db
-npx prisma migrate dev --name add_suggestion_logs
-```
+### What `make doctor` checks
+
+- Node ≥ 20, npm, docker (daemon running), openssl, curl
+- Required ports free: 3000 (web), 3011 (workflow-engine), 3002 (production-pipeline), 3003 (ai-assistant), 5432 (postgres), 6389 (redis, host-mapped from container 6379), 9000/9001 (MinIO), 11434 (Ollama)
+- Port 3011 (instead of 3001) avoids collision with mission-control / openclaw dashboards; port 6389 avoids collision with Homebrew's default Redis on 6379. If either 3000 or 11434 is in use by another project (e.g. `delegayt-dashboard` LaunchAgent), disable it with `launchctl bootout gui/$UID/<label>` or edit `.env` `PORT=`.
+- `.env` present and every required secret ≥ 32 chars
+- Postgres / Redis / MinIO reachable
+- Ollama reachable and `qwen3:8b` installed
+- Optional: `ffmpeg` with libvmaf (VMAF), `c2patool` (C2PA)
+
+### What `make bootstrap` does
+
+1. Runs `make doctor` and aborts if required checks fail
+2. `docker compose up -d` — starts Postgres, Redis, MinIO (+ minio-init for bucket/CORS)
+3. Waits for all containers to be healthy (polls `docker inspect`, 60s timeout per service)
+4. `npm install` — installs all workspaces
+5. `prisma generate` + `prisma migrate deploy` — applies all 11 migrations
+6. `turbo build` — builds every package, service, and app
+7. Prints a "ready" banner with the next commands to run
+
+Re-run `make bootstrap` any time — every step is idempotent.
 
 ---
 
-## Seasoning Pipeline Setup (Session 25)
+## Optional external services
 
-### Required: Database Migration
-```bash
-npx prisma migrate dev --name add_seasoning_models
-```
-Run this to create the `seasoning_cohorts` and `seasoning_enrollments` tables.
+These are gracefully skipped if absent; the app still runs.
 
-### Optional: CAPTCHA Solving Service
-Set `CAPTCHA_SOLVER_API_KEY` in `.env` with a [2Captcha](https://2captcha.com/) API key. This enables automated CAPTCHA solving during account signup. Without it, all CAPTCHAs will fall back to human-in-the-loop resolution.
+### Ollama (local LLM) — required for AI features
 
-### Optional: SMS Verification Service
-Set `SMS_VERIFIER_API_KEY` in `.env` with an [sms-activate.org](https://sms-activate.org/) API key. This provides disposable phone numbers for platform SMS verification during signup. Without it, SMS verification steps will require manual intervention.
-
----
-
-## 1. Start Infrastructure (if not already running)
+Install: <https://ollama.com/download>. Default model is `qwen3:8b`:
 
 ```bash
-# From the project root:
-docker compose up -d
+ollama pull qwen3:8b
+# verify:
+curl http://localhost:11434/api/tags
 ```
 
-This starts PostgreSQL, Redis, and MinIO.
+Without Ollama, AI chat and content generation return 502 at the endpoint level; the dashboard, CRUD, and publishing all still work.
 
----
+#### Choosing the default model (D131)
 
-## 2. Install All Dependencies
+The resolution order at every Ollama call site is:
+
+1. Explicit `request.model` passed by the caller
+2. `OLLAMA_DEFAULT_MODEL` env var (trimmed)
+3. Seeded `AiService.capabilities.defaultModel` in the DB (registry paths only)
+4. Compiled fallback: `qwen3:8b`
+
+If you pull a larger tag (e.g. `qwen3.5:122b` on a 512 GB Mac Studio) and want it to be the default everywhere, set `OLLAMA_DEFAULT_MODEL=qwen3.5:122b` in `.env`. No DB edit required.
+
+#### Thinking mode is off by default (D132)
+
+Thinking-capable models (qwen3, deepseek-r1, etc.) default to non-thinking mode — every call passes `think: false` to ollama.chat() and any `<think>...</think>` blocks are stripped defensively (including across streaming chunk boundaries). Typical content-generation latency on qwen3:8b: ~1 minute (vs ~4 minutes with thinking on).
+
+To opt a single call into reasoning mode, set `think: true` on the `TextRequest` / `ChatRequest`. Only do this for code paths that genuinely benefit from chain-of-thought (complex research synthesis, multi-step planning). The HICC content pipeline, caption generation, and thumbnail prompts do **not** need it.
+
+### ComfyUI (image generation) — optional
+
+Install: <https://github.com/comfyanonymous/ComfyUI>. Start on port 8188. Image jobs fail gracefully if ComfyUI is absent.
+
+### ffmpeg + libvmaf (KI-069) — optional
+
+For VMAF-based quality regression tests.
 
 ```bash
-npm install
+brew install ffmpeg        # Homebrew's default build now includes libvmaf
+ffmpeg -filters 2>&1 | grep vmaf   # verify
 ```
 
----
+### c2patool (KI-069) — optional
 
-## 3. Run Database Migrations
-
-```bash
-npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma
-```
-
-This applies the two migrations (init + GIN fulltext indexes) to create all 36 tables. For development, you can also use `npx prisma migrate dev --schema=packages/db/prisma/schema.prisma`.
-
----
-
-## 4. Set Up Ollama (Required for AI Features)
-
-1. Install Ollama: https://ollama.com/download
-2. Pull a model (The system defaults to `qwen3:8b`):
-   ```bash
-   ollama pull qwen3:8b
-   ```
-3. Verify it's running:
-   ```bash
-   curl http://localhost:11434/api/tags
-   ```
-
-**Note**: Since you already have `qwen3:8b` installed, you can skip Step 4.2.
-
-Without Ollama, the AI chat and content generation features will return 502 errors. Everything else works fine.
-
----
-
-## 5. Set Up ComfyUI (Optional — for Image Generation)
-
-1. Install ComfyUI: https://github.com/comfyanonymous/ComfyUI
-2. Start it on port 8188 (default)
-3. The production-pipeline service will connect automatically
-
-This is optional — the system works without it. Image generation jobs will fail gracefully.
-
----
-
-## 6. Platform API Keys (Required for Publishing)
-
-The posting worker currently uses **placeholders** for platform APIs. To actually publish content, you need to:
-
-1. **YouTube**: Create OAuth2 credentials in Google Cloud Console
-2. **TikTok**: Register a TikTok Developer app
-3. **Instagram**: Set up a Meta Developer app (Instagram Graph API)
-4. **Twitter**: Create a Twitter Developer app (OAuth 2.0)
-5. **Facebook**: Use the same Meta Developer app as Instagram
-
-Add API keys/OAuth credentials to `.env` and implement the platform-specific publishing logic in `workers/src/posting.worker.ts`.
-
----
-
-## 7. Generate Encryption Keys (Already Done in .env)
-
-Your `.env` already has generated keys for:
-- `ENCRYPTION_KEY` — used for encrypting stored API tokens
-- `JWT_SECRET` — used for JWT authentication
-- `JWT_REFRESH_SECRET` — used for refresh tokens
-
-**For production**: Regenerate these with:
-```bash
-openssl rand -hex 32  # for ENCRYPTION_KEY
-openssl rand -hex 64  # for JWT_SECRET and JWT_REFRESH_SECRET
-```
-
----
-
-## 8. Start the Services
-
-### Development mode (all at once):
-```bash
-npm run dev
-```
-
-### Or individually:
-```bash
-# Terminal 1: Web dashboard
-cd apps/web && npm run dev
-
-# Terminal 2: Workflow engine API
-cd services/workflow-engine && npm run dev
-
-# Terminal 3: AI assistant
-cd services/ai-assistant && npm run dev
-
-# Terminal 4: Production pipeline
-cd services/production-pipeline && npm run dev
-
-# Terminal 5: Workers
-cd workers && npm run dev
-```
-
-### Production mode:
-```bash
-npm run build
-npx pm2 start ecosystem.config.js
-```
-
----
-
-## 9. Access the Dashboard
-
-Open http://localhost:3000 in your browser and register a new account.
-
----
-
-## 10. Remotion (Already Set Up)
-
-Remotion is installed and configured with 3 compositions in `remotion/`:
-- **ShortFormVideo** (9:16) — vertical short-form with H.I.C.C. beat timing
-- **LongFormVideo** (16:9) — horizontal long-form
-- **ThumbnailRenderer** — still image thumbnails
-
-The production worker renders via Remotion CLI. No additional setup needed.
-
----
-
-## 11. CORS Origins (Session 17)
-
-All 3 Fastify services now restrict CORS to the origins listed in `CORS_ORIGINS`. Default: `http://localhost:3000`.
-
-For production, set this in your `.env`:
-```bash
-CORS_ORIGINS=https://dashboard.yourdomain.com,https://staging.yourdomain.com
-```
-
-Comma-separated list, no trailing slashes.
-
----
-
-## 11. Docker Deployment (Optional)
-
-Build and run the full app via Docker:
+For embedding C2PA Content Credentials into media files.
 
 ```bash
-# Build all images
-make docker-build
-
-# Or individually:
-docker build -f Dockerfile.web -t airevstream-web .
-docker build -f Dockerfile.services --build-arg SERVICE=workflow-engine -t airevstream-workflow-engine .
-docker build -f Dockerfile.services --build-arg SERVICE=ai-assistant -t airevstream-ai-assistant .
-docker build -f Dockerfile.services --build-arg SERVICE=production-pipeline -t airevstream-production-pipeline .
-docker build -f Dockerfile.workers -t airevstream-workers .
-```
-
-Copy `.env.production.example` to `.env` and fill in all values before running.
-
----
-
-## 11. Install ffmpeg with libvmaf Support (Session 31 — G4)
-
-**Required for**: VMAF quality regression testing (comparing rendered video quality against reference)
-
-```bash
-# macOS (Homebrew)
-brew install ffmpeg --with-libvmaf
-# or build from source with --enable-libvmaf
-
-# Verify
-ffmpeg -filters 2>&1 | grep vmaf
-```
-
-The system gracefully degrades if ffmpeg/libvmaf is not available — `isVMAFAvailable()` returns false and quality regression tests are skipped.
-
-## 12. Install c2patool (Session 31 — G6)
-
-**Required for**: Embedding C2PA Content Credentials into media files (content provenance)
-
-```bash
-# Install from GitHub releases
-# https://github.com/contentauth/c2patool/releases
-
-# macOS (Homebrew)
 brew install c2patool
-
-# Verify
+# or download a release: https://github.com/contentauth/c2patool/releases
 c2patool --version
 ```
 
-Optional: Generate signing certificate for production use:
+---
+
+## Platform publishing credentials (required only to actually publish)
+
+The posting adapters are implemented for YouTube Data API v3, TikTok Content Posting, Instagram Graph, Facebook Graph, and Twitter OAuth 2.0, but none are tested against live endpoints (KI-007).
+
+Set these in `.env` when you're ready to publish:
+
+| Platform  | Env vars | Where to get them |
+|-----------|----------|-------------------|
+| YouTube   | `YOUTUBE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google Cloud Console → OAuth 2.0 + API key |
+| TikTok    | `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET` | <https://developers.tiktok.com> |
+| Instagram | Meta Developer app — shared with Facebook | <https://developers.facebook.com> |
+| Facebook  | Same Meta Developer app | <https://developers.facebook.com> |
+
+OAuth flows are wired; you connect accounts through the Accounts page UI after setting the credentials.
+
+## Signup automation (optional — seasoning pipeline only, KI-063)
+
+- `CAPTCHA_SOLVER_API_KEY` — 2Captcha (<https://2captcha.com>)
+- `SMS_VERIFIER_API_KEY` — sms-activate.org
+
+Both default to HITL fallback when absent.
+
+---
+
+## Production deployment
+
+1. Copy `.env.production.example` → `.env` on the production host; fill in every value.
+2. `make docker-build` to build all five images.
+3. Run with your orchestrator of choice (docker compose, k8s, ECS, …).
+
+For regenerating production secrets:
+
 ```bash
-openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 \
-  -keyout c2pa-key.pem -out c2pa-cert.pem -days 365 -nodes
+openssl rand -hex 32   # ENCRYPTION_KEY
+openssl rand -hex 64   # JWT_SECRET
+openssl rand -hex 64   # JWT_REFRESH_SECRET
 ```
 
-The system gracefully degrades if c2patool is not available — `isC2PAToolAvailable()` returns false and embedding is skipped.
+Set `CORS_ORIGINS` to your real frontend URL(s), comma-separated, no trailing slashes.
 
-## 13. Run Asset Registry Migration (Session 31 — G2)
+---
 
-**Required for**: Asset graph tracking in production pipeline
+## Troubleshooting
 
-```bash
-cd packages/db
-npx prisma migrate dev --name add-asset-registry-and-sequences
-```
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| `make bootstrap` aborts at "waiting for airevstream-postgres" | Docker Desktop not running, or port 5432 already taken by another Postgres | `make doctor` tells you which; start Docker or `brew services stop postgresql@14` |
+| Services start but every API call 500s | `.env` secrets missing; services now fail fast with a clear message on stderr | Check the terminal — the error names exactly which secret is missing |
+| `npm run dev` → "Invalid environment configuration" | Malformed URL in `.env` (usually `DATABASE_URL` or `OLLAMA_BASE_URL`) | Copy the default from `.env.example` |
+| Dashboard loads but AI chat returns 502 | Ollama not installed or not running | `ollama serve` (or install from <https://ollama.com/download>) + `ollama pull qwen3:8b` |
+| MinIO uploads fail with CORS errors | `minio-init` container didn't run or failed | `docker logs airevstream-minio-init`, or `docker compose restart minio-init` |
+| "delegayt-dashboard" serving on :3000 instead of AiRevStream (KI-056) | Another Next.js app running on the same port | Kill it: `lsof -iTCP:3000 -sTCP:LISTEN` → `kill <PID>` |
+| Content job appears stuck at `generating` for > 3 min | Thinking mode wasn't fully disabled before this version, OR the model is still being loaded into VRAM on first call | Confirm the real state — `redis-cli -p 6389 HGETALL bull:content:<id>` will show `finishedOn` and `returnvalue` if the job actually completed. First qwen3:8b call after `ollama serve` warms the model (~30-60s); subsequent calls are fast. |
+| Workers process exits silently, jobs stuck in `active` with stale locks | Uncaught exception in a BullMQ processor (pre-session-49) | Already fixed — `workers/src/index.ts` now installs `uncaughtException` / `unhandledRejection` handlers that log full stacks via Pino before exit. If it happens again, the stack trace will be in the pino output. |
 
-This adds 3 new tables: `AssetRegistryEntry`, `Sequence`, `SequenceItem`. Until the migration runs, the production worker's `registerAsset()` calls will fail silently (by design — non-blocking).
+---
 
-## Summary of What's Blocked
+## Summary of what's blocked without external setup
 
-| Feature | Blocked By | Severity |
-|---------|------------|----------|
-| AI Chat & Generation | Ollama not installed | Medium — install to use AI |
-| Image Generation | ComfyUI not installed | Low — optional feature |
-| Video Rendering | Remotion installed and configured | None — ready to use |
-| Cross-Platform Publishing | Platform API keys needed | Medium — placeholder works |
-| Audio/TTS | TTS engine not configured | Low — future feature |
+| Feature | Blocked by | Severity |
+|---------|-----------|----------|
+| AI chat & content generation | Ollama not installed | Medium — install to use AI |
+| Image generation | ComfyUI not installed | Low — optional |
+| Video rendering (Remotion) | — | None — ready to use |
+| Cross-platform publishing | Platform OAuth credentials | Medium — placeholders work for testing |
+| VMAF quality regression | ffmpeg + libvmaf not installed | Low — graceful skip |
+| C2PA content credentials | c2patool not installed | Low — graceful skip |
+| CAPTCHA / SMS during signup | API keys not set | Low — HITL fallback |

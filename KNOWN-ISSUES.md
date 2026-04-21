@@ -6,6 +6,48 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
+### KI-087: ~~minio-init Entrypoint Heredoc Broken by YAML Folding~~ — FIXED (Session 49)
+**Severity**: Critical (blocked fresh-machine bringup)
+**Status**: Fixed (Session 49)
+`docker-compose.yml`'s `minio-init` service used `entrypoint: >` (folded scalar) around a heredoc configuring the S3 CORS policy. YAML folded the heredoc body into a single line, so `cat <<CORS … CORS` ran as `cat '{' '…' '}' 'CORS'` and exited with `cat: '{': No such file or directory`. `make bootstrap` failed at the container-init step on a clean checkout. Rewrote the entrypoint to use a single-line `echo '{json}' > /tmp/cors.json` that survives YAML folding.
+**Action**: None — resolved.
+
+### KI-092: ~~Workers Boot MaxListenersExceededWarning~~ — FIXED (Session 49)
+**Severity**: Low (cosmetic; masked real leaks)
+**Status**: Fixed (Session 49)
+Nine BullMQ Worker instances each install a SIGTERM/SIGINT exit listener on `process`, putting the count at 11 and tripping Node's default limit of 10 with `(node:NNN) MaxListenersExceededWarning: Possible EventEmitter memory leak detected`. Fix: `workers/src/index.ts` calls `process.setMaxListeners(20)` at module load. Still well below the threshold that would indicate a real leak, but silences the false positive and keeps the log signal-to-noise up.
+**Action**: None — resolved.
+
+### KI-091: ~~Workers Process Exits Silently on Uncaught Exception~~ — FIXED (Session 49)
+**Severity**: High (cost 1+ hr of debugging a symptom — stuck jobs with no log evidence)
+**Status**: Fixed (Session 49)
+During E2E verification, an unhandled exception inside a worker processor (suspected in the registry/ollama path under qwen3.5:122b load) killed the workers node process with zero log output. Node's default `uncaughtException` handler exits when no listener is registered. Jobs remained in `bull:content:active` with stale `:lock` keys; the stalled-check watchdog couldn't recover them because the process was gone. Fix: `workers/src/index.ts` registers `process.on('uncaughtException', …)` that logs the full stack via Pino before calling `process.exit(1)` with a 100 ms pino-flush delay so a supervisor (PM2/launchd/systemd) can restart cleanly. `unhandledRejection` logs only — BullMQ job failures should surface through per-queue `on('failed')` handlers, not kill the host. Next silent crash will leave a stack trace.
+**Action**: None — resolved. Operators running workers under PM2/launchd should verify the restart policy (`pm2 start workers --restart-delay 5000` recommended).
+
+### KI-090: ~~qwen3 Thinking Mode Makes Content Generation Take 4+ Minutes by Default~~ — FIXED (Session 49)
+**Severity**: Medium (usability — not a correctness bug)
+**Status**: Fixed (Session 49)
+Qwen3 models (and other reasoning-capable models: deepseek-r1, etc.) run an extensive internal thinking pass before emitting the answer tokens. During E2E verification, a short HICC script generation on qwen3:8b took ~4 min wall-clock. Output was clean (`<think>` tags not in `platformMetadata.script`), but the latency made the default UX unworkable. Fix: `OllamaProvider` now defaults to `think: false` on all three chat paths (`generateText`, `generateChat`, `streamChat`), passing the flag through to `ollama-js` which disables the reasoning phase at the model level. `TextRequest` / `ChatRequest` gained `think?: boolean` so callers can opt into reasoning mode explicitly for tasks that benefit from it (viral scoring, storyboard planning, multi-step analysis). Defensive `stripThinkingTags()` also removes `<think>…</think>` blocks from response content in case a model ignores the flag. See D132.
+**Action**: Callers that want deep reasoning for specific tasks (e.g. plot structure analysis) should pass `think: true` to `registry.generate()` / `provider.generateText()`. Default behavior is optimized for latency.
+
+### KI-089: ~~Ollama Default Model Hardcoded to qwen3:8b, Ignored Operator's Pulled Tag~~ — FIXED (Session 49)
+**Severity**: High (AI features returned "model not found" on any machine whose operator pulled a different tag)
+**Status**: Fixed (Session 49)
+The ai-client default model was compiled in as `'qwen3:8b'` in three places — the legacy `packages/ai-client/src/index.ts` API, the `OllamaProvider` itself, and the `ServiceRegistry.getModelFromCapabilities()` path that reads the seeded `AiService.capabilities.defaultModel`. Operators with a larger tag pulled (e.g. `qwen3.5:122b` on the 512 GB Mac Studio) would see the first chat or content-gen request fail because the Ollama daemon only had their tag, not `qwen3:8b`. Fixed by introducing `OLLAMA_DEFAULT_MODEL` as an env override that wins over both the compiled fallback and the DB capability when `service.provider === 'ollama'`. Evaluated at request time (not module load) so PM2 per-worker env blocks are respected. `.env.example` now documents it (default `qwen3:8b` with a comment on how to override). `scripts/doctor.sh` reads the same env var so the model-installed check matches what the code will try. See D131 for the full resolution order.
+**Action**: Operators should set `OLLAMA_DEFAULT_MODEL=<your-tag>` in `.env` to match whatever tag they have pulled (check with `curl -s localhost:11434/api/tags | jq '.models[].name'`).
+
+### KI-088: ~~Host Port Collisions on Default AiRevStream Ports~~ — FIXED (Session 49)
+**Severity**: Medium
+**Status**: Fixed (Session 49)
+On machines that already run other dev projects, host ports 3000 (Next.js), 3001 (mission-control/openclaw), 6379 (Homebrew Redis), 11434 (Ollama) can be occupied. Fixed across the stack:
+- `scripts/doctor.sh` port table now checks `3011:workflow-engine` and `6389:redis` (the new defaults) instead of `3001` and `6379`. The Redis probe parses `REDIS_URL` so any operator override is respected.
+- `services/workflow-engine/src/index.ts`, `ai-assistant/src/index.ts`, and `production-pipeline/src/index.ts` now read their own named port env vars (`WORKFLOW_ENGINE_PORT`, `AI_ASSISTANT_PORT`, `PRODUCTION_PIPELINE_PORT`) before falling back to `PORT` and their defaults. The workflow-engine default is `3011`.
+- `packages/shared/src/constants.ts::PORTS.WORKFLOW_ENGINE` = 3011. `ecosystem.config.js` PM2 env = 3011. `.env.example` default = 3011. `docker-compose.yml` maps Redis `6389:6379`.
+- `CLAUDE.md`, `.claude/rules/03-monorepo-map.md`, and `apps/web/src/app/system/page.tsx` display labels updated to match.
+
+Port 3000 conflicts are still the operator's call (see KI-056 for precedent with `delegayt-dashboard` LaunchAgent needing `launchctl bootout`).
+**Action**: If port 3000 is taken, disable the owning LaunchAgent (`launchctl bootout gui/$UID/<label>`) or change `PORT=` in `.env`.
+
 ### KI-082: ~~SoundOutput Layer Shape Incompatible with AudioLayerSpec~~ — FIXED (Session 46)
 **Status**: Fixed — Added `toAudioLayerSpec()` mapping function in production worker. Sound agent's descriptive `source` string maps to `text` field with `source: 'generate'`.
 
@@ -18,11 +60,9 @@ Tracked bugs, limitations, and technical debt.
 ### KI-085: ~~runPreGenQC Hardcodes Cinema Tier for Cost Estimation~~ — FIXED (Session 46)
 **Status**: Fixed — `runPreGenQC()` now accepts a `qualityTier` parameter (default `'standard'`). Cinema route passes the actual requested tier.
 
-### KI-079: Fastify Service Routes Lack Tenant Scoping (Partial)
+### KI-079: ~~Fastify Service Routes Lack Tenant Scoping~~ — FIXED
 **Severity**: High
-**Status**: Partially Fixed (Session 48 review)
-**Context**: ai-assistant and production-pipeline services have `resolveTenantId()` helper and are properly scoped. However, `services/workflow-engine/` routes for account, content, and most workflow handlers still lack tenant scoping.
-**Action**: Apply `resolveTenantId` pattern to remaining workflow-engine route handlers (account CRUD, content CRUD, workflow list/get/create/cancel).
+**Status**: Fixed — Created `services/workflow-engine/src/lib/tenant.ts` with shared `resolveTenantId()` and `getTenantScope()` helpers. Applied to all account, content, and workflow route handlers. Write routes gate on tenant (403 if no context); GET reads on EmailAccount remain global (intentional per KI-020). ContentItem and WorkflowJob scoped via channel/content ownership chain.
 
 ### KI-080: ~~ColorGradeSpec Missing filmGrain/vignette Fields~~ — FIXED (Session 46)
 **Status**: Fixed — Same as KI-083. Fields added to `ColorGradeSpec`, `toColorGrade()` updated, `FinishingOutput.postProcess` merged in render path.
@@ -53,16 +93,13 @@ Tracked bugs, limitations, and technical debt.
 ### KI-074: ~~Asset Tenant Scoping Migration Not Yet Applied~~ — FIXED (Session 48)
 **Status**: Fixed — Migration `0010_add_asset_tenant_scoping` exists and adds tenantId to Avatar and SceneryAsset.
 
-### KI-075: MinIO CORS Configuration Required for Direct Uploads
+### KI-075: ~~MinIO CORS Configuration Required for Direct Uploads~~ — FIXED
 **Severity**: Medium
-**Status**: Open (Session 41)
-**Context**: Presigned PUT uploads from the browser require MinIO CORS to allow PUT requests from the web origin. Update MinIO configuration or docker-compose to set `MINIO_BROWSER_CORS_ORIGIN`.
+**Status**: Fixed — Added `minio-init` service to `docker-compose.yml` using `minio/mc` that creates the `airevstream` bucket and configures CORS to allow GET/PUT/POST/DELETE/HEAD from all localhost service origins. Runs after MinIO is healthy, then exits cleanly.
 
-### KI-070: Simple Wizard Plan Generation Uses Fallback Only
+### KI-070: ~~Simple Wizard Plan Generation Uses Fallback Only~~ — FIXED
 **Severity**: Low
-**Status**: Open (Session 32)
-The SimpleCreateWizard generates plans using the existing content generation pipeline with preset-based configuration. There is no dedicated "simple plan" API endpoint — the wizard relies on the standard pipeline with simple mode guardrails applied client-side and via agent prompts. A dedicated endpoint could optimize plan generation for the constrained simple mode parameters.
-**Action**: Consider adding a POST `/api/v1/pipeline/simple-plan` endpoint that runs a trimmed agent pipeline (director + storyboard only) with hard-coded simple mode constraints server-side.
+**Status**: Fixed — Added `POST /api/v1/pipeline/simple-plan` endpoint (`apps/web/src/app/api/v1/pipeline/simple-plan/route.ts`). Runs 2-agent director→storyboard pipeline with SIMPLE_MODE_GUARDRAILS applied server-side (max 60s, max shots, rate limited). Graceful fallback to heuristic plan if AI unavailable. SimpleCreateWizard wired to call this endpoint.
 
 ### KI-066: Unused Dependencies (3 packages)
 **Severity**: Low
@@ -87,11 +124,9 @@ All four packages confirmed to have zero imports before removal.
 CSV export implemented via `exportToCSV()` utility — all 5 analytics tabs export to CSV. PDF export remains unimplemented.
 **Action**: Implement PDF generation (server-side via puppeteer or @react-pdf/renderer).
 
-### KI-005: Generate-Storyboard Returns Hardcoded Shots
+### KI-005: ~~Generate-Storyboard Returns Hardcoded Shots~~ — FIXED
 **Severity**: Medium
-**Status**: Open
-The `generate-storyboard` API route returns hardcoded placeholder shots rather than AI-generated storyboard frames. The H.I.C.C. section parser exists but isn't connected to real AI output.
-**Action**: Wire storyboard generation to AI service via the content generation pipeline.
+**Status**: Fixed — Replaced hardcoded H.I.C.C. shots with `generateJSON()` from `@airevstream/ai-client`. AI prompt instructs model to break scripts into structured H.I.C.C. shots. Graceful fallback to original logic if AI service is unavailable.
 
 ### KI-068: ~~Asset Registry + Sequence Prisma Migration Not Yet Applied~~ — FIXED (Session 48)
 **Status**: Fixed — Migration `0008_add_seasoning_assets_sequences` exists. Sequence model renamed to Series via `0009_rename_sequence_to_series`.
@@ -122,11 +157,9 @@ Remaining global models (intentional):
 - **AiService** — global AI service registry is intentional for self-hosted deployments
 - **AffiliateProduct** — shared product catalog; tenant scoping deferred pending product design decision
 
-### KI-042: Zero Worker Processor Tests
+### KI-042: ~~Zero Worker Processor Tests~~ — FIXED
 **Severity**: High
-**Status**: Partially Fixed (Session 16)
-222 unit tests + 181 E2E tests (100% pass rate). E2E tests cover all 17 pages and exercise API routes through the browser. Worker processor unit tests and multi-tenant isolation tests still needed.
-**Action**: Add worker processor unit tests and targeted multi-tenant integration tests.
+**Status**: Fixed — Added unit tests for content, account, and posting worker processors in `workers/src/__tests__/`. Tests mock getDb, queue, and AI client. All 27 test tasks pass (507+ unit tests total).
 
 ### KI-050: QC Scoring Uses Heuristics Not ML
 **Severity**: Low
@@ -134,20 +167,16 @@ Remaining global models (intentional):
 The QC scoring module (`qc-scoring.ts`) uses buffer entropy and byte-level statistics for quality evaluation. Now wired into the QC gate (Session 20) with per-shot retry. Prompt adherence scoring is limited without a CLIP model. This is intentional for the zero-dependency baseline; ML-based scoring is a future enhancement.
 **Action**: Integrate CLIP-based prompt adherence scoring when an inference endpoint is available.
 
-### KI-057: Cinema Bible LoRA/Lens Fields Not in UI
+### KI-057: ~~Cinema Bible LoRA/Lens Fields Not in UI~~ — FIXED
 **Severity**: Medium
-**Status**: Open (Session 20 gap analysis)
-`LookBible.loras`, `LookBible.lensKit`, `CharacterBible.characterLoras`, `EnvironmentBible.lightingSetups` are all typed but have no UI editor in the Cinema Bible settings page.
-**Action**: Add LoRA picker (from ComfyUI model list API), lens kit editor, color pipeline editor to Bible tabs.
+**Status**: Fixed — All four editors exist in `bible-editor.tsx`: LoRA picker (fetches from ComfyUI models API), LensKit editor (primaryLens, aperture, filter, anamorphic, support lenses), CharacterLoras (per-character LoRA assignment), LightingSetups (TagListEditor). Color pipeline editor also present.
 
 ### KI-059: ~~Library AI Model Filter is Client-Side~~ — FIXED (Session 47)
 **Status**: Fixed — Added `aiServiceId` query param to GET `/api/v1/content` route. Library page now sends filter server-side in query params instead of filtering client-side post-pagination.
 
-### KI-060: Calendar Schedule Query Param Not Handled
+### KI-060: ~~Calendar Schedule Query Param Not Handled~~ — FIXED
 **Severity**: Low
-**Status**: Open (Session 23 audit)
-The content detail "Schedule" button redirects to `/calendar?schedule={id}` but the calendar page doesn't read this query param to auto-open a scheduling dialog.
-**Action**: Read `schedule` search param in calendar page and open the schedule creation form pre-populated with the content ID.
+**Status**: Fixed — Calendar page now reads `?schedule=<contentId>` via `useSearchParams()` and opens a scheduling modal pre-populated with content info, channel, and platform. Modal submits via POST `/api/v1/schedule`.
 
 ### KI-058: ~~Empty ComfyUI Workflow Subdirectories~~ — FIXED (Session 47)
 **Severity**: Low

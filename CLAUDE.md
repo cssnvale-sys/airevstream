@@ -22,7 +22,7 @@ AiRevStream is a self-hosted, AI-powered content automation platform that genera
 ```
 apps/web              → Next.js dashboard (port 3000)
 services/
-  workflow-engine     → REST API + workflow orchestration (port 3001)
+  workflow-engine     → REST API + workflow orchestration (port 3011)
   ai-assistant        → AI chat + content generation (port 3003)
   production-pipeline → Video/image production (port 3002)
 packages/

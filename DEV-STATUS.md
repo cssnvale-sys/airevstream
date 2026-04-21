@@ -394,6 +394,21 @@
 | PD-8 | Wave 8: Test infra + config | Done | 66 files, 3 agents, PM2 paths fixed, 2 missing workers, audit regex gap, dead imports |
 | PD-9 | Build verification | Done | 14 packages build, all tests pass, 33 audit tests pass, 0 regressions |
 
+### Phase 30: Fresh-Machine Bringup Infrastructure (Session 49) — COMPLETE
+| Step | Feature | Status | Notes |
+|------|---------|--------|-------|
+| BM-1 | `scripts/doctor.sh` preflight | Done | Docker running, Node/npm versions, required CLI (docker, node, npm), optional CLI (ffmpeg, python3, jq) with brew hints, host port collision check (3000/3011/3002/3003/6389/5432/9000/11434), `.env` present, required secrets non-empty |
+| BM-2 | `scripts/bootstrap.sh` idempotent bringup | Done | Validates env → `docker compose up -d` → polls `docker inspect` for healthy → `prisma migrate deploy` → `turbo build` → ready banner. Stops short of admin creation / dev server by design. |
+| BM-3 | Fail-fast env validation | Done | `packages/shared/src/config.ts` parses `process.env` through strict Zod at startup in every process. Missing/placeholder secrets throw with a complete list before any service code runs. No silent dev fallbacks. (D130) |
+| BM-4 | Makefile targets | Done | `make doctor`, `make bootstrap`, `make reset` wire the scripts into the standard project workflow. |
+| BM-5 | `docker-compose.yml` minio-init fix | Done | Replaced folded-scalar heredoc with single-line `echo '{json}' > /tmp/cors.json` so CORS configuration survives YAML folding. KI-087 fixed. |
+| BM-6 | Port reassignments | Done | `WORKFLOW_ENGINE_PORT=3011` (avoid openclaw on 3001), Redis host mapping `6389:6379` (avoid Homebrew redis on 6379). `.env`, `docker-compose.yml`, and system page labels updated. |
+| BM-7 | Remotion dev script split | Done | `remotion/package.json`: `dev` = silent `tsc --watch --preserveWatchOutput`; opt-in `studio` = `remotion studio src/Root.tsx`. Stops auto-launching :3004 studio on every `turbo dev`. |
+| BM-8 | End-to-end verification | Done | Fresh-machine bootstrap completed all 7 steps, 14 workspaces compiled, operator logged in with existing admin credentials, dashboard loaded at localhost:3000. |
+| BM-9 | Content pipeline E2E (2026-04-21) | Done | POST `/api/v1/content/generate` → Zod → tenant-scoped channel lookup → ContentItem (status=generating) → BullMQ enqueue → content worker → `registry.generate` (Ollama qwen3:8b) → HICC-compliant script with beat tags → DB updated to `pending_approval` (approvalGateWindowHrs=24). Surfaced three runtime caveats — all fixed in same session (see D132, KI-090/091/092). |
+| BM-10 | Ollama `think:false` default (D132) | Done | `packages/ai-client/src/providers/ollama.ts` now defaults `think: false` on `generateText`/`generateChat`/`streamChat`, defensively strips `<think>...</think>` including cross-chunk streaming boundaries. `TextRequest`/`ChatRequest` gained optional `think?: boolean` for explicit opt-in. Cuts typical content-gen latency from ~4 min to ~1 min on qwen3:8b. |
+| BM-11 | Worker host-process hardening | Done | `workers/src/index.ts`: `process.setMaxListeners(20)` (was 10 — 9 BullMQ workers + shutdown handlers exceeded Node's default), `uncaughtException` handler logs full stack via Pino then exits non-zero so supervisor restarts, `unhandledRejection` handler logs without exit. Eliminates silent worker deaths that previously left jobs stuck in `active` with stale locks. |
+
 ### PRD Epic Progress
 | Epic | Title | Status | Notes |
 |------|-------|--------|-------|

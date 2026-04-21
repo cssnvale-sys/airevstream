@@ -2,7 +2,10 @@ import { buildApp } from './app.js';
 import { createLogger } from '@airevstream/shared';
 
 const logger = createLogger('workflow-engine');
-const PORT = parseInt(process.env.PORT ?? '3001', 10);
+const PORT = parseInt(
+  process.env.WORKFLOW_ENGINE_PORT ?? process.env.PORT ?? '3011',
+  10,
+);
 
 async function main() {
   const app = await buildApp();

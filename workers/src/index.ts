@@ -11,6 +11,27 @@ import { startLifecycleWorker } from './lifecycle.worker.js';
 
 const logger = createLogger('workers');
 
+// Nine workers each register a SIGTERM/SIGINT exit listener via BullMQ's Worker.
+// Node's default limit is 10, which triggers MaxListenersExceededWarning and
+// masks a real leak behind a cosmetic one. Bump to a sane ceiling.
+process.setMaxListeners(20);
+
+// Previously, an unhandled rejection or uncaught exception inside a BullMQ
+// processor could terminate the workers process without any log output,
+// leaving jobs stuck in `active` with stale locks. Log with full stack before
+// Node exits so the next silent death has evidence.
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err, stack: err?.stack }, 'Uncaught exception — workers process will exit');
+  // Give pino a moment to flush, then exit non-zero so a supervisor can restart.
+  setTimeout(() => process.exit(1), 100).unref();
+});
+process.on('unhandledRejection', (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error({ err, stack: err.stack }, 'Unhandled promise rejection in workers');
+  // Don't kill the process on unhandled rejection — BullMQ job failures surface
+  // here and should be caught by the per-queue failed handler, not exit the host.
+});
+
 async function main() {
   logger.info('Starting all workers...');
 

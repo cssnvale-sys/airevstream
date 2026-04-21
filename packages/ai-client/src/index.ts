@@ -46,7 +46,12 @@ export { SoraProvider } from './providers/video/index.js';
 import { OllamaProvider } from './providers/ollama.js';
 import type { GenerateOptions, GenerateResult, ChatMessage, StreamChunk } from './types.js';
 
-const DEFAULT_MODEL = 'qwen3:8b';
+// Legacy call sites below default their model via OLLAMA_DEFAULT_MODEL so the
+// operator's pulled tag (e.g. qwen3.5:122b) is honored without code changes.
+const FALLBACK_MODEL = 'qwen3:8b';
+function defaultModel(): string {
+  return process.env.OLLAMA_DEFAULT_MODEL?.trim() || FALLBACK_MODEL;
+}
 let ollamaProvider: OllamaProvider | null = null;
 
 function getOllamaProvider(): OllamaProvider {
@@ -77,7 +82,7 @@ export async function generateText(
   const provider = getOllamaProvider();
   const result = await provider.generateText({
     prompt,
-    model: options.model ?? DEFAULT_MODEL,
+    model: options.model ?? defaultModel(),
     systemPrompt: options.systemPrompt,
     temperature: options.temperature,
     maxTokens: options.maxTokens,
@@ -101,7 +106,7 @@ export async function chat(
   const provider = getOllamaProvider();
   const result = await provider.generateChat({
     messages,
-    model: options.model ?? DEFAULT_MODEL,
+    model: options.model ?? defaultModel(),
     systemPrompt: options.systemPrompt,
     temperature: options.temperature,
     maxTokens: options.maxTokens,
@@ -125,7 +130,7 @@ export async function* streamText(
   const provider = getOllamaProvider();
   const stream = provider.streamChat({
     messages: [{ role: 'user', content: prompt }],
-    model: options.model ?? DEFAULT_MODEL,
+    model: options.model ?? defaultModel(),
     systemPrompt: options.systemPrompt,
     temperature: options.temperature,
     maxTokens: options.maxTokens,

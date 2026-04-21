@@ -18,12 +18,14 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, { origin: allowedOrigins, credentials: true });
   await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
 
-  if (!config.JWT_SECRET && config.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET is required in production');
+  if (!config.JWT_SECRET || config.JWT_SECRET.trim().length < 32) {
+    throw new Error(
+      'JWT_SECRET is missing or too short (need ≥ 32 chars). ' +
+      'Generate one with: openssl rand -hex 64, then put it in .env. ' +
+      'Run `make doctor` to verify.',
+    );
   }
-  await app.register(fjwt, {
-    secret: config.JWT_SECRET ?? 'dev-jwt-secret-change-in-production',
-  });
+  await app.register(fjwt, { secret: config.JWT_SECRET });
   await app.register(authPlugin);
 
   // Routes

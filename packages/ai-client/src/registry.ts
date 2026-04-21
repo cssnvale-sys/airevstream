@@ -360,6 +360,12 @@ export class ServiceRegistry {
   // ─── Helpers ───
 
   private getModelFromCapabilities(service: ServiceRecord): string | undefined {
+    // Environment override wins for Ollama — operators frequently pull a
+    // different tag than whatever the seed row advertised, and we don't want
+    // to force them to hand-edit the `capabilities` JSON in the DB.
+    if (service.provider === 'ollama' && process.env.OLLAMA_DEFAULT_MODEL?.trim()) {
+      return process.env.OLLAMA_DEFAULT_MODEL.trim();
+    }
     const caps = service.capabilities as Record<string, any> | null;
     return caps?.defaultModel ?? caps?.model ?? undefined;
   }

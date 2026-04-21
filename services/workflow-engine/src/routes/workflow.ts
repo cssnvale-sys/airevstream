@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { createLogger } from '@airevstream/shared';
 import type { Prisma } from '@prisma/client';
+import { resolveTenantId, getTenantScope } from '../lib/tenant.js';
 
 const logger = createLogger('routes:workflow');
 
@@ -23,13 +24,26 @@ export async function workflowRoutes(app: FastifyInstance) {
   // List workflow jobs (paginated, filterable)
   app.get('/', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds, emailAccountIds } = await getTenantScope(tenantId);
+
       const { page = '1', limit = '50', status, jobType, sort = 'createdAt', order = 'desc' } = request.query as Record<string, string>;
       const pageNum = Math.max(1, parseInt(page) || 1);
       const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
       const skip = (pageNum - 1) * limitNum;
       const db = getDb();
 
-      const where: Record<string, unknown> = {};
+      // Scope to tenant resources
+      const tenantFilter: Prisma.WorkflowJobWhereInput = {
+        OR: [
+          { content: { channelId: { in: channelIds } } },
+          { channelId: { in: channelIds } },
+          { emailAccountId: { in: emailAccountIds } },
+        ],
+      };
+
+      const where: Prisma.WorkflowJobWhereInput = { ...tenantFilter };
       if (status) where.status = status;
       if (jobType) where.jobType = jobType;
 
@@ -66,11 +80,22 @@ export async function workflowRoutes(app: FastifyInstance) {
   // Get job detail
   app.get('/:id', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds, emailAccountIds } = await getTenantScope(tenantId);
+
       const { id } = request.params as { id: string };
       const db = getDb();
 
-      const job = await db.workflowJob.findUnique({
-        where: { id },
+      const job = await db.workflowJob.findFirst({
+        where: {
+          id,
+          OR: [
+            { content: { channelId: { in: channelIds } } },
+            { channelId: { in: channelIds } },
+            { emailAccountId: { in: emailAccountIds } },
+          ],
+        },
         include: { content: true },
       });
 
@@ -91,6 +116,9 @@ export async function workflowRoutes(app: FastifyInstance) {
   // Create workflow job
   app.post('/', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const parsed = createJobSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
@@ -99,7 +127,36 @@ export async function workflowRoutes(app: FastifyInstance) {
         });
       }
 
+      // Verify referenced entities belong to tenant
       const db = getDb();
+      if (parsed.data.channelId) {
+        const ch = await db.channel.findFirst({
+          where: { id: parsed.data.channelId, socialAccount: { emailAccount: { tenantId } } },
+          select: { id: true },
+        });
+        if (!ch) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Channel not found' } });
+        }
+      }
+      if (parsed.data.emailAccountId) {
+        const ea = await db.emailAccount.findFirst({
+          where: { id: parsed.data.emailAccountId, tenantId },
+          select: { id: true },
+        });
+        if (!ea) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Email account not found' } });
+        }
+      }
+      if (parsed.data.contentId) {
+        const ci = await db.contentItem.findFirst({
+          where: { id: parsed.data.contentId, channel: { socialAccount: { emailAccount: { tenantId } } } },
+          select: { id: true },
+        });
+        if (!ci) {
+          return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Content not found' } });
+        }
+      }
+
       const job = await db.workflowJob.create({
         data: {
           jobType: parsed.data.jobType,
@@ -124,10 +181,23 @@ export async function workflowRoutes(app: FastifyInstance) {
   // Cancel job
   app.post('/:id/cancel', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds, emailAccountIds } = await getTenantScope(tenantId);
+
       const { id } = request.params as { id: string };
       const db = getDb();
 
-      const job = await db.workflowJob.findUnique({ where: { id } });
+      const job = await db.workflowJob.findFirst({
+        where: {
+          id,
+          OR: [
+            { content: { channelId: { in: channelIds } } },
+            { channelId: { in: channelIds } },
+            { emailAccountId: { in: emailAccountIds } },
+          ],
+        },
+      });
       if (!job) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Job not found' } });
       }
@@ -157,11 +227,25 @@ export async function workflowRoutes(app: FastifyInstance) {
   // Complete HITL task
   app.post('/:id/human-complete', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds, emailAccountIds } = await getTenantScope(tenantId);
+
       const { id } = request.params as { id: string };
       const db = getDb();
 
-      const job = await db.workflowJob.findUnique({ where: { id } });
-      if (!job || !job.needsHuman) {
+      const job = await db.workflowJob.findFirst({
+        where: {
+          id,
+          needsHuman: true,
+          OR: [
+            { content: { channelId: { in: channelIds } } },
+            { channelId: { in: channelIds } },
+            { emailAccountId: { in: emailAccountIds } },
+          ],
+        },
+      });
+      if (!job) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No HITL task found' } });
       }
 
@@ -199,15 +283,11 @@ export async function workflowRoutes(app: FastifyInstance) {
     }
 
     try {
-      // Resolve tenantId from authenticated user
-      const userId = request.user?.sub;
-      const user = userId ? await getDb().user.findUnique({ where: { id: userId }, select: { tenantId: true } }) : null;
-      if (!user?.tenantId) {
-        return reply.status(403).send({ success: false, error: { code: 'FORBIDDEN', message: 'No tenant context' } });
-      }
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
 
       const { startContentPipeline } = await import('@airevstream/queue');
-      const result = await startContentPipeline({ ...parsed.data, tenantId: user.tenantId });
+      const result = await startContentPipeline({ ...parsed.data, tenantId });
       return reply.status(201).send({ success: true, data: { flowJobId: result.job.id } });
     } catch (err) {
       logger.error({ err }, 'POST /workflows/pipeline/content failed');
@@ -219,21 +299,32 @@ export async function workflowRoutes(app: FastifyInstance) {
   });
 
   // Get active workflows summary
-  app.get('/summary/active', async (_request, reply) => {
+  app.get('/summary/active', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds, emailAccountIds } = await getTenantScope(tenantId);
+
       const db = getDb();
+      const tenantFilter: Prisma.WorkflowJobWhereInput = {
+        OR: [
+          { content: { channelId: { in: channelIds } } },
+          { channelId: { in: channelIds } },
+          { emailAccountId: { in: emailAccountIds } },
+        ],
+      };
 
       const [running, queued, paused, needsHuman] = await Promise.all([
-        db.workflowJob.count({ where: { status: 'running' } }),
-        db.workflowJob.count({ where: { status: 'queued' } }),
-        db.workflowJob.count({ where: { status: 'paused' } }),
-        db.workflowJob.count({ where: { needsHuman: true, humanCompletedAt: null } }),
+        db.workflowJob.count({ where: { ...tenantFilter, status: 'running' } }),
+        db.workflowJob.count({ where: { ...tenantFilter, status: 'queued' } }),
+        db.workflowJob.count({ where: { ...tenantFilter, status: 'paused' } }),
+        db.workflowJob.count({ where: { ...tenantFilter, needsHuman: true, humanCompletedAt: null } }),
       ]);
 
       // Count by job type
       const byType = await db.workflowJob.groupBy({
         by: ['jobType'],
-        where: { status: { in: ['running', 'queued'] } },
+        where: { ...tenantFilter, status: { in: ['running', 'queued'] } },
         _count: true,
       });
 

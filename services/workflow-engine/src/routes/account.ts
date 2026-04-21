@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig, createLogger } from '@airevstream/shared';
+import { resolveTenantId } from '../lib/tenant.js';
 
 const logger = createLogger('routes:account');
 
@@ -145,6 +146,9 @@ export async function accountRoutes(app: FastifyInstance) {
   // Create email account
   app.post('/', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const parsed = createEmailAccountSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
@@ -168,6 +172,7 @@ export async function accountRoutes(app: FastifyInstance) {
           passwordEnc,
           tier: parsed.data.tier,
           notes: parsed.data.notes,
+          tenantId,
         },
       });
 
@@ -184,6 +189,9 @@ export async function accountRoutes(app: FastifyInstance) {
   // Update email account
   app.put('/:id', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const parsed = updateEmailAccountSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -194,6 +202,16 @@ export async function accountRoutes(app: FastifyInstance) {
       }
 
       const db = getDb();
+
+      // Verify account belongs to tenant
+      const existing = await db.emailAccount.findFirst({ where: { id, tenantId } });
+      if (!existing) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Email account not found' },
+        });
+      }
+
       const updateData: Record<string, unknown> = {};
       if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
       if (parsed.data.tier !== undefined) updateData.tier = parsed.data.tier;
@@ -217,8 +235,21 @@ export async function accountRoutes(app: FastifyInstance) {
   // Delete email account
   app.delete('/:id', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const db = getDb();
+
+      // Verify account belongs to tenant
+      const existing = await db.emailAccount.findFirst({ where: { id, tenantId } });
+      if (!existing) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Email account not found' },
+        });
+      }
+
       await db.emailAccount.delete({ where: { id } });
       return reply.status(204).send();
     } catch (err) {
@@ -233,6 +264,9 @@ export async function accountRoutes(app: FastifyInstance) {
   // Bulk import email accounts
   app.post('/bulk-import', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const parsed = bulkImportSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
@@ -251,6 +285,7 @@ export async function accountRoutes(app: FastifyInstance) {
               email: a.email,
               passwordEnc: config.ENCRYPTION_KEY ? encrypt(a.password, config.ENCRYPTION_KEY) : a.password,
               tier: a.tier || 'tier2',
+              tenantId,
             },
           }),
         ),
@@ -292,6 +327,9 @@ export async function accountRoutes(app: FastifyInstance) {
   // Create social account for email
   app.post('/:id/socials', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const parsed = createSocialAccountSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -301,12 +339,22 @@ export async function accountRoutes(app: FastifyInstance) {
         });
       }
 
+      const db = getDb();
+
+      // Verify parent email account belongs to tenant
+      const emailAccount = await db.emailAccount.findFirst({ where: { id, tenantId } });
+      if (!emailAccount) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Email account not found' },
+        });
+      }
+
       const config = getConfig();
       const credentialsEnc = parsed.data.credentials && config.ENCRYPTION_KEY
         ? encrypt(parsed.data.credentials, config.ENCRYPTION_KEY)
         : parsed.data.credentials ?? null;
 
-      const db = getDb();
       const social = await db.socialAccount.create({
         data: {
           emailAccountId: id,

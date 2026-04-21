@@ -2,7 +2,10 @@ import { buildApp } from './app.js';
 import { createLogger } from '@airevstream/shared';
 
 const logger = createLogger('ai-assistant');
-const PORT = parseInt(process.env.PORT ?? '3003', 10);
+const PORT = parseInt(
+  process.env.AI_ASSISTANT_PORT ?? process.env.PORT ?? '3003',
+  10,
+);
 
 async function main() {
   const app = await buildApp();

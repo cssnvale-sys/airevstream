@@ -2,7 +2,10 @@ import { buildApp } from './app.js';
 import { createLogger } from '@airevstream/shared';
 
 const logger = createLogger('production-pipeline');
-const PORT = parseInt(process.env.PORT ?? '3002', 10);
+const PORT = parseInt(
+  process.env.PRODUCTION_PIPELINE_PORT ?? process.env.PORT ?? '3002',
+  10,
+);
 
 async function main() {
   const app = await buildApp();

@@ -27,6 +27,12 @@ export interface TextRequest {
   temperature?: number;
   maxTokens?: number;
   format?: 'json' | undefined;
+  /**
+   * Whether to allow the model's internal thinking/reasoning phase (qwen3, deepseek-r1, etc.).
+   * Defaults to `false` for latency. Callers that need deep reasoning for complex tasks
+   * (planning, multi-step analysis) can set `think: true` explicitly.
+   */
+  think?: boolean;
 }
 
 export interface ChatRequest {
@@ -36,6 +42,11 @@ export interface ChatRequest {
   temperature?: number;
   maxTokens?: number;
   format?: 'json' | undefined;
+  /**
+   * Whether to allow the model's internal thinking/reasoning phase.
+   * Defaults to `false`. See TextRequest.think for rationale.
+   */
+  think?: boolean;
 }
 
 export interface TextResponse {

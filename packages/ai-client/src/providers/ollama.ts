@@ -4,7 +4,23 @@ import type { AiProvider, TextRequest, ChatRequest, TextResponse, StreamChunk, H
 
 const logger = createLogger('ai-client:ollama');
 
-const DEFAULT_MODEL = 'qwen3:8b';
+// The default model can be overridden at runtime via OLLAMA_DEFAULT_MODEL,
+// e.g. if the operator has pulled qwen3.5:122b or any other tag instead of qwen3:8b.
+// Read inside the call (not at module load) so per-process env overrides work
+// even when this file is compiled into a shared bundle.
+const FALLBACK_MODEL = 'qwen3:8b';
+function getDefaultModel(): string {
+  return process.env.OLLAMA_DEFAULT_MODEL?.trim() || FALLBACK_MODEL;
+}
+
+// Thinking models (qwen3, deepseek-r1, etc.) emit `<think>...</think>` blocks
+// in message.content even when the top-level `think` flag suppresses structured
+// thinking. Strip them defensively so downstream consumers see only the final
+// answer. Non-thinking models pass through unchanged.
+function stripThinkingTags(content: string): string {
+  if (!content) return content;
+  return content.replace(/<think>[\s\S]*?<\/think>\s*/gi, '').trim();
+}
 
 export class OllamaProvider implements AiProvider {
   readonly name = 'ollama';
@@ -25,7 +41,8 @@ export class OllamaProvider implements AiProvider {
   async generateText(request: TextRequest & { endpoint?: string }): Promise<TextResponse> {
     const endpoint = request.endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
     const client = this.getClient(endpoint);
-    const model = request.model ?? DEFAULT_MODEL;
+    const model = request.model ?? getDefaultModel();
+    const think = request.think ?? false;
 
     const messages: Array<{ role: string; content: string }> = [];
     if (request.systemPrompt) {
@@ -37,6 +54,7 @@ export class OllamaProvider implements AiProvider {
     const response = await client.chat({
       model,
       messages,
+      think,
       options: {
         temperature: request.temperature ?? 0.7,
         num_predict: request.maxTokens,
@@ -45,7 +63,7 @@ export class OllamaProvider implements AiProvider {
     });
 
     return {
-      content: response.message.content,
+      content: stripThinkingTags(response.message.content),
       model: response.model,
       durationMs: Date.now() - start,
       promptTokens: response.prompt_eval_count,
@@ -57,7 +75,8 @@ export class OllamaProvider implements AiProvider {
   async generateChat(request: ChatRequest & { endpoint?: string }): Promise<TextResponse> {
     const endpoint = request.endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
     const client = this.getClient(endpoint);
-    const model = request.model ?? DEFAULT_MODEL;
+    const model = request.model ?? getDefaultModel();
+    const think = request.think ?? false;
 
     const messages = request.systemPrompt
       ? [{ role: 'system' as const, content: request.systemPrompt }, ...request.messages]
@@ -67,6 +86,7 @@ export class OllamaProvider implements AiProvider {
     const response = await client.chat({
       model,
       messages,
+      think,
       options: {
         temperature: request.temperature ?? 0.7,
         num_predict: request.maxTokens,
@@ -75,7 +95,7 @@ export class OllamaProvider implements AiProvider {
     });
 
     return {
-      content: response.message.content,
+      content: stripThinkingTags(response.message.content),
       model: response.model,
       durationMs: Date.now() - start,
       promptTokens: response.prompt_eval_count,
@@ -87,7 +107,8 @@ export class OllamaProvider implements AiProvider {
   async *streamChat(request: ChatRequest & { endpoint?: string }): AsyncGenerator<StreamChunk> {
     const endpoint = request.endpoint ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
     const client = this.getClient(endpoint);
-    const model = request.model ?? DEFAULT_MODEL;
+    const model = request.model ?? getDefaultModel();
+    const think = request.think ?? false;
 
     const messages = request.systemPrompt
       ? [{ role: 'system' as const, content: request.systemPrompt }, ...request.messages]
@@ -96,6 +117,7 @@ export class OllamaProvider implements AiProvider {
     const stream = await client.chat({
       model,
       messages,
+      think,
       stream: true,
       options: {
         temperature: request.temperature ?? 0.7,
@@ -103,11 +125,32 @@ export class OllamaProvider implements AiProvider {
       },
     });
 
+    // Buffer across chunk boundaries so we don't leak partial <think> tags.
+    let insideThink = false;
     for await (const chunk of stream) {
-      yield {
-        content: chunk.message.content,
-        done: chunk.done,
-      };
+      let piece = chunk.message.content ?? '';
+      // Fast path: no tags present
+      if (!piece.includes('<think>') && !piece.includes('</think>') && !insideThink) {
+        yield { content: piece, done: chunk.done };
+        continue;
+      }
+      // Slow path: filter tags. Simple state machine per-chunk.
+      let out = '';
+      while (piece.length > 0) {
+        if (insideThink) {
+          const end = piece.indexOf('</think>');
+          if (end === -1) { piece = ''; break; }
+          piece = piece.slice(end + '</think>'.length);
+          insideThink = false;
+        } else {
+          const start = piece.indexOf('<think>');
+          if (start === -1) { out += piece; piece = ''; break; }
+          out += piece.slice(0, start);
+          piece = piece.slice(start + '<think>'.length);
+          insideThink = true;
+        }
+      }
+      yield { content: out, done: chunk.done };
     }
   }
 

@@ -4,6 +4,7 @@ import { getDb } from '@airevstream/db';
 import { addJob } from '@airevstream/queue';
 import { createLogger } from '@airevstream/shared';
 import type { Prisma } from '@prisma/client';
+import { resolveTenantId, getTenantScope } from '../lib/tenant.js';
 
 const logger = createLogger('routes:content');
 
@@ -49,6 +50,10 @@ export async function contentRoutes(app: FastifyInstance) {
   // List content items (paginated, filterable)
   app.get('/', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds } = await getTenantScope(tenantId);
+
       const {
         page = '1', limit = '50', status, contentType, channelId, search, sort = 'createdAt', order = 'desc',
       } = request.query as Record<string, string>;
@@ -57,10 +62,10 @@ export async function contentRoutes(app: FastifyInstance) {
       const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
       const skip = (pageNum - 1) * limitNum;
 
-      const where: Record<string, unknown> = {};
+      const where: Record<string, unknown> = { channelId: { in: channelIds } };
       if (status) where.status = status;
       if (contentType) where.contentType = contentType;
-      if (channelId) where.channelId = channelId;
+      if (channelId && channelIds.includes(channelId)) where.channelId = channelId;
       if (search) where.title = { contains: search, mode: 'insensitive' };
 
       const safeSort = (CONTENT_SORT_FIELDS as readonly string[]).includes(sort) ? sort : 'createdAt';
@@ -101,11 +106,17 @@ export async function contentRoutes(app: FastifyInstance) {
   // Get content detail
   app.get('/:id', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const db = getDb();
 
-      const content = await db.contentItem.findUnique({
-        where: { id },
+      const content = await db.contentItem.findFirst({
+        where: {
+          id,
+          channel: { socialAccount: { emailAccount: { tenantId } } },
+        },
         include: {
           channel: true,
           aiService: true,
@@ -151,6 +162,9 @@ export async function contentRoutes(app: FastifyInstance) {
   // Start content generation
   app.post('/generate', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const parsed = createContentSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
@@ -159,7 +173,22 @@ export async function contentRoutes(app: FastifyInstance) {
         });
       }
 
+      // Verify channel belongs to tenant
       const db = getDb();
+      const channel = await db.channel.findFirst({
+        where: {
+          id: parsed.data.channelId,
+          socialAccount: { emailAccount: { tenantId } },
+        },
+        select: { id: true },
+      });
+      if (!channel) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Channel not found' },
+        });
+      }
+
       const content = await db.contentItem.create({
         data: {
           channelId: parsed.data.channelId,
@@ -194,6 +223,9 @@ export async function contentRoutes(app: FastifyInstance) {
   // Update content metadata
   app.put('/:id', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const parsed = updateContentSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -203,7 +235,19 @@ export async function contentRoutes(app: FastifyInstance) {
         });
       }
 
+      // Verify content belongs to tenant
       const db = getDb();
+      const existing = await db.contentItem.findFirst({
+        where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
+        select: { id: true },
+      });
+      if (!existing) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Content not found' },
+        });
+      }
+
       const updateData: Record<string, unknown> = {};
       if (parsed.data.title !== undefined) updateData.title = parsed.data.title;
       if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
@@ -228,8 +272,23 @@ export async function contentRoutes(app: FastifyInstance) {
   // Approve content
   app.post('/:id/approve', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const db = getDb();
+
+      // Verify content belongs to tenant
+      const existing = await db.contentItem.findFirst({
+        where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
+        select: { id: true },
+      });
+      if (!existing) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Content not found' },
+        });
+      }
 
       const content = await db.contentItem.update({
         where: { id },
@@ -249,9 +308,24 @@ export async function contentRoutes(app: FastifyInstance) {
   // Reject content
   app.post('/:id/reject', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const { feedback } = request.body as { feedback?: string };
       const db = getDb();
+
+      // Verify content belongs to tenant
+      const existing = await db.contentItem.findFirst({
+        where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
+        select: { id: true },
+      });
+      if (!existing) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Content not found' },
+        });
+      }
 
       const content = await db.contentItem.update({
         where: { id },
@@ -275,10 +349,15 @@ export async function contentRoutes(app: FastifyInstance) {
   // Regenerate content (creates new version)
   app.post('/:id/regenerate', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const db = getDb();
 
-      const existing = await db.contentItem.findUnique({ where: { id } });
+      const existing = await db.contentItem.findFirst({
+        where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
+      });
       if (!existing) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Content not found' } });
       }
@@ -319,10 +398,15 @@ export async function contentRoutes(app: FastifyInstance) {
   // Get content versions
   app.get('/:id/versions', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const db = getDb();
 
-      const content = await db.contentItem.findUnique({ where: { id } });
+      const content = await db.contentItem.findFirst({
+        where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
+      });
       if (!content) {
         return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Content not found' } });
       }
@@ -353,8 +437,20 @@ export async function contentRoutes(app: FastifyInstance) {
   // Get storyboard for content
   app.get('/:id/storyboard', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
       const { id } = request.params as { id: string };
       const db = getDb();
+
+      // Verify content belongs to tenant
+      const contentOwned = await db.contentItem.findFirst({
+        where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
+        select: { id: true },
+      });
+      if (!contentOwned) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Content not found' } });
+      }
 
       const storyboard = await db.storyboard.findFirst({
         where: { contentId: id },
@@ -390,13 +486,17 @@ export async function contentRoutes(app: FastifyInstance) {
   // List pending approvals
   app.get('/approvals/pending', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds } = await getTenantScope(tenantId);
+
       const { page = '1', limit = '50' } = request.query as Record<string, string>;
       const pageNum = Math.max(1, parseInt(page) || 1);
       const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
       const skip = (pageNum - 1) * limitNum;
       const db = getDb();
 
-      const where = { status: 'pending_approval' };
+      const where = { status: 'pending_approval', channelId: { in: channelIds } };
       const [items, total] = await Promise.all([
         db.contentItem.findMany({
           where,
@@ -431,6 +531,10 @@ export async function contentRoutes(app: FastifyInstance) {
   // Bulk approve/reject
   app.post('/approvals/bulk', async (request, reply) => {
     try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+      const { channelIds } = await getTenantScope(tenantId);
+
       const parsed = bulkApprovalSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
@@ -446,7 +550,7 @@ export async function contentRoutes(app: FastifyInstance) {
         : { status: 'draft' };
 
       const result = await db.contentItem.updateMany({
-        where: { id: { in: ids }, status: 'pending_approval' },
+        where: { id: { in: ids }, status: 'pending_approval', channelId: { in: channelIds } },
         data: updateData,
       });
 

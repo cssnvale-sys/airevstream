@@ -44,7 +44,7 @@ export const PLATFORM_LIMITS = {
 // ─── Service Ports ───
 export const PORTS = {
   WEB: 3000,
-  WORKFLOW_ENGINE: 3001,
+  WORKFLOW_ENGINE: 3011,
   PRODUCTION_PIPELINE: 3002,
   AI_ASSISTANT: 3003,
 } as const;

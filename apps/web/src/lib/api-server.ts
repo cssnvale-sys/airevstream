@@ -7,10 +7,20 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 let _jwtSecret: Uint8Array | null = null;
 export function getJwtSecret(): Uint8Array {
   if (!_jwtSecret) {
-    if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-      throw new Error('JWT_SECRET environment variable is required in production');
+    const secret = process.env.JWT_SECRET;
+    // Tests stub JWT_SECRET='test-secret' per-case; accept any non-empty string then.
+    if (process.env.NODE_ENV === 'test') {
+      _jwtSecret = new TextEncoder().encode(secret ?? 'test-secret');
+      return _jwtSecret;
     }
-    _jwtSecret = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-me');
+    if (!secret || secret.trim().length < 32) {
+      throw new Error(
+        'JWT_SECRET is missing or too short (need ≥ 32 chars). ' +
+        'Generate one with: openssl rand -hex 64, then put it in .env. ' +
+        'Run `make doctor` to verify.',
+      );
+    }
+    _jwtSecret = new TextEncoder().encode(secret);
   }
   return _jwtSecret;
 }

@@ -216,16 +216,15 @@ export function SimpleCreateWizard() {
     try {
       const res = await apiPost<{
         data: { title: string; concept: string; sceneCount: number; shotCount: number };
-      }>('/content/generate-script', {
+      }>('/pipeline/simple-plan', {
         channelId: effectiveChannelId,
         topic: form.topic,
-        contentType: 'video_short',
-        platforms: ['youtube'],
-        duration: parseInt(form.duration, 10),
-        setting: form.setting,
-        emotion: form.emotion,
+        durationSeconds: parseInt(form.duration, 10),
+        stylePreset: selectedRecipe?.name ?? undefined,
+        setting: form.setting || undefined,
+        emotion: form.emotion || undefined,
         hasSpeaking: form.hasSpeaking,
-        characterDescription: form.characterDescription,
+        characterDescription: form.characterDescription || undefined,
       });
       setPlanSummary({
         title: res.data?.title ?? form.topic,
@@ -251,7 +250,7 @@ export function SimpleCreateWizard() {
     } finally {
       setGenerating(false);
     }
-  }, [effectiveChannelId, form.topic, form.duration, form.setting, form.emotion, form.hasSpeaking, form.characterDescription, form.directives.targetShotCount]);
+  }, [effectiveChannelId, form.topic, form.duration, form.setting, form.emotion, form.hasSpeaking, form.characterDescription, form.directives.targetShotCount, selectedRecipe?.name]);
 
   const startPipeline = useCallback(async () => {
     setGenerating(true);

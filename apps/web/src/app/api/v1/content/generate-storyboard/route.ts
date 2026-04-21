@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { generateJSON } from '@airevstream/ai-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,28 @@ const GenerateStoryboardSchema = z.object({
   contentType: z.string().max(50).optional().nullable(),
   duration: z.number().int().positive().optional().nullable(),
 });
+
+interface GeneratedShot {
+  shotNumber: number;
+  section: string;
+  description: string;
+  duration: number;
+  cameraAngle: string;
+}
+
+const STORYBOARD_SYSTEM_PROMPT = `You are a video storyboard director. Given a script, break it into shots following the H.I.C.C. structure (Hook, Intro, Content, CTA). Return a JSON object with a "shots" array. Each shot must have: shotNumber (int), section (HOOK|INTRO|CONTENT|CTA), description (visual description of the shot), duration (seconds, int), and cameraAngle (e.g. "medium close-up", "wide establishing", "over-the-shoulder", "close-up detail"). Aim for 4-12 shots depending on script length. Keep total duration reasonable for the content type.`;
+
+/** Fallback: generate placeholder shots when AI is unavailable */
+function generateFallbackShots(contentType: string | null | undefined): GeneratedShot[] {
+  const sections = ['HOOK', 'INTRO', 'CONTENT', 'CTA'];
+  return sections.map((section, i) => ({
+    shotNumber: i + 1,
+    section,
+    description: `${section} segment - ${contentType ?? 'video'} frame`,
+    duration: section === 'HOOK' ? 5 : section === 'INTRO' ? 25 : section === 'CTA' ? 10 : 20,
+    cameraAngle: i % 2 === 0 ? 'medium close-up' : 'wide establishing',
+  }));
+}
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticate(req);
@@ -32,7 +55,7 @@ export async function POST(req: NextRequest) {
       return validationError(formatZodErrors(parsed.error.errors));
     }
 
-    const { script, channelId, contentType } = parsed.data;
+    const { script, channelId, contentType, duration } = parsed.data;
 
     if (!ctx.tenantId) {
       return forbidden('No tenant context');
@@ -50,15 +73,37 @@ export async function POST(req: NextRequest) {
       if (!channel) return notFound('Channel not found');
     }
 
-    // Parse H.I.C.C. sections from script to generate shots
-    const sections = ['HOOK', 'INTRO', 'CONTENT', 'CTA'];
-    const shots = sections.map((section, i) => ({
-      id: `shot-${i + 1}`,
-      shotNumber: i + 1,
-      section,
-      description: `${section} segment - ${contentType ?? 'video'} frame`,
-      duration: section === 'HOOK' ? 5 : section === 'INTRO' ? 25 : section === 'CTA' ? 10 : 20,
-      cameraAngle: i % 2 === 0 ? 'medium close-up' : 'wide establishing',
+    // Generate storyboard shots via AI, with fallback
+    let generatedShots: GeneratedShot[];
+    try {
+      const durationHint = duration ? ` Target total duration: ~${duration} seconds.` : '';
+      const typeHint = contentType ? ` Content type: ${contentType}.` : '';
+      const prompt = `Break this script into storyboard shots.${typeHint}${durationHint}\n\nScript:\n${script}`;
+
+      const result = await generateJSON<{ shots: GeneratedShot[] }>(prompt, {
+        systemPrompt: STORYBOARD_SYSTEM_PROMPT,
+        temperature: 0.7,
+      });
+
+      if (result.shots && Array.isArray(result.shots) && result.shots.length > 0) {
+        generatedShots = result.shots.map((shot, i) => ({
+          shotNumber: shot.shotNumber ?? i + 1,
+          section: shot.section ?? 'CONTENT',
+          description: shot.description ?? `Shot ${i + 1}`,
+          duration: typeof shot.duration === 'number' ? shot.duration : 10,
+          cameraAngle: shot.cameraAngle ?? 'medium close-up',
+        }));
+      } else {
+        generatedShots = generateFallbackShots(contentType);
+      }
+    } catch (aiErr) {
+      console.error('[generate-storyboard] AI generation failed, using fallback:', aiErr);
+      generatedShots = generateFallbackShots(contentType);
+    }
+
+    const shots = generatedShots.map((shot) => ({
+      id: `shot-${shot.shotNumber}`,
+      ...shot,
       imageUrl: null,
       status: 'pending',
     }));

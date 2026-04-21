@@ -210,9 +210,9 @@ function progressBarColor(pct: number): string {
 const DEFAULT_SERVICES: Array<ServiceDisplay & { infraKey?: string }> = [
   { name: 'PostgreSQL', status: 'unknown', connectionInfo: 'localhost:5432', infraKey: 'database' },
   { name: 'Next.js Web', status: 'unknown', connectionInfo: 'localhost:3000' },
-  { name: 'Workflow Engine', status: 'unknown', connectionInfo: 'localhost:3001' },
+  { name: 'Workflow Engine', status: 'unknown', connectionInfo: 'localhost:3011' },
   { name: 'Ollama', status: 'unknown', connectionInfo: 'localhost:11434', infraKey: 'ollama' },
-  { name: 'Redis', status: 'unknown', connectionInfo: 'localhost:6379', infraKey: 'redis' },
+  { name: 'Redis', status: 'unknown', connectionInfo: 'localhost:6389', infraKey: 'redis' },
   { name: 'MinIO', status: 'unknown', connectionInfo: 'localhost:9000', infraKey: 'minio' },
   { name: 'ComfyUI', status: 'unknown', connectionInfo: 'localhost:8188', infraKey: 'comfyui' },
 ];

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback, type DragEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useCallback, useEffect, type DragEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useCalendar, useChannels, apiPut } from '@/hooks/use-api';
+import { useCalendar, useChannels, apiPost, apiPut } from '@/hooks/use-api';
+import { useApi } from '@/hooks/use-api';
 import { cn, platformIcon } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { useSWRConfig } from 'swr';
@@ -11,6 +12,8 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  X,
+  Clock,
 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -139,6 +142,7 @@ function buildDayTimeLabels(): string[] {
 
 export default function CalendarPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { mutate: globalMutate } = useSWRConfig();
 
   // State — currentDate is the anchor date for all view modes
@@ -154,6 +158,89 @@ export default function CalendarPage() {
   // Drag-and-drop state
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
+
+  // Schedule modal state (KI-060)
+  const [scheduleContentId, setScheduleContentId] = useState<string | null>(null);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('12:00');
+  const [scheduleChannelId, setScheduleChannelId] = useState('');
+  const [schedulePlatform, setSchedulePlatform] = useState('');
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  // Fetch content info when scheduling
+  const { data: scheduleContentData, error: scheduleContentError } = useApi<{
+    id: string;
+    title: string;
+    contentType: string;
+    channelId: string;
+    channel?: { id: string; name: string; socialAccount?: { platform: string } };
+  }>(scheduleContentId ? `/content/${scheduleContentId}` : null);
+  const scheduleContent = scheduleContentData?.data;
+
+  // Show error if content fetch fails
+  useEffect(() => {
+    if (scheduleContentError) {
+      toast.error('Failed to load content details');
+    }
+  }, [scheduleContentError]);
+
+  // Auto-open schedule modal from query param
+  useEffect(() => {
+    const contentId = searchParams.get('schedule');
+    if (contentId) {
+      setScheduleContentId(contentId);
+      // Default date to tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setScheduleDate(tomorrow.toISOString().split('T')[0]);
+    }
+  }, [searchParams]);
+
+  // Pre-fill channel/platform when content data loads
+  useEffect(() => {
+    if (scheduleContent?.channelId && !scheduleChannelId) {
+      setScheduleChannelId(scheduleContent.channelId);
+    }
+    if (scheduleContent?.channel?.socialAccount?.platform && !schedulePlatform) {
+      setSchedulePlatform(scheduleContent.channel.socialAccount.platform);
+    }
+  }, [scheduleContent, scheduleChannelId, schedulePlatform]);
+
+  const closeScheduleModal = useCallback(() => {
+    setScheduleContentId(null);
+    setScheduleDate('');
+    setScheduleTime('12:00');
+    setScheduleChannelId('');
+    setSchedulePlatform('');
+    // Remove query param
+    router.replace('/calendar', { scroll: false });
+  }, [router]);
+
+  const handleScheduleSubmit = useCallback(async () => {
+    if (!scheduleContentId || !scheduleDate || !scheduleTime || !scheduleChannelId || !schedulePlatform) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsScheduling(true);
+    try {
+      const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString();
+      await apiPost('/schedule', {
+        contentId: scheduleContentId,
+        channelId: scheduleChannelId,
+        scheduledAt,
+        platform: schedulePlatform,
+      });
+      toast.success('Content scheduled successfully');
+      globalMutate((key: unknown) => typeof key === 'string' && key.includes('/calendar'));
+      closeScheduleModal();
+    } catch (err) {
+      console.error('Failed to schedule content:', err);
+      toast.error('Failed to schedule content');
+    } finally {
+      setIsScheduling(false);
+    }
+  }, [scheduleContentId, scheduleDate, scheduleTime, scheduleChannelId, schedulePlatform, globalMutate, closeScheduleModal]);
 
   // Derived date ranges for each view mode
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
@@ -832,6 +919,102 @@ export default function CalendarPage() {
           </div>
         ))}
       </div>
+
+      {/* ---- Schedule Modal (KI-060) ---- */}
+      {scheduleContentId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeScheduleModal}>
+          <div
+            className="bg-bg-secondary rounded-xl border border-border shadow-2xl w-full max-w-md mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                <Clock size={20} className="text-accent-blue" />
+                Schedule Content
+              </h2>
+              <button type="button" onClick={closeScheduleModal} className="btn-icon" aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            {scheduleContent && (
+              <div className="mb-4 p-3 rounded-lg bg-bg-tertiary border border-border">
+                <p className="text-sm font-medium text-text-primary truncate">{scheduleContent.title ?? 'Untitled'}</p>
+                <p className="text-caption text-text-secondary mt-0.5 capitalize">{scheduleContent.contentType?.replace('_', ' ')}</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="schedule-date" className="block text-sm font-medium text-text-secondary mb-1">Date</label>
+                <input
+                  id="schedule-date"
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="input w-full"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="schedule-time" className="block text-sm font-medium text-text-secondary mb-1">Time</label>
+                <input
+                  id="schedule-time"
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="input w-full"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="schedule-channel" className="block text-sm font-medium text-text-secondary mb-1">Channel</label>
+                <select
+                  id="schedule-channel"
+                  value={scheduleChannelId}
+                  onChange={(e) => setScheduleChannelId(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">Select channel</option>
+                  {channels.map((ch) => (
+                    <option key={ch.id} value={ch.id}>{ch.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="schedule-platform" className="block text-sm font-medium text-text-secondary mb-1">Platform</label>
+                <select
+                  id="schedule-platform"
+                  value={schedulePlatform}
+                  onChange={(e) => setSchedulePlatform(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">Select platform</option>
+                  {PLATFORM_OPTIONS.filter((p) => p !== 'all').map((p) => (
+                    <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button type="button" onClick={closeScheduleModal} className="btn-secondary btn-sm">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleScheduleSubmit}
+                disabled={isScheduling || !scheduleDate || !scheduleTime || !scheduleChannelId || !schedulePlatform}
+                className="btn-primary btn-sm"
+              >
+                {isScheduling ? 'Scheduling...' : 'Schedule'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

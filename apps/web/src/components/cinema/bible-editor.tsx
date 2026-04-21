@@ -37,6 +37,15 @@ interface LoraEntry {
   triggerWords?: string[];
 }
 
+interface LensKitData {
+  primaryLens?: string;
+  supportLenses?: string[];
+  anamorphic?: boolean;
+  filterPack?: string;
+  minAperture?: string;
+  notes?: string;
+}
+
 interface ColorPipelineData {
   lut?: string;
   temperature?: number;
@@ -332,6 +341,170 @@ function ColorPipelineEditor({
   );
 }
 
+// --- Lens Kit Editor ---
+
+function LensKitEditor({
+  lensKit,
+  onChange,
+}: {
+  lensKit: LensKitData;
+  onChange: (lk: LensKitData) => void;
+}) {
+  const supportLenses = lensKit.supportLenses ?? [];
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="bible-primary-lens" className="text-xs text-text-tertiary">Primary Lens</label>
+          <input
+            id="bible-primary-lens"
+            type="text"
+            value={lensKit.primaryLens ?? ''}
+            onChange={(e) => onChange({ ...lensKit, primaryLens: e.target.value })}
+            placeholder="e.g., Canon EF 85mm f/1.2L"
+            className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none mt-1"
+          />
+        </div>
+        <div>
+          <label htmlFor="bible-min-aperture" className="text-xs text-text-tertiary">Min Aperture</label>
+          <input
+            id="bible-min-aperture"
+            type="text"
+            value={lensKit.minAperture ?? ''}
+            onChange={(e) => onChange({ ...lensKit, minAperture: e.target.value })}
+            placeholder="e.g., f/1.4"
+            className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none mt-1"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="bible-filter-pack" className="text-xs text-text-tertiary">Filter Pack</label>
+          <input
+            id="bible-filter-pack"
+            type="text"
+            value={lensKit.filterPack ?? ''}
+            onChange={(e) => onChange({ ...lensKit, filterPack: e.target.value })}
+            placeholder="e.g., Black Pro-Mist 1/4, ND Variable"
+            className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none mt-1"
+          />
+        </div>
+        <div className="flex items-end pb-1">
+          <label htmlFor="bible-anamorphic" className="flex items-center gap-2 cursor-pointer">
+            <input
+              id="bible-anamorphic"
+              type="checkbox"
+              checked={lensKit.anamorphic ?? false}
+              onChange={(e) => onChange({ ...lensKit, anamorphic: e.target.checked })}
+              className="accent-accent-blue"
+            />
+            <span className="text-sm text-text-secondary">Anamorphic</span>
+          </label>
+        </div>
+      </div>
+      <div>
+        <label className="text-xs text-text-tertiary">Support Lenses</label>
+        <div className="space-y-2 mt-1">
+          {supportLenses.map((lens, i) => (
+            <div key={i} className="flex gap-2">
+              <input
+                aria-label={`Support lens ${i + 1}`}
+                type="text"
+                value={lens}
+                onChange={(e) => {
+                  const updated = [...supportLenses];
+                  updated[i] = e.target.value;
+                  onChange({ ...lensKit, supportLenses: updated });
+                }}
+                placeholder="e.g., 35mm f/1.4, 24mm f/2.8"
+                className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
+              />
+              <button
+                type="button"
+                aria-label={`Remove support lens ${i + 1}`}
+                onClick={() => onChange({ ...lensKit, supportLenses: supportLenses.filter((_, idx) => idx !== i) })}
+                className="text-accent-red hover:text-accent-red/80 text-sm px-2"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => onChange({ ...lensKit, supportLenses: [...supportLenses, ''] })}
+            className="text-accent-blue text-sm hover:underline"
+          >
+            + Add support lens
+          </button>
+        </div>
+      </div>
+      <div>
+        <label htmlFor="bible-lens-notes" className="text-xs text-text-tertiary">Notes</label>
+        <textarea
+          id="bible-lens-notes"
+          value={lensKit.notes ?? ''}
+          onChange={(e) => onChange({ ...lensKit, notes: e.target.value })}
+          placeholder="Lens usage notes, preferred focal lengths per shot type..."
+          className="w-full bg-bg-tertiary text-text-primary border border-border rounded-md p-2 text-sm resize-y min-h-[50px] focus:ring-1 focus:ring-accent-blue outline-none mt-1"
+        />
+      </div>
+    </div>
+  );
+}
+
+// --- Tag List Editor ---
+
+function TagListEditor({
+  tags,
+  onChange,
+  placeholder,
+  addLabel,
+}: {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  placeholder: string;
+  addLabel: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {tags.map((tag, i) => (
+          <div key={i} className="flex items-center gap-1 bg-bg-tertiary border border-border rounded-md px-2 py-1">
+            <input
+              aria-label={`Tag ${i + 1}`}
+              type="text"
+              value={tag}
+              onChange={(e) => {
+                const updated = [...tags];
+                updated[i] = e.target.value;
+                onChange(updated);
+              }}
+              placeholder={placeholder}
+              className="bg-transparent text-text-primary text-sm outline-none min-w-[200px]"
+            />
+            <button
+              type="button"
+              aria-label={`Remove tag ${i + 1}`}
+              onClick={() => onChange(tags.filter((_, idx) => idx !== i))}
+              className="text-text-tertiary hover:text-accent-red text-xs ml-1"
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange([...tags, ''])}
+        className="text-accent-blue text-sm hover:underline"
+      >
+        {addLabel}
+      </button>
+    </div>
+  );
+}
+
 // --- Key-Value List Editor ---
 
 function KeyValueEditor({
@@ -407,7 +580,7 @@ function KeyValueEditor({
 function LookSection({ data, onChange, availableLoras }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void; availableLoras: string[] }) {
   const update = (key: string, value: unknown) => onChange({ ...data, [key]: value });
   const loras = (data.loras as LoraEntry[]) ?? [];
-  const lensKit = (data.lensKit as string[]) ?? [];
+  const lensKit = (data.lensKit as LensKitData) ?? {};
   const colorPipeline = (data.colorPipeline as ColorPipelineData) ?? {};
 
   return (
@@ -483,39 +656,10 @@ function LookSection({ data, onChange, availableLoras }: { data: Record<string, 
 
       {/* NEW: Lens Kit */}
       <FieldGroup label="Lens Kit">
-        <div className="space-y-2">
-          {lensKit.map((lens, i) => (
-            <div key={i} className="flex gap-2">
-              <input
-                aria-label={`Lens specification ${i + 1}`}
-                type="text"
-                value={lens}
-                onChange={(e) => {
-                  const updated = [...lensKit];
-                  updated[i] = e.target.value;
-                  update('lensKit', updated);
-                }}
-                placeholder="e.g., 35mm f/1.4, 85mm f/1.2, 24mm f/2.8"
-                className="flex-1 bg-bg-tertiary text-text-primary border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-accent-blue outline-none"
-              />
-              <button
-                type="button"
-                aria-label={`Remove lens ${i + 1}`}
-                onClick={() => update('lensKit', lensKit.filter((_, idx) => idx !== i))}
-                className="text-accent-red hover:text-accent-red/80 text-sm px-2"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => update('lensKit', [...lensKit, ''])}
-            className="text-accent-blue text-sm hover:underline"
-          >
-            + Add lens
-          </button>
-        </div>
+        <LensKitEditor
+          lensKit={lensKit}
+          onChange={(v) => update('lensKit', v)}
+        />
       </FieldGroup>
 
       {/* NEW: Color Pipeline */}
@@ -745,7 +889,7 @@ function CharacterSection({ data, onChange, availableLoras }: { data: Record<str
 
 function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void; availableLoras: string[] }) {
   const update = (key: string, value: unknown) => onChange({ ...data, [key]: value });
-  const lightingSetups = (data.lightingSetups as Record<string, string>) ?? {};
+  const lightingSetups = (data.lightingSetups as string[]) ?? [];
   const envLoras = (data.environmentLoras as Record<string, LoraEntry>) ?? {};
 
   const addEnvLora = () => {
@@ -799,11 +943,11 @@ function EnvironmentSection({ data, onChange, availableLoras }: { data: Record<s
 
       {/* NEW: Lighting Setups */}
       <FieldGroup label="Lighting Setups">
-        <KeyValueEditor
-          entries={lightingSetups}
+        <TagListEditor
+          tags={lightingSetups}
           onChange={(v) => update('lightingSetups', v)}
-          keyPlaceholder="Setup name"
-          valuePlaceholder="e.g., three-point key=5600K fill=4500K rim=warm"
+          placeholder="e.g., three-point key=5600K fill=4500K rim=warm"
+          addLabel="+ Add lighting setup"
         />
       </FieldGroup>
 

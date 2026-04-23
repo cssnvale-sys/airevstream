@@ -50,6 +50,7 @@ export const KNOWN_INCOMPLETE_STATUS_CHECKS = new Set<string>([
   'content/[id]/pipeline-status/route.ts:ContentItem.status', // pipeline steps don't map to scheduled/posted/archived
   'content/[id]/pipeline-status/route.ts:ScheduledPost.status', // pipeline-status references ContentItem statuses, not ScheduledPost
   'experiments/[id]/stop/route.ts:Experiment.status',      // stop only applies to running/evaluating
+  'experiments/[id]/declare-winner/route.ts:Experiment.status', // draft→completed invalid — need data first
   'suggestions/[id]/route.ts:SuggestionLog.outcome',       // 'shown' is initial DB default, not a user action
   'storyboard-shots/[shotId]/approve/route.ts:StoryboardShot.status', // approve route only handles pending/approved/rejected, not generating/generated
   'system/health/route.ts:AiService.status',                         // groupBy captures all statuses; 'disabled' not explicitly referenced

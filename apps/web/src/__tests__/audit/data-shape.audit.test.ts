@@ -28,6 +28,9 @@ describe('Bug Class 5: Data shape mismatches', () => {
       'cinema-bible/route.ts',
       'content/viral-score/route.ts',
       'content/viral-suggestions/route.ts',
+      // Nested select (channel -> socialAccount -> emailAccount -> tenantId) —
+      // the channel.select DOES include id + name; regex can't parse nested braces.
+      'affiliate/clicks/[id]/convert/route.ts',
     ]);
     const violations: string[] = [];
 

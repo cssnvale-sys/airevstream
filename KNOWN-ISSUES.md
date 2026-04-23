@@ -6,6 +6,42 @@ Tracked bugs, limitations, and technical debt.
 
 ## Open Issues
 
+### KI-093: ~~Auth pages rendered generic fallback for every validation error~~ — FIXED (Session 50)
+**Severity**: High (users couldn't see which field was wrong on register/reset/forgot)
+**Status**: Fixed (Session 50)
+`formatZodErrors()` (in `apps/web/src/lib/api-server.ts`) prefixes each message with the field path — e.g. `"password: Password must be at least 8 characters"`. The auth-page `safeMessages` allowlists only contained the bare messages, so every validation error dropped to the generic fallback. Fix: new `pickSafeMessage()` helper tolerates both the exact string and the prefixed variant, stripping `"field: "` before matching.
+**Action**: None — resolved.
+
+### KI-094: ~~POST /content dropped storyboard shots into generationParams instead of persisting them~~ — FIXED (Session 50)
+**Severity**: Critical (production-pipeline workers rendered nothing)
+**Status**: Fixed (Session 50)
+The create path serialised the shot array into `ContentItem.generationParams` JSON and never touched `Storyboard` / `StoryboardShot`. Workers that read from the relational tables saw empty shot lists even when the assistant generated a full board. Fix: wrap create in a `$transaction`; when shots are provided, insert the `Storyboard` row plus a `StoryboardShot` per shot with cumulative `startSec/endSec`, `shotspec={promptBlocks, duration}`, `keyframeUrls`, `status='pending'`.
+**Action**: None — resolved.
+
+### KI-095: ~~No affiliate click conversion endpoint — revenue permanently zero~~ — FIXED (Session 50)
+**Severity**: Critical (entire revenue dashboard was decorative)
+**Status**: Fixed (Session 50)
+The redirect endpoint only knew about clicks; there was no way to record conversion. Postbacks from Amazon Associates / Impact / ShareASale had nowhere to land, and the manual admin "mark converted" flow didn't exist. Fix: new `POST /api/v1/affiliate/clicks/[id]/convert`, accepting Bearer JWT or X-API-Key, tenant-scoped through the channel chain, transactional, 409 on double-conversion, bumps `AffiliateProduct.totalRevenue` / `totalConversions`.
+**Action**: None — resolved. Operators wanting automatic attribution still need to configure postback URLs at the network (outside the codebase).
+
+### KI-096: ~~Budget check computed thresholds but never persisted Alert rows~~ — FIXED (Session 50)
+**Severity**: High (cost/alerts page was empty no matter what)
+**Status**: Fixed (Session 50)
+`GET /api/v1/budgets/check` returned the over-threshold list in the response but never wrote an `Alert` row. The system/alerts UI has no "virtual alerts" concept, so there was nothing for operators to acknowledge. Fix: the check endpoint now inserts `Alert` rows with metadata `alertKey = budget:<id>:<threshold|exceeded>` and dedupes against any open/acknowledged cost alert from the last 24 h.
+**Action**: None — resolved.
+
+### KI-097: ~~No public storefront page — /p/[slug] 404'd~~ — FIXED (Session 50)
+**Severity**: High (storefronts were invisible to end users)
+**Status**: Fixed (Session 50)
+`Storefront.slug` and `status='published'` existed in the schema but nothing rendered them publicly. Shareable storefront URLs in the dashboard led to a Next.js 404. Fix: new `apps/web/src/app/p/[slug]/page.tsx` + `apps/web/src/app/api/v1/public/storefronts/[slug]/route.ts`. Both 404 for non-published slugs so drafts can't be scraped; the API is rate-limited at 120 req/min per IP; outbound links carry `rel="sponsored nofollow noopener"`.
+**Action**: None — resolved.
+
+### KI-098: ~~No manual-winner-declaration endpoint for experiments~~ — FIXED (Session 50)
+**Severity**: Medium (partial automation — some experiments need operator judgement)
+**Status**: Fixed (Session 50)
+The evaluate worker auto-declared winners when significance + sample size met thresholds, but operators had no endpoint to complete an experiment that needed human judgement (low traffic, qualitative trade-offs). Fix: new `POST /api/v1/experiments/[id]/declare-winner` accepts `{ variantId, notes? }` from `running | evaluating | stopped`, validates variant ownership, sets `status='completed'`, `winnerId`, `endedAt`, and stamps `declaredWinner: { declaredBy, declaredAt, notes }` into `config` for audit.
+**Action**: None — resolved.
+
 ### KI-087: ~~minio-init Entrypoint Heredoc Broken by YAML Folding~~ — FIXED (Session 49)
 **Severity**: Critical (blocked fresh-machine bringup)
 **Status**: Fixed (Session 49)

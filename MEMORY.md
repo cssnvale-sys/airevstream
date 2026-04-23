@@ -2,6 +2,24 @@
 
 Cross-session patterns, conventions, and hard-won facts. Keep under 200 lines — move anything codified in `.claude/rules/*.md` out.
 
+## Auth-page error display (D133)
+
+`formatZodErrors()` in `apps/web/src/lib/api-server.ts` prefixes every Zod error with the field path (`"password: Password must be at least 8 characters"`). Raw `safeMessages.includes(data.error.message)` silently misses every validation error.
+
+Always use the helper:
+```typescript
+import { pickSafeMessage } from '@/lib/safe-messages';
+const msg = pickSafeMessage(data?.error?.message, safeMessages, 'Invalid request');
+```
+It matches either the exact allowlisted string or strips a leading `"field: "` before matching.
+
+## Audit-suite false positives to know about
+
+Two audit regexes can't parse nested braces — add routes with these structural patterns to the test's own `KNOWN_FALSE_POSITIVES` / `KNOWN_INCOMPLETE_STATUS_CHECKS` set rather than rewriting:
+
+- `data-shape.audit.test.ts` — channel-select check trips on nested `socialAccount → emailAccount → tenantId` selects because the regex stops at the first `}`. Add the route path with a comment explaining the nest.
+- `status-enum.audit.test.ts` — trips on routes that intentionally omit a status for which the operation is semantically invalid (e.g. declaring a winner from `draft`). Key format is `<relativePath>:Model.field`.
+
 ## Runtime verification shortcuts
 
 ### Prove a BullMQ job actually completed (the logs can lie)

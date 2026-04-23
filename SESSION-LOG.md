@@ -4,6 +4,76 @@ Development session history for AiRevStream MPCAS. Each entry captures what was 
 
 ---
 
+## Session 50 — Wave-1 Gap Audit + Functional-Completeness Fix Pass
+
+**Date**: 2026-04-21
+**Focus**: Operator asked for a line-by-line, feature-by-feature, userflow-by-userflow audit of the platform to close any gap that prevents meaningful usage. Ran a 5-agent parallel audit across auth, content pipeline, accounts/channels, affiliate/experiments/budgets, and public surfaces, then applied surgical fixes for every confirmed blocker.
+
+### Wave-1 audit findings (5 parallel agents, read-only)
+Agents flagged twelve distinct gaps; five were confirmed blocker-level on investigation, the rest were either already implemented or accepted partial designs:
+
+| Area | Confirmed gap | Outcome |
+|------|---------------|---------|
+| Auth | `formatZodErrors` prefixes messages with the field path (`"password: …"`), bypassing `safeMessages` allowlists on register/reset-password/forgot-password — every validation error rendered as the generic fallback | Fixed — new `pickSafeMessage()` helper |
+| Content | POST /api/v1/content dropped storyboard shots into `generationParams` JSON instead of persisting them, so production-pipeline workers never saw them | Fixed — atomic `$transaction` creates Storyboard + StoryboardShot rows |
+| Affiliate | No endpoint to mark a click converted — affiliate revenue was permanently zero no matter how many conversions landed | Fixed — new `POST /api/v1/affiliate/clicks/[id]/convert` (JWT + API-key, tenant-scoped, transactional) |
+| Budgets | `GET /api/v1/budgets/check` computed thresholds but never persisted Alert rows — the cost/alerts UI stayed empty | Fixed — creates deduped Alert rows (24 h window, metadata `alertKey`) |
+| Experiments | No operator path to manually declare a winner when the evaluate worker needed human judgement | Fixed — new `POST /api/v1/experiments/[id]/declare-winner` |
+| Public surface | No public route for published storefronts — `/p/[slug]` 404'd | Fixed — new `/p/[slug]` server page + `GET /api/v1/public/storefronts/[slug]` (120 req/min/IP, published-only) |
+
+Dismissed-after-investigation:
+- "No token revocation on password reset" — already implemented via `passwordChangedAt` check in `api-server.ts`.
+- "Missing Trend model" — trends are stored as `KnowledgeBaseEntry` rows with `category='trends'`.
+- "Missing Notification model" — operator-facing notifications are powered by the existing `Alert` model + `/api/v1/system/alerts`.
+
+### New files
+- `apps/web/src/lib/safe-messages.ts` — `pickSafeMessage(raw, allowlist, fallback)` helper. Accepts either the exact message string or the field-prefixed variant from `formatZodErrors`, stripping the `"field: "` prefix before matching. Used from every auth page.
+- `apps/web/src/app/api/v1/affiliate/clicks/[id]/convert/route.ts` — Zod-validated POST (revenue ≤ 999 999.99, optional currency+orderId). Tenant-scopes the click through `channel → socialAccount → emailAccount`. 409 on already-converted. Atomically updates `AffiliateClick.converted/revenue` and bumps `AffiliateProduct.totalRevenue/totalConversions`, swallowing the counter-bump on older deployments that predate those columns.
+- `apps/web/src/app/api/v1/experiments/[id]/declare-winner/route.ts` — POST accepting `{ variantId, notes? }`. Allowed only from `running | evaluating | stopped`. Verifies the variant belongs to the experiment, sets `status='completed'`, `winnerId`, `endedAt`, and records `declaredWinner` audit metadata in `config`. 409 on already-completed, 400 on variant mismatch.
+- `apps/web/src/app/api/v1/public/storefronts/[slug]/route.ts` — Unauthenticated GET with per-IP rate limit (120 req/min). Returns only `status='published'` storefronts; drafts and archived rows 404 to prevent URL scraping. Hides inactive `AffiliateProduct` rows even if the join row is still active.
+- `apps/web/src/app/p/[slug]/page.tsx` — Public server component for storefronts. 60 s revalidate, OpenGraph metadata, featured-then-rest product grids, `rel="sponsored nofollow noopener"` on every outbound affiliate link.
+
+### Modified files
+- `apps/web/src/app/auth/register/page.tsx`, `reset-password/page.tsx`, `forgot-password/page.tsx` — import `pickSafeMessage`, added `'Invalid email'` where missing.
+- `apps/web/src/app/api/v1/content/route.ts` — wrapped the create path in a `$transaction`. When the caller supplies `shots`, creates a `Storyboard` row (with `scriptJson`, `totalDurationSec`, `shotCount`) and one `StoryboardShot` per shot with cumulative `startSec/endSec`, `shotspec={promptBlocks:[description], duration}`, optional `keyframeUrls`, and `status='pending'`.
+- `apps/web/src/app/api/v1/budgets/check/route.ts` — persists Alert rows on every threshold crossing. Uses a metadata `alertKey` (`budget:<id>:threshold|exceeded`) to dedupe against any open/acknowledged cost alert in the prior 24 h; batches inserts via `createMany`.
+
+### Audit-suite fixups (new files surfaced two advisory violations)
+- `apps/web/src/__tests__/audit/status-enum.audit.test.ts` — added `experiments/[id]/declare-winner/route.ts:Experiment.status` to `KNOWN_INCOMPLETE_STATUS_CHECKS`. The route intentionally omits `draft` because declaring a winner from draft is semantically invalid (no experiment data yet). Same rationale already applied to the `/stop` route.
+- `apps/web/src/__tests__/audit/data-shape.audit.test.ts` — added `affiliate/clicks/[id]/convert/route.ts` to `KNOWN_FALSE_POSITIVES`. The channel select includes `id` and `name`, but a nested `socialAccount → emailAccount → tenantId` select confuses the non-brace-aware regex (same pattern as the four `cinema-bible`/viral routes already in that set).
+
+### Verification
+`npx tsc --noEmit` — clean in apps/web, packages/shared, packages/db (EXIT 0).
+Vitest run per package and app:
+
+| Target | Tests |
+|--------|-------|
+| apps/web (unit) | 141 ✓ |
+| apps/web (audit) | 39 ✓ |
+| packages/shared | 372 ✓ |
+| packages/db | 4 ✓ (one pre-existing Prisma engine warning — darwin-arm64 client in linux-arm64 sandbox, not a code regression) |
+| packages/crypto | 10 ✓ |
+| packages/storage | 3 ✓ |
+| packages/queue | 5 ✓ |
+| packages/ai-client | 14 ✓ |
+| packages/audio-engine | 12 ✓ |
+| packages/browser-automation | 3 ✓ |
+| services/workflow-engine | 8 ✓ |
+| services/ai-assistant | 5 ✓ |
+| services/production-pipeline | 5 ✓ |
+| workers | 31 ✓ |
+| **Total** | **652 passing, 0 failing** |
+
+Note: `turbo build --force` fails in this sandbox because `packages/shared` uses `rm -rf dist && tsc` and the existing dist was produced on the operator's Mac with different ownership, so `rm` returns `Operation not permitted`. This is an environment artifact; direct `npx tsc --noEmit` verifies the sources compile.
+
+### Follow-ups to land separately
+- Wave 2 — frontend page-by-page UX audit.
+- Wave 3 — dead-code + TODO/stub scan.
+- Wave 4 — integration + data-path tracing.
+- Operator still needs to run `bash scripts/session-49-commit.sh` on their Mac for the Session 49 D017 four-commit split; Session 50 changes will slot into a new `audit/wave-1-functional-completeness` branch with its own four-commit split (frontend + frontend + docs + no housekeeping).
+
+---
+
 ## Session 49 — Fresh-Machine Bootstrap Infrastructure + First Successful Bringup
 
 **Date**: 2026-04-20

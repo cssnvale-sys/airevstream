@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { generateJSON } from '@airevstream/ai-client';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
         generatedShots = generateFallbackShots(contentType);
       }
     } catch (aiErr) {
-      console.error('[generate-storyboard] AI generation failed, using fallback:', aiErr);
+      logger.error('[generate-storyboard] AI generation failed, using fallback', aiErr as Error);
       generatedShots = generateFallbackShots(contentType);
     }
 
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     return success({ shots });
   } catch (err) {
-    console.error('[POST /content/generate-storyboard]', err);
+    logger.error('[POST /content/generate-storyboard]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate storyboard', 500);
   }
 }

@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, forbidden, formatZodErro
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { generateText, generateJSON, createServiceRegistry } from '@airevstream/ai-client';
 import { SIMPLE_MODE_GUARDRAILS } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
       concept = parsed.concept ?? concept;
       visualDirection = parsed.visualDirection ?? visualDirection;
     } catch (directorErr) {
-      console.error('[simple-plan] Director agent failed, falling back to direct:', directorErr);
+      logger.error('[simple-plan] Director agent failed, falling back to direct', directorErr as Error);
       try {
         const result = await generateText(directorPrompt, {
           systemPrompt: DIRECTOR_SYSTEM_PROMPT,
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest) {
         concept = parsed.concept ?? concept;
         visualDirection = parsed.visualDirection ?? visualDirection;
       } catch (fallbackErr) {
-        console.error('[simple-plan] Direct AI fallback also failed:', fallbackErr);
+        logger.error('[simple-plan] Direct AI fallback also failed', fallbackErr as Error);
       }
     }
 
@@ -166,7 +167,7 @@ export async function POST(req: NextRequest) {
         shots = generateFallbackPlan(topic, clampedDuration, emotion).shots;
       }
     } catch (sbErr) {
-      console.error('[simple-plan] Storyboard agent failed, using fallback:', sbErr);
+      logger.error('[simple-plan] Storyboard agent failed, using fallback', sbErr as Error);
       shots = generateFallbackPlan(topic, clampedDuration, emotion).shots;
     }
 
@@ -188,7 +189,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('POST /api/v1/pipeline/simple-plan failed:', err);
+    logger.error('POST /api/v1/pipeline/simple-plan failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate simple plan', 500);
   }
 }

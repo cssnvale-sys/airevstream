@@ -24,3 +24,4 @@ services/production-pipeline/src/*.d.ts.map
 # Remotion render output
 remotion/out/
 .claude/worktrees/
+.env.bak

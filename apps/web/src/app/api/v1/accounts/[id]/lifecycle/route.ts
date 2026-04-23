@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { startAccountLifecyclePipeline } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const StartLifecycleSchema = z.object({
   targetPlatforms: z.array(z.enum(['youtube', 'tiktok', 'instagram', 'facebook'])).min(1),
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     });
   } catch (err) {
-    console.error('GET /api/v1/accounts/[id]/lifecycle failed:', err);
+    logger.error('GET /api/v1/accounts/[id]/lifecycle failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch lifecycle status', 500);
   }
 }
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return success({ jobId: result.jobId, status: 'started' });
   } catch (err) {
-    console.error('POST /api/v1/accounts/[id]/lifecycle failed:', err);
+    logger.error('POST /api/v1/accounts/[id]/lifecycle failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to start lifecycle pipeline', 500);
   }
 }

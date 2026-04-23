@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(items, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/affiliate/storefronts error:', err);
+    logger.error('GET /api/v1/affiliate/storefronts error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list storefronts', 500);
   }
 }
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
       console.error('POST /api/v1/affiliate/storefronts slug conflict:', err.meta);
       return error('CONFLICT', 'A storefront with this slug already exists', 409);
     }
-    console.error('POST /api/v1/affiliate/storefronts error:', err);
+    logger.error('POST /api/v1/affiliate/storefronts error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create storefront', 500);
   }
 }

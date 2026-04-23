@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,7 +99,7 @@ export async function GET(req: NextRequest) {
     }));
     return paginated(converted, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/ai-services error:', err);
+    logger.error('GET /api/v1/ai-services error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list AI services', 500);
   }
 }
@@ -165,7 +166,7 @@ export async function POST(req: NextRequest) {
       avgQualityScore: safe.avgQualityScore != null ? Number(safe.avgQualityScore) : null,
     });
   } catch (err) {
-    console.error('POST /api/v1/ai-services error:', err);
+    logger.error('POST /api/v1/ai-services error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to register AI service', 500);
   }
 }

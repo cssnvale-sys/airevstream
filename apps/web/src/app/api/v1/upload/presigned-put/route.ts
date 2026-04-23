@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, forbidden } from '@/lib/
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { getPresignedPutUrl, ensureBucket } from '@airevstream/storage';
 import { BUCKETS, PRESIGNED_URL_TTL_SECONDS } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     return success({ url, bucket, key, expiresIn: PRESIGNED_URL_TTL_SECONDS });
   } catch (err) {
-    console.error('POST /api/v1/upload/presigned-put failed:', err);
+    logger.error('POST /api/v1/upload/presigned-put failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate presigned URL', 500);
   }
 }

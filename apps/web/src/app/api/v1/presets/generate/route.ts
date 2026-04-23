@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, forbidden, formatZodErro
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { PRESET_GENERATION_SYSTEM_PROMPT, validateAndNormalizeAiPreset } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
       content = result.content;
       model = result.model;
     } catch (registryErr) {
-      console.error('Service registry generation failed, falling back to direct generateText:', registryErr);
+      logger.error('Service registry generation failed, falling back to direct generateText', registryErr as Error);
       try {
         const result = await generateText(prompt, {
           systemPrompt: PRESET_GENERATION_SYSTEM_PROMPT,
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
         content = result.content;
         model = result.model;
       } catch (aiErr) {
-        console.error('AI preset generation failed:', aiErr);
+        logger.error('AI preset generation failed', aiErr as Error);
         return error('SERVICE_UNAVAILABLE', 'AI service is not available. Please ensure Ollama is running.', 503);
       }
     }
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
       const cleaned = content.replace(/^```(?:json)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
       rawPreset = JSON.parse(cleaned);
     } catch {
-      console.error('AI returned non-JSON content:', content);
+      logger.error('AI returned non-JSON content:', new Error(content));
       return error('AI_PARSE_ERROR', 'AI returned invalid JSON. Please try again with a different description.', 422);
     }
 
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     return success({ preset: result.preset, model });
   } catch (err) {
-    console.error('POST /api/v1/presets/generate error:', err);
+    logger.error('POST /api/v1/presets/generate error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate preset', 500);
   }
 }

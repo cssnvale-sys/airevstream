@@ -1,5 +1,6 @@
 import { authenticate, error, notFound, paginated, parseQuery, isUUID } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/v1/seasoning/cohorts/[id]/enrollments
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return paginated(enrollments, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/seasoning/cohorts/[id]/enrollments failed:', err);
+    logger.error('GET /api/v1/seasoning/cohorts/[id]/enrollments failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch enrollments', 500);
   }
 }

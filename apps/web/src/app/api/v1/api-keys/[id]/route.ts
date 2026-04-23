@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(apiKey);
   } catch (err) {
-    console.error('GET /api/v1/api-keys/[id] failed:', err);
+    logger.error('GET /api/v1/api-keys/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch API key', 500);
   }
 }
@@ -126,7 +127,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('PATCH /api/v1/api-keys/[id] failed:', err);
+    logger.error('PATCH /api/v1/api-keys/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update API key', 500);
   }
 }
@@ -182,7 +183,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('DELETE /api/v1/api-keys/[id] failed:', err);
+    logger.error('DELETE /api/v1/api-keys/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to revoke API key', 500);
   }
 }

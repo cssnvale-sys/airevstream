@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,7 +93,7 @@ Return ONLY the script text, no extra commentary.`;
       script = result.content;
       model = result.model;
     } catch (registryErr) {
-      console.error('Service registry script generation failed, falling back to direct:', registryErr);
+      logger.error('Service registry script generation failed, falling back to direct', registryErr as Error);
       try {
         const result = await generateText(prompt, {
           systemPrompt: 'You are an expert social media scriptwriter. Write engaging scripts using the H.I.C.C. framework.',
@@ -100,14 +101,14 @@ Return ONLY the script text, no extra commentary.`;
         script = result.content;
         model = result.model;
       } catch (aiErr) {
-        console.error('AI script generation failed:', aiErr);
+        logger.error('AI script generation failed', aiErr as Error);
         return error('SERVICE_UNAVAILABLE', 'AI service is not available. Please ensure Ollama is running.', 503);
       }
     }
 
     return success({ script, model });
   } catch (err) {
-    console.error('[POST /content/generate-script]', err);
+    logger.error('[POST /content/generate-script]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate script', 500);
   }
 }

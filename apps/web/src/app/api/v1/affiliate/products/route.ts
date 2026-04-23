@@ -2,6 +2,7 @@ import { authenticate, success, error, paginated, parseQuery, validationError, f
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(items, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/affiliate/products error:', err);
+    logger.error('GET /api/v1/affiliate/products error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list affiliate products', 500);
   }
 }
@@ -123,7 +124,7 @@ export async function POST(req: NextRequest) {
       totalRevenue: Number(product.totalRevenue),
     });
   } catch (err) {
-    console.error('POST /api/v1/affiliate/products error:', err);
+    logger.error('POST /api/v1/affiliate/products error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create affiliate product', 500);
   }
 }

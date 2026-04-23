@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const UpdateStoryboardSchema = z.object({
   status: z.enum(['draft', 'approved', 'in_production']).optional(),
@@ -15,8 +16,9 @@ const UpdateStoryboardSchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (!ctx.tenantId) return forbidden('No tenant context');
@@ -69,7 +71,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     };
     return success(converted);
   } catch (err) {
-    console.error('GET /api/v1/content/[id]/storyboard error:', err);
+    logger.error('GET /api/v1/content/[id]/storyboard error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch storyboard', 500);
   }
 }
@@ -148,7 +150,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     };
     return success(converted);
   } catch (err) {
-    console.error('PUT /api/v1/content/[id]/storyboard error:', err);
+    logger.error('PUT /api/v1/content/[id]/storyboard error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create storyboard', 500);
   }
 }

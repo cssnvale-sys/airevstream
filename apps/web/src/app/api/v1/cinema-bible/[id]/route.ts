@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(bible);
   } catch (err) {
-    console.error('GET /api/v1/cinema-bible/[id] failed:', err);
+    logger.error('GET /api/v1/cinema-bible/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch cinema bible', 500);
   }
 }
@@ -119,7 +120,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(bible);
   } catch (err) {
-    console.error('PUT /api/v1/cinema-bible/[id] failed:', err);
+    logger.error('PUT /api/v1/cinema-bible/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update cinema bible', 500);
   }
 }

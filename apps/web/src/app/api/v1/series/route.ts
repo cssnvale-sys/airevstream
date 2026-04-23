@@ -1,6 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, paginated, error, validationError, parseQuery, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +11,9 @@ function tenantFilter(tenantId: string) {
 }
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
@@ -40,14 +42,15 @@ export async function GET(req: NextRequest) {
 
     return paginated(items, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/series failed:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch series', 500);
   }
 }
 
 export async function POST(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
     if ((ctx as ApiContext).role === 'viewer') return error('FORBIDDEN', 'Viewers cannot create series', 403);
@@ -91,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     return success(series);
   } catch (err) {
-    console.error('POST /api/v1/series failed:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to create series', 500);
   }
 }

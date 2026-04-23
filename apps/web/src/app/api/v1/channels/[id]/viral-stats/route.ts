@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAny, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -94,7 +95,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       tierCounts,
     });
   } catch (err) {
-    console.error('GET /api/v1/channels/[id]/viral-stats failed:', err);
+    logger.error('GET /api/v1/channels/[id]/viral-stats failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch viral stats', 500);
   }
 }

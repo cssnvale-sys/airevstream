@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAny, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
 import { matchTrends } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -87,7 +88,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       platform: channel.socialAccount?.platform ?? null,
     });
   } catch (err) {
-    console.error('GET /api/v1/channels/[id]/topic-suggestions failed:', err);
+    logger.error('GET /api/v1/channels/[id]/topic-suggestions failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch topic suggestions', 500);
   }
 }

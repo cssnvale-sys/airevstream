@@ -8,6 +8,7 @@ import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
 import { Film, Search, ArrowRight, Clapperboard, AlertTriangle, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useDebounce } from '@/hooks/use-debounce';
+import { StudioErrorBoundary } from '@/components/error-boundary';
 
 interface StudioItem {
   id: string;
@@ -37,13 +38,14 @@ export default function StudioIndexPage() {
   const items: StudioItem[] = data?.data ?? [];
 
   return (
-    <AppLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Studio</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Open content items in the cinema production studio to edit shots, timelines, and render videos.
-        </p>
-      </div>
+    <StudioErrorBoundary>
+      <AppLayout>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-text-primary">Studio</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            Open content items in the cinema production studio to edit shots, timelines, and render videos.
+          </p>
+        </div>
 
       {/* Search */}
       <div className="relative mb-6">
@@ -121,6 +123,7 @@ export default function StudioIndexPage() {
           ))}
         </div>
       )}
-    </AppLayout>
+      </AppLayout>
+    </StudioErrorBoundary>
   );
 }

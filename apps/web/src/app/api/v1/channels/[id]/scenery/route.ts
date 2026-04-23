@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(data);
   } catch (err) {
-    console.error('GET /api/v1/channels/[id]/scenery error:', err);
+    logger.error('GET /api/v1/channels/[id]/scenery error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list channel scenery', 500);
   }
 }
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success(channelScenery.scenery);
   } catch (err) {
-    console.error('POST /api/v1/channels/[id]/scenery error:', err);
+    logger.error('POST /api/v1/channels/[id]/scenery error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to assign scenery to channel', 500);
   }
 }
@@ -165,7 +166,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/channels/[id]/scenery error:', err);
+    logger.error('DELETE /api/v1/channels/[id]/scenery error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to unassign scenery from channel', 500);
   }
 }

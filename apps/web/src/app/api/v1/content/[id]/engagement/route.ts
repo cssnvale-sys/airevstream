@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, authenticateAny, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, notFound, validationError, isUUID, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -15,8 +16,9 @@ const EngagementSchema = z.object({
 });
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticateAny(req, 'read');
+    ctx = await authenticateAny(req, 'read');
     if (ctx instanceof NextResponse) return ctx;
 
     // Unconditional tenant guard (D076)
@@ -57,14 +59,15 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       lastUpdated: performance.lastUpdated ?? null,
     });
   } catch (err) {
-    console.error('GET /api/v1/content/[id]/engagement failed:', err);
+    logger.error('GET /api/v1/content/[id]/engagement failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch engagement data', 500);
   }
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (ctx.role === 'viewer') {
@@ -109,7 +112,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({ contentId: id, engagement: updated });
   } catch (err) {
-    console.error('POST /api/v1/content/[id]/engagement failed:', err);
+    logger.error('POST /api/v1/content/[id]/engagement failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update engagement data', 500);
   }
 }

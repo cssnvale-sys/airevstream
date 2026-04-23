@@ -25,7 +25,8 @@ const DEBUGGER_RE = /\bdebugger\b/;
  * Remove entries when the log is removed; the test ensures they don't come back.
  */
 export const KNOWN_CONSOLE_LOGS = new Set<string>([
-  // Add legitimate usages here if needed (e.g., startup banners in services)
+  // Logger implementation legitimately uses console.log for info level
+  'apps/web/src/lib/logger.ts',
 ]);
 
 /** Check if a line is inside a comment */

@@ -15,6 +15,7 @@ import { findApiRouteFiles, extractCatchBlocks, KNOWN_SILENT_CATCHES } from './a
 const VALID_CATCH_PATTERNS = [
   /console\.(error|warn|log|info|debug)\b/,
   /log\.(error|warn|info|debug)\b/,
+  /logger\.(error|warn|info|debug|apiError)\b/,
   /\bthrow\b/,
   /\breturn\s+error\b/,     // return error(...) in route handlers
   /\breturn\s+notFound\b/,

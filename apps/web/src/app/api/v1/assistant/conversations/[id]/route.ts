@@ -1,6 +1,7 @@
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(conversation);
   } catch (err) {
-    console.error('GET /api/v1/assistant/conversations/[id] error:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to fetch conversation', 500);
   }
 }
@@ -82,7 +83,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/assistant/conversations/[id] error:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to delete conversation', 500);
   }
 }

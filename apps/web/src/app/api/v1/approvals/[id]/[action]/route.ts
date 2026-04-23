@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { updateTrustAfterAction, APPROVAL_DEFAULTS } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 const RejectBodySchema = z.object({
   feedback: z.string().max(2000).optional(),
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           feedback = parsed.data.feedback;
         }
       } catch (parseErr) {
-        console.error('Failed to parse reject body:', parseErr);
+        logger.error('Failed to parse reject body', parseErr as Error);
       }
     }
 
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         },
       });
     } catch (trustErr) {
-      console.error('Failed to update trust score:', trustErr);
+      logger.error('Failed to update trust score', trustErr as Error);
     }
 
     return success({ id: result.id, action: result.action, status: result.status });

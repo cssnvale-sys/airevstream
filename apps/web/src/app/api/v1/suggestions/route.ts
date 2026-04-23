@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(logs, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/suggestions failed:', err);
+    logger.error('GET /api/v1/suggestions failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list suggestions', 500);
   }
 }
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     return success({ count: logs.length, logs });
   } catch (err) {
-    console.error('POST /api/v1/suggestions failed:', err);
+    logger.error('POST /api/v1/suggestions failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to log suggestions', 500);
   }
 }

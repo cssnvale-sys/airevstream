@@ -1,5 +1,6 @@
 import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -114,7 +115,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       byChannel: channelBreakdown,
     });
   } catch (err) {
-    console.error('GET /api/v1/affiliate/products/[id]/analytics error:', err);
+    logger.error('GET /api/v1/affiliate/products/[id]/analytics error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch product analytics', 500);
   }
 }

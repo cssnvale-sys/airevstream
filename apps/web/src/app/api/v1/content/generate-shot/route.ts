@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden, formatZodErrors } from '@/lib/api-server';
 import { addJob } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
       message: 'Shot generation queued',
     });
   } catch (err) {
-    console.error('[POST /content/generate-shot]', err);
+    logger.error('[POST /content/generate-shot]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to queue shot generation', 500);
   }
 }

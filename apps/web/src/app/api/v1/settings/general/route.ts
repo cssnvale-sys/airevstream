@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, formatZodErrors, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, formatZodErrors, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,9 @@ const DEFAULTS = {
 };
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     const ip = getClientIp(req);
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
     const row = await ctx.db.systemSetting.findUnique({ where: { key: SETTING_KEY } });
     return success(row ? row.value : DEFAULTS);
   } catch (err) {
-    console.error('GET /api/v1/settings/general failed:', err);
+    logger.error('GET /api/v1/settings/general failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch general settings', 500);
   }
 }
@@ -63,7 +65,7 @@ export async function PUT(req: NextRequest) {
 
     return success(row.value);
   } catch (err) {
-    console.error('PUT /api/v1/settings/general failed:', err);
+    logger.error('PUT /api/v1/settings/general failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to update general settings', 500);
   }
 }

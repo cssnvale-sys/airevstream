@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, notFound } from '@/lib/a
 import { scoreViralPotential } from '@airevstream/shared';
 import type { ViralScoringInput } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const TRENDING_ENTRIES_LIMIT = 20;
 const VIRAL_SCORE_CACHE_AGE_MS = 3_600_000;
@@ -140,7 +141,7 @@ export async function GET(req: NextRequest) {
       scoredAt: new Date().toISOString(),
     });
   } catch (err) {
-    console.error('[GET /content/viral-score]', err);
+    logger.error('[GET /content/viral-score]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to compute viral score', 500);
   }
 }

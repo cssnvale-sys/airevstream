@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -23,8 +24,9 @@ const PIPELINE_STEP_NAMES = [
  * Derives step completion from content status and storyboard/shot states.
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     // Unconditional tenant guard (D076)
@@ -186,7 +188,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success({ steps });
   } catch (err) {
-    console.error('GET /api/v1/content/[id]/pipeline-status error:', err);
+    logger.error('GET /api/v1/content/[id]/pipeline-status error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch pipeline status', 500);
   }
 }

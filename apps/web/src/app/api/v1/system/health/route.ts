@@ -1,6 +1,7 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createConnection } from 'net';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ async function checkService(name: string, url: string, timeoutMs = 5000): Promis
     clearTimeout(timeout);
     return { name, status: res.ok ? 'up' : 'down', latencyMs: Date.now() - start, lastChecked };
   } catch (err) {
-    console.error(`Health check failed for ${name}:`, err);
+    logger.error('Health check failed for service', err as Error);
     return { name, status: 'down', latencyMs: Date.now() - start, lastChecked, error: 'Connection failed' };
   }
 }
@@ -54,7 +55,7 @@ async function checkRedis(timeoutMs = 3000): Promise<ServiceCheck> {
 
     return { name: 'redis', status: pong.includes('PONG') ? 'up' : 'down', latencyMs: Date.now() - start, lastChecked };
   } catch (err) {
-    console.error('Health check failed for redis:', err);
+    logger.error('Health check failed for redis', err as Error);
     return { name: 'redis', status: 'down', latencyMs: Date.now() - start, lastChecked, error: 'Connection failed' };
   }
 }
@@ -177,7 +178,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('GET /api/v1/system/health error:', err);
+    logger.error('GET /api/v1/system/health error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch system health', 500);
   }
 }

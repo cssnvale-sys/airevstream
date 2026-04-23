@@ -28,6 +28,10 @@ import {
   Palette,
   Menu,
   X,
+  Mic,
+  FileText,
+  UserCircle,
+  Scissors,
 } from 'lucide-react';
 import { removeToken, getToken } from '@/lib/auth';
 import { useState, useEffect, useCallback } from 'react';
@@ -40,6 +44,10 @@ const navItems = [
   { href: '/channels', label: 'Channels', icon: Radio },
   { href: '/series', label: 'Series', icon: Layers },
   { href: '/assets', label: 'Assets', icon: Palette },
+  { href: '/templates', label: 'Templates', icon: FileText },
+  { href: '/voices', label: 'Voices', icon: Mic },
+  { href: '/avatars', label: 'Avatars', icon: UserCircle },
+  { href: '/repurpose', label: 'Repurpose', icon: Scissors },
   { href: '/seasoning', label: 'Seasoning', icon: Sprout },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/create', label: 'Create', icon: Sparkles },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -165,7 +166,7 @@ export async function GET(req: NextRequest) {
       metrics,
     });
   } catch (err) {
-    console.error('GET /api/v1/usage failed:', err);
+    logger.error('GET /api/v1/usage failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch usage metrics', 500);
   }
 }

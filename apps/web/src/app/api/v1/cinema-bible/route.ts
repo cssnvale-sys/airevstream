@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const CINEMA_BIBLES_LIMIT = 100;
 
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     return success(bibles);
   } catch (err) {
-    console.error('GET /api/v1/cinema-bible failed:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to fetch cinema bibles', 500);
   }
 }
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
 
     return success(bible);
   } catch (err) {
-    console.error('POST /api/v1/cinema-bible failed:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to create cinema bible', 500);
   }
 }

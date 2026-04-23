@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { authenticate, success, error, validationError, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -62,7 +63,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success({ reordered: true });
   } catch (err) {
-    console.error('PUT /api/v1/series/[id]/episodes/reorder failed:', err);
+    logger.error('PUT /api/v1/series/[id]/episodes/reorder failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to reorder episodes', 500);
   }
 }

@@ -1,6 +1,7 @@
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('POST /api/v1/system/alerts/[id]/acknowledge error:', err);
+    logger.error('POST /api/v1/system/alerts/[id]/acknowledge error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to acknowledge alert', 500);
   }
 }

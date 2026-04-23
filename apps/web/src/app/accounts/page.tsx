@@ -111,8 +111,7 @@ function AccountsEmptyState({ onAddEmail }: { onAddEmail: () => void }) {
       icon={Mail}
       title="No accounts found"
       description="Add your first email account to get started."
-      actionLabel="Add Email Account"
-      onAction={onAddEmail}
+      action={{ label: 'Add Email Account', onClick: onAddEmail }}
     />
   );
 }

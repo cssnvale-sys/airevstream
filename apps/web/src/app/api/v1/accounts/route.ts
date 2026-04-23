@@ -1,10 +1,11 @@
-import { authenticate, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors, type ApiContext } from '@/lib/api-server';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { startAccountLifecyclePipeline } from '@airevstream/queue';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,7 +87,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/accounts failed:', err);
+    logger.error('GET /api/v1/accounts failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to list accounts', 500);
   }
 }
@@ -155,7 +156,7 @@ export async function POST(req: NextRequest) {
         });
         lifecycleJobId = result.jobId;
       } catch (lifecycleErr) {
-        console.error('Failed to start lifecycle pipeline:', lifecycleErr);
+        logger.error('Failed to start lifecycle pipeline:', lifecycleErr as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
         // Don't fail the account creation — lifecycle can be started manually
       }
     }
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
     const { passwordEnc: _, ...safe } = account;
     return success({ ...safe, lifecycleJobId });
   } catch (err) {
-    console.error('POST /api/v1/accounts failed:', err);
+    logger.error('POST /api/v1/accounts failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to create account', 500);
   }
 }

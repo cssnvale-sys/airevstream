@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       relevanceScore: entry.relevanceScore != null ? Number(entry.relevanceScore) : null,
     });
   } catch (err) {
-    console.error('GET /api/v1/knowledge-base/[id] error:', err);
+    logger.error('GET /api/v1/knowledge-base/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch knowledge base entry', 500);
   }
 }
@@ -109,7 +110,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       relevanceScore: updated.relevanceScore != null ? Number(updated.relevanceScore) : null,
     });
   } catch (err) {
-    console.error('PATCH /api/v1/knowledge-base/[id] error:', err);
+    logger.error('PATCH /api/v1/knowledge-base/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update knowledge base entry', 500);
   }
 }
@@ -149,7 +150,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/knowledge-base/[id] error:', err);
+    logger.error('DELETE /api/v1/knowledge-base/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete knowledge base entry', 500);
   }
 }

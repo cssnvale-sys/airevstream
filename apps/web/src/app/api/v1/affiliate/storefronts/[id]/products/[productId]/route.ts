@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string; productId: string }> };
 
@@ -66,7 +67,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('PATCH /api/v1/affiliate/storefronts/[id]/products/[productId] error:', err);
+    logger.error('PATCH /api/v1/affiliate/storefronts/[id]/products/[productId] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update storefront product', 500);
   }
 }
@@ -114,7 +115,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/affiliate/storefronts/[id]/products/[productId] error:', err);
+    logger.error('DELETE /api/v1/affiliate/storefronts/[id]/products/[productId] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to remove product from storefront', 500);
   }
 }

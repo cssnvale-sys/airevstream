@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, validationError, isUUID, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -11,19 +12,21 @@ const DistributeSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+    const authCtx = ctx as ApiContext;
 
-    if (ctx.role === 'viewer') {
+    if (authCtx.role === 'viewer') {
       return forbidden('Viewers cannot distribute content');
     }
 
     // Unconditional tenant guard (D076)
-    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+    if (!authCtx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const ip = getClientIp(req);
-    const rl = checkRateLimit(`distribute:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    const rl = checkRateLimit(`distribute:${ip}:${authCtx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     const { id } = await params;
@@ -36,10 +39,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { channelIds, scheduledFor } = parsed.data;
 
     // Find source content and verify access
-    const content = await ctx.db.contentItem.findFirst({
+    const content = await authCtx.db.contentItem.findFirst({
       where: {
         id,
-        channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+        channel: { socialAccount: { emailAccount: { tenantId: authCtx.tenantId } } },
       },
       select: { id: true, status: true },
     });
@@ -50,10 +53,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     // Verify all channels belong to the tenant
-    const channels = await ctx.db.channel.findMany({
+    const channels = await authCtx.db.channel.findMany({
       where: {
         id: { in: channelIds },
-        socialAccount: { emailAccount: { tenantId: ctx.tenantId } },
+        socialAccount: { emailAccount: { tenantId: authCtx.tenantId } },
       },
       select: { id: true, name: true, socialAccount: { select: { id: true, platform: true } } },
     });
@@ -64,9 +67,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     // Create scheduled posts for each channel
     const scheduledAt = scheduledFor ? new Date(scheduledFor) : new Date();
-    const posts = await ctx.db.$transaction(
+    const posts = await authCtx.db.$transaction(
       channels.map(channel =>
-        ctx.db.scheduledPost.create({
+        authCtx.db.scheduledPost.create({
           data: {
             contentId: content.id,
             channelId: channel.id,
@@ -86,7 +89,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       immediate: !scheduledFor,
     });
   } catch (err) {
-    console.error('POST /api/v1/content/[id]/distribute failed:', err);
+    logger.error('POST /api/v1/content/[id]/distribute failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to distribute content', 500);
   }
 }

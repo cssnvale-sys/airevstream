@@ -8,6 +8,7 @@ import {
   getExecutionOrder,
 } from '@airevstream/shared';
 import type { AgentRole } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
       message: 'Pipeline plan generated — execute phases sequentially',
     });
   } catch (err) {
-    console.error('[POST /ai/agents]', err);
+    logger.error('[POST /ai/agents]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to process agent request', 500);
   }
 }

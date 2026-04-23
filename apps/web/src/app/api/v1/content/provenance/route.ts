@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, notFound, forbidden } fr
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { generateC2PAManifest } from '@airevstream/shared';
 import type { ProvenanceRecord } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,7 +108,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (err) {
-    console.error('[GET /content/provenance]', err);
+    logger.error('[GET /content/provenance]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to load provenance data', 500);
   }
 }

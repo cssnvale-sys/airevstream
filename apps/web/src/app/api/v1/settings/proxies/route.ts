@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, formatZodErrors, requireAdmin } from '@/lib/api-server';
+import { authenticate, success, error, validationError, formatZodErrors, requireAdmin , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { randomUUID } from 'node:crypto';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +31,9 @@ interface ProxyEntry {
 }
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     const adminCheck = requireAdmin(ctx);
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest) {
 
     return success(masked);
   } catch (err) {
-    console.error('GET /api/v1/settings/proxies failed:', err);
+    logger.error('GET /api/v1/settings/proxies failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch proxy configuration', 500);
   }
 }
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest) {
       password: newProxy.password ? '********' : undefined,
     });
   } catch (err) {
-    console.error('POST /api/v1/settings/proxies failed:', err);
+    logger.error('POST /api/v1/settings/proxies failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to add proxy', 500);
   }
 }

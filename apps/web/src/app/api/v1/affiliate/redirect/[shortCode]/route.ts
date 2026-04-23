@@ -3,6 +3,7 @@ import { getDb } from '@airevstream/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 /** Rate limit for public redirect: 60 clicks per minute per IP */
 const REDIRECT_RATE_LIMIT = { maxAttempts: 60, windowMs: 60 * 1000 };
@@ -100,7 +101,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // 302 redirect to the actual affiliate URL
     return NextResponse.redirect(redirectUrl.toString(), 302);
   } catch (err) {
-    console.error('GET /api/v1/affiliate/redirect/[shortCode] error:', err);
+    logger.error('GET /api/v1/affiliate/redirect/[shortCode] error', err as Error);
     return error('INTERNAL_ERROR', 'Redirect failed', 500);
   }
 }

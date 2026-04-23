@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (ctx.role === 'viewer') {
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({ jobId: job.id, message: 'Rescore started' });
   } catch (err) {
-    console.error('POST /api/v1/content/[id]/rescore error:', err);
+    logger.error('POST /api/v1/content/[id]/rescore error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to rescore content', 500);
   }
 }

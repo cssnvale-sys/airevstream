@@ -5,6 +5,7 @@ import { getDb } from '@airevstream/db';
 import { success, error, validationError, formatZodErrors, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { hashPassword } from '@/lib/password';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,8 @@ export async function POST(req: NextRequest) {
       if (!userId) {
         return error('INVALID_TOKEN', 'Invalid reset token', 400);
       }
-    } catch {
+    } catch (jwtErr) {
+      logger.warn('JWT verification failed for password reset', { error: jwtErr as Error });
       return error('INVALID_TOKEN', 'Invalid or expired reset token', 400);
     }
 
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     return success({ message: 'Password has been reset successfully' });
   } catch (err) {
-    console.error('POST /api/v1/auth/reset-password failed:', err);
+    logger.error('POST /api/v1/auth/reset-password failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to reset password', 500);
   }
 }

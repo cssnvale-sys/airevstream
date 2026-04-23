@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const AssignAvatarSchema = z.object({
   avatarId: z.string().uuid(),
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(data);
   } catch (err) {
-    console.error('GET avatars failed:', err);
+    logger.error('GET avatars failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list channel avatars', 500);
   }
 }
@@ -149,7 +150,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       role: channelAvatar.role,
     });
   } catch (err) {
-    console.error('POST avatars failed:', err);
+    logger.error('POST avatars failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to assign avatar to channel', 500);
   }
 }
@@ -202,7 +203,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE avatars failed:', err);
+    logger.error('DELETE avatars failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to unassign avatar from channel', 500);
   }
 }

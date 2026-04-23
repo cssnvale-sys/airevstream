@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, forbidden, isUUID, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({ id, revoked: true });
   } catch (err) {
-    console.error('POST /api/v1/settings/api-keys/[id]/revoke error:', err);
+    logger.error('POST /api/v1/settings/api-keys/[id]/revoke error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to revoke API key', 500);
   }
 }

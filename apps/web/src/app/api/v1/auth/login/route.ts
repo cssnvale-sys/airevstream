@@ -5,6 +5,7 @@ import { getDb } from '@airevstream/db';
 import { success, error, validationError, formatZodErrors, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { verifyPassword } from '@/lib/password';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('POST /api/v1/auth/login failed:', err);
+    logger.error('POST /api/v1/auth/login failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to log in', 500);
   }
 }

@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, forbidden } from '@/lib/
 import type { ApiContext } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -568,8 +569,8 @@ export async function POST(req: NextRequest) {
     try {
       result = await executor(parameters, ctx);
     } catch (execError) {
-      const errMsg = execError instanceof Error ? execError.message : String(execError);
-      console.error(`Action ${actionType} execution failed:`, execError);
+      const caughtError = execError instanceof Error ? execError : new Error(String(execError));
+      logger.error(`Action ${actionType} execution failed:`, caughtError)
 
       // Log failed execution (internal log only — don't expose to client)
       await ctx.db.actionAuditLog.create({
@@ -577,7 +578,7 @@ export async function POST(req: NextRequest) {
           actionType,
           tier,
           parameters: parameters as object,
-          result: { error: errMsg },
+          result: { error: caughtError.message },
           status: 'failed',
           conversationId: conversationId ?? null,
         },
@@ -613,7 +614,7 @@ export async function POST(req: NextRequest) {
       result: result.data,
     });
   } catch (err) {
-    console.error('POST /api/v1/assistant/actions error:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to execute action', 500);
   }
 }

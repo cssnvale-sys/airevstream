@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, formatZodErrors, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, validationError, formatZodErrors, forbidden , type ApiContext } from '@/lib/api-server';
 import { sha256 } from '@airevstream/crypto';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const API_KEYS_LIST_LIMIT = 100;
 
@@ -17,8 +18,9 @@ const CreateApiKeySchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     const ip = getClientIp(req);
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest) {
 
     return success(keys);
   } catch (err) {
-    console.error('GET /api/v1/settings/api-keys failed:', err);
+    logger.error('GET /api/v1/settings/api-keys failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch API keys', 500);
   }
 }
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
     // Return the full key ONLY on creation — it cannot be retrieved again
     return success({ ...apiKey, key: rawKey });
   } catch (err) {
-    console.error('POST /api/v1/settings/api-keys error:', err);
+    logger.error('POST /api/v1/settings/api-keys error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to create API key', 500);
   }
 }

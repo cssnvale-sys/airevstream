@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ shotId: string }> };
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       generationCost: shot.generationCost != null ? Number(shot.generationCost) : null,
     });
   } catch (err) {
-    console.error('GET /api/v1/storyboard-shots/[shotId] error:', err);
+    logger.error('GET /api/v1/storyboard-shots/[shotId] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch shot', 500);
   }
 }
@@ -113,7 +114,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       generationCost: updated.generationCost != null ? Number(updated.generationCost) : null,
     });
   } catch (err) {
-    console.error('PUT /api/v1/storyboard-shots/[shotId] error:', err);
+    logger.error('PUT /api/v1/storyboard-shots/[shotId] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update shot', 500);
   }
 }

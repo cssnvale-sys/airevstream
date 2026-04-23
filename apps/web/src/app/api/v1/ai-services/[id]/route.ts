@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { encrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       avgQualityScore: safe.avgQualityScore != null ? Number(safe.avgQualityScore) : null,
     });
   } catch (err) {
-    console.error('GET /api/v1/ai-services/[id] error:', err);
+    logger.error('GET /api/v1/ai-services/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch AI service', 500);
   }
 }
@@ -125,7 +126,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       avgQualityScore: safe.avgQualityScore != null ? Number(safe.avgQualityScore) : null,
     });
   } catch (err) {
-    console.error('PUT /api/v1/ai-services/[id] error:', err);
+    logger.error('PUT /api/v1/ai-services/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update AI service', 500);
   }
 }
@@ -156,7 +157,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     await ctx.db.aiService.delete({ where: { id } });
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/ai-services/[id] error:', err);
+    logger.error('DELETE /api/v1/ai-services/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete AI service', 500);
   }
 }

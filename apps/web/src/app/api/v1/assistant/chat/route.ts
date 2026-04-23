@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { chat, createServiceRegistry } from '@airevstream/ai-client';
 import type { ChatMessage } from '@airevstream/ai-client';
+import { logger } from '@/lib/logger';
 
 const CHAT_CONTEXT_LIMIT = 50;
 const KB_SEARCH_LIMIT = 3;
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
         tokensUsed = result.tokensUsed ?? null;
         modelUsed = result.model;
       } catch (registryErr) {
-        console.error('Service registry chat failed, falling back to Ollama:', registryErr);
+        logger.apiError('METHOD', 'PATH', registryErr as Error, { userId: ctx?.userId });
         // Fall back to direct Ollama chat
         try {
           const result = await chat(chatMessages);
@@ -172,8 +173,8 @@ export async function POST(req: NextRequest) {
           tokensUsed = (result.promptTokens ?? 0) + (result.completionTokens ?? 0) || null;
           modelUsed = result.model;
         } catch (aiErr) {
-          console.error('AI chat call failed:', aiErr);
-          assistantContent = 'I apologize, but I\'m unable to connect to the AI service right now. Please check that your AI service (e.g., Ollama) is running and try again.';
+          logger.apiError('METHOD', 'PATH', aiErr as Error, { userId: ctx?.userId });
+          assistantContent = "I apologize, but I'm unable to connect to the AI service right now. Please check that your AI service (e.g., Ollama) is running and try again.";
         }
       }
     } else {
@@ -233,7 +234,7 @@ export async function POST(req: NextRequest) {
       messageCount: history.length + 1, // +1 for the new assistant message
     });
   } catch (err) {
-    console.error('POST /api/v1/assistant/chat error:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to process chat message', 500);
   }
 }
@@ -323,7 +324,7 @@ async function buildSystemContext(
 
     return sections.join('\n');
   } catch (err) {
-    console.error('buildSystemContext error:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     // Gracefully degrade -- return minimal context if something fails
     return `=== SYSTEM CONTEXT (auto-injected) ===\nTimestamp: ${new Date().toISOString()}\nContext build partially failed. Proceed with the user's question.\n=== END SYSTEM CONTEXT ===`;
   }

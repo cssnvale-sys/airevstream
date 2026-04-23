@@ -3,6 +3,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { startSeasoningPipeline } from '@airevstream/queue';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const EnrollSchema = z.object({
   emailAccountIds: z.array(z.string().uuid()).min(1).max(100),
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       totalJobs: result.totalJobs,
     });
   } catch (err) {
-    console.error('POST /api/v1/seasoning/cohorts/[id]/enroll failed:', err);
+    logger.error('POST /api/v1/seasoning/cohorts/[id]/enroll failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to enroll accounts', 500);
   }
 }

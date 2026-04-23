@@ -202,7 +202,7 @@ export default function CreatePage() {
   const [directives, setDirectives] = useState<ProductionDirectives>({});
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { mode } = useComplexityMode();
+  const { mode, setMode } = useComplexityMode();
 
   // API hooks
   const { data: channelsData, isLoading: channelsLoading, error: channelsError } = useChannels<Channel[]>();
@@ -1348,14 +1348,98 @@ export default function CreatePage() {
 
   return (
     <AppLayout>
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-page-title text-text-primary">Create Content</h1>
-          <p className="text-text-secondary mt-1">
-            Step-by-step wizard to generate and publish content.
-          </p>
+      <div className="mb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h1 className="text-page-title text-text-primary">Create Content</h1>
+            <p className="text-text-secondary mt-1">
+              Choose your creation mode based on how much control you need.
+            </p>
+          </div>
         </div>
-        <ComplexityToggle />
+
+        {/* Mode Selection Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <button
+            type="button"
+            onClick={() => setMode('simple')}
+            className={cn(
+              'p-6 rounded-xl border-2 text-left transition-all',
+              mode === 'simple'
+                ? 'border-accent-blue bg-accent-blue/5'
+                : 'border-border bg-bg-secondary hover:border-accent-blue/30'
+            )}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-lg bg-accent-green/10 flex items-center justify-center">
+                <Zap size={24} className="text-accent-green" />
+              </div>
+              {mode === 'simple' && (
+                <span className="px-2 py-1 rounded-full bg-accent-blue text-white text-xs font-medium">
+                  Selected
+                </span>
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary mb-1">Quick Create</h3>
+            <p className="text-sm text-text-secondary mb-3">
+              Fast 3-step workflow. Perfect for quick content when you trust the AI.
+            </p>
+            <ul className="text-sm text-text-secondary space-y-1">
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-accent-green" />
+                3 simple steps
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-accent-green" />
+                AI handles the details
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-accent-green" />
+                2-5 minutes to generate
+              </li>
+            </ul>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMode('advanced')}
+            className={cn(
+              'p-6 rounded-xl border-2 text-left transition-all',
+              mode === 'advanced'
+                ? 'border-accent-blue bg-accent-blue/5'
+                : 'border-border bg-bg-secondary hover:border-accent-blue/30'
+            )}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 rounded-lg bg-accent-purple/10 flex items-center justify-center">
+                <Clapperboard size={24} className="text-accent-purple" />
+              </div>
+              {mode === 'advanced' && (
+                <span className="px-2 py-1 rounded-full bg-accent-blue text-white text-xs font-medium">
+                  Selected
+                </span>
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary mb-1">Advanced Studio</h3>
+            <p className="text-sm text-text-secondary mb-3">
+              Full 6-step HICC workflow. Maximum control over every aspect.
+            </p>
+            <ul className="text-sm text-text-secondary space-y-1">
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-accent-purple" />
+                Full HICC framework
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-accent-purple" />
+                Shot-by-shot storyboard
+              </li>
+              <li className="flex items-center gap-2">
+                <Check size={14} className="text-accent-purple" />
+                Approval gates & QC
+              </li>
+            </ul>
+          </button>
+        </div>
       </div>
 
       {mode === 'simple' ? (

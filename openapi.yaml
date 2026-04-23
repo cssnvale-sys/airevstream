@@ -1,0 +1,976 @@
+openapi: 3.1.0
+info:
+  title: AIrevstream API
+  description: |
+    AIrevstream API for automated content generation, channel management, and video production.
+    
+    Features:
+    - Channel management (YouTube, TikTok, Instagram, Facebook)
+    - AI-powered content generation
+    - Video production pipeline with storyboards
+    - Series and episode management
+    - Analytics and performance tracking
+    - Approval workflows with trust scoring
+  version: 1.0.0
+  contact:
+    name: AIrevstream Support
+    email: support@airevstream.com
+  license:
+    name: Proprietary
+    url: https://airevstream.com/license
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+  - url: https://api.airevstream.com/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Channels
+    description: Channel management and configuration
+  - name: Content
+    description: Content creation, generation, and management
+  - name: Series
+    description: Series and episode management
+  - name: Storyboards
+    description: Video storyboard and shot management
+  - name: AI Services
+    description: AI model configuration and health monitoring
+  - name: Analytics
+    description: Performance analytics and reporting
+  - name: Approvals
+    description: Content approval workflows
+  - name: Settings
+    description: System and user settings
+
+paths:
+  # Authentication
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate a user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: securePassword123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: User registration
+      description: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                tenantId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Registration successful
+        '409':
+          description: Email already exists
+
+  # Channels
+  /channels:
+    get:
+      tags: [Channels]
+      summary: List channels
+      description: Get paginated list of channels with optional filters
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, pending, error]
+        - name: platform
+          in: query
+          schema:
+            type: string
+            enum: [youtube, tiktok, instagram, facebook]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags: [Channels]
+      summary: Create channel
+      description: Create a new channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelCreate'
+      responses:
+        '201':
+          description: Channel created
+        '403':
+          description: Insufficient permissions
+
+  /channels/{id}:
+    get:
+      tags: [Channels]
+      summary: Get channel
+      description: Get detailed channel information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Channel details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '404':
+          description: Channel not found
+
+    put:
+      tags: [Channels]
+      summary: Update channel
+      description: Update channel configuration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelUpdate'
+      responses:
+        '200':
+          description: Channel updated
+
+    delete:
+      tags: [Channels]
+      summary: Delete channel
+      description: Delete a channel (soft delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Channel deleted
+
+  # Content
+  /content:
+    get:
+      tags: [Content]
+      summary: List content
+      description: Get paginated list of content items
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, generating, generated, pending_approval, approved, scheduled, posted, archived, failed]
+        - name: contentType
+          in: query
+          schema:
+            type: string
+            enum: [video_short, video_long, image, text, voice, thumbnail]
+        - name: channelId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of content items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentItem'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags: [Content]
+      summary: Create content
+      description: Create a new content item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentItemCreate'
+      responses:
+        '201':
+          description: Content created
+
+  /content/{id}:
+    get:
+      tags: [Content]
+      summary: Get content
+      description: Get detailed content information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Content details
+
+    put:
+      tags: [Content]
+      summary: Update content
+      description: Update content item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentItemUpdate'
+      responses:
+        '200':
+          description: Content updated
+
+  /content/{id}/approve:
+    post:
+      tags: [Approvals]
+      summary: Approve content
+      description: Approve content for publishing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Content approved
+        '409':
+          description: Content cannot be approved (wrong status)
+
+  /content/{id}/reject:
+    post:
+      tags: [Approvals]
+      summary: Reject content
+      description: Reject content and return to draft
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback:
+                  type: string
+                  maxLength: 5000
+      responses:
+        '200':
+          description: Content rejected
+
+  /content/{id}/regenerate:
+    post:
+      tags: [Content]
+      summary: Regenerate content
+      description: Regenerate content with AI
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Regeneration queued
+
+  # Series
+  /series:
+    get:
+      tags: [Series]
+      summary: List series
+      description: Get paginated list of series
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: channelId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, completed, archived]
+      responses:
+        '200':
+          description: List of series
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Series'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags: [Series]
+      summary: Create series
+      description: Create a new series
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeriesCreate'
+      responses:
+        '201':
+          description: Series created
+
+  /series/{id}:
+    get:
+      tags: [Series]
+      summary: Get series
+      description: Get detailed series information with episodes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Series details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesDetail'
+
+    put:
+      tags: [Series]
+      summary: Update series
+      description: Update series configuration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeriesUpdate'
+      responses:
+        '200':
+          description: Series updated
+
+  # AI Services
+  /ai-services:
+    get:
+      tags: [AI Services]
+      summary: List AI services
+      description: Get configured AI services
+      responses:
+        '200':
+          description: List of AI services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AIService'
+
+    post:
+      tags: [AI Services]
+      summary: Create AI service
+      description: Configure a new AI service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIServiceCreate'
+      responses:
+        '201':
+          description: AI service created
+
+  /ai-services/{id}/health-check:
+    post:
+      tags: [AI Services]
+      summary: Health check
+      description: Perform health check on AI service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Health check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      healthy:
+                        type: boolean
+                      responseTime:
+                        type: number
+                      details:
+                        type: object
+
+  # Analytics
+  /analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: Analytics overview
+      description: Get high-level analytics
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsOverview'
+
+  /analytics/content-performance:
+    get:
+      tags: [Analytics]
+      summary: Content performance
+      description: Get content performance metrics
+      parameters:
+        - name: channelId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Content performance metrics
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        pages:
+          type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, editor, viewer]
+        tenantId:
+          type: string
+          format: uuid
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        platform:
+          type: string
+          enum: [youtube, tiktok, instagram, facebook]
+        status:
+          type: string
+          enum: [active, inactive, pending, error]
+        primaryLanguage:
+          type: string
+        socialAccount:
+          type: object
+          properties:
+            id:
+              type: string
+            username:
+              type: string
+            status:
+              type: string
+
+    ChannelCreate:
+      type: object
+      required: [name, platform, socialAccountId]
+      properties:
+        name:
+          type: string
+        platform:
+          type: string
+          enum: [youtube, tiktok, instagram, facebook]
+        socialAccountId:
+          type: string
+          format: uuid
+        primaryLanguage:
+          type: string
+          default: en
+
+    ChannelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        primaryLanguage:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, pending, error]
+
+    ContentItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        contentType:
+          type: string
+          enum: [video_short, video_long, image, text, voice, thumbnail]
+        status:
+          type: string
+          enum: [draft, generating, generated, pending_approval, approved, scheduled, posted, archived, failed]
+        channelId:
+          type: string
+          format: uuid
+        channel:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        qualityScore:
+          type: number
+          nullable: true
+        durationSec:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ContentItemCreate:
+      type: object
+      required: [channelId, title, contentType]
+      properties:
+        channelId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        contentType:
+          type: string
+          enum: [video_short, video_long, image, text, voice, thumbnail]
+        script:
+          type: string
+        shots:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              description:
+                type: string
+              duration:
+                type: number
+              imageUrl:
+                type: string
+        affiliateProductId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, generating, generated, pending_approval, approved, scheduled, posted, archived, failed]
+
+    ContentItemUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        script:
+          type: string
+        status:
+          type: string
+          enum: [draft, generating, generated, pending_approval, approved, scheduled, posted, archived, failed]
+
+    Series:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, active, completed, archived]
+        channelId:
+          type: string
+          format: uuid
+        channel:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        _count:
+          type: object
+          properties:
+            episodes:
+              type: integer
+
+    SeriesCreate:
+      type: object
+      required: [channelId, name]
+      properties:
+        channelId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, completed, archived]
+          default: draft
+        targetAudience:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    SeriesUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, completed, archived]
+        targetAudience:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    SeriesDetail:
+      allOf:
+        - $ref: '#/components/schemas/Series'
+        - type: object
+          properties:
+            episodes:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  status:
+                    type: string
+                  episodeNumber:
+                    type: integer
+
+    AIService:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        serviceType:
+          type: string
+          enum: [text, image, video, voice]
+        provider:
+          type: string
+          enum: [ollama, openai, anthropic, custom]
+        status:
+          type: string
+          enum: [active, inactive, error]
+        baseUrl:
+          type: string
+          format: uri
+        fallbackOrder:
+          type: integer
+        healthScore:
+          type: number
+
+    AIServiceCreate:
+      type: object
+      required: [name, serviceType, provider, baseUrl]
+      properties:
+        name:
+          type: string
+        serviceType:
+          type: string
+          enum: [text, image, video, voice]
+        provider:
+          type: string
+          enum: [ollama, openai, anthropic, custom]
+        baseUrl:
+          type: string
+          format: uri
+        apiKey:
+          type: string
+        fallbackOrder:
+          type: integer
+          default: 0
+
+    AnalyticsOverview:
+      type: object
+      properties:
+        totalContent:
+          type: integer
+        contentByStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        contentByType:
+          type: object
+          additionalProperties:
+            type: integer
+        recentActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer

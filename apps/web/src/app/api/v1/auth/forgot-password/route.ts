@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getDb } from '@airevstream/db';
 import { success, error, validationError, formatZodErrors, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     return success({ message: 'If an account with that email exists, a reset link has been sent.' });
   } catch (err) {
-    console.error('POST /api/v1/auth/forgot-password failed:', err);
+    logger.error('POST /api/v1/auth/forgot-password failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to process password reset', 500);
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -9,8 +10,9 @@ type RouteParams = { params: Promise<{ id: string }> };
  * Approve a storyboard that is in pending_review status and resume the pipeline.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (ctx.role === 'viewer') {
@@ -81,13 +83,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         autoApprove: false,
       } as any);
     } catch (queueErr) {
-      console.error('Failed to queue pipeline continuation jobs:', queueErr);
+      logger.error('Failed to queue pipeline continuation jobs', queueErr as Error);
       // Still return success — the storyboard is approved even if queuing fails
     }
 
     return success({ id, status: 'approved', pipelineResumed: true });
   } catch (err) {
-    console.error('POST /api/v1/storyboards/[id]/approve error:', err);
+    logger.error('POST /api/v1/storyboards/[id]/approve error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to approve storyboard', 500);
   }
 }

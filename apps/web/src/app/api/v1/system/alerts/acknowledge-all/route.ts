@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     return success({ acknowledged: result.count });
   } catch (err) {
-    console.error('[POST /system/alerts/acknowledge-all]', err);
+    logger.error('[POST /system/alerts/acknowledge-all]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to acknowledge alerts', 500);
   }
 }

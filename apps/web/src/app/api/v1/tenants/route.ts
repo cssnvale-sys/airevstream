@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, paginated, parseQuery, validationError, formatZodErrors, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,7 +87,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/tenants failed:', err);
+    logger.error('GET /api/v1/tenants failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list tenants', 500);
   }
 }
@@ -144,7 +145,7 @@ export async function POST(req: NextRequest) {
 
     return success(tenant);
   } catch (err) {
-    console.error('POST /api/v1/tenants failed:', err);
+    logger.error('POST /api/v1/tenants failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create tenant', 500);
   }
 }

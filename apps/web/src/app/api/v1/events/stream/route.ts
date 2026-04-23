@@ -3,6 +3,7 @@ import { authenticateSSE, error } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import type { ApiContext } from '@/lib/api-server';
 import type { SystemEvent, AlertSeverity, WorkflowStatus, ContentStatus } from '@/lib/event-types';
+import { logger } from '@/lib/logger';
 
 const SSE_HEARTBEAT_INTERVAL_MS = 30_000;
 
@@ -201,8 +202,9 @@ export async function GET(req: NextRequest) {
       const heartbeatInterval = setInterval(() => {
         try {
           controller.enqueue(sseComment('ping'));
-        } catch {
+        } catch (streamErr) {
           // Stream closed by client — clean up heartbeat
+          logger.debug('SSE stream closed by client, cleaning up heartbeat', { streamErr });
           clearInterval(heartbeatInterval);
         }
       }, SSE_HEARTBEAT_INTERVAL_MS);
@@ -221,7 +223,7 @@ export async function GET(req: NextRequest) {
           }
           lastCheck = cycleStart;
         } catch (err) {
-          console.error('SSE poll error (cycle skipped):', err);
+          logger.error('SSE poll error (cycle skipped)', err as Error);
         }
       }, 10_000);
 

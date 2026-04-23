@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { randomBytes, createHash } from 'node:crypto';
 import { authenticate, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(keys, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/api-keys failed:', err);
+    logger.error('GET /api/v1/api-keys failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list API keys', 500);
   }
 }
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
       key: rawKey,
     });
   } catch (err) {
-    console.error('POST /api/v1/api-keys failed:', err);
+    logger.error('POST /api/v1/api-keys failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create API key', 500);
   }
 }

@@ -1,5 +1,6 @@
 import { authenticate, success, error } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -105,7 +106,7 @@ export async function GET(req: NextRequest) {
 
     return success(capabilities);
   } catch (err) {
-    console.error('GET /api/v1/assistant/capabilities error:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to fetch capabilities', 500);
   }
 }

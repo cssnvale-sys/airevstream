@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
+import { authenticate, success, error, validationError, forbidden, formatZodErrors , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +19,9 @@ const GenerateContentSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (ctx.role === 'viewer') {
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (jobErr) {
       // If job enqueue fails, roll back content status so it doesn't stay stuck in 'generating'
-      console.error('Failed to enqueue content generation job:', jobErr);
+      logger.error('Failed to enqueue content generation job', jobErr as Error);
       await ctx.db.contentItem.update({
         where: { id: contentItem.id },
         data: { status: 'failed' },
@@ -122,7 +124,7 @@ export async function POST(req: NextRequest) {
       approvalGateWindowHrs: contentItem.approvalGateWindowHrs != null ? Number(contentItem.approvalGateWindowHrs) : null,
     }, { queued: true });
   } catch (err) {
-    console.error('POST /api/v1/content/generate error:', err);
+    logger.error('POST /api/v1/content/generate error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate content', 500);
   }
 }

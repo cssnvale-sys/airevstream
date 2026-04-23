@@ -1,5 +1,6 @@
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(conversations, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/assistant/conversations error:', err);
+    logger.apiError('METHOD', 'PATH', err as Error, { userId: ctx?.userId });
     return error('INTERNAL_ERROR', 'Failed to list conversations', 500);
   }
 }

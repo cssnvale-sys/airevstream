@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { deleteObject } from '@airevstream/storage';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       assetRegistryEntriesCount: _count.assetRegistryEntries,
     });
   } catch (err) {
-    console.error('GET /api/v1/avatars/[id] failed:', err);
+    logger.error('GET /api/v1/avatars/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch avatar', 500);
   }
 }
@@ -117,7 +118,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('PUT /api/v1/avatars/[id] failed:', err);
+    logger.error('PUT /api/v1/avatars/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update avatar', 500);
   }
 }
@@ -167,7 +168,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/avatars/[id] failed:', err);
+    logger.error('DELETE /api/v1/avatars/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete avatar', 500);
   }
 }

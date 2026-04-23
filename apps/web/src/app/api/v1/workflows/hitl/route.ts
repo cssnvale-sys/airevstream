@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(jobs, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/workflows/hitl failed:', err);
+    logger.error('GET /api/v1/workflows/hitl failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list HITL tasks', 500);
   }
 }

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
+import { authenticate, error, paginated, parseQuery , type ApiContext } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
@@ -57,7 +59,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(items, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/approvals error:', err);
+    logger.error('GET /api/v1/approvals error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch approvals', 500);
   }
 }

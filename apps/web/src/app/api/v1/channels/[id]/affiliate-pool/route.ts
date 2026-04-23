@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const AddToPoolSchema = z.object({
   affiliateProductId: z.string().uuid('affiliateProductId must be a valid UUID'),
@@ -51,7 +52,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/channels/[id]/affiliate-pool failed:', err);
+    logger.error('DELETE /api/v1/channels/[id]/affiliate-pool failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to remove from pool', 500);
   }
 }
@@ -98,7 +99,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(data);
   } catch (err) {
-    console.error('GET affiliate-pool failed:', err);
+    logger.error('GET affiliate-pool failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list affiliate pool', 500);
   }
 }
@@ -174,7 +175,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       lastUsedAt: entry.lastUsedAt,
     });
   } catch (err) {
-    console.error('POST affiliate-pool failed:', err);
+    logger.error('POST affiliate-pool failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to add product to affiliate pool', 500);
   }
 }

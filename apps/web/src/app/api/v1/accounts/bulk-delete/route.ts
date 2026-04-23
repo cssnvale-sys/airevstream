@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     return success({ deleted: count });
   } catch (err) {
-    console.error('POST /api/v1/accounts/bulk-delete error:', err);
+    logger.error('POST /api/v1/accounts/bulk-delete error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete accounts', 500);
   }
 }

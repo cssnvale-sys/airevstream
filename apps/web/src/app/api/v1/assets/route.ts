@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(assets, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/assets error:', err);
+    logger.error('GET /api/v1/assets error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch assets', 500);
   }
 }

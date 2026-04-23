@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const SnoozeSchema = z.object({
   duration: z.number().positive().max(86400).optional(),
@@ -40,9 +41,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       if (parsed.success && parsed.data.duration != null) {
         duration = parsed.data.duration;
       }
-    } catch {
+    } catch (parseErr) {
       // No body or invalid JSON — use default duration (expected for bodyless requests)
-      console.debug('POST /api/v1/system/alerts/[id]/snooze: no JSON body, using default duration');
+      logger.debug('POST /api/v1/system/alerts/[id]/snooze: no JSON body, using default duration', { parseErr });
     }
 
     await ctx.db.alert.update({

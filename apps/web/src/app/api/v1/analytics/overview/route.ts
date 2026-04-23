@@ -1,6 +1,7 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -249,7 +250,7 @@ export async function GET(req: NextRequest) {
       audience: [],
     });
   } catch (err) {
-    console.error('GET /api/v1/analytics/overview error:', err);
+    logger.error('GET /api/v1/analytics/overview error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch analytics overview', 500);
   }
 }

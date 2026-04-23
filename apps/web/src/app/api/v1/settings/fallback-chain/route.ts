@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, validationError, requireAdmin } from '@/lib/api-server';
+import { authenticate, success, error, validationError, requireAdmin , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +14,9 @@ const FallbackChainSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (ctx.role !== 'admin') {
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     return success([...enriched, ...unordered]);
   } catch (err) {
-    console.error('GET /api/v1/settings/fallback-chain failed:', err);
+    logger.error('GET /api/v1/settings/fallback-chain failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch fallback chain', 500);
   }
 }
@@ -88,7 +90,7 @@ export async function PUT(req: NextRequest) {
 
     return success({ ordering: parsed.data.ordering });
   } catch (err) {
-    console.error('PUT /api/v1/settings/fallback-chain failed:', err);
+    logger.error('PUT /api/v1/settings/fallback-chain failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to save fallback chain', 500);
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
 import { addJob } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ shotId: string }> };
 
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       message: 'Shot generation queued',
     });
   } catch (err) {
-    console.error('[POST /storyboard-shots/[shotId]/generate]', err);
+    logger.error('[POST /storyboard-shots/[shotId]/generate]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to queue shot generation', 500);
   }
 }

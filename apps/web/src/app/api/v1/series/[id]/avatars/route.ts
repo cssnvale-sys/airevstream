@@ -1,6 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, validationError, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -9,8 +10,9 @@ function tenantFilter(tenantId: string) {
 }
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
@@ -32,14 +34,15 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(avatars);
   } catch (err) {
-    console.error('GET /api/v1/series/[id]/avatars failed:', err);
+    logger.error('GET /api/v1/series/[id]/avatars failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch series avatars', 500);
   }
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
     if ((ctx as ApiContext).role === 'viewer') return error('FORBIDDEN', 'Viewers cannot assign avatars', 403);
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success(seriesAvatar);
   } catch (err) {
-    console.error('POST /api/v1/series/[id]/avatars failed:', err);
+    logger.error('POST /api/v1/series/[id]/avatars failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to assign avatar', 500);
   }
 }
@@ -108,7 +111,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/series/[id]/avatars failed:', err);
+    logger.error('DELETE /api/v1/series/[id]/avatars failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to remove avatar', 500);
   }
 }

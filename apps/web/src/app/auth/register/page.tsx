@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { setToken } from '@/lib/auth';
+import { pickSafeMessage } from '@/lib/safe-messages';
 import { LoadingButton } from '@/components/ui/loading-button';
 
 export default function RegisterPage() {
@@ -29,16 +30,18 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg = data?.error?.message;
-        // Only allow known safe messages through
+        // Only allow known safe messages through. formatZodErrors prefixes Zod
+        // messages with the field name ("password: Password must be at least 8
+        // characters"); pickSafeMessage strips that prefix before matching.
         const safeMessages = [
           'A user with this email already exists',
           'Password must be at least 8 characters',
+          'Invalid email',
           'Registration is currently closed',
           'Too many registration attempts. Please try again later.',
           'Failed to register',
         ];
-        throw new Error(msg && safeMessages.includes(msg) ? msg : 'Registration failed');
+        throw new Error(pickSafeMessage(data?.error?.message, safeMessages, 'Registration failed'));
       }
       setToken(data.data.token);
       router.push('/dashboard');

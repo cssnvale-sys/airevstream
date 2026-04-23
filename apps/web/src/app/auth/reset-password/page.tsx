@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { pickSafeMessage } from '@/lib/safe-messages';
 import { LoadingButton } from '@/components/ui/loading-button';
 
 function ResetPasswordForm() {
@@ -44,7 +45,9 @@ function ResetPasswordForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg = data?.error?.message;
+        // Only allow known safe messages through. formatZodErrors prefixes Zod
+        // messages with the field name ("newPassword: Password must be at
+        // least 8 characters"); pickSafeMessage strips that prefix.
         const safeMessages = [
           'Invalid or expired reset token',
           'Invalid reset token',
@@ -52,7 +55,7 @@ function ResetPasswordForm() {
           'Too many attempts. Please try again later.',
           'Failed to reset password',
         ];
-        throw new Error(msg && safeMessages.includes(msg) ? msg : 'Password reset failed');
+        throw new Error(pickSafeMessage(data?.error?.message, safeMessages, 'Password reset failed'));
       }
       setSuccess(true);
     } catch (err: unknown) {

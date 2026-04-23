@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { pickSafeMessage } from '@/lib/safe-messages';
 import { LoadingButton } from '@/components/ui/loading-button';
 
 export default function ForgotPasswordPage() {
@@ -23,12 +24,12 @@ export default function ForgotPasswordPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg = data?.error?.message;
         const safeMessages = [
           'Too many requests. Please try again later.',
+          'Invalid email',
           'Failed to process password reset',
         ];
-        throw new Error(msg && safeMessages.includes(msg) ? msg : 'Request failed');
+        throw new Error(pickSafeMessage(data?.error?.message, safeMessages, 'Request failed'));
       }
       setSent(true);
     } catch (err: unknown) {

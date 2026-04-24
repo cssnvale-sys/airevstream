@@ -276,14 +276,14 @@ export function ChannelAssetsTab({ channelId }: ChannelAssetsTabProps) {
 
       {/* Remove Confirmation */}
       <ConfirmDialog
-        open={!!removeTarget}
+        isOpen={!!removeTarget}
         title={`Remove ${removeTarget?.type === 'avatar' ? 'Character' : 'Background'}`}
         message={`Remove "${removeTarget?.name ?? ''}" from this channel? The asset itself will not be deleted.`}
         confirmLabel="Remove"
         variant="warning"
         onConfirm={handleRemoveConfirm}
         onCancel={() => setRemoveTarget(null)}
-        loading={removing}
+        isLoading={removing}
       />
     </div>
   );

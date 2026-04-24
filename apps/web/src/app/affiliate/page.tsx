@@ -1933,14 +1933,14 @@ function StorefrontsTab({
       </div>
 
       <ConfirmDialog
-        open={deleteTarget !== null}
+        isOpen={deleteTarget !== null}
         title="Delete Storefront"
         message={`This will permanently delete "${deleteTarget?.name}" and all its product listings. This cannot be undone.`}
         confirmLabel="Delete"
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
-        loading={deleting}
+        isLoading={deleting}
       />
     </div>
   );

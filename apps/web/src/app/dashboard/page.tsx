@@ -712,14 +712,14 @@ export default function DashboardPage() {
         )}
       </div>
       <ConfirmDialog
-        open={rejectId !== null}
+        isOpen={rejectId !== null}
         title="Reject Content"
         message="Are you sure you want to reject this content? Visit the content detail page to provide a rejection reason."
         confirmLabel="Reject"
         variant="danger"
         onConfirm={() => { if (rejectId) { handleApproval(rejectId, 'reject'); } setRejectId(null); }}
         onCancel={() => setRejectId(null)}
-        loading={actionInFlight !== null}
+        isLoading={actionInFlight !== null}
       />
     </AppLayout>
   );

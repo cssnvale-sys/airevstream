@@ -375,18 +375,18 @@ export default function ApprovalsPage() {
         </div>
 
         <ConfirmDialog
-          open={!!rejectTarget}
+          isOpen={!!rejectTarget}
           title="Reject Content"
           message="This content will be rejected and moved back to draft. The creator will need to revise it."
           confirmLabel="Reject"
           variant="danger"
           onConfirm={() => rejectTarget && handleAction(rejectTarget, 'reject')}
           onCancel={() => setRejectTarget(null)}
-          loading={acting === rejectTarget}
+          isLoading={acting === rejectTarget}
         />
 
         <ConfirmDialog
-          open={bulkRejectOpen}
+          isOpen={bulkRejectOpen}
           title="Reject Selected Content"
           message={(() => {
             const selectedItems = items.filter(i => selectedIds.has(i.id));

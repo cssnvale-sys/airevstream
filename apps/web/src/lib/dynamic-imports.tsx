@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { PageLoader } from '@/components/ui/page-loader';
 
 // Loading fallback component
-const DefaultLoadingFallback = () => <PageLoader variant="default" />;
+const DefaultLoadingFallback = () => <PageLoader type="default" />;
 
 /**
  * Higher-order component that wraps a dynamically imported component
@@ -39,21 +39,21 @@ export const LazyStudioEditor = dynamic(
   () => import('@/components/cinema/bible-editor').then(mod => ({ default: mod.BibleEditor })),
   { 
     ssr: false,
-    loading: () => <PageLoader variant="detail" message="Loading studio..." />
+    loading: () => <PageLoader type="detail" message="Loading studio..." />
   }
 );
 
 export const LazyCalendar = dynamic(
   () => import('@/app/calendar/page').then(mod => ({ default: mod.default })),
   {
-    loading: () => <PageLoader variant="dashboard" />
+    loading: () => <PageLoader type="dashboard" />
   }
 );
 
 export const LazyAnalyticsDashboard = dynamic(
   () => import('@/app/analytics/page').then(mod => ({ default: mod.default })),
   {
-    loading: () => <PageLoader variant="dashboard" />
+    loading: () => <PageLoader type="dashboard" />
   }
 );
 
@@ -61,7 +61,7 @@ export const LazyVoiceCloneForm = dynamic(
   () => import('@/app/voices/page').then(mod => ({ default: mod.default })),
   {
     ssr: false,
-    loading: () => <PageLoader variant="form" message="Loading voice studio..." />
+    loading: () => <PageLoader type="form" message="Loading voice studio..." />
   }
 );
 
@@ -69,7 +69,7 @@ export const LazyAvatarGenerator = dynamic(
   () => import('@/app/avatars/page').then(mod => ({ default: mod.default })),
   {
     ssr: false,
-    loading: () => <PageLoader variant="form" message="Loading avatar studio..." />
+    loading: () => <PageLoader type="form" message="Loading avatar studio..." />
   }
 );
 

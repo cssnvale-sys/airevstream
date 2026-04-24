@@ -275,7 +275,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
         })}
       </div>
       <ConfirmDialog
-        open={stopOpen}
+        isOpen={stopOpen}
         title="Stop Experiment"
         message="This will stop the experiment and finalize results with current data. This cannot be resumed."
         confirmLabel="Stop Experiment"

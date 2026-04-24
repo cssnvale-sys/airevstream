@@ -755,24 +755,24 @@ export default function ContentDetailPage() {
         )}
       </div>
       <ConfirmDialog
-        open={archiveOpen}
+        isOpen={archiveOpen}
         title="Archive Content"
         message="This will archive the content. Archived content can be found in the library with the 'archived' filter."
         confirmLabel="Archive"
         variant="warning"
         onConfirm={() => { setArchiveOpen(false); handleAction('archive'); }}
         onCancel={() => setArchiveOpen(false)}
-        loading={acting}
+        isLoading={acting}
       />
       <ConfirmDialog
-        open={publishOpen}
+        isOpen={publishOpen}
         title="Publish Content"
         message="This will publish the content to all configured platforms. This action cannot be undone."
         confirmLabel="Publish"
         variant="warning"
         onConfirm={() => { setPublishOpen(false); handleAction('publish'); }}
         onCancel={() => setPublishOpen(false)}
-        loading={acting}
+        isLoading={acting}
       />
     </AppLayout>
   );

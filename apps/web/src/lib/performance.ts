@@ -17,7 +17,8 @@ export function markPerformance(label: string, type: 'start' | 'end' = 'start') 
       performance.measure(label, startMark, markName);
       const entries = performance.getEntriesByName(label);
       const lastEntry = entries[entries.length - 1] as PerformanceMeasure;
-      console.log(`[Performance] ${label}: ${lastEntry.duration.toFixed(2)}ms`);
+      // eslint-disable-next-line no-console
+      console.debug(`[Performance] ${label}: ${lastEntry.duration.toFixed(2)}ms`);
     } catch (e) {
       // Start mark might not exist
     }

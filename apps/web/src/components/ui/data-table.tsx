@@ -91,8 +91,8 @@ export function DataTable<T>({
     // Sort
     if (sortKey && sortDirection) {
       result.sort((a, b) => {
-        const aValue = getValue(a, sortKey);
-        const bValue = getValue(b, sortKey);
+        const aValue = getValue(a, sortKey) as string | number;
+        const bValue = getValue(b, sortKey) as string | number;
         
         if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;

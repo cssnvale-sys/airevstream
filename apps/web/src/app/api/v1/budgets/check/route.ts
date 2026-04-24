@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,37 @@ export async function GET(req: NextRequest) {
 
     const results = [];
     const updates = [];
+    const alertsToCreate: Array<{
+      severity: string;
+      category: string;
+      title: string;
+      message: string;
+      source: string;
+      metadata: Record<string, unknown>;
+    }> = [];
+
+    // Look up recent open cost-category alerts once so we can de-duplicate.
+    // Previously the check endpoint computed thresholds but never persisted
+    // anything (A4 Wave-1 blocker) — the budget page's "alerts" tab stayed
+    // empty no matter how bad the overrun was.
+    const existingAlerts = await ctx.db.alert.findMany({
+      where: {
+        tenantId: ctx.tenantId,
+        category: 'cost',
+        status: { in: ['open', 'acknowledged'] },
+        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+      select: { id: true, source: true, metadata: true, severity: true },
+    });
+    const alertKey = (budgetId: string, kind: 'threshold' | 'exceeded') =>
+      `budget:${budgetId}:${kind}`;
+    const seenAlerts = new Set(
+      existingAlerts
+        .map((a) => (typeof a.metadata === 'object' && a.metadata && 'alertKey' in a.metadata
+          ? String((a.metadata as Record<string, unknown>).alertKey)
+          : null))
+        .filter(Boolean) as string[],
+    );
 
     for (let i = 0; i < budgets.length; i++) {
       const budget = budgets[i];
@@ -86,6 +118,38 @@ export async function GET(req: NextRequest) {
           periodStart: budget.periodStart,
           periodEnd: budget.periodEnd,
         });
+
+        const kind = isExceeded ? 'exceeded' : 'threshold';
+        const key = alertKey(budget.id, kind);
+        // Dedupe: only open one alert row per (budget, kind) per 24h window.
+        if (!seenAlerts.has(key)) {
+          seenAlerts.add(key);
+          const percentText = (percentUsed * 100).toFixed(1);
+          alertsToCreate.push({
+            severity: isExceeded ? 'critical' : 'warning',
+            category: 'cost',
+            title: isExceeded
+              ? `Budget exceeded: ${budget.name}`
+              : `Budget threshold reached: ${budget.name}`,
+            message: isExceeded
+              ? `Budget "${budget.name}" has been exceeded: $${computedSpend.toFixed(2)} of $${limitAmount.toFixed(2)} (${percentText}%).`
+              : `Budget "${budget.name}" is at ${percentText}% of its limit ($${computedSpend.toFixed(2)} / $${limitAmount.toFixed(2)}).`,
+            source: 'budgets/check',
+            metadata: {
+              alertKey: key,
+              budgetId: budget.id,
+              budgetName: budget.name,
+              budgetType: budget.budgetType,
+              category: budget.category,
+              limitAmount,
+              currentSpend: computedSpend,
+              percentUsed: Math.round(percentUsed * 10000) / 100,
+              kind,
+              periodStart: budget.periodStart.toISOString(),
+              periodEnd: budget.periodEnd.toISOString(),
+            },
+          });
+        }
       }
     }
 
@@ -94,12 +158,28 @@ export async function GET(req: NextRequest) {
       await ctx.db.$transaction(updates);
     }
 
+    // Persist alert rows so the cost/alerts UI has something to display.
+    // `createMany` is fine here — no relations need to be returned.
+    if (alertsToCreate.length > 0) {
+      await ctx.db.alert.createMany({
+        data: alertsToCreate.map((a) => ({
+          tenantId: ctx.tenantId!,
+          severity: a.severity,
+          category: a.category,
+          title: a.title,
+          message: a.message,
+          source: a.source,
+          metadata: a.metadata as any,
+        })),
+      });
+    }
+
     return success(results, {
       totalActive: budgets.length,
       totalOverThreshold: results.length,
     });
   } catch (err) {
-    console.error('GET /api/v1/budgets/check error:', err);
+    logger.error('GET /api/v1/budgets/check error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to check budgets', 500);
   }
 }

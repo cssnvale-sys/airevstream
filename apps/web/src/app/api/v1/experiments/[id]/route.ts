@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, forbidden, isU
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const UpdateExperimentSchema = z.object({
   name: z.string().min(1).max(255).optional(),

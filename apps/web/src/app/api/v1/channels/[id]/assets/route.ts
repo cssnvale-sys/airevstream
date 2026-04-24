@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success({ avatars, scenery, branding });
   } catch (err) {
-    console.error('GET /api/v1/channels/[id]/assets error:', err);
+    logger.error('GET /api/v1/channels/[id]/assets error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch channel assets', 500);
   }
 }

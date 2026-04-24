@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +13,9 @@ interface GuidanceSuggestion {
 }
 
 export async function POST(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
     if (ctx.role === 'viewer') {
       return forbidden('Viewers cannot perform this action');
@@ -101,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     return success({ suggestions });
   } catch (err) {
-    console.error('POST /api/v1/ai/guidance failed:', err);
+    logger.error('POST /api/v1/ai/guidance failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate guidance', 500);
   }
 }

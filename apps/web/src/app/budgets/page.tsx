@@ -372,12 +372,12 @@ export default function BudgetsPage() {
 
       {/* Delete confirmation */}
       <ConfirmDialog
-        open={!!deleteTarget}
+        isOpen={!!deleteTarget}
         title="Delete Budget"
         message={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
         variant="danger"
         confirmLabel="Delete"
-        loading={deleting}
+        isLoading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

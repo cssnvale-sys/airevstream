@@ -2,6 +2,7 @@ import { authenticate, authenticateAny, success, error, paginated, parseQuery, v
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,7 +109,10 @@ export async function GET(req: NextRequest) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/channels failed:', err);
+    logger.apiError('GET', '/api/v1/channels', err as Error, { 
+      userId: ctx.userId, 
+      tenantId: ctx.tenantId 
+    });
     return error('INTERNAL_ERROR', 'Failed to list channels', 500);
   }
 }
@@ -173,7 +177,10 @@ export async function POST(req: NextRequest) {
 
     return success(channel);
   } catch (err) {
-    console.error('POST /api/v1/channels failed:', err);
+    logger.apiError('POST', '/api/v1/channels', err as Error, { 
+      userId: ctx.userId, 
+      tenantId: ctx.tenantId 
+    });
     return error('INTERNAL_ERROR', 'Failed to create channel', 500);
   }
 }

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden , type ApiContext} from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(converted, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/budgets error:', err);
+    logger.error('GET /api/v1/budgets error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch budgets', 500);
   }
 }
@@ -162,7 +163,7 @@ export async function POST(req: NextRequest) {
 
     return success(converted);
   } catch (err) {
-    console.error('POST /api/v1/budgets error:', err);
+    logger.error('POST /api/v1/budgets error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to create budget', 500);
   }
 }

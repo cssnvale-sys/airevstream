@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const VERSIONS_LIST_LIMIT = 100;
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (!ctx.tenantId) return forbidden('No tenant context');
@@ -75,7 +77,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }));
     return success({ versions: converted, total: converted.length });
   } catch (err) {
-    console.error('GET /api/v1/content/[id]/versions error:', err);
+    logger.error('GET /api/v1/content/[id]/versions error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch content versions', 500);
   }
 }

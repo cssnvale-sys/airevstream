@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors , type ApiContext } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticateAny(req, 'read');
+    ctx = await authenticateAny(req, 'read');
     if (ctx instanceof NextResponse) return ctx;
 
     const { page, limit, skip, sort, order, search, params } = parseQuery(req);
@@ -101,7 +103,7 @@ export async function GET(req: NextRequest) {
     }));
     return paginated(converted, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/content error:', err);
+    logger.error('GET /api/v1/content error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch content', 500);
   }
 }
@@ -124,8 +126,9 @@ const createContentSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
     if (ctx.role === 'viewer') {
       return forbidden('Viewers cannot perform this action');
@@ -160,21 +163,71 @@ export async function POST(req: NextRequest) {
       return error('NOT_FOUND', 'Channel not found', 404);
     }
 
-    const item = await ctx.db.contentItem.create({
-      data: {
-        channelId,
-        title,
-        contentType,
-        prompt: title,
-        generationParams: { script: script ?? null, shots: shots ?? [] } as any,
-        affiliateProductId: affiliateProductId ?? null,
-        affiliateMode: affiliateMode ?? null,
-        status: status ?? 'draft',
-        version: 1,
-      },
-      include: {
-        channel: { select: { id: true, name: true, primaryLanguage: true } },
-      },
+    // Atomically create the ContentItem and, if shots were provided by the
+    // create wizard, persist them as a Storyboard + StoryboardShot graph so
+    // the production pipeline worker can pick them up. Previously only the
+    // raw shot list was dropped into generationParams.shots as a blob, which
+    // meant every downstream worker that reads Storyboard.shots saw an empty
+    // result (A2 Wave-1 blocker).
+    const item = await ctx.db.$transaction(async (tx) => {
+      const created = await tx.contentItem.create({
+        data: {
+          channelId,
+          title,
+          contentType,
+          prompt: title,
+          generationParams: { script: script ?? null, shots: shots ?? [] } as any,
+          affiliateProductId: affiliateProductId ?? null,
+          affiliateMode: affiliateMode ?? null,
+          status: status ?? 'draft',
+          version: 1,
+        },
+        include: {
+          channel: { select: { id: true, name: true, primaryLanguage: true } },
+        },
+      });
+
+      if (shots && shots.length > 0) {
+        const totalDuration = shots.reduce((sum, s) => sum + (Number.isFinite(s.duration) ? s.duration : 0), 0);
+        const storyboard = await tx.storyboard.create({
+          data: {
+            contentId: created.id,
+            status: 'draft',
+            scriptJson: { script: script ?? '', shotCount: shots.length } as any,
+            totalDurationSec: totalDuration > 0 ? totalDuration : null,
+          },
+        });
+
+        let cursor = 0;
+        // Persist each shot sequentially so startSec/endSec are cumulative —
+        // the render pipeline relies on monotonically increasing timing.
+        for (let i = 0; i < shots.length; i++) {
+          const shot = shots[i];
+          const dur = Number.isFinite(shot.duration) && shot.duration > 0 ? shot.duration : 5;
+          const startSec = cursor;
+          const endSec = cursor + dur;
+          cursor = endSec;
+          // Build a minimal-but-valid ShotSpec. Anything beyond promptBlocks +
+          // duration is resolved later by the LookDev / ShotSpec agents.
+          const shotspec = {
+            promptBlocks: [shot.description],
+            duration: dur,
+          };
+          await tx.storyboardShot.create({
+            data: {
+              storyboardId: storyboard.id,
+              shotNumber: typeof shot.id === 'number' ? shot.id : i + 1,
+              shotspec: shotspec as any,
+              keyframeUrls: shot.imageUrl ? [shot.imageUrl] : [],
+              startSec,
+              endSec,
+              status: 'pending',
+            },
+          });
+        }
+      }
+
+      return created;
     });
 
     return success({
@@ -184,7 +237,7 @@ export async function POST(req: NextRequest) {
       approvalGateWindowHrs: item.approvalGateWindowHrs != null ? Number(item.approvalGateWindowHrs) : null,
     });
   } catch (err) {
-    console.error('POST /api/v1/content error:', err);
+    logger.error('POST /api/v1/content error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to create content', 500);
   }
 }

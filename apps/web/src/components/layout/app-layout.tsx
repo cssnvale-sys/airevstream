@@ -1,20 +1,47 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { StatusBar } from './status-bar';
-import { AiPanel } from './ai-panel';
 import { getToken } from '@/lib/auth';
 import { Toaster } from 'sonner';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
-import { CommandPalette } from '@/components/ui/command-palette';
+import { PageLoader } from '@/components/ui/page-loader';
+import { useTheme } from '@/hooks/use-theme';
+
+// Lazy load heavy components that aren't needed for initial render
+const LazyAiPanel = dynamic(
+  () => import('./ai-panel').then(mod => ({ default: mod.AiPanel })),
+  {
+    ssr: false,
+    loading: () => <div className="w-80 border-l border-white/5 bg-bg-secondary animate-pulse" />
+  }
+);
+
+const LazyCommandPalette = dynamic(
+  () => import('@/components/ui/command-palette').then(mod => ({ default: mod.CommandPalette })),
+  {
+    ssr: false,
+    loading: () => null
+  }
+);
+
+const LazyGlobalSearch = dynamic(
+  () => import('@/components/search/global-search').then(mod => ({ default: mod.GlobalSearch })),
+  {
+    ssr: false,
+    loading: () => null
+  }
+);
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     if (!getToken()) {
@@ -54,13 +81,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <Breadcrumbs />
               {children}
             </div>
-            <AiPanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
+            <Suspense fallback={<div className="w-80 border-l border-white/5 bg-bg-secondary animate-pulse" />}>
+              <LazyAiPanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
+            </Suspense>
           </div>
         </main>
         <StatusBar />
       </div>
-      <CommandPalette />
-      <Toaster position="bottom-right" theme="dark" />
+      <LazyGlobalSearch />
+      <LazyCommandPalette />
+      <Toaster position="bottom-right" theme={resolvedTheme} />
     </div>
   );
 }

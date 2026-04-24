@@ -4,6 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { FAMILY_OVERRIDE_KEYS } from '@airevstream/shared';
 import type { PresetFamily } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(preset);
   } catch (err) {
-    console.error('GET /api/v1/presets/[id] error:', err);
+    logger.error('GET /api/v1/presets/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch preset', 500);
   }
 }
@@ -109,7 +110,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('PATCH /api/v1/presets/[id] error:', err);
+    logger.error('PATCH /api/v1/presets/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update preset', 500);
   }
 }
@@ -144,7 +145,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/presets/[id] error:', err);
+    logger.error('DELETE /api/v1/presets/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete preset', 500);
   }
 }

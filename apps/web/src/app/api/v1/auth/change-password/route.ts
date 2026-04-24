@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, formatZodErrors, getJwtSecret } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { hashPassword, verifyPassword } from '@/lib/password';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     return success({ message: 'Password changed successfully', token });
   } catch (err) {
-    console.error('[POST /auth/change-password]', err);
+    logger.error('[POST /auth/change-password]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to change password', 500);
   }
 }

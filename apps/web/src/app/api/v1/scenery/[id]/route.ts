@@ -4,6 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { deleteObject } from '@airevstream/storage';
 import { BUCKETS } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(scenery);
   } catch (err) {
-    console.error('GET /api/v1/scenery/[id] error:', err);
+    logger.error('GET /api/v1/scenery/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch scenery asset', 500);
   }
 }
@@ -101,7 +102,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('PUT /api/v1/scenery/[id] error:', err);
+    logger.error('PUT /api/v1/scenery/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update scenery asset', 500);
   }
 }
@@ -141,14 +142,14 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       try {
         await deleteObject(BUCKETS.SCENERY, existing.imageUrl);
       } catch (storageErr) {
-        console.error('Failed to delete scenery image from storage:', storageErr);
+        logger.error('Failed to delete scenery image from storage', storageErr as Error);
         // Non-blocking — the DB record is already deleted
       }
     }
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/scenery/[id] error:', err);
+    logger.error('DELETE /api/v1/scenery/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete scenery asset', 500);
   }
 }

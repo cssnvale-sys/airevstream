@@ -2,6 +2,7 @@ import { authenticate, success, error, paginated, parseQuery, validationError, f
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(cohorts, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/seasoning/cohorts failed:', err);
+    logger.error('GET /api/v1/seasoning/cohorts failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch cohorts', 500);
   }
 }
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     return success(cohort);
   } catch (err) {
-    console.error('POST /api/v1/seasoning/cohorts failed:', err);
+    logger.error('POST /api/v1/seasoning/cohorts failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create cohort', 500);
   }
 }

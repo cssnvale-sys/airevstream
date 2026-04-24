@@ -1,8 +1,9 @@
-import { authenticate, success, error, validationError, paginated, parseQuery, forbidden, formatZodErrors } from '@/lib/api-server';
+import { authenticate, success, error, validationError, paginated, parseQuery, forbidden, formatZodErrors , type ApiContext} from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import type { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(items, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/schedule error:', err);
+    logger.error('GET /api/v1/schedule error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to list scheduled posts', 500);
   }
 }
@@ -143,7 +144,7 @@ export async function POST(req: NextRequest) {
 
     return success(post);
   } catch (err) {
-    console.error('POST /api/v1/schedule error:', err);
+    logger.error('POST /api/v1/schedule error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to schedule post', 500);
   }
 }

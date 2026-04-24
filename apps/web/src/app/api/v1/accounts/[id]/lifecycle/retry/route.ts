@@ -2,6 +2,7 @@ import { authenticate, success, error, forbidden } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { startAccountLifecyclePipeline } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/v1/accounts/[id]/lifecycle/retry
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return success({ jobId: result.jobId, status: 'retrying' });
   } catch (err) {
-    console.error('POST /api/v1/accounts/[id]/lifecycle/retry failed:', err);
+    logger.error('POST /api/v1/accounts/[id]/lifecycle/retry failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to retry lifecycle', 500);
   }
 }

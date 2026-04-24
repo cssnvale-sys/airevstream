@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, error, validationError, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -156,7 +157,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('GET /api/v1/settings/data/export failed:', err);
+    logger.error('GET /api/v1/settings/data/export failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to export data', 500);
   }
 }

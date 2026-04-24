@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const RescheduleSchema = z.object({
   scheduledAt: z.string().datetime({ message: 'scheduledAt must be a valid ISO date' }).optional(),
@@ -89,7 +90,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(updated);
   } catch (err) {
-    console.error('PUT /api/v1/schedule/[id] error:', err);
+    logger.error('PUT /api/v1/schedule/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to reschedule post', 500);
   }
 }
@@ -138,7 +139,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/schedule/[id] error:', err);
+    logger.error('DELETE /api/v1/schedule/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to cancel scheduled post', 500);
   }
 }

@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const UpdateCinemaBibleSchema = z.object({
   lookBible: z.record(z.unknown()).optional(),
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(cinemaBible);
   } catch (err) {
-    console.error('GET cinema-bible failed:', err);
+    logger.error('GET cinema-bible failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch cinema bible', 500);
   }
 }
@@ -127,7 +128,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(cinemaBible);
   } catch (err) {
-    console.error('PUT cinema-bible failed:', err);
+    logger.error('PUT cinema-bible failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update cinema bible', 500);
   }
 }

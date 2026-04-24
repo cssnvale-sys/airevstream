@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -25,8 +26,9 @@ const ResearchBodySchema = z.discriminatedUnion('type', [
 ]);
 
 export async function POST(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
@@ -42,7 +44,8 @@ export async function POST(req: NextRequest) {
     try {
       const raw = await req.json();
       body = ResearchBodySchema.parse(raw);
-    } catch {
+    } catch (parseErr) {
+      logger.error('Research request validation failed', parseErr as Error);
       return error('VALIDATION_ERROR', 'Invalid request body. Expected type: trends, topics, or knowledge-update', 400);
     }
 
@@ -69,7 +72,9 @@ export async function POST(req: NextRequest) {
 
     return success({ jobId: job.id, type: body.type, message: 'Research job queued' });
   } catch (err) {
-    console.error('POST /api/v1/research error:', err);
+    logger.apiError('POST', '/api/v1/research', err as Error, {
+      userId: (err as { userId?: string }).userId,
+    });
     return error('INTERNAL_ERROR', 'Failed to queue research', 500);
   }
 }

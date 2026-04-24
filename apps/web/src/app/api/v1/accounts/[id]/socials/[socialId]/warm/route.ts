@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, notFound, isUUID, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string; socialId: string }> };
 
@@ -11,8 +12,9 @@ const WarmBodySchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       if (parseErr instanceof SyntaxError) {
         // Expected when body is empty or not JSON — safe to ignore
       } else {
-        console.error('Unexpected error parsing warm body:', parseErr);
+        logger.error('Unexpected error parsing warm body', parseErr as Error);
       }
     }
 
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({ jobId: job.id, message: 'Warm-up started' });
   } catch (err) {
-    console.error('POST /api/v1/accounts/[id]/socials/[socialId]/warm error:', err);
+    logger.error('POST /api/v1/accounts/[id]/socials/[socialId]/warm error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to warm account', 500);
   }
 }

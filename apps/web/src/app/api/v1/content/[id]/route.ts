@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, authenticateAny, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors } from '@/lib/api-server';
+import { authenticate, authenticateAny, success, error, notFound, validationError, isUUID, forbidden, formatZodErrors , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -16,8 +17,9 @@ const UpdateContentSchema = z.object({
 });
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticateAny(req, 'read');
+    ctx = await authenticateAny(req, 'read');
     if (ctx instanceof NextResponse) return ctx;
 
     // Unconditional tenant guard (D076)
@@ -104,7 +106,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(converted);
   } catch (err) {
-    console.error('GET /api/v1/content/[id] error:', err);
+    logger.error('GET /api/v1/content/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch content item', 500);
   }
 }
@@ -172,7 +174,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       approvalGateWindowHrs: updated.approvalGateWindowHrs != null ? Number(updated.approvalGateWindowHrs) : null,
     });
   } catch (err) {
-    console.error('PUT /api/v1/content/[id] error:', err);
+    logger.error('PUT /api/v1/content/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update content item', 500);
   }
 }
@@ -238,7 +240,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/content/[id] error:', err);
+    logger.error('DELETE /api/v1/content/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete content item', 500);
   }
 }

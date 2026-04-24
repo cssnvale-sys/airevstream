@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(storefront);
   } catch (err) {
-    console.error('GET /api/v1/affiliate/storefronts/[id] error:', err);
+    logger.error('GET /api/v1/affiliate/storefronts/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch storefront', 500);
   }
 }
@@ -108,7 +109,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       console.error('PATCH /api/v1/affiliate/storefronts/[id] slug conflict:', err.meta);
       return error('CONFLICT', 'A storefront with this slug already exists', 409);
     }
-    console.error('PATCH /api/v1/affiliate/storefronts/[id] error:', err);
+    logger.error('PATCH /api/v1/affiliate/storefronts/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update storefront', 500);
   }
 }
@@ -146,7 +147,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/affiliate/storefronts/[id] error:', err);
+    logger.error('DELETE /api/v1/affiliate/storefronts/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete storefront', 500);
   }
 }

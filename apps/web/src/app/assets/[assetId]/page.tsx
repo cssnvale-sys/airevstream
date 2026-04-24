@@ -217,14 +217,14 @@ function SlotCard({
       )}
 
       <ConfirmDialog
-        open={deleteSlotOpen}
+        isOpen={deleteSlotOpen}
         title="Remove Image"
         message={`Remove the ${SLOT_LABELS[slot]} image? This cannot be undone.`}
         confirmLabel="Remove"
         variant="danger"
         onConfirm={handleDeleteSlot}
         onCancel={() => setDeleteSlotOpen(false)}
-        loading={deleting}
+        isLoading={deleting}
       />
     </div>
   );
@@ -592,14 +592,14 @@ export default function AssetDetailPage() {
       </div>
 
       <ConfirmDialog
-        open={deleteAvatarOpen}
+        isOpen={deleteAvatarOpen}
         title="Delete Character"
         message="Delete this character permanently? All images will be removed. This cannot be undone."
         confirmLabel="Delete"
         variant="danger"
         onConfirm={handleDeleteAvatar}
         onCancel={() => setDeleteAvatarOpen(false)}
-        loading={deleting}
+        isLoading={deleting}
       />
     </AppLayout>
   );

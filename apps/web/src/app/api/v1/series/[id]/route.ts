@@ -1,6 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, validationError, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -9,8 +10,9 @@ function tenantFilter(tenantId: string) {
 }
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
@@ -29,7 +31,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!series) return error('NOT_FOUND', 'Series not found', 404);
     return success(series);
   } catch (err) {
-    console.error('GET /api/v1/series/[id] failed:', err);
+    logger.error('GET /api/v1/series/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch series', 500);
   }
 }
@@ -81,7 +83,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return success(series);
   } catch (err) {
-    console.error('PUT /api/v1/series/[id] failed:', err);
+    logger.error('PUT /api/v1/series/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update series', 500);
   }
 }
@@ -108,7 +110,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     await ctx.db.series.delete({ where: { id } });
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/series/[id] failed:', err);
+    logger.error('DELETE /api/v1/series/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete series', 500);
   }
 }

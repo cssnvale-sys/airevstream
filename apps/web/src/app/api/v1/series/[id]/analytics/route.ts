@@ -1,5 +1,6 @@
-import { NextRequest } from 'next/server';
-import { authenticate, success, error, validationError, isUUID } from '@/lib/api-server';
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticate, success, error, validationError, isUUID , type ApiContext } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -8,8 +9,9 @@ function tenantFilter(tenantId: string) {
 }
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
@@ -57,7 +59,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       statusBreakdown,
     });
   } catch (err) {
-    console.error('GET /api/v1/series/[id]/analytics failed:', err);
+    logger.error('GET /api/v1/series/[id]/analytics failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch series analytics', 500);
   }
 }

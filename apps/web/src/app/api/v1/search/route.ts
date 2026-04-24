@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticate, success, error , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const SEARCH_RESULTS_PER_TYPE = 5;
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     const ip = getClientIp(req);
@@ -66,7 +68,7 @@ export async function GET(req: NextRequest) {
 
     return success({ content, channels: flatChannels, accounts });
   } catch (err) {
-    console.error('GET /api/v1/search error:', err);
+    logger.error('GET /api/v1/search error', err as Error);
     return error('INTERNAL_ERROR', 'Search failed', 500);
   }
 }

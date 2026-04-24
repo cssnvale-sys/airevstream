@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, forbidden, isU
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const UpdateEnrollmentSchema = z.object({
   status: z.enum(['paused', 'phase_1', 'phase_2', 'phase_3', 'phase_4', 'failed']).optional(),
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return success(enrollment);
   } catch (err) {
-    console.error('GET /api/v1/seasoning/enrollments/[id] failed:', err);
+    logger.error('GET /api/v1/seasoning/enrollments/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch enrollment', 500);
   }
 }
@@ -112,7 +113,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     return success(updated);
   } catch (err) {
-    console.error('PUT /api/v1/seasoning/enrollments/[id] failed:', err);
+    logger.error('PUT /api/v1/seasoning/enrollments/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update enrollment', 500);
   }
 }

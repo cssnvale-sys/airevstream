@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, notFound, forbidden } fr
 import { scoreViralPotential, suggestPresetVariantForChannel } from '@airevstream/shared';
 import type { ViralScoringInput, ChannelContext } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
       channelId: content.channel?.id ?? null,
     });
   } catch (err) {
-    console.error('POST /api/v1/content/viral-suggestions failed:', err);
+    logger.error('POST /api/v1/content/viral-suggestions failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to generate suggestions', 500);
   }
 }

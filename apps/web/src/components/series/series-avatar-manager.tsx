@@ -124,10 +124,10 @@ export function SeriesAvatarManager({ seriesId, avatars, onUpdate }: Props) {
       )}
 
       <ConfirmDialog
-        open={!!removeTarget}
+        isOpen={!!removeTarget}
         onCancel={() => setRemoveTarget(null)}
         onConfirm={handleRemove}
-        loading={removing}
+        isLoading={removing}
         title="Remove Avatar"
         message="Remove this avatar from the series? This does not delete the avatar itself."
         variant="danger"

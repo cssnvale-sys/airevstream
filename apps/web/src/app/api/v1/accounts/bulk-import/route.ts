@@ -4,6 +4,7 @@ import { getConfig } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
       results,
     });
   } catch (err) {
-    console.error('POST /api/v1/accounts/bulk-import failed:', err);
+    logger.error('POST /api/v1/accounts/bulk-import failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to bulk import accounts', 500);
   }
 }

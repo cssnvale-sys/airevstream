@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticate, success, error, paginated, parseQuery, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(subscriptions, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/subscriptions failed:', err);
+    logger.error('GET /api/v1/subscriptions failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list subscriptions', 500);
   }
 }
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     return success(subscription);
   } catch (err) {
-    console.error('POST /api/v1/subscriptions failed:', err);
+    logger.error('POST /api/v1/subscriptions failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create subscription', 500);
   }
 }

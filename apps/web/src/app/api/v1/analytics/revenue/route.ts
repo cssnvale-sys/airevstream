@@ -1,6 +1,7 @@
 import { authenticateAny, success, error } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,7 +115,7 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (err) {
-    console.error('GET /api/v1/analytics/revenue error:', err);
+    logger.error('GET /api/v1/analytics/revenue error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch revenue analytics', 500);
   }
 }

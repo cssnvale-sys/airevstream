@@ -3,6 +3,7 @@
 import { Search, User, MessageSquare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { NotificationCenter } from '@/components/notifications/notification-center';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Home',
@@ -48,6 +49,7 @@ export function Header({ onToggleAssistant }: { onToggleAssistant: () => void })
       </div>
 
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         <button
           type="button"
           onClick={onToggleAssistant}

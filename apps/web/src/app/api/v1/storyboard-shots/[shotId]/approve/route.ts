@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, isUUID, validationError, forbidden, formatZodErrors } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden, formatZodErrors , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ shotId: string }> };
 
@@ -14,8 +15,9 @@ const ShotActionSchema = z.object({
  * Approve, reject, or regenerate an individual shot.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     if (ctx.role === 'viewer') {
@@ -90,13 +92,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           channelId: shot.storyboard.content.channelId,
         } as any);
       } catch (queueErr) {
-        console.error('Failed to queue shot regeneration:', queueErr);
+        logger.error('Failed to queue shot regeneration', queueErr as Error);
       }
     }
 
     return success({ shotId, action, status: action === 'approve' ? 'approved' : action === 'reject' ? 'failed' : 'pending' });
   } catch (err) {
-    console.error('POST /api/v1/storyboard-shots/[shotId]/approve error:', err);
+    logger.error('POST /api/v1/storyboard-shots/[shotId]/approve error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to approve shot', 500);
   }
 }

@@ -1,6 +1,7 @@
 import { authenticate, success, error, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ function isPrivateUrl(urlStr: string): boolean {
     }
     return false;
   } catch (err) {
-    console.error('isPrivateUrl: malformed URL, treating as private:', err);
+    logger.error('isPrivateUrl: malformed URL, treating as private', err as Error);
     return true;
   }
 }
@@ -108,7 +109,10 @@ export async function POST(req: NextRequest) {
           healthy = res.ok;
         } catch (fetchErr) {
           clearTimeout(timeout);
-          console.error('Health check fetch failed for', healthUrl, fetchErr);
+          logger.error('Health check fetch failed for ' + healthUrl, fetchErr as Error, {
+            serviceId: service.id,
+            endpoint: healthUrl,
+          });
           errorMsg = fetchErr instanceof Error && fetchErr.name === 'AbortError' ? `Timeout (${HEALTH_CHECK_TIMEOUT_MS / 1000}s)` : 'Connection failed';
           healthy = false;
         }
@@ -162,7 +166,7 @@ export async function POST(req: NextRequest) {
       results,
     });
   } catch (err) {
-    console.error('POST /api/v1/ai-services/health-check error:', err);
+    logger.error('POST /api/v1/ai-services/health-check error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to run health checks', 500);
   }
 }

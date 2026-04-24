@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
 import { matchTrends } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 const TRENDING_DEFAULT_LIMIT = 20;
 const TRENDING_MAX_LIMIT = 50;
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
       platform,
     });
   } catch (err) {
-    console.error('[GET /trending]', err);
+    logger.error('[GET /trending]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch trending topics', 500);
   }
 }

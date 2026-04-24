@@ -1,5 +1,6 @@
 import { authenticate, success, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/lifecycle/active failed:', err);
+    logger.error('GET /api/v1/lifecycle/active failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list active lifecycles', 500);
   }
 }

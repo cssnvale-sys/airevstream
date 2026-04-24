@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, requireAdmin, isUUID, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import net from 'node:net';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -50,7 +51,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ id, deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/settings/proxies/[id] failed:', err);
+    logger.error('DELETE /api/v1/settings/proxies/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete proxy', 500);
   }
 }
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       status: reachable ? 'active' : 'inactive',
     });
   } catch (err) {
-    console.error('POST /api/v1/settings/proxies/[id] (test) failed:', err);
+    logger.error('POST /api/v1/settings/proxies/[id] (test) failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to test proxy', 500);
   }
 }

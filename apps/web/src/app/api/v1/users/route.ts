@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(users, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/users failed:', err);
+    logger.error('GET /api/v1/users failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list users', 500);
   }
 }

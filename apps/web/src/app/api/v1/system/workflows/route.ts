@@ -1,5 +1,6 @@
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(jobs, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/system/workflows error:', err);
+    logger.error('GET /api/v1/system/workflows error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch workflows', 500);
   }
 }

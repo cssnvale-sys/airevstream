@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
 import type { Prisma } from '@prisma/client';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,7 +102,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(converted, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/prompts error:', err);
+    logger.error('GET /api/v1/prompts error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch prompt templates', 500);
   }
 }
@@ -156,7 +157,7 @@ export async function POST(req: NextRequest) {
 
     return success(converted);
   } catch (err) {
-    console.error('POST /api/v1/prompts error:', err);
+    logger.error('POST /api/v1/prompts error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create prompt template', 500);
   }
 }

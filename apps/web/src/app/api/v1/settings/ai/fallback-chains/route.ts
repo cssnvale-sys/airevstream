@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, requireAdmin } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
 
     return success(chains);
   } catch (err) {
-    console.error('[GET /settings/ai/fallback-chains]', err);
+    logger.error('[GET /settings/ai/fallback-chains]', err as Error);
     return error('INTERNAL_ERROR', 'Failed to load fallback chains', 500);
   }
 }

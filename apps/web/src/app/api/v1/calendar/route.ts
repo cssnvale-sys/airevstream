@@ -1,5 +1,6 @@
-import { authenticateAny, success, error, validationError } from '@/lib/api-server';
+import { authenticateAny, success, error, validationError , type ApiContext} from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 const CALENDAR_MAX_ITEMS = 1000;
 
@@ -96,7 +97,7 @@ export async function GET(req: NextRequest) {
 
     return success(events);
   } catch (err) {
-    console.error('GET /api/v1/calendar error:', err);
+    logger.error('GET /api/v1/calendar error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch calendar events', 500);
   }
 }

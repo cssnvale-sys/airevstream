@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error, validationError } from '@/lib/api-server';
+import { authenticate, success, error, validationError , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { getPresignedUrl } from '@airevstream/storage';
 import { BUCKETS, PRESIGNED_URL_TTL_SECONDS } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 const ALLOWED_BUCKETS: Set<string> = new Set(Object.values(BUCKETS));
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     const ip = getClientIp(req);
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
     const url = await getPresignedUrl(bucket, key, PRESIGNED_URL_TTL_SECONDS);
     return success({ url, expiresIn: PRESIGNED_URL_TTL_SECONDS });
   } catch (err) {
-    console.error('GET /api/v1/media/[...path] error:', err);
+    logger.error('GET /api/v1/media/[...path] error', err as Error);
     // MinIO throws if object doesn't exist
     if (err instanceof Error && err.message.includes('Not Found')) {
       return error('NOT_FOUND', 'Object not found', 404);

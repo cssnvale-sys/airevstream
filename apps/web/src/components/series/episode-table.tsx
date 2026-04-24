@@ -150,12 +150,12 @@ export function EpisodeTable({ seriesId }: Props) {
       )}
 
       <ConfirmDialog
-        open={!!deleteId}
+        isOpen={!!deleteId}
         title="Remove Episode"
         message="Remove this episode from the series? The underlying content will not be deleted."
         confirmLabel="Remove"
         variant="danger"
-        loading={deletingId !== null}
+        isLoading={deletingId !== null}
         onConfirm={() => deleteId && handleDelete(deleteId)}
         onCancel={() => setDeleteId(null)}
       />

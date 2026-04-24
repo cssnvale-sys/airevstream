@@ -38,6 +38,15 @@ vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(),
   getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
 }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    apiError: vi.fn(),
+  },
+}));
 
 import {
   json,

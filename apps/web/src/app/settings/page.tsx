@@ -1072,12 +1072,12 @@ function SecurityTab() {
       </div>
 
       <ConfirmDialog
-        open={!!revokeTarget}
+        isOpen={!!revokeTarget}
         title="Revoke API Key"
         message="This key will be permanently revoked and can no longer be used for authentication. This action cannot be undone."
         confirmLabel="Revoke Key"
         variant="danger"
-        loading={revokingKeyId !== null}
+        isLoading={revokingKeyId !== null}
         onConfirm={() => revokeTarget && handleRevokeKey(revokeTarget)}
         onCancel={() => setRevokeTarget(null)}
       />
@@ -1508,12 +1508,12 @@ function ProxiesTab() {
       </div>
 
       <ConfirmDialog
-        open={!!deleteTarget}
+        isOpen={!!deleteTarget}
         title="Delete Proxy"
         message="This proxy will be permanently removed from the configuration. This action cannot be undone."
         confirmLabel="Delete Proxy"
         variant="danger"
-        loading={deletingProxyId !== null}
+        isLoading={deletingProxyId !== null}
         onConfirm={() => deleteTarget && handleDeleteProxy(deleteTarget)}
         onCancel={() => setDeleteTarget(null)}
       />

@@ -4,6 +4,7 @@ import { authenticate, success, error, paginated, parseQuery, validationError, f
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { FAMILY_OVERRIDE_KEYS, generatePresetId } from '@airevstream/shared';
 import type { PresetFamily } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(presets, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/presets error:', err);
+    logger.error('GET /api/v1/presets error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch presets', 500);
   }
 }
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
 
     return success(preset);
   } catch (err) {
-    console.error('POST /api/v1/presets error:', err);
+    logger.error('POST /api/v1/presets error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to create preset', 500);
   }
 }

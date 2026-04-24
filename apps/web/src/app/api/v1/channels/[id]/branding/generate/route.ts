@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({ queued: true });
   } catch (err) {
-    console.error('POST /api/v1/channels/[id]/branding/generate error:', err);
+    logger.error('POST /api/v1/channels/[id]/branding/generate error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to queue branding generation', 500);
   }
 }

@@ -1,6 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, validationError, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -13,8 +14,9 @@ function tenantFilter(tenantId: string) {
  * Currently a stub — will integrate with YouTube Data API when ready.
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
     if ((ctx as ApiContext).role === 'viewer') return error('FORBIDDEN', 'Viewers cannot trigger sync', 403);
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       youtubePlaylistId: series.youtubePlaylistId,
     });
   } catch (err) {
-    console.error('POST /api/v1/series/[id]/playlist-sync failed:', err);
+    logger.error('POST /api/v1/series/[id]/playlist-sync failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to trigger playlist sync', 500);
   }
 }

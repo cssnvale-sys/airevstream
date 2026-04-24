@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,7 +117,7 @@ export async function GET(req: NextRequest) {
       recentlyActiveAccounts: recentlyActive,
     });
   } catch (err) {
-    console.error('GET /api/v1/accounts/stats failed:', err);
+    logger.error('GET /api/v1/accounts/stats failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch account stats', 500);
   }
 }

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({ queued: true, jobName: 'production:asset-generate' });
   } catch (err) {
-    console.error('POST /api/v1/avatars/[id]/generate failed:', err);
+    logger.error('POST /api/v1/avatars/[id]/generate failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to queue avatar generation', 500);
   }
 }

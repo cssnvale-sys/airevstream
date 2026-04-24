@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAny, success, error } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,7 +97,7 @@ export async function GET(req: NextRequest) {
       recent,
     });
   } catch (err) {
-    console.error('GET /api/v1/suggestions/stats failed:', err);
+    logger.error('GET /api/v1/suggestions/stats failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch suggestion stats', 500);
   }
 }

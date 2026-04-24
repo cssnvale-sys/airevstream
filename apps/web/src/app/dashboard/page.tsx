@@ -16,6 +16,8 @@ import {
   ClipboardCheck, Send, HeartPulse, DollarSign,
   CheckCircle2, XCircle, ArrowRight, Clock,
   Cpu, MemoryStick, Layers, ChevronRight,
+  Zap, Plus, Search, Image as ImageIcon, Play,
+  Sparkles, TrendingUp,
 } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, formatRelativeTime, statusColor } from '@/lib/utils';
 import { toast } from '@/lib/toast';
@@ -55,6 +57,10 @@ interface ApprovalItem {
 interface ContentItem {
   id: string;
   status: string;
+  title?: string | null;
+  contentType?: string;
+  thumbnailUrl?: string | null;
+  channel?: { name: string } | null;
   createdAt: string;
 }
 
@@ -194,6 +200,7 @@ export default function DashboardPage() {
 
   const [actionInFlight, setActionInFlight] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Derived data
   const approvals = approvalsRes?.data ?? [];
@@ -249,10 +256,56 @@ export default function DashboardPage() {
           Some dashboard data failed to load. Please try refreshing the page.
         </div>
       )}
-      {/* 1. Greeting Row */}
+      {/* 1. Greeting Row + Quick Actions */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">{getGreeting()}</h1>
-        <p className="text-text-secondary mt-1">{formatDate()}</p>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary">{getGreeting()}</h1>
+            <p className="text-text-secondary mt-1">{formatDate()}</p>
+          </div>
+        </div>
+
+        {/* Quick Create CTA Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Link href="/create" className="group card bg-gradient-to-br from-accent-blue/10 to-accent-purple/10 border-accent-blue/20 hover:border-accent-blue/40 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent-blue flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Zap size={24} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-text-primary">Quick Create</h3>
+                <p className="text-sm text-text-secondary">Generate content in 3 steps</p>
+              </div>
+              <ArrowRight size={20} className="text-accent-blue" />
+            </div>
+          </Link>
+
+          <Link href="/content" className="group card hover:border-accent-green/30 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent-green/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Play size={24} className="text-accent-green" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-text-primary">Library</h3>
+                <p className="text-sm text-text-secondary">{contentItems.length} items</p>
+              </div>
+              <ArrowRight size={20} className="text-text-secondary" />
+            </div>
+          </Link>
+
+          <Link href="/analytics" className="group card hover:border-accent-amber/30 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent-amber/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <TrendingUp size={24} className="text-accent-amber" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-text-primary">Analytics</h3>
+                <p className="text-sm text-text-secondary">View performance</p>
+              </div>
+              <ArrowRight size={20} className="text-text-secondary" />
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* 2. KPI Cards */}
@@ -329,6 +382,65 @@ export default function DashboardPage() {
                 <DollarSign size={20} className="text-accent-amber" />
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Recent Content with Thumbnails */}
+      <div className="card mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-text-primary">Recent Content</h2>
+          <Link href="/content" className="text-sm text-accent-blue hover:underline flex items-center gap-1">
+            View all <ChevronRight size={14} />
+          </Link>
+        </div>
+
+        {contentLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-video rounded-lg bg-bg-tertiary mb-2" />
+                <div className="h-3 w-20 bg-bg-tertiary rounded" />
+              </div>
+            ))}
+          </div>
+        ) : contentItems.length === 0 ? (
+          <EmptyState
+            icon={ImageIcon}
+            title="No content yet"
+            description="Create your first piece of content to see it here."
+            className="py-8"
+          />
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {contentItems.slice(0, 6).map((item) => (
+              <Link key={item.id} href={`/content/${item.id}`} className="group">
+                <div className="aspect-video rounded-lg bg-bg-tertiary overflow-hidden mb-2 relative">
+                  {item.thumbnailUrl ? (
+                    <img
+                      src={item.thumbnailUrl}
+                      alt={item.title ?? 'Content thumbnail'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon size={24} className="text-text-secondary" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                    <span className={cn('badge text-xs', statusColor(item.status))}>
+                      {item.status}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-text-primary truncate" title={item.title ?? 'Untitled'}>
+                  {item.title ?? 'Untitled'}
+                </p>
+                <p className="text-xs text-text-secondary truncate">
+                  {item.channel?.name ?? 'No channel'}
+                </p>
+              </Link>
+            ))}
           </div>
         )}
       </div>
@@ -600,14 +712,14 @@ export default function DashboardPage() {
         )}
       </div>
       <ConfirmDialog
-        open={rejectId !== null}
+        isOpen={rejectId !== null}
         title="Reject Content"
         message="Are you sure you want to reject this content? Visit the content detail page to provide a rejection reason."
         confirmLabel="Reject"
         variant="danger"
         onConfirm={() => { if (rejectId) { handleApproval(rejectId, 'reject'); } setRejectId(null); }}
         onCancel={() => setRejectId(null)}
-        loading={actionInFlight !== null}
+        isLoading={actionInFlight !== null}
       />
     </AppLayout>
   );

@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(products);
   } catch (err) {
-    console.error('GET /api/v1/affiliate/storefronts/[id]/products error:', err);
+    logger.error('GET /api/v1/affiliate/storefronts/[id]/products error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to list storefront products', 500);
   }
 }
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success(storefrontProduct);
   } catch (err) {
-    console.error('POST /api/v1/affiliate/storefronts/[id]/products error:', err);
+    logger.error('POST /api/v1/affiliate/storefronts/[id]/products error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to add product to storefront', 500);
   }
 }

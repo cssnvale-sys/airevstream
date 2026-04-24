@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { authenticate, success, error, validationError, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string; episodeId: string }> };
 
@@ -57,7 +58,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       } : null,
     });
   } catch (err) {
-    console.error('PUT /api/v1/series/[id]/episodes/[episodeId] failed:', err);
+    logger.error('PUT /api/v1/series/[id]/episodes/[episodeId] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update episode', 500);
   }
 }
@@ -102,7 +103,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/series/[id]/episodes/[episodeId] failed:', err);
+    logger.error('DELETE /api/v1/series/[id]/episodes/[episodeId] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete episode', 500);
   }
 }

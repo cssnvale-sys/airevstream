@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, success, error } from '@/lib/api-server';
+import { authenticate, success, error , type ApiContext} from '@/lib/api-server';
 import { ComfyUIClient } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     return success({ available: true, checkpoints, loras, controlNets });
   } catch (err) {
-    console.error('GET /api/v1/comfyui/models failed:', err);
+    logger.error('GET /api/v1/comfyui/models failed:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to list ComfyUI models', 500);
   }
 }

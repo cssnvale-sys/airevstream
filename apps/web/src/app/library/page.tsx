@@ -592,14 +592,14 @@ export default function LibraryPage() {
       )}
 
       <ConfirmDialog
-        open={!!deleteTarget}
+        isOpen={!!deleteTarget}
         title="Delete Content"
         message="This content item will be permanently deleted. This action cannot be undone."
         confirmLabel="Delete"
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
-        loading={deleting}
+        isLoading={deleting}
       />
     </AppLayout>
   );

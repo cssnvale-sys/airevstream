@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, notFound, isUUID, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, notFound, isUUID, validationError, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { updateTrustAfterAction, APPROVAL_DEFAULTS } from '@airevstream/shared';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -11,20 +12,22 @@ const RejectSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
+    const authCtx = ctx as ApiContext;
 
-    if (ctx.role === 'viewer') {
+    if (authCtx.role === 'viewer') {
       return forbidden('Viewers cannot reject content');
     }
 
     const ip = getClientIp(req);
-    const rl = checkRateLimit(`content-reject:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
+    const rl = checkRateLimit(`content-reject:POST:${ip}:${authCtx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
     // Unconditional tenant guard (D076)
-    if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
+    if (!authCtx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
     const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
@@ -32,8 +35,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     let body: unknown = {};
     try {
       body = await req.json();
-    } catch {
+    } catch (parseErr) {
       // Empty body is acceptable for rejection (feedback is optional)
+      logger.debug('Content reject: empty or invalid request body', { parseErr });
     }
     const parsed = RejectSchema.safeParse(body);
     const feedback = parsed.success ? parsed.data.feedback : undefined;
@@ -41,11 +45,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rejectableStatuses = ['generated', 'pending_approval'];
 
     // Use interactive transaction to prevent TOCTOU race on status check
-    const result = await ctx.db.$transaction(async (tx) => {
+    const result = await authCtx.db.$transaction(async (tx) => {
       const item = await tx.contentItem.findFirst({
         where: {
           id,
-          channel: { socialAccount: { emailAccount: { tenantId: ctx.tenantId } } },
+          channel: { socialAccount: { emailAccount: { tenantId: authCtx.tenantId } } },
         },
         select: { id: true, status: true },
       });
@@ -96,12 +100,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     // Update approval trust score (non-blocking)
     try {
-      const contentItem = await ctx.db.contentItem.findUnique({
+      const contentItem = await authCtx.db.contentItem.findUnique({
         where: { id },
         select: { contentType: true, qualityScore: true },
       });
       if (contentItem) {
-        const existing = await ctx.db.approvalTrustScore.findFirst({
+        const existing = await authCtx.db.approvalTrustScore.findFirst({
           where: { dimensionType: 'content_type', dimensionValue: contentItem.contentType },
         });
         const current = existing
@@ -113,7 +117,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           action: 'reject',
           qualityScore: contentItem.qualityScore != null ? Number(contentItem.qualityScore) : null,
         });
-        await ctx.db.approvalTrustScore.upsert({
+        await authCtx.db.approvalTrustScore.upsert({
           where: { id: existing?.id ?? '00000000-0000-0000-0000-000000000000' },
           create: {
             dimensionType: 'content_type',
@@ -131,7 +135,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         });
       }
     } catch (trustErr) {
-      console.error('Failed to update trust score on reject:', trustErr);
+      logger.error('Failed to update trust score on reject', trustErr as Error);
     }
 
     return success({
@@ -141,7 +145,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       approvalGateWindowHrs: updated.approvalGateWindowHrs != null ? Number(updated.approvalGateWindowHrs) : null,
     });
   } catch (err) {
-    console.error('POST /api/v1/content/[id]/reject error:', err);
+    logger.error('POST /api/v1/content/[id]/reject error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to reject content', 500);
   }
 }

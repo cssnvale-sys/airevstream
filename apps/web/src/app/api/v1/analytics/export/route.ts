@@ -1,6 +1,7 @@
 import { authenticateAny, success, error, validationError } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -204,7 +205,7 @@ export async function GET(req: NextRequest) {
 
     return success(exportPayload);
   } catch (err) {
-    console.error('GET /api/v1/analytics/export error:', err);
+    logger.error('GET /api/v1/analytics/export error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to export analytics', 500);
   }
 }

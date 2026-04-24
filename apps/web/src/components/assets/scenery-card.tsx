@@ -103,14 +103,14 @@ export function SceneryCard({ scenery, onDelete }: SceneryCardProps) {
       </div>
 
       <ConfirmDialog
-        open={confirmOpen}
+        isOpen={confirmOpen}
         title="Delete Scenery"
         message={`Are you sure you want to delete "${scenery.name}"? This action cannot be undone.`}
         confirmLabel="Delete"
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
-        loading={deleting}
+        isLoading={deleting}
       />
     </>
   );

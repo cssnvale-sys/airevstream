@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAny, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       // channelId and emailAccountId excluded from response (used for tenant check only)
     });
   } catch (err) {
-    console.error('GET /api/v1/jobs/[id] error:', err);
+    logger.error('GET /api/v1/jobs/[id] error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch job status', 500);
   }
 }

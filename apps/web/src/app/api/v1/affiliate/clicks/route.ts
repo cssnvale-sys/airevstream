@@ -1,5 +1,6 @@
 import { authenticate, error, paginated, parseQuery } from '@/lib/api-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
     const serialized = clicks.map(c => ({ ...c, revenue: c.revenue != null ? Number(c.revenue) : null }));
     return paginated(serialized, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/affiliate/clicks error:', err);
+    logger.error('GET /api/v1/affiliate/clicks error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch click analytics', 500);
   }
 }

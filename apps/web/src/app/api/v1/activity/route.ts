@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, parseQuery } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
 
     return success(activity);
   } catch (err) {
-    console.error('GET /api/v1/activity failed:', err);
+    logger.error('GET /api/v1/activity failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to load activity', 500);
   }
 }

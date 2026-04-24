@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { success, error, authenticate } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     return success(user);
   } catch (err) {
-    console.error('GET /api/v1/auth/me failed:', err);
+    logger.error('GET /api/v1/auth/me failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch user profile', 500);
   }
 }

@@ -10,6 +10,18 @@ const nextConfig = {
   ],
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client', 'bullmq'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  // Performance optimizations
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**' },
+    ],
+    formats: ['image/webp', 'image/avif'],
   },
   async headers() {
     return [

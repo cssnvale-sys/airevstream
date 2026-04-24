@@ -111,8 +111,7 @@ function AccountsEmptyState({ onAddEmail }: { onAddEmail: () => void }) {
       icon={Mail}
       title="No accounts found"
       description="Add your first email account to get started."
-      actionLabel="Add Email Account"
-      onAction={onAddEmail}
+      action={{ label: 'Add Email Account', onClick: onAddEmail }}
     />
   );
 }
@@ -1248,14 +1247,14 @@ export default function AccountsPage() {
 
       {/* Bulk Delete Confirm */}
       <ConfirmDialog
-        open={showBulkDelete}
+        isOpen={showBulkDelete}
         title="Delete Selected Accounts"
         message={`Are you sure you want to delete ${selectedIds.size} account(s)? This will also remove all connected social accounts. This action cannot be undone.`}
         confirmLabel={`Delete ${selectedIds.size} Account(s)`}
         variant="danger"
         onConfirm={handleBulkDelete}
         onCancel={() => setShowBulkDelete(false)}
-        loading={bulkDeleting}
+        isLoading={bulkDeleting}
       />
 
       {/* Modals */}

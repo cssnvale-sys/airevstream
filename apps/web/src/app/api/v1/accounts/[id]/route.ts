@@ -2,6 +2,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return success(data);
   } catch (err) {
-    console.error('GET /api/v1/accounts/[id] failed:', err);
+    logger.error('GET /api/v1/accounts/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch account', 500);
   }
 }
@@ -124,7 +125,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const { passwordEnc, ...safe } = updated;
     return success(safe);
   } catch (err) {
-    console.error('PUT /api/v1/accounts/[id] failed:', err);
+    logger.error('PUT /api/v1/accounts/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to update account', 500);
   }
 }
@@ -156,7 +157,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return success({ deleted: true });
   } catch (err) {
-    console.error('DELETE /api/v1/accounts/[id] failed:', err);
+    logger.error('DELETE /api/v1/accounts/[id] failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to delete account', 500);
   }
 }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticate, success, error, paginated, parseQuery, validationError, forbidden } from '@/lib/api-server';
+import { authenticate, success, error, paginated, parseQuery, validationError, forbidden , type ApiContext} from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
 
     return paginated(data, total, page, limit);
   } catch (err) {
-    console.error('GET /api/v1/scenery error:', err);
+    logger.error('GET /api/v1/scenery error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to fetch scenery assets', 500);
   }
 }
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     return success(scenery);
   } catch (err) {
-    console.error('POST /api/v1/scenery error:', err);
+    logger.error('POST /api/v1/scenery error:', err as Error, { userId: ctx && !(ctx instanceof NextResponse) ? (ctx as ApiContext).userId : undefined });
     return error('INTERNAL_ERROR', 'Failed to create scenery asset', 500);
   }
 }

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, error, success } from '@/lib/api-server';
+import { authenticate, error, success , type ApiContext } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  let ctx: ApiContext | NextResponse | undefined = undefined;
   try {
-    const ctx = await authenticate(req);
+    ctx = await authenticate(req);
     if (ctx instanceof NextResponse) return ctx;
 
     const rawScores = await ctx.db.approvalTrustScore.findMany({
@@ -22,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     return success(scores);
   } catch (err) {
-    console.error('GET /api/v1/approvals/trust-scores error:', err);
+    logger.error('GET /api/v1/approvals/trust-scores error', err as Error);
     return error('INTERNAL_ERROR', 'Failed to fetch trust scores', 500);
   }
 }

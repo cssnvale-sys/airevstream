@@ -351,14 +351,14 @@ function AvatarCard({
       </div>
 
       <ConfirmDialog
-        open={deleteOpen}
+        isOpen={deleteOpen}
         title="Delete Character"
         message="Delete this character? This cannot be undone."
         confirmLabel="Delete"
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteOpen(false)}
-        loading={deleting}
+        isLoading={deleting}
       />
     </Link>
   );
@@ -438,14 +438,14 @@ function SceneryCard({
       </div>
 
       <ConfirmDialog
-        open={deleteOpen}
+        isOpen={deleteOpen}
         title="Delete Background"
         message="Delete this background? This cannot be undone."
         confirmLabel="Delete"
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteOpen(false)}
-        loading={deleting}
+        isLoading={deleting}
       />
     </div>
   );

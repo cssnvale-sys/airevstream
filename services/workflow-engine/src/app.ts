@@ -9,6 +9,7 @@ import { authRoutes } from './routes/auth.js';
 import { contentRoutes } from './routes/content.js';
 import { accountRoutes } from './routes/account.js';
 import { workflowRoutes } from './routes/workflow.js';
+import { oauthRoutes } from './routes/oauth.js';
 
 const logger = createLogger('workflow-engine');
 
@@ -41,6 +42,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(contentRoutes, { prefix: '/api/content' });
   await app.register(accountRoutes, { prefix: '/api/accounts' });
   await app.register(workflowRoutes, { prefix: '/api/workflows' });
+  await app.register(oauthRoutes, { prefix: '/api/accounts/oauth' });
 
   // Global error handler
   app.setErrorHandler((error: FastifyError, _request, reply) => {

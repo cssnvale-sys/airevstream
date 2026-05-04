@@ -37,6 +37,17 @@ const envSchema = z.object({
 
   // App
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+
+  // OAuth — Google / YouTube
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+
+  // OAuth — TikTok
+  TIKTOK_CLIENT_KEY: z.string().min(1).optional(),
+  TIKTOK_CLIENT_SECRET: z.string().min(1).optional(),
+
+  // Frontend URL for OAuth redirects
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

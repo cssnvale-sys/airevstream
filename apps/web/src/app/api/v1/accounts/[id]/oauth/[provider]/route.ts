@@ -1,0 +1,64 @@
+import { authenticate, error } from '@/lib/api-server';
+import { type NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * GET /api/v1/accounts/[id]/oauth/[provider]
+ * Proxies OAuth initiation to the workflow engine.
+ * Provider must be 'google' or 'tiktok'.
+ */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string; provider: string } },
+) {
+  const ctx = await authenticate(req);
+  if (ctx instanceof NextResponse) return ctx;
+
+  const { id, provider } = params;
+  if (!['google', 'tiktok'].includes(provider)) {
+    return error('BAD_REQUEST', "Provider must be 'google' or 'tiktok'", 400);
+  }
+
+  const token = req.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return error('UNAUTHORIZED', 'Missing authorization token', 401);
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_WORKFLOW_API_URL ?? 'http://localhost:3011';
+  const upstreamUrl = `${baseUrl}/api/accounts/${id}/oauth/${provider}`;
+
+  try {
+    const upstreamRes = await fetch(upstreamUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+      redirect: 'manual',
+    });
+
+    // Pass through any redirect response from the workflow engine
+    if (upstreamRes.status >= 300 && upstreamRes.status < 400) {
+      const location = upstreamRes.headers.get('location');
+      if (location) {
+        return NextResponse.redirect(location, upstreamRes.status as 302);
+      }
+    }
+
+    // Pass through JSON errors
+    if (!upstreamRes.ok) {
+      try {
+        const errBody = await upstreamRes.json();
+        return NextResponse.json(errBody, { status: upstreamRes.status });
+      } catch {
+        return error('INTERNAL_ERROR', 'OAuth initiation failed', upstreamRes.status);
+      }
+    }
+
+    // If somehow we got a 200 without a redirect, that's unexpected
+    return error('INTERNAL_ERROR', 'Unexpected response from OAuth service', 500);
+  } catch (err) {
+    return error('INTERNAL_ERROR', 'Failed to connect to OAuth service', 502);
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useDebounce } from '@/hooks/use-debounce';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useAccounts, useAccount, apiPost } from '@/hooks/use-api';
@@ -9,7 +10,7 @@ import { cn, formatRelativeTime, statusColor, platformIcon } from '@/lib/utils';
 import {
   Plus, Upload, Search, ChevronDown, ChevronUp,
   X, Mail, Activity, Hash, Globe, Tag, Palette, User, Trash2,
-  RefreshCw, HeartPulse, Flame, ArrowLeft, ArrowRight, Rocket,
+  RefreshCw, HeartPulse, Flame, ArrowLeft, ArrowRight, Rocket, Link2,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -728,6 +729,20 @@ function DetailPanel({
                   ))}
                 </div>
               )}
+              <div className="flex gap-2 mt-3">
+                <a
+                  href={`/api/v1/accounts/${account.id}/oauth/google`}
+                  className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5"
+                >
+                  <Link2 size={12} /> Connect YouTube
+                </a>
+                <a
+                  href={`/api/v1/accounts/${account.id}/oauth/tiktok`}
+                  className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5"
+                >
+                  <Link2 size={12} /> Connect TikTok
+                </a>
+              </div>
             </div>
 
             {/* Health Metrics */}
@@ -908,6 +923,30 @@ function SortIcon({ field, sortField, sortOrder }: { field: SortField; sortField
 // ---------------------------------------------------------------------------
 
 export default function AccountsPage() {
+  const searchParams = useSearchParams();
+
+  // Show toast on OAuth redirect
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+    const message = searchParams.get('message');
+
+    if (error) {
+      toast.error(message ? decodeURIComponent(message).replace(/\+/g, ' ') : `${error} — OAuth failed`);
+    } else if (success) {
+      toast.success(`Connected ${success.replace('_connected', '')}!`);
+    }
+
+    // Clean up URL params
+    if (error || success) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('success');
+      url.searchParams.delete('error');
+      url.searchParams.delete('message');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams]);
+
   // Filters
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);

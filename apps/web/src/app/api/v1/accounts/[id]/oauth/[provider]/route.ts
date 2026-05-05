@@ -16,9 +16,12 @@ export async function GET(
   if (ctx instanceof NextResponse) return ctx;
 
   const { id, provider } = params;
-  if (!['google', 'tiktok'].includes(provider)) {
-    return error('BAD_REQUEST', "Provider must be 'google' or 'tiktok'", 400);
+  if (!['google', 'youtube', 'tiktok'].includes(provider)) {
+    return error('BAD_REQUEST', "Provider must be 'google', 'youtube' or 'tiktok'", 400);
   }
+
+  // Normalize youtube to google for upstream routing
+  const upstreamProvider = provider === 'youtube' ? 'google' : provider;
 
   const token = req.headers.get('authorization')?.replace('Bearer ', '');
   if (!token) {
@@ -26,7 +29,7 @@ export async function GET(
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_WORKFLOW_API_URL ?? 'http://localhost:3011';
-  const upstreamUrl = `${baseUrl}/api/accounts/${id}/oauth/${provider}`;
+  const upstreamUrl = `${baseUrl}/api/accounts/${id}/oauth/${upstreamProvider}`;
 
   try {
     const upstreamRes = await fetch(upstreamUrl, {

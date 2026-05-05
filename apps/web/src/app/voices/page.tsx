@@ -237,6 +237,7 @@ export default function VoicesPage() {
                     onClick={() => handlePreview(voice)}
                     disabled={previewingVoiceId === voice.voiceId || !voice.previewUrl}
                     className="btn-icon btn-sm"
+                    title={!voice.previewUrl ? 'No preview available for this voice' : 'Play preview'}
                   >
                     {previewingVoiceId === voice.voiceId ? (
                       <Loader2 size={14} className="animate-spin" />

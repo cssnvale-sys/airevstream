@@ -105,7 +105,22 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <LoadingButton type="submit" loading={loading} loadingText="Signing in..." className="btn-primary w-full">
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              type="checkbox"
+              className="rounded border-border"
+            />
+            <label htmlFor="remember-me" className="ml-2 text-sm text-text-secondary">Remember me</label>
+          </div>
+
+          <LoadingButton
+            type="submit"
+            loading={loading}
+            loadingText="Signing in..."
+            className="btn-primary w-full"
+            onClick={() => { /* Explicit click guard — form submit fires natively */ }}
+          >
             Sign In
           </LoadingButton>
 

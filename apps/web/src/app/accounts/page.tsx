@@ -106,13 +106,12 @@ function TableSkeleton() {
   );
 }
 
-function AccountsEmptyState({ onAddEmail }: { onAddEmail: () => void }) {
+function AccountsEmptyState() {
   return (
     <EmptyStateComponent
       icon={Mail}
       title="No accounts found"
-      description="Add your first email account to get started."
-      action={{ label: 'Add Email Account', onClick: onAddEmail }}
+      description="Add your first email account to get started using the button above."
     />
   );
 }
@@ -731,7 +730,7 @@ function DetailPanel({
               )}
               <div className="flex gap-2 mt-3">
                 <a
-                  href={`/api/v1/accounts/${account.id}/oauth/google`}
+                  href={`/api/v1/accounts/${account.id}/oauth/youtube`}
                   className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5"
                 >
                   <Link2 size={12} /> Connect YouTube
@@ -1082,26 +1081,27 @@ export default function AccountsPage() {
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="card mb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search by email or notes..."
-              aria-label="Search by email or notes"
-              className="input w-full pl-9"
-            />
-          </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-            className="input"
-            aria-label="Filter by status"
-          >
+      {/* Filter Bar — hidden when no accounts */}
+      {filteredAccounts.length > 0 && (
+        <div className="card mb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Search by email or notes..."
+                aria-label="Search by email or notes"
+                className="input w-full pl-9"
+              />
+            </div>
+            <select
+              value={filterStatus}
+              onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+              className="input"
+              aria-label="Filter by status"
+            >
             <option value="">All Statuses</option>
             {STATUS_OPTIONS.filter(Boolean).map((s) => (
               <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -1129,8 +1129,9 @@ export default function AccountsPage() {
               <option key={t} value={t}>{tierLabel(t)}</option>
             ))}
           </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bulk Action Toolbar */}
       {selectedIds.size > 0 && (
@@ -1169,7 +1170,7 @@ export default function AccountsPage() {
             <button type="button" onClick={handleRefresh} className="btn-secondary btn-sm mt-3">Retry</button>
           </div>
         ) : filteredAccounts.length === 0 ? (
-          <AccountsEmptyState onAddEmail={() => setShowAddEmail(true)} />
+          <AccountsEmptyState />
         ) : (
           <>
             <div className="overflow-x-auto">

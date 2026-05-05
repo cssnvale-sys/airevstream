@@ -3,14 +3,9 @@ import { hashPassword, verifyPassword } from '../lib/password';
 
 describe('password', () => {
   describe('hashPassword', () => {
-    it('returns a salt:key formatted string', () => {
+    it('returns a bcrypt formatted string', () => {
       const hash = hashPassword('test-password');
-      const parts = hash.split(':');
-      expect(parts).toHaveLength(2);
-      // Salt is 16 bytes = 32 hex chars
-      expect(parts[0]).toHaveLength(32);
-      // Derived key is 64 bytes = 128 hex chars
-      expect(parts[1]).toHaveLength(128);
+      expect(hash).toMatch(/^\$2[aby]\$\d+\$/);
     });
 
     it('produces different hashes for the same password (random salt)', () => {
@@ -37,20 +32,12 @@ describe('password', () => {
       expect(verifyPassword('wrong-password', hash)).toBe(false);
     });
 
-    it('returns false for a malformed hash (no colon)', () => {
+    it('returns false for a malformed hash (not bcrypt)', () => {
       expect(verifyPassword('test', 'not-a-valid-hash')).toBe(false);
     });
 
-    it('returns false for a malformed hash (empty salt)', () => {
-      expect(verifyPassword('test', ':abc123')).toBe(false);
-    });
-
-    it('returns false for a malformed hash (empty key)', () => {
+    it('returns false for a legacy scrypt hash (salt:key format)', () => {
       expect(verifyPassword('test', 'abc123:')).toBe(false);
-    });
-
-    it('returns false for a malformed hash (too many colons)', () => {
-      expect(verifyPassword('test', 'a:b:c')).toBe(false);
     });
 
     it('handles empty password', () => {

@@ -124,7 +124,7 @@ export async function oauthRoutes(app: FastifyInstance) {
   // ---------------------------------------------------------------------------
   // Google OAuth Init
   // ---------------------------------------------------------------------------
-  app.get<{ Params: { id: string } }>('/google', { onRequest: [app.authenticate] }, async (request, reply) => {
+  app.get<{ Params: { id: string } }>('/:id/google', { onRequest: [app.authenticate] }, async (request, reply) => {
     const { id: emailAccountId } = request.params;
     const config = getConfig();
     const db = getDb();
@@ -172,7 +172,7 @@ export async function oauthRoutes(app: FastifyInstance) {
   // ---------------------------------------------------------------------------
   // TikTok OAuth Init
   // ---------------------------------------------------------------------------
-  app.get<{ Params: { id: string } }>('/tiktok', { onRequest: [app.authenticate] }, async (request, reply) => {
+  app.get<{ Params: { id: string } }>('/:id/tiktok', { onRequest: [app.authenticate] }, async (request, reply) => {
     const { id: emailAccountId } = request.params;
     const config = getConfig();
     const db = getDb();

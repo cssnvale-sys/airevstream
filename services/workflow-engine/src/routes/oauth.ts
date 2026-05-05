@@ -231,6 +231,10 @@ export async function oauthRoutes(app: FastifyInstance) {
       return reply.redirect(redirect('/accounts?error=oauth_failed', 'Missing code or state').redirect);
     }
 
+    if (!config.JWT_SECRET) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'JWT_SECRET not configured').redirect);
+    }
+
     const stateData = await verifyState(state, config.JWT_SECRET);
     if (!stateData) {
       return reply.redirect(redirect('/accounts?error=oauth_failed', 'Invalid or expired state').redirect);
@@ -345,6 +349,10 @@ export async function oauthRoutes(app: FastifyInstance) {
 
     if (!code || !state) {
       return reply.redirect(redirect('/accounts?error=oauth_failed', 'Missing code or state').redirect);
+    }
+
+    if (!config.JWT_SECRET) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'JWT_SECRET not configured').redirect);
     }
 
     const stateData = await verifyState(state, config.JWT_SECRET);

@@ -1,4 +1,5 @@
 import { type FastifyInstance, type FastifyRequest, type FastifyReply } from 'fastify';
+import '@fastify/jwt';
 import fp from 'fastify-plugin';
 import { createLogger } from '@airevstream/shared';
 
@@ -7,6 +8,9 @@ const logger = createLogger('plugins:auth');
 declare module 'fastify' {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+  }
+  interface FastifyRequest {
+    jwtVerify(): Promise<void>;
   }
 }
 

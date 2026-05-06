@@ -16,6 +16,7 @@ import {
   Trophy,
   Play,
 } from 'lucide-react';
+import { EmptyState, ErrorState } from '@/components/ui/empty-state';
 import { exportToCSV } from '@/lib/export';
 import { useExperiments } from '@/hooks/use-experiments';
 import { useSuggestionStats } from '@/hooks/use-suggestion-stats';
@@ -926,11 +927,10 @@ export default function AnalyticsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue" />
         </div>
       ) : analyticsError ? (
-        <div className="card flex flex-col items-center justify-center py-12 text-center">
-          <BarChart3 size={32} className="text-text-secondary mb-3" />
-          <h3 className="text-lg font-medium text-text-primary">Failed to load analytics</h3>
-          <p className="text-sm text-text-secondary mt-1">There was an error loading your analytics data. Please try again later.</p>
-        </div>
+        <ErrorState
+          title="Failed to load analytics"
+          message="There was an error loading your analytics data. Please try again later."
+        />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

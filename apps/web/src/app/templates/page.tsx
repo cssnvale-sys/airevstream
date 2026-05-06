@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   FileText,
   Video,
@@ -361,13 +362,12 @@ export default function TemplatesPage() {
           </div>
 
           {filteredTemplates.length === 0 && (
-            <div className="text-center py-16">
-              <Search className="w-12 h-12 mx-auto mb-4 text-text-tertiary opacity-30" />
-              <h3 className="text-lg font-medium mb-2">No templates found</h3>
-              <p className="text-text-secondary">
-                Try adjusting your search or filters
-              </p>
-            </div>
+            <EmptyState
+              icon={Search}
+              title="No templates found"
+              description="Try adjusting your search or filters."
+              compact
+            />
           )}
         </div>
 

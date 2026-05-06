@@ -6,6 +6,7 @@ import { useExperiments } from '@/hooks/use-experiments';
 import { cn, formatNumber, formatDate } from '@/lib/utils';
 import { FlaskConical, Plus, Play, Square, Trophy, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
+import { EmptyState } from '@/components/ui/empty-state';
 import { CreateExperimentModal } from '@/components/experiments/create-experiment-modal';
 
 interface ExperimentRow {
@@ -99,17 +100,12 @@ export default function ExperimentsPage() {
       ) : fetchError ? (
         <div className="card text-center py-8 text-text-secondary">Failed to load experiments. Please try again later.</div>
       ) : experiments.length === 0 ? (
-        <div className="card flex flex-col items-center justify-center py-12 text-center">
-          <FlaskConical size={32} className="text-text-secondary mb-3" />
-          <h3 className="text-lg font-medium text-text-primary">No experiments yet</h3>
-          <p className="text-sm text-text-secondary mt-1">
-            Create your first experiment to start A/B testing content variants.
-          </p>
-          <button type="button" onClick={() => setShowCreate(true)} className="btn-primary mt-4 flex items-center gap-2">
-            <Plus size={16} />
-            New Experiment
-          </button>
-        </div>
+        <EmptyState
+          icon={FlaskConical}
+          title="No experiments yet"
+          description="Create your first experiment to start A/B testing content variants."
+          action={{ label: 'New Experiment', onClick: () => setShowCreate(true), icon: Plus }}
+        />
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full text-body" aria-label="Experiments list">

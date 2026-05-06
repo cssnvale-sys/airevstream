@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useApi, apiPost, apiDelete } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { Mic, Plus, Play, Trash2, Loader2, Volume2, Clock, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -134,23 +135,12 @@ export default function VoicesPage() {
             {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
           </div>
         ) : clonedVoices.length === 0 ? (
-          <div className="card py-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-bg-tertiary flex items-center justify-center mx-auto mb-4">
-              <Mic size={24} className="text-text-secondary" />
-            </div>
-            <h3 className="text-lg font-medium text-text-primary mb-1">No cloned voices yet</h3>
-            <p className="text-text-secondary mb-4 max-w-md mx-auto">
-              Clone your voice or create custom voice profiles for consistent narration across your content.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(true)}
-              className="btn-primary inline-flex items-center gap-2"
-            >
-              <Plus size={16} />
-              Clone Your First Voice
-            </button>
-          </div>
+          <EmptyState
+            icon={Mic}
+            title="No cloned voices yet"
+            description="Clone your voice or create custom voice profiles for consistent narration across your content."
+            action={{ label: 'Clone Your First Voice', onClick: () => setShowCreateModal(true), icon: Plus }}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {clonedVoices.map((voice: Voice) => (

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useCohorts, useSeasoningStats } from '@/hooks/use-seasoning';
 import { apiPost } from '@/hooks/use-api';
 import { CreateCohortModal } from '@/components/seasoning/create-cohort-modal';
@@ -127,18 +128,12 @@ export default function SeasoningPage() {
         {!isLoading && !hasError && (
           <div className="space-y-3">
             {cohorts.length === 0 ? (
-              <div className="text-center py-12 bg-bg-secondary border border-border rounded-lg">
-                <Sprout className="mx-auto text-text-secondary mb-3" size={40} />
-                <p className="text-body text-text-secondary mb-2">No seasoning cohorts yet</p>
-                <p className="text-caption text-text-secondary mb-4">Create a cohort to start seasoning your accounts.</p>
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(true)}
-                  className="btn-primary"
-                >
-                  Create First Cohort
-                </button>
-              </div>
+              <EmptyState
+                icon={Sprout}
+                title="No seasoning cohorts yet"
+                description="Create a cohort to start seasoning your accounts."
+                action={{ label: 'Create First Cohort', onClick: () => setShowCreate(true) }}
+              />
             ) : (
               cohorts.map((cohort) => (
                 <Link

@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useAvatars, useSceneryAssets } from '@/hooks/use-assets';
 import { apiPost, apiDelete } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -598,19 +599,12 @@ export default function AssetsPage() {
           ) : avatarError ? (
             <div className="card text-center py-8 text-text-secondary">Failed to load characters. Please try again later.</div>
           ) : avatars.length === 0 ? (
-            <div className="card flex flex-col items-center justify-center py-16 text-center">
-              <Users size={40} className="text-text-tertiary mb-3" />
-              <h3 className="text-lg font-medium text-text-primary">No characters yet</h3>
-              <p className="text-sm text-text-secondary mt-1 mb-4">
-                {search ? 'No characters match your search.' : 'Create your first character to use in productions.'}
-              </p>
-              {!search && (
-                <button type="button" onClick={() => setShowCreateAvatar(true)} className="btn-primary text-sm inline-flex items-center gap-2">
-                  <Plus size={16} />
-                  New Character
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={Users}
+              title="No characters yet"
+              description={search ? 'No characters match your search.' : 'Create your first character to use in productions.'}
+              action={!search ? { label: 'New Character', onClick: () => setShowCreateAvatar(true), icon: Plus } : undefined}
+            />
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -660,21 +654,12 @@ export default function AssetsPage() {
           ) : sceneryError ? (
             <div className="card text-center py-8 text-text-secondary">Failed to load backgrounds. Please try again later.</div>
           ) : sceneryAssets.length === 0 ? (
-            <div className="card flex flex-col items-center justify-center py-16 text-center">
-              <Mountain size={40} className="text-text-tertiary mb-3" />
-              <h3 className="text-lg font-medium text-text-primary">No backgrounds yet</h3>
-              <p className="text-sm text-text-secondary mt-1 mb-4">
-                {search || sceneryCategory !== 'all'
-                  ? 'No backgrounds match your filters.'
-                  : 'Add backgrounds for use in your video productions.'}
-              </p>
-              {!search && sceneryCategory === 'all' && (
-                <button type="button" onClick={() => setShowCreateScenery(true)} className="btn-primary text-sm inline-flex items-center gap-2">
-                  <Plus size={16} />
-                  New Background
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={Mountain}
+              title="No backgrounds yet"
+              description={search || sceneryCategory !== 'all' ? 'No backgrounds match your filters.' : 'Add backgrounds for use in your video productions.'}
+              action={!search && sceneryCategory === 'all' ? { label: 'New Background', onClick: () => setShowCreateScenery(true), icon: Plus } : undefined}
+            />
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

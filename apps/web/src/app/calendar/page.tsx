@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, type DragEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useCalendar, useChannels, apiPost, apiPut } from '@/hooks/use-api';
+import { useCalendar, useChannels, apiPost, apiPut, apiDelete } from '@/hooks/use-api';
 import { useApi } from '@/hooks/use-api';
 import { cn, platformIcon } from '@/lib/utils';
 import { toast } from '@/lib/toast';
@@ -158,6 +158,11 @@ export default function CalendarPage() {
   // Drag-and-drop state
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
+
+  // Context menu state for unschedule
+  const [contextMenuItem, setContextMenuItem] = useState<CalendarItem | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [isUnscheduling, setIsUnscheduling] = useState(false);
 
   // Schedule modal state (KI-060)
   const [scheduleContentId, setScheduleContentId] = useState<string | null>(null);
@@ -428,6 +433,24 @@ export default function CalendarPage() {
     handleDrop(e, targetDate);
   }, [handleDrop]);
 
+  // Unschedule handler
+  const handleUnschedule = useCallback(async () => {
+    if (!contextMenuItem) return;
+    setIsUnscheduling(true);
+    try {
+      await apiDelete(`/schedule/${contextMenuItem.id}`);
+      toast.success('Post unscheduled successfully');
+      globalMutate((key: unknown) => typeof key === 'string' && key.includes('/calendar'));
+    } catch (err) {
+      console.error('Failed to unschedule post:', err);
+      toast.error('Failed to unschedule post');
+    } finally {
+      setIsUnscheduling(false);
+      setContextMenuItem(null);
+      setContextMenuPos(null);
+    }
+  }, [contextMenuItem, globalMutate]);
+
   // Build a drop handler for month view (preserves original time, changes date)
   const handleDropOnDate = useCallback((e: DragEvent<HTMLDivElement>, day: Date) => {
     e.preventDefault();
@@ -525,7 +548,12 @@ export default function CalendarPage() {
         onDragStart={(e) => handleDragStart(e, item)}
         onDragEnd={handleDragEnd}
         onClick={() => item.content?.id && router.push(`/content/${item.content.id}`)}
-        aria-label={`${item.channel?.name ?? 'Unknown'} on ${item.platform} \u2014 ${item.content?.status ?? item.status}`}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setContextMenuItem(item);
+          setContextMenuPos({ x: e.clientX, y: e.clientY });
+        }}
+        aria-label={`${item.channel?.name ?? 'Unknown'} on ${item.platform} — ${item.content?.status ?? item.status}`}
         className={cn(
           'w-full text-left px-2 py-1.5 rounded-md text-caption transition-colors cursor-grab active:cursor-grabbing',
           'bg-bg-tertiary hover:bg-bg-primary border border-border',
@@ -1014,6 +1042,45 @@ export default function CalendarPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Context menu for unschedule */}
+      {contextMenuItem && contextMenuPos && (
+        <div
+          className="fixed z-50 bg-bg-primary border border-border rounded-lg shadow-xl py-1 min-w-[160px]"
+          style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
+        >
+          <button
+            type="button"
+            onClick={handleUnschedule}
+            disabled={isUnscheduling}
+            className="w-full text-left px-3 py-2 text-sm text-accent-red hover:bg-bg-tertiary transition-colors flex items-center gap-2"
+          >
+            <X size={14} />
+            {isUnscheduling ? 'Unscheduling...' : 'Unschedule'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setContextMenuItem(null);
+              setContextMenuPos(null);
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-text-secondary hover:bg-bg-tertiary transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Close context menu on click outside */}
+      {contextMenuItem && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => {
+            setContextMenuItem(null);
+            setContextMenuPos(null);
+          }}
+        />
       )}
     </AppLayout>
   );

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDb } from '@airevstream/db';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 export const dynamic = 'force-dynamic';
 // Keep fresh for 60s; lets us publish changes without a full revalidation flow.
@@ -100,6 +101,9 @@ export default async function PublicStorefrontPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
+      <div className="mx-auto max-w-5xl px-6 pt-4">
+        <Breadcrumb items={[{ label: 'Storefronts', href: '/storefronts' }, { label: storefront.name, href: '#', isActive: true }]} />
+      </div>
       {storefront.bannerUrl ? (
         <div className="relative h-56 w-full overflow-hidden md:h-72">
           {/* eslint-disable-next-line @next/next/no-img-element */}

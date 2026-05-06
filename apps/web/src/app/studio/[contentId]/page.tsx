@@ -13,6 +13,7 @@ import { CostPreviewPanel } from '@/components/cinema/cost-preview-panel';
 import type { ShotData } from '@/components/cinema/shot-editor-panel';
 import type { GuidanceSuggestion } from '@/components/cinema/ai-guidance-panel';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { List, Table2, ImageIcon, Film as FilmIcon, Check, X, RotateCcw } from 'lucide-react';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { MediaPreview } from '@/components/ui/media-preview';
@@ -262,6 +263,7 @@ export default function StudioPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-0px)]">
+      <Breadcrumb items={[{ label: 'Library', href: '/library' }, { label: content?.title ?? 'Untitled', href: '#', isActive: true }]} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-bg-secondary shrink-0">
         <div className="flex items-center gap-3">

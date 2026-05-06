@@ -113,7 +113,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return success({ id: result.id, action: result.action, status: result.status });
   } catch (err) {
-    console.error(`POST /approvals/${id}/${action} failed:`, err);
+    logger.error('POST /api/v1/approvals/[id]/[action] failed', err as Error);
     return error('INTERNAL_ERROR', `Failed to ${action} content`, 500);
   }
 }

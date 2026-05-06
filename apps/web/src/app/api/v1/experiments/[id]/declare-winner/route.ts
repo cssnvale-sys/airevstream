@@ -120,7 +120,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       })),
     });
   } catch (err) {
-    console.error(`POST /api/v1/experiments/${id}/declare-winner failed:`, err);
+    logger.error('POST /api/v1/experiments/[id]/declare-winner failed', err as Error);
     return error('INTERNAL_ERROR', 'Failed to declare winner', 500);
   }
 }

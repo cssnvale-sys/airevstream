@@ -8,6 +8,7 @@ import { useApi, apiPost, apiPut } from '@/hooks/use-api';
 import { cn, formatRelativeTime, statusColor } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { CopyButton } from '@/components/ui/copy-button';
 import { QualityBreakdown } from '@/components/content/quality-breakdown';
 import { ShotGallery } from '@/components/content/shot-gallery';
@@ -225,7 +226,13 @@ export default function ContentDetailPage() {
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+        {/* Breadcrumb + Header */}
+        <Breadcrumb
+          items={[
+            { label: 'Content', href: '/content' },
+            { label: item.title ?? 'Untitled', href: '#', isActive: true },
+          ]}
+        />
         <div className="flex items-center gap-3 mb-6">
           <button type="button" onClick={() => router.back()} className="btn-secondary p-2" aria-label="Go back">
             <ArrowLeft size={16} />

@@ -12,6 +12,7 @@ import { SeriesAvatarManager } from '@/components/series/series-avatar-manager';
 import { SeriesAnalytics } from '@/components/series/series-analytics';
 import { apiPut } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface SeriesDetail {
   id: string;
@@ -94,6 +95,7 @@ export default function SeriesDetailPage() {
 
   return (
     <AppLayout>
+      <Breadcrumb items={[{ label: 'Series', href: '/series' }, { label: series?.name ?? 'Untitled', href: '#', isActive: true }]} />
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>

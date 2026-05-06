@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { Radio, ArrowLeft, Save, Layers } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { useChannelSeries } from '@/hooks/use-series';
 import { SeriesCard } from '@/components/series/series-card';
 import { CreateSeriesModal } from '@/components/series/create-series-modal';
@@ -333,6 +334,13 @@ export default function ChannelDetailPage() {
 
   return (
     <AppLayout>
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Channels', href: '/channels' },
+          { label: channel.name, href: '#', isActive: true },
+        ]}
+      />
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link href="/channels" className="p-1.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors" aria-label="Back to channels">

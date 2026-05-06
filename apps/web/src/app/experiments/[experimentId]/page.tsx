@@ -9,6 +9,7 @@ import { ArrowLeft, Play, Square, Trophy, FlaskConical, BarChart3 } from 'lucide
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { useState } from 'react';
 
 interface VariantData {
@@ -123,6 +124,12 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
 
   return (
     <AppLayout>
+      <Breadcrumb
+        items={[
+          { label: 'Experiments', href: '/experiments' },
+          { label: exp?.name ?? 'Untitled', href: '#', isActive: true },
+        ]}
+      />
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>

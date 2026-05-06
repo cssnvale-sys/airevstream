@@ -28,8 +28,6 @@ interface Template {
   type: 'video' | 'audio' | 'image' | 'mixed';
   duration: string;
   aiFeatures: string[];
-  usageCount: number;
-  rating: number;
   isPro?: boolean;
 }
 
@@ -42,8 +40,6 @@ const templates: Template[] = [
     type: 'video',
     duration: '60s',
     aiFeatures: ['Script Generation', 'Auto-Captions', 'Music Sync'],
-    usageCount: 12543,
-    rating: 4.8,
   },
   {
     id: 'instagram-reel-promo',
@@ -53,8 +49,6 @@ const templates: Template[] = [
     type: 'video',
     duration: '30s',
     aiFeatures: ['Style Transfer', 'Auto-Captions', 'Trending Audio'],
-    usageCount: 8932,
-    rating: 4.7,
     isPro: true,
   },
   {
@@ -65,8 +59,6 @@ const templates: Template[] = [
     type: 'video',
     duration: '90s',
     aiFeatures: ['Script Generation', 'Voice Cloning', 'Auto-Captions'],
-    usageCount: 15621,
-    rating: 4.9,
   },
   {
     id: 'podcast-intro',
@@ -76,8 +68,6 @@ const templates: Template[] = [
     type: 'audio',
     duration: '15s',
     aiFeatures: ['Music Generation', 'Voice Synthesis'],
-    usageCount: 5678,
-    rating: 4.6,
   },
   {
     id: 'linkedin-carousel',
@@ -87,8 +77,6 @@ const templates: Template[] = [
     type: 'image',
     duration: '5 slides',
     aiFeatures: ['Text Generation', 'Chart Creation'],
-    usageCount: 7234,
-    rating: 4.5,
   },
   {
     id: 'product-demo',
@@ -98,8 +86,6 @@ const templates: Template[] = [
     type: 'video',
     duration: '2min',
     aiFeatures: ['Script Generation', 'Voice Synthesis', 'Screen Recording'],
-    usageCount: 9876,
-    rating: 4.7,
     isPro: true,
   },
   {
@@ -110,8 +96,6 @@ const templates: Template[] = [
     type: 'video',
     duration: '3min',
     aiFeatures: ['Script Generation', 'Avatar Presenter', 'Visual Assets'],
-    usageCount: 11234,
-    rating: 4.8,
   },
   {
     id: 'ad-creative',
@@ -121,8 +105,6 @@ const templates: Template[] = [
     type: 'mixed',
     duration: '15-30s',
     aiFeatures: ['Variant Generation', 'Auto-Captions', 'CRO Optimization'],
-    usageCount: 14567,
-    rating: 4.9,
     isPro: true,
   },
   {
@@ -133,8 +115,6 @@ const templates: Template[] = [
     type: 'video',
     duration: '2min',
     aiFeatures: ['Text-to-Video', 'Voice Synthesis', 'Visual Selection'],
-    usageCount: 6789,
-    rating: 4.4,
   },
   {
     id: 'tutorial-series',
@@ -144,14 +124,12 @@ const templates: Template[] = [
     type: 'video',
     duration: '5-10min',
     aiFeatures: ['Script Generation', 'Chapter Detection', 'Captions'],
-    usageCount: 23456,
-    rating: 4.9,
   },
 ];
 
 const categories = [
   { value: 'all', label: 'All Templates', icon: Filter },
-  { value: 'social', label: 'Social Media', icon: TrendingUp },
+  { value: 'social', label: 'Social Media', icon: Sparkles },
   { value: 'youtube', label: 'YouTube', icon: Play },
   { value: 'podcast', label: 'Podcast', icon: Mic },
   { value: 'marketing', label: 'Marketing', icon: Zap },
@@ -244,16 +222,26 @@ function TemplateCard({ template }: { template: Template }) {
         )}
       </div>
       
-      {/* Stats */}
+      {/* Features */}
+      <div className="flex flex-wrap gap-1 mb-3">
+        {template.aiFeatures.slice(0, 3).map((feature) => (
+          <span key={feature} className="badge badge-sm">
+            {feature}
+          </span>
+        ))}
+        {template.aiFeatures.length > 3 && (
+          <span className="badge badge-sm">
+            +{template.aiFeatures.length - 3}
+          </span>
+        )}
+      </div>
+      
+      {/* Meta */}
       <div className="flex items-center justify-between text-xs text-text-secondary pt-3 border-t border-border">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" />
-            {template.usageCount.toLocaleString()} uses
-          </span>
-          <span className="flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            {template.rating}
+            <Clock className="w-3 h-3" />
+            {template.duration}
           </span>
         </div>
       </div>
@@ -297,7 +285,7 @@ export default function TemplatesPage() {
             <h2 className="text-2xl font-bold mb-2">Tutorial Series</h2>
             <p className="text-white/80 max-w-xl mb-4">
               Create engaging educational content with AI-generated scripts, automatic chapter detection, 
-              and perfectly synced captions. Used by 23,456 creators.
+              and perfectly synced captions.
             </p>
             <div className="flex gap-3">
               <Link href="/create?template=tutorial-series">

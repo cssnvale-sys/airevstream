@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 // ─── Types ─────────────────────────────────────────────
 
@@ -368,6 +369,12 @@ export default function AssetDetailPage() {
 
   return (
     <AppLayout>
+      <Breadcrumb
+        items={[
+          { label: 'Assets', href: '/assets' },
+          { label: avatar?.name ?? 'Untitled', href: '#', isActive: true },
+        ]}
+      />
       {/* Header */}
       <div className="mb-6">
         <Link

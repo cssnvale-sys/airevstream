@@ -10,7 +10,8 @@ import { EnrollmentTable } from '@/components/seasoning/enrollment-table';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
-
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 interface CohortDetail {
   id: string;
   name: string;
@@ -104,7 +105,13 @@ export default function CohortDetailPage() {
 
   return (
     <AppLayout>
-    <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Seasoning', href: '/seasoning' },
+          { label: cohort?.name ?? 'Untitled', href: '#', isActive: true },
+        ]}
+      />
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

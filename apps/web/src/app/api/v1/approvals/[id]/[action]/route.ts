@@ -9,7 +9,7 @@ const RejectBodySchema = z.object({
   feedback: z.string().max(2000).optional(),
 });
 
-type RouteParams = { params: { id: string; action: string } };
+type RouteParams = { params: Promise<{ id: string; action: string  }> };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id, action } = params;
+  const { id, action } = await params;
   if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
   if (!['approve', 'reject'].includes(action)) {
     return error('VALIDATION_ERROR', 'Action must be approve or reject', 400);

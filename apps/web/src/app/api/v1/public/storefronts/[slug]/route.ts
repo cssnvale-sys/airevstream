@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{  slug: 
   const rl = checkRateLimit(`public/storefronts:${ip}`, PUBLIC_STOREFRONT_RATE_LIMIT);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
   const params = await context.params;
-  const { slug } = params;
+  const { slug } = await params;
   if (!slug || slug.length > 100) return error('NOT_FOUND', 'Storefront not found', 404);
   try {
     const db = getDb();

@@ -4,7 +4,7 @@ import { addJob } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { shotId: string } };
+type RouteParams = { params: Promise<{ shotId: string  }> };
 
 /**
  * POST /api/v1/storyboard-shots/[shotId]/generate
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
-    const { shotId } = params;
+    const { shotId } = await params;
     if (!isUUID(shotId)) return validationError('Invalid shot ID format');
 
     // Load shot with tenant verification

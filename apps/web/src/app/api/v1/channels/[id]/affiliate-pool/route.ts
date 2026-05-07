@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`affiliate-pool:delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id: channelId } = params;
+  const { id: channelId } = await params;
   if (!isUUID(channelId)) return validationError('Invalid ID format');
 
   try {

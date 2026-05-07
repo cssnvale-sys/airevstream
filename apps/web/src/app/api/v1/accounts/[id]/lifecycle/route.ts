@@ -16,8 +16,9 @@ const StartLifecycleSchema = z.object({
  * GET /api/v1/accounts/[id]/lifecycle
  * Get lifecycle status for an email account
  */
-export async function GET(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
+  const params = await context.params;
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
@@ -65,8 +66,9 @@ export async function GET(req: NextRequest, { params }: { params: {  id: string 
  * POST /api/v1/accounts/[id]/lifecycle
  * Start a lifecycle pipeline for an email account
  */
-export async function POST(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
+  const params = await context.params;
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
   if (ctx.role === 'viewer') return forbidden('Viewers cannot perform this action');

@@ -4,7 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { shotId: string } };
+type RouteParams = { params: Promise<{ shotId: string  }> };
 
 const UpdateShotSchema = z.object({
   shotspec: z.record(z.unknown()).optional(),
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
   try {
-    const { shotId } = params;
+    const { shotId } = await params;
     if (!isUUID(shotId)) return validationError('Invalid shot ID format');
 
     const shot = await ctx.db.storyboardShot.findFirst({
@@ -73,7 +73,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
   try {
-    const { shotId } = params;
+    const { shotId } = await params;
     if (!isUUID(shotId)) return validationError('Invalid shot ID format');
 
     // Verify shot exists and belongs to tenant

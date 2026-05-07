@@ -16,13 +16,15 @@ const UpdateExperimentSchema = z.object({
 /**
  * GET /api/v1/experiments/[id]
  */
-export async function GET(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = await params;
+  const params = await context.params;
+
+  const { id } = params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest, { params }: { params: {  id: string 
 /**
  * PUT /api/v1/experiments/[id]
  */
-export async function PUT(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot update experiments');
@@ -70,7 +72,8 @@ export async function PUT(req: NextRequest, { params }: { params: {  id: string 
   const rl = checkRateLimit(`experiment-update:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = await params;
+  const params = await context.params;
+  const { id } = params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {
@@ -116,7 +119,7 @@ export async function PUT(req: NextRequest, { params }: { params: {  id: string 
 /**
  * DELETE /api/v1/experiments/[id]
  */
-export async function DELETE(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot delete experiments');
@@ -127,7 +130,8 @@ export async function DELETE(req: NextRequest, { params }: { params: {  id: stri
   const rl = checkRateLimit(`experiment-delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = await params;
+  const params = await context.params;
+  const { id } = params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {

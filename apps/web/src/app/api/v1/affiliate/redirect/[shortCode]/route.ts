@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 /** Rate limit for public redirect: 60 clicks per minute per IP */
 const REDIRECT_RATE_LIMIT = { maxAttempts: 60, windowMs: 60 * 1000 };
 
-type RouteParams = { params: { shortCode: string } };
+type RouteParams = { params: Promise<{ shortCode: string  }> };
 
 /**
  * GET /api/v1/affiliate/redirect/[shortCode]
@@ -24,7 +24,7 @@ type RouteParams = { params: { shortCode: string } };
  *   - channelId: channel that published the link
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
-  const { shortCode } = params;
+  const { shortCode } = await params;
 
   // IP-based rate limiting to prevent click fraud
   const ip = getClientIp(req);

@@ -3,7 +3,7 @@ import { authenticate, success, error, validationError, isUUID, type ApiContext 
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string; episodeId: string } };
+type RouteParams = { params: Promise<{ id: string; episodeId: string  }> };
 
 function tenantFilter(tenantId: string) {
   return { channel: { socialAccount: { emailAccount: { tenantId } } } };
@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`episode:update:${(ctx as ApiContext).userId}:${ip}`, { maxAttempts: 30, windowMs: 60_000 });
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-    const { id, episodeId } = params;
+    const { id, episodeId } = await params;
     if (!isUUID(id) || !isUUID(episodeId)) return validationError('Invalid ID');
 
     // Verify series belongs to tenant
@@ -74,7 +74,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`episode:delete:${(ctx as ApiContext).userId}:${ip}`, { maxAttempts: 10, windowMs: 60_000 });
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-    const { id, episodeId } = params;
+    const { id, episodeId } = await params;
     if (!isUUID(id) || !isUUID(episodeId)) return validationError('Invalid ID');
 
     const series = await ctx.db.series.findFirst({

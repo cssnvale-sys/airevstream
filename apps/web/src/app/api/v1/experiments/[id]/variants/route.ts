@@ -14,13 +14,15 @@ const CreateVariantSchema = z.object({
 /**
  * GET /api/v1/experiments/[id]/variants
  */
-export async function GET(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = await params;
+  const params = await context.params;
+
+  const { id } = params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest, { params }: { params: {  id: string 
 /**
  * POST /api/v1/experiments/[id]/variants
  */
-export async function POST(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot add variants');
@@ -63,7 +65,8 @@ export async function POST(req: NextRequest, { params }: { params: {  id: string
   const rl = checkRateLimit(`experiment-variant-create:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = await params;
+  const params = await context.params;
+  const { id } = params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {

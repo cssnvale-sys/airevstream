@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
  * POST /api/v1/experiments/[id]/evaluate
  * Queue an experiment evaluation job
  */
-export async function POST(req: NextRequest, { params }: { params: {  id: string  } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot evaluate experiments');
@@ -19,7 +19,8 @@ export async function POST(req: NextRequest, { params }: { params: {  id: string
   const rl = checkRateLimit(`experiment-evaluate:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = await params;
+  const params = await context.params;
+  const { id } = params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {

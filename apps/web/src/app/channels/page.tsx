@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Radio, Hash, Globe, Film } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface ChannelRow {
   id: string;
@@ -62,12 +63,10 @@ export default function ChannelsPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-page-title text-text-primary">Channels</h1>
-          <p className="text-text-secondary mt-1">Manage channel identities, niches, and viral performance.</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Channels"
+        description="Manage channel identities, niches, and viral performance."
+      />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

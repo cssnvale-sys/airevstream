@@ -61,7 +61,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // Strip encrypted credentials from social accounts
     const data = {
       ...safe,
-      socialAccounts: safe.socialAccounts.map(({ credentialsEnc, ...sa }) => sa),
+      socialAccounts: safe.socialAccounts.map(({ credentialsEnc: _credentialsEnc, ...sa }: { credentialsEnc: unknown; [key: string]: unknown }) => sa),
       lifecycle: lifecycle ? {
         id: lifecycle.id,
         status: lifecycle.status,

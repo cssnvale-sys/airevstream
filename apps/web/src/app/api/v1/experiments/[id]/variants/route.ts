@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{  id: st
       shareRate: Number(v.shareRate),
     })));
   } catch (err) {
-    console.error(`GET /api/v1/experiments/${id}/variants failed:`, err);
+    logger.error(`GET /api/v1/experiments/${id}/variants failed`, err);
     return error('INTERNAL_ERROR', 'Failed to fetch variants', 500);
   }
 }

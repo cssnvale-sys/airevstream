@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { z } from 'zod';
 import { X, Search } from 'lucide-react';
 import { apiPost, useApi } from '@/hooks/use-api';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
+import { useForm } from '@/hooks/use-form';
+import { uuidSchema, nameSchema } from '@/lib/form-validation';
+import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { LoadingButton } from '@/components/ui/loading-button';
 
@@ -22,11 +26,17 @@ interface ContentOption {
   status: string;
 }
 
+// Schema for adding episode form
+const addEpisodeSchema = z.object({
+  selectedContentId: uuidSchema,
+  title: nameSchema.optional().nullable(),
+});
+
+type AddEpisodeFormData = z.infer<typeof addEpisodeSchema>;
+
 export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const [title, setTitle] = useState('');
-  const [selectedContentId, setSelectedContentId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: submitting });
 
@@ -35,29 +45,30 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
   );
   const contentItems = contentData?.data ?? [];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedContentId) return;
-
-    setSubmitting(true);
-    try {
-      await apiPost(`/series/${seriesId}/episodes`, {
-        contentId: selectedContentId,
-        title: title.trim() || null,
-      });
-      toast.success('Episode added');
-      onAdded();
-      onClose();
-      setSelectedContentId('');
-      setTitle('');
-      setSearch('');
-    } catch (err) {
-      console.error('Failed to add episode:', err);
-      toast.error('Failed to add episode');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const form = useForm<AddEpisodeFormData>({
+    schema: addEpisodeSchema,
+    initialValues: { selectedContentId: '', title: '' },
+    onSubmit: async (values) => {
+      setSubmitting(true);
+      try {
+        await apiPost(`/series/${seriesId}/episodes`, {
+          contentId: values.selectedContentId,
+          title: values.title?.trim() || null,
+        });
+        toast.success('Episode added');
+        onAdded();
+        onClose();
+      } catch (err) {
+        console.error('Failed to add episode:', err);
+        toast.error('Failed to add episode');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    successMessage: 'Episode added',
+    errorMessage: 'Failed to add episode',
+    resetOnSuccess: true,
+  });
 
   if (!open) return null;
 
@@ -71,7 +82,7 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
             <X size={18} />
           </button>
         </div>
-        <form noValidate onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form noValidate onSubmit={form.handleSubmit} className="p-4 space-y-4">
           <div>
             <label htmlFor="episode-search" className="block text-sm font-medium text-text-primary mb-1">Search Content</label>
             <div className="relative">
@@ -90,10 +101,10 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
             <label htmlFor="episode-content-select" className="block text-sm font-medium text-text-primary mb-1">Select Content</label>
             <select
               id="episode-content-select"
-              value={selectedContentId}
-              onChange={(e) => setSelectedContentId(e.target.value)}
-              className="input w-full"
-              required
+              value={form.state.values.selectedContentId ?? ''}
+              onChange={(e) => form.setValue('selectedContentId', e.target.value)}
+              onBlur={() => form.touch('selectedContentId')}
+              className={cn('input w-full', form.getError('selectedContentId') && 'border-accent-red')}
             >
               <option value="">Choose content...</option>
               {contentItems.map((c) => (
@@ -102,21 +113,28 @@ export function AddEpisodeModal({ open, onClose, seriesId, onAdded }: Props) {
                 </option>
               ))}
             </select>
+            {form.getError('selectedContentId') && (
+              <p className="text-accent-red text-xs mt-1">{form.getError('selectedContentId')}</p>
+            )}
           </div>
           <div>
             <label htmlFor="episode-title" className="block text-sm font-medium text-text-primary mb-1">Episode Title (optional)</label>
             <input
               id="episode-title"
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="input w-full"
+              value={form.state.values.title ?? ''}
+              onChange={form.handleTextChange('title')}
+              onBlur={() => form.touch('title')}
+              className={cn('input w-full', form.getError('title') && 'border-accent-red')}
               placeholder="Override title for this episode"
             />
+            {form.getError('title') && (
+              <p className="text-accent-red text-xs mt-1">{form.getError('title')}</p>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-            <LoadingButton type="submit" loading={submitting} disabled={!selectedContentId} loadingText="Adding..." className="btn-primary">
+            <LoadingButton type="submit" loading={submitting} disabled={!form.state.values.selectedContentId} loadingText="Adding..." className="btn-primary">
               Add Episode
             </LoadingButton>
           </div>

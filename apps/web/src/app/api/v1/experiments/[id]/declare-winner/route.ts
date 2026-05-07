@@ -35,7 +35,7 @@ const DeclareWinnerSchema = z.object({
   notes: z.string().max(2000).optional().nullable(),
 });
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`experiment-declare-winner:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {

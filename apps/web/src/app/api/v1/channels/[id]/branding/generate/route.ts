@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 const generateBrandingSchema = z.object({
   type: z.enum(['logo', 'banner', 'profile']),
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`channels-branding-generate:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

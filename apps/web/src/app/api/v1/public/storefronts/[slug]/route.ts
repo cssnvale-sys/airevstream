@@ -19,10 +19,11 @@ const PUBLIC_STOREFRONT_RATE_LIMIT = { maxAttempts: 120, windowMs: 60 * 1000 };
  * Returns the bare minimum the public page needs to render — channel branding
  * and a list of featured/active products with their resolved public link URL.
  */
-export async function GET(req: NextRequest, { params }: { params: {  slug: string  } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{  slug: string  }> }) {
   const ip = getClientIp(req);
   const rl = checkRateLimit(`public/storefronts:${ip}`, PUBLIC_STOREFRONT_RATE_LIMIT);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
+  const params = await context.params;
   const { slug } = params;
   if (!slug || slug.length > 100) return error('NOT_FOUND', 'Storefront not found', 404);
   try {

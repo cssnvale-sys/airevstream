@@ -13,11 +13,11 @@ const UpdateEnrollmentSchema = z.object({
  * GET /api/v1/seasoning/enrollments/[id]
  * Get enrollment detail with full activity log
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return notFound('Enrollment not found');
 
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
@@ -54,12 +54,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
  * PUT /api/v1/seasoning/enrollments/[id]
  * Update enrollment (pause, resume, retry, manual phase set)
  */
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot update enrollments');
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return notFound('Enrollment not found');
 
   const ip = getClientIp(req);

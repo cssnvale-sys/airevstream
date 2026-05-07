@@ -3,7 +3,7 @@ import { authenticate, success, error, notFound, isUUID, validationError, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 /**
  * POST /api/v1/storyboards/[id]/approve
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const storyboard = await ctx.db.storyboard.findFirst({

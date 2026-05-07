@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAny, success, error, notFound, isUUID, validationError } from '@/lib/api-server';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 /**
  * GET /api/v1/jobs/[id]
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticateAny(req, 'read');
   if (ctx instanceof NextResponse) return ctx;
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

@@ -13,7 +13,7 @@ const CreateSocialSchema = z.object({
   credentials: z.union([z.string(), z.record(z.unknown())]).optional().nullable(),
 });
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 /**
  * GET /api/v1/accounts/[id]/socials
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
   const { page, limit, skip, sort, order, params: queryParams } = parseQuery(req);
   const platform = queryParams.get('platform') ?? undefined;
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`accounts/[id]/socials:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

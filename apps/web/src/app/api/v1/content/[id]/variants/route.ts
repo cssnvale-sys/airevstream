@@ -10,7 +10,7 @@ const CreateVariantSchema = z.object({
   modifications: z.record(z.unknown()).optional(),
 });
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 // GET /api/v1/content/[id]/variants — List all variants of a content item
 export async function GET(req: NextRequest, { params }: RouteParams) {
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`content/variants:get:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     // Find the root content item (check if this item IS the root, or has a parentId)
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`content/variants:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const rawBody = await req.json();

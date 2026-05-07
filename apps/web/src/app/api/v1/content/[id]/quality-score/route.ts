@@ -3,7 +3,7 @@ import { authenticate, authenticateAny, success, error, notFound, isUUID, valida
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 // POST /api/v1/content/[id]/quality-score — Score a content item
 export async function POST(req: NextRequest, { params }: RouteParams) {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     // Unconditional tenant guard (D076)
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const contentItem = await ctx.db.contentItem.findFirst({
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // Unconditional tenant guard (D076)
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     const contentItem = await ctx.db.contentItem.findFirst({

@@ -14,7 +14,7 @@ const UpdateCinemaBibleSchema = z.object({
   message: 'At least one bible section must be provided',
 });
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 /**
  * GET /api/v1/channels/[id]/cinema-bible
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -69,7 +69,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`channels-cinema-bible:PUT:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

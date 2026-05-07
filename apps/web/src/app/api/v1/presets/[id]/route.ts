@@ -6,7 +6,7 @@ import { FAMILY_OVERRIDE_KEYS } from '@airevstream/shared';
 import type { PresetFamily } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 const VALID_FAMILIES = [
   'visual', 'camera', 'audio', 'edit', 'output',
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -64,7 +64,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`presets/[id]:patch:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -130,7 +130,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`presets/[id]:delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

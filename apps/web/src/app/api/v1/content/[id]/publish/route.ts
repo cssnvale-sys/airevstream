@@ -4,7 +4,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   let ctx: ApiContext | NextResponse | undefined = undefined;
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`content-publish:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
 
     // Unconditional tenant guard (D076)

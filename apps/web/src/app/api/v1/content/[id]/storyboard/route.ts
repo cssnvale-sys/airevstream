@@ -13,7 +13,7 @@ const UpdateStoryboardSchema = z.object({
   aspectRatio: z.string().max(20).optional(),
 });
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
   let ctx: ApiContext | NextResponse | undefined = undefined;
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`content/storyboard:get:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     // Verify the content item exists
@@ -91,7 +91,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`content/storyboard:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     // Verify the content item exists

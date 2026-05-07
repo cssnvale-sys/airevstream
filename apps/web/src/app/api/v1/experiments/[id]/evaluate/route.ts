@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: {  id: string
   const rl = checkRateLimit(`experiment-evaluate:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {

@@ -7,11 +7,12 @@ const voiceClient = new VoiceCloneClient(process.env.ELEVENLABS_API_KEY);
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Note: Authentication should be added here - simplified for now
   try {
-    await voiceClient.deleteVoice(params.id);
+    const { id } = await params;
+    await voiceClient.deleteVoice(id);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Failed to delete voice', err);

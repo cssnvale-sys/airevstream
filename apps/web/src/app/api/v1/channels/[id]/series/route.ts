@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, validationError, isUUID, parseQuery , type ApiContext } from '@/lib/api-server';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
   let ctx: ApiContext | NextResponse | undefined = undefined;
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (ctx instanceof Response) return ctx;
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return validationError('Invalid channel ID');
 
     // Verify channel belongs to tenant

@@ -6,11 +6,11 @@ import { logger } from '@/lib/logger';
  * GET /api/v1/seasoning/cohorts/[id]/enrollments
  * List enrollments for a cohort (filterable by status, platform, phase)
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return notFound('Cohort not found');
 
   const { page, limit, skip, params: searchParams } = parseQuery(req);

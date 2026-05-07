@@ -4,7 +4,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   let ctx: ApiContext | NextResponse | undefined = undefined;
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     // Unconditional tenant guard (D076)
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { id } = params;
+    const { id } = await params;
     if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
 
     const item = await ctx.db.contentItem.findFirst({

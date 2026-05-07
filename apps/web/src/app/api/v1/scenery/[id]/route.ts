@@ -6,7 +6,7 @@ import { deleteObject } from '@airevstream/storage';
 import { BUCKETS } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 const updateScenerySchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`scenery/[id]:put:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -123,7 +123,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`scenery/[id]:delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

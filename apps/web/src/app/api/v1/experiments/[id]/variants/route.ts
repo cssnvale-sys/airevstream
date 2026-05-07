@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: {  id: string 
 
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: {  id: string
   const rl = checkRateLimit(`experiment-variant-create:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = params;
+  const { id } = await params;
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {

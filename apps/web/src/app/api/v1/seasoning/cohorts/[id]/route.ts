@@ -14,7 +14,8 @@ const UpdateCohortSchema = z.object({
 /**
  * GET /api/v1/seasoning/cohorts/[id]
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
@@ -53,7 +54,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 /**
  * PUT /api/v1/seasoning/cohorts/[id]
  */
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot update cohorts');
@@ -95,7 +97,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 /**
  * DELETE /api/v1/seasoning/cohorts/[id]
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot delete cohorts');

@@ -14,7 +14,8 @@ const CreateVariantSchema = z.object({
 /**
  * GET /api/v1/experiments/[id]/variants
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
+  const params = await context.params;
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
@@ -52,7 +53,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 /**
  * POST /api/v1/experiments/[id]/variants
  */
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
+  const params = await context.params;
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot add variants');

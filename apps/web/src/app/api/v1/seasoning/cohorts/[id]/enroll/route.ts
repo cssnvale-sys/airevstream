@@ -18,7 +18,8 @@ const EnrollSchema = z.object({
  * POST /api/v1/seasoning/cohorts/[id]/enroll
  * Enroll email accounts into the seasoning pipeline
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot enroll accounts');

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { apiPost } from '@/hooks/use-api';
 import { useForm } from '@/hooks/use-form';
 import { nameSchema, descriptionSchema } from '@/lib/form-validation';
+import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
@@ -141,7 +142,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
                 onChange={form.handleTextChange('name')}
                 onBlur={() => form.touch('name')}
                 placeholder="e.g. Hook style comparison"
-                className="input w-full"
+                className={cn('input w-full', form.getError('name') && 'border-accent-red')}
               />
               {form.getError('name') && (
                 <p className="text-sm text-accent-red mt-1">{form.getError('name')}</p>
@@ -158,7 +159,7 @@ export function CreateExperimentModal({ open, onClose, onCreated }: CreateExperi
                 onBlur={() => form.touch('hypothesis')}
                 placeholder="e.g. Question hooks will increase engagement by 20%"
                 rows={2}
-                className="input w-full resize-none"
+                className={cn('input w-full resize-none', form.getError('hypothesis') && 'border-accent-red')}
               />
               {form.getError('hypothesis') && (
                 <p className="text-sm text-accent-red mt-1">{form.getError('hypothesis')}</p>

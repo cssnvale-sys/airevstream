@@ -7,10 +7,9 @@ const voiceClient = new VoiceCloneClient(process.env.ELEVENLABS_API_KEY);
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   // Note: Authentication should be added here - simplified for now
-  const params = await context.params;
   try {
     await voiceClient.deleteVoice(params.id);
     return NextResponse.json({ success: true });
@@ -22,10 +21,9 @@ export async function DELETE(
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   // Note: Authentication should be added here - simplified for now
-  const params = await context.params;
   try {
     const voice = await voiceClient.getVoice(params.id);
     return NextResponse.json({ success: true, data: voice });

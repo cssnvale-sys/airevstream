@@ -6,8 +6,7 @@ import { logger } from '@/lib/logger';
  * GET /api/v1/seasoning/cohorts/[id]/enrollments
  * List enrollments for a cohort (filterable by status, platform, phase)
  */
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params;
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 

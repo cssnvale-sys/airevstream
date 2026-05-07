@@ -8,8 +8,7 @@ import { logger } from '@/lib/logger';
  * POST /api/v1/accounts/[id]/lifecycle/retry
  * Retry a failed lifecycle pipeline
  */
-export async function POST(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
-  const params = await context.params;
+export async function POST(req: NextRequest, { params }: { params: {  id: string  } }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
@@ -19,7 +18,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{  id: s
   const rl = checkRateLimit(`lifecycle:retry:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = await params;
+  const { id } = params;
 
   try {
     const emailAccount = await ctx.db.emailAccount.findFirst({

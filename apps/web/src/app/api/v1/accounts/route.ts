@@ -76,9 +76,9 @@ export async function GET(req: NextRequest) {
       ctx.db.emailAccount.count({ where }),
     ]);
 
-    const data = accounts.map(({ passwordEnc, _count, ...account }) => ({
+    const data = accounts.map(({ passwordEnc: _passwordEnc, _count, ...account }: { passwordEnc: unknown; _count: { socialAccounts: number }; [key: string]: unknown }) => ({
       ...account,
-      socialAccounts: account.socialAccounts.map((sa) => ({
+      socialAccounts: (account as { socialAccounts: Array<Record<string, unknown>> }).socialAccounts.map((sa: Record<string, unknown>) => ({
         ...sa,
         healthScore: sa.healthScore != null ? Number(sa.healthScore) : null,
       })),

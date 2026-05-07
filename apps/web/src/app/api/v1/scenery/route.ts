@@ -55,9 +55,9 @@ export async function GET(req: NextRequest) {
       ctx.db.sceneryAsset.count({ where: where as any }),
     ]);
 
-    const data = sceneryAssets.map(({ _count, ...asset }) => ({
+    const data = sceneryAssets.map(({ _count, ...asset }: { _count: unknown; [key: string]: unknown }) => ({
       ...asset,
-      channelCount: _count.channelScenery,
+      channelCount: (_count as { channelScenery: number }).channelScenery,
     }));
 
     return paginated(data, total, page, limit);

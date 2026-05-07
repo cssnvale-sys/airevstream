@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, validationError, isUUID } from '@/lib/api-server';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 /**
  * GET /api/v1/channels/[id]/assets
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

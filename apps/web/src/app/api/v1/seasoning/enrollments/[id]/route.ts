@@ -13,8 +13,7 @@ const UpdateEnrollmentSchema = z.object({
  * GET /api/v1/seasoning/enrollments/[id]
  * Get enrollment detail with full activity log
  */
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params;
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
@@ -55,8 +54,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
  * PUT /api/v1/seasoning/enrollments/[id]
  * Update enrollment (pause, resume, retry, manual phase set)
  */
-export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params;
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (ctx.role === 'viewer') return forbidden('Viewers cannot update enrollments');

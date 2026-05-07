@@ -8,7 +8,7 @@ const AddToPoolSchema = z.object({
   affiliateProductId: z.string().uuid('affiliateProductId must be a valid UUID'),
 });
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 /**
  * DELETE /api/v1/channels/[id]/affiliate-pool?affiliateProductId=xxx
@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`affiliate-pool:delete:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id: channelId } = await params;
+  const { id: channelId } = params;
   if (!isUUID(channelId)) return validationError('Invalid ID format');
 
   try {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`affiliate-pool:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

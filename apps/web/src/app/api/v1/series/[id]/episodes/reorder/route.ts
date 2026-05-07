@@ -3,7 +3,7 @@ import { authenticate, success, error, validationError, isUUID, type ApiContext 
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 function tenantFilter(tenantId: string) {
   return { channel: { socialAccount: { emailAccount: { tenantId } } } };
@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`episode:reorder:${(ctx as ApiContext).userId}:${ip}`, { maxAttempts: 20, windowMs: 60_000 });
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-    const { id } = await params;
+    const { id } = params;
     if (!isUUID(id)) return validationError('Invalid series ID');
 
     const series = await ctx.db.series.findFirst({

@@ -4,7 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const RepurposeSchema = z.object({
   targetFormat: z.enum(['short', 'reel', 'story']),
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`repurpose:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = await params;
+    const { id } = params;
     if (!isUUID(id)) return validationError('Invalid content ID format');
 
     const body = await req.json();

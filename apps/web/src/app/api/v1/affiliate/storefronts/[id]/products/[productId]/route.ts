@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string; productId: string }> };
+type RouteParams = { params: { id: string; productId: string } };
 
 const updateProductSchema = z.object({
   displayOrder: z.number().int().min(0).optional(),
@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`affiliate-storefront-product:PATCH:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id, productId } = await params;
+  const { id, productId } = params;
   if (!isUUID(id) || !isUUID(productId)) return validationError('Invalid ID format');
 
   try {
@@ -88,7 +88,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`affiliate-storefront-product:DELETE:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id, productId } = await params;
+  const { id, productId } = params;
   if (!isUUID(id) || !isUUID(productId)) return validationError('Invalid ID format');
 
   try {

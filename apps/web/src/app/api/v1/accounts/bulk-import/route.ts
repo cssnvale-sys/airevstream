@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       where: { email: { in: emails }, tenantId: ctx.tenantId },
       select: { email: true },
     });
-    const existingEmails = new Set(existingAccounts.map((a) => a.email));
+    const existingEmails = new Set(existingAccounts.map((a: { email: string }) => a.email));
 
     // Prepare records to create
     const toCreate: { email: string; passwordEnc: string; tier: string; notes: string | null }[] = [];

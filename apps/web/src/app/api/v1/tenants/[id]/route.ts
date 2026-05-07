@@ -4,7 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, requir
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const updateTenantSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   const ip = getClientIp(req);
@@ -101,7 +101,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`tenants:PATCH:${ip}:${ctx.userId}`, RATE_LIMITS.adminWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

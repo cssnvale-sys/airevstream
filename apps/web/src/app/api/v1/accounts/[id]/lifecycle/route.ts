@@ -16,13 +16,12 @@ const StartLifecycleSchema = z.object({
  * GET /api/v1/accounts/[id]/lifecycle
  * Get lifecycle status for an email account
  */
-export async function GET(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
-  const params = await context.params;
+export async function GET(req: NextRequest, { params }: { params: {  id: string  } }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = await params;
+  const { id } = params;
 
   try {
     const emailAccount = await ctx.db.emailAccount.findFirst({
@@ -66,8 +65,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{  id: st
  * POST /api/v1/accounts/[id]/lifecycle
  * Start a lifecycle pipeline for an email account
  */
-export async function POST(req: NextRequest, context: { params: Promise<{  id: string  }> }) {
-  const params = await context.params;
+export async function POST(req: NextRequest, { params }: { params: {  id: string  } }) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
@@ -77,7 +75,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{  id: s
   const rl = checkRateLimit(`lifecycle:start:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = await params;
+  const { id } = params;
 
   try {
     const emailAccount = await ctx.db.emailAccount.findFirst({

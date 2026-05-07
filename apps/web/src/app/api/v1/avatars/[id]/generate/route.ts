@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const VALID_SLOTS = ['face', 'waist', 'body_front', 'body_back'] as const;
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`avatars/[id]/generate:post:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

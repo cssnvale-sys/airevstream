@@ -4,7 +4,7 @@ import { authenticate, authenticateAny, success, error, notFound, validationErro
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const EngagementSchema = z.object({
   views: z.number().int().min(0).optional(),
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     // Unconditional tenant guard (D076)
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { id } = await params;
+    const { id } = params;
     if (!isUUID(id)) return validationError('Invalid content ID format');
 
     const content = await ctx.db.contentItem.findFirst({
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`engagement:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = await params;
+    const { id } = params;
     if (!isUUID(id)) return validationError('Invalid content ID format');
 
     const body = await req.json();

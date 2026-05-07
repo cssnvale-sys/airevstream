@@ -8,7 +8,7 @@ const SnoozeSchema = z.object({
   duration: z.number().positive().max(86400).optional(),
 });
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`system-alerts-snooze:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

@@ -4,7 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const UpdateOutcomeSchema = z.object({
   outcome: z.enum(['accepted', 'rejected', 'ignored']),
@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const rl = checkRateLimit(`suggestions:patch:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
   if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests', 429);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

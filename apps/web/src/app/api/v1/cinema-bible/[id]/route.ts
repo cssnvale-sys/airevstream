@@ -4,7 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const UpdateCinemaBibleSchema = z.object({
   lookBible: z.record(z.unknown()).optional(),
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   // Unconditional tenant guard (D076)
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -75,7 +75,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
   }
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

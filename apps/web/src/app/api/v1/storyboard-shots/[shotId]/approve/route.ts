@@ -4,7 +4,7 @@ import { authenticate, success, error, notFound, isUUID, validationError, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ shotId: string }> };
+type RouteParams = { params: { shotId: string } };
 
 const ShotActionSchema = z.object({
   action: z.enum(['approve', 'reject', 'regenerate']),
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { shotId } = await params;
+    const { shotId } = params;
     if (!isUUID(shotId)) return validationError('Invalid shot ID format');
 
     const body = await req.json();

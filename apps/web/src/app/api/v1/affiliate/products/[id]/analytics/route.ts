@@ -2,7 +2,7 @@ import { authenticate, success, error, notFound, isUUID, validationError } from 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 /**
  * GET /api/v1/affiliate/products/[id]/analytics
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);

@@ -3,7 +3,7 @@ import { authenticate, success, error, notFound, isUUID, validationError , type 
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 interface PipelineStep {
   name: string;
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`content/pipeline-status:${ip}:${ctx.userId}`, RATE_LIMITS.contentGeneration);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id } = await params;
+    const { id } = params;
     if (!isUUID(id)) return validationError('Invalid content ID format');
 
     const item = await ctx.db.contentItem.findFirst({

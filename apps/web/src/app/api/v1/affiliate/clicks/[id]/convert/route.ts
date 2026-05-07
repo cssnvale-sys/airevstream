@@ -39,7 +39,7 @@ const ConvertSchema = z.object({
   orderId: z.string().max(200).optional().nullable(),
 });
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticateAny(req, 'write');
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   if (!ctx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid click id', 400);
 
   try {

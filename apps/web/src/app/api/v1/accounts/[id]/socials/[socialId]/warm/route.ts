@@ -5,7 +5,7 @@ import { addJob } from '@airevstream/queue';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string; socialId: string }> };
+type RouteParams = { params: { id: string; socialId: string } };
 
 const WarmBodySchema = z.object({
   durationMinutes: z.number().int().min(1).max(120).optional(),
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`account-warm:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id, socialId } = await params;
+    const { id, socialId } = params;
     if (!isUUID(id) || !isUUID(socialId)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
 
     let body: z.infer<typeof WarmBodySchema> = {};

@@ -6,7 +6,7 @@ import { getConfig } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const UpdateAiServiceSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -74,7 +74,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return forbidden('Only admins can update AI services');
   }
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {
@@ -147,7 +147,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     return forbidden('Only admins can delete AI services');
   }
 
-  const { id } = await params;
+  const { id } = params;
   if (!isUUID(id)) return validationError('Invalid ID format');
 
   try {

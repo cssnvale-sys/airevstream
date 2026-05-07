@@ -4,7 +4,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string; socialId: string }> };
+type RouteParams = { params: { id: string; socialId: string } };
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   let ctx: ApiContext | NextResponse | undefined = undefined;
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = checkRateLimit(`account-sync:POST:${ip}:${ctx.userId}`, RATE_LIMITS.standardWrite);
     if (!rl.allowed) return error('RATE_LIMITED', 'Too many requests. Please try again later.', 429);
 
-    const { id, socialId } = await params;
+    const { id, socialId } = params;
     if (!isUUID(id) || !isUUID(socialId)) return error('VALIDATION_ERROR', 'Invalid ID format', 400);
 
     // Verify ownership: email account belongs to tenant, social belongs to email

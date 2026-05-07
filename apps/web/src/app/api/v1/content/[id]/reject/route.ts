@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { updateTrustAfterAction, APPROVAL_DEFAULTS } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
-type RouteParams = { params: Promise<{ id: string }> };
+type RouteParams = { params: { id: string } };
 
 const RejectSchema = z.object({
   feedback: z.string().max(5000).optional(),
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     // Unconditional tenant guard (D076)
     if (!authCtx.tenantId) return error('FORBIDDEN', 'No tenant context', 403);
 
-    const { id } = await params;
+    const { id } = params;
     if (!isUUID(id)) return validationError('Invalid ID format');
 
     let body: unknown = {};

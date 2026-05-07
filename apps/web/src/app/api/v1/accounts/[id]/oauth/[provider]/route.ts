@@ -10,12 +10,12 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string; provider: string }> },
+  { params }: { params: { id: string; provider: string } },
 ) {
   const ctx = await authenticate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  const { id, provider } = await context.params;
+  const { id, provider } = params;
   if (!['google', 'youtube', 'tiktok'].includes(provider)) {
     return error('BAD_REQUEST', "Provider must be 'google', 'youtube' or 'tiktok'", 400);
   }

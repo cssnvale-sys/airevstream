@@ -258,12 +258,51 @@ export default function VoicesPage() {
   );
 }
 
+import { useForm } from '@/hooks/use-form';
+import { z } from 'zod';
+import { nameSchema, descriptionSchema } from '@/lib/form-validation';
+
+// Voice clone form schema
+const voiceCloneSchema = z.object({
+  name: nameSchema,
+  description: descriptionSchema,
+});
+
+type VoiceCloneFormData = z.infer<typeof voiceCloneSchema>;
+
 function VoiceCloneModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const form = useForm<VoiceCloneFormData>({
+    schema: voiceCloneSchema,
+    initialValues: { name: '', description: '' },
+    onSubmit: async (values) => {
+      if (files.length === 0) {
+        toast.error('Please upload at least one audio sample');
+        return;
+      }
+
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('name', values.name.trim());
+        if (values.description) formData.append('description', values.description.trim());
+        files.forEach(file => formData.append('files', file));
+
+        await apiPost('/voices', formData);
+        toast.success('Voice clone created successfully!');
+        onSuccess();
+      } catch (err) {
+        toast.error('Failed to create voice clone');
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    successMessage: 'Voice clone created successfully!',
+    errorMessage: 'Failed to create voice clone',
+    resetOnSuccess: true,
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files ?? []);
@@ -278,36 +317,6 @@ function VoiceCloneModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      toast.error('Please enter a name for the voice');
-      return;
-    }
-    if (files.length === 0) {
-      toast.error('Please upload at least one audio sample');
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    try {
-      const formData = new FormData();
-      formData.append('name', name.trim());
-      if (description) formData.append('description', description.trim());
-      files.forEach(file => formData.append('files', file));
-
-      await apiPost('/voices', formData);
-      toast.success('Voice clone created successfully!');
-      onSuccess();
-    } catch (err) {
-      toast.error('Failed to create voice clone');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={!isUploading ? onClose : undefined} />
@@ -319,24 +328,27 @@ function VoiceCloneModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={form.handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="label">Voice Name *</label>
             <input
               type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={form.state.values.name ?? ''}
+              onChange={form.handleTextChange('name')}
+              onBlur={() => form.touch('name')}
               placeholder="e.g., My Voice, Narrator Joe"
-              className="input w-full"
-              required
+              className={cn('input w-full', form.getError('name') && 'border-accent-red')}
             />
+            {form.getError('name') && (
+              <p className="text-accent-red text-xs mt-1">{form.getError('name')}</p>
+            )}
           </div>
 
           <div>
             <label className="label">Description</label>
             <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
+              value={form.state.values.description ?? ''}
+              onChange={form.handleTextChange('description')}
               placeholder="Optional description of the voice..."
               className="input w-full h-20 resize-none"
             />
@@ -395,7 +407,7 @@ function VoiceCloneModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             </button>
             <button
               type="submit"
-              disabled={isUploading || !name.trim() || files.length === 0}
+              disabled={isUploading || !form.state.values.name?.trim() || files.length === 0}
               className="btn-primary flex-1 flex items-center justify-center gap-2"
             >
               {isUploading ? (

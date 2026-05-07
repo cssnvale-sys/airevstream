@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useForm } from '@/hooks/use-form';
+import { z } from 'zod';
+import { nameSchema, descriptionSchema } from '@/lib/form-validation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useApi, apiPost, apiDelete } from '@/hooks/use-api';
@@ -257,10 +260,6 @@ export default function VoicesPage() {
     </AppLayout>
   );
 }
-
-import { useForm } from '@/hooks/use-form';
-import { z } from 'zod';
-import { nameSchema, descriptionSchema } from '@/lib/form-validation';
 
 // Voice clone form schema
 const voiceCloneSchema = z.object({

@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { z } from 'zod';
+import { X } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/use-focus-trap';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { useForm } from '@/hooks/use-form';
+import { nameSchema } from '@/lib/form-validation';
 
 interface CreateCohortModalProps {
   open: boolean;
@@ -17,39 +20,40 @@ const PLATFORMS = [
   { value: 'facebook', label: 'Facebook' },
 ];
 
+const cohortSchema = z.object({
+  name: nameSchema,
+  platforms: z.array(z.string()).min(1, 'Select at least one platform'),
+});
+
+type CohortFormData = z.infer<typeof cohortSchema>;
+
 export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModalProps) {
-  const [name, setName] = useState('');
-  const [platforms, setPlatforms] = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: submitting });
+  const form = useForm<CohortFormData>({
+    schema: cohortSchema,
+    initialValues: { name: '', platforms: [] },
+    onSubmit: async (values) => {
+      await onSubmit({ name: values.name.trim(), platforms: values.platforms });
+      form.reset();
+      onClose();
+    },
+    resetOnSuccess: true,
+  });
+
+  const trapRef = useFocusTrap(open, { onEscape: onClose, disabled: form.state.isSubmitting });
 
   if (!open) return null;
 
   const togglePlatform = (p: string) => {
-    setPlatforms((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || platforms.length === 0) return;
-    setSubmitting(true);
-    try {
-      await onSubmit({ name: name.trim(), platforms });
-      setName('');
-      setPlatforms([]);
-      onClose();
-    } catch (err) {
-      console.error('CreateCohortModal submit failed:', err);
-    } finally {
-      setSubmitting(false);
-    }
+    const current = (form.getValue('platforms') as string[]) ?? [];
+    const next = current.includes(p) ? current.filter((x) => x !== p) : [...current, p];
+    form.setValue('platforms', next);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true" aria-labelledby="create-cohort-modal-title">
       <div ref={trapRef} className="bg-bg-secondary border border-border rounded-lg w-full max-w-md p-6">
         <h2 id="create-cohort-modal-title" className="text-h3 text-text-primary mb-4">New Seasoning Cohort</h2>
-        <form noValidate onSubmit={handleSubmit} className="space-y-4">
+        <form noValidate onSubmit={form.handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="cohort-name" className="block text-body text-text-secondary mb-1">
               Cohort Name
@@ -57,12 +61,15 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
             <input
               id="cohort-name"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={form.getValue('name') ?? ''}
+              onChange={form.handleTextChange('name')}
               className="input w-full"
               placeholder="e.g. Batch 1 - Gaming Channels"
               required
             />
+            {form.isTouched('name') && form.getError('name') && (
+              <p className="text-caption text-error mt-1">{form.getError('name')}</p>
+            )}
           </div>
 
           <div>
@@ -74,7 +81,7 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
                   type="button"
                   onClick={() => togglePlatform(p.value)}
                   className={`px-3 py-1.5 rounded-md text-caption border transition-colors ${
-                    platforms.includes(p.value)
+                    (form.getValue('platforms') as string[] ?? []).includes(p.value)
                       ? 'bg-accent-blue/20 border-accent-blue text-accent-blue'
                       : 'bg-bg-tertiary border-border text-text-secondary hover:border-text-secondary'
                   }`}
@@ -83,6 +90,9 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
                 </button>
               ))}
             </div>
+            {form.isTouched('platforms') && form.getError('platforms') && (
+              <p className="text-caption text-error mt-1">{form.getError('platforms')}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -95,8 +105,8 @@ export function CreateCohortModal({ open, onClose, onSubmit }: CreateCohortModal
             </button>
             <LoadingButton
               type="submit"
-              loading={submitting}
-              disabled={!name.trim() || platforms.length === 0}
+              loading={form.state.isSubmitting}
+              disabled={!form.state.isValid}
               loadingText="Creating..."
               className="btn-primary"
             >

@@ -8,12 +8,12 @@ const nextConfig = {
     '@airevstream/queue',
     '@airevstream/crypto',
   ],
+  // Next.js 16+ syntax — serverExternalPackages is top-level (not experimental)
+  serverExternalPackages: ['@prisma/client', 'bullmq'],
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'bullmq'],
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'recharts'],
   },
-  // Performance optimizations
-  swcMinify: true,
+  // Next.js 16+ automatically enables SWC minification — swcMinify is removed
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

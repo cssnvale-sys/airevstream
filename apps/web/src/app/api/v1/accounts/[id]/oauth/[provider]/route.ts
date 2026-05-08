@@ -1,4 +1,5 @@
 import { authenticate, error } from '@/lib/api-server';
+import { logger } from '@/lib/logger';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -54,7 +55,9 @@ export async function GET(
       try {
         const errBody = await upstreamRes.json();
         return NextResponse.json(errBody, { status: upstreamRes.status });
-      } catch {
+      } catch (err) {
+        const errForLog = err instanceof Error ? err : new Error('Unknown parse failure');
+        logger.error('OAuth upstream JSON parse failed', errForLog, { provider, upstreamStatus: upstreamRes.status });
         return error('INTERNAL_ERROR', 'OAuth initiation failed', upstreamRes.status);
       }
     }

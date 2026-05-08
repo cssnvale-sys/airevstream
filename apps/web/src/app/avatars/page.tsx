@@ -336,48 +336,64 @@ export default function AvatarsPage() {
         )}
 
         {activeTab === 'videos' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockVideos.map((video) => (
-              <div key={video.id} className="card overflow-hidden">
-                <div className="relative aspect-[9/16] bg-bg-tertiary rounded-lg mb-4">
-                  <div className="absolute inset-0 flex items-center justify-center text-text-tertiary">
-                    <Video className="w-12 h-12 opacity-20" />
-                  </div>
-                  {video.status === 'generating' && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                      <div className="flex items-center gap-2 text-white">
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Generating...
-                      </div>
-                    </div>
-                  )}
-                  <span className="absolute top-2 left-2 badge">
-                    {video.duration}
-                  </span>
-                  <button className="absolute bottom-2 left-2 btn-icon btn-sm">
-                    <Play className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-sm text-text-secondary line-clamp-2 mb-2">
-                  {video.script}
+          <div>
+            {mockVideos.length === 0 ? (
+              <div className="card p-12 text-center">
+                <Video className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No videos yet</h3>
+                <p className="text-text-secondary max-w-md mx-auto mb-4">
+                  Create your first AI avatar video. Select an avatar and provide a script to generate a talking-head video.
                 </p>
-                <div className="flex items-center justify-between text-xs text-text-secondary">
-                  <span>{video.createdAt.toLocaleDateString()}</span>
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <button className="btn-secondary btn-sm flex-1">
-                    <Eye className="w-4 h-4 mr-2" />
-                    View
-                  </button>
-                  {video.status === 'completed' && (
-                    <button className="btn-secondary btn-sm flex-1">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </button>
-                  )}
-                </div>
+                <button className="btn-secondary" onClick={() => setActiveTab('avatars')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Video
+                </button>
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {mockVideos.map((video) => (
+                  <div key={video.id} className="card overflow-hidden">
+                    <div className="relative aspect-[9/16] bg-bg-tertiary rounded-lg mb-4">
+                      <div className="absolute inset-0 flex items-center justify-center text-text-tertiary">
+                        <Video className="w-12 h-12 opacity-20" />
+                      </div>
+                      {video.status === 'generating' && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                          <div className="flex items-center gap-2 text-white">
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Generating...
+                          </div>
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 badge">
+                        {video.duration}
+                      </span>
+                      <button className="absolute bottom-2 left-2 btn-icon btn-sm">
+                        <Play className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-text-secondary line-clamp-2 mb-2">
+                      {video.script}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-text-secondary">
+                      <span>{video.createdAt.toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <button className="btn-secondary btn-sm flex-1">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </button>
+                      {video.status === 'completed' && (
+                        <button className="btn-secondary btn-sm flex-1">
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

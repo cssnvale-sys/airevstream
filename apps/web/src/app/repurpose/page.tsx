@@ -291,13 +291,13 @@ export default function RepurposePage() {
           </Link>
         </div>
 
-        {/* Stats */}
+        {/* Stats — dynamic from real data only */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Clips Generated', value: '156', icon: Scissors },
-            { label: 'Total Views', value: '2.4M', icon: Eye },
-            { label: 'Avg. Virality Score', value: '87', icon: Zap },
-            { label: 'Time Saved', value: '48h', icon: Clock },
+            { label: 'Clips Generated', value: selectedClips.length.toString(), icon: Scissors },
+            { label: 'Total Views', value: '—', icon: Eye },
+            { label: 'Avg. Virality Score', value: '—', icon: Zap },
+            { label: 'Time Saved', value: '—', icon: Clock },
           ].map((stat) => (
             <div key={stat.label} className="card p-4">
               <div className="flex items-center gap-3">

@@ -95,7 +95,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       }).catch((err) => {
         // Some older deployments don't have totalRevenue/totalConversions —
         // log and swallow so the conversion is still recorded.
-        console.warn('[affiliate/convert] product counter update skipped:', err instanceof Error ? err.message : String(err));
+        logger.warn('[affiliate/convert] product counter update skipped', {
+          err: err instanceof Error ? err.message : String(err),
+          productId: click.productId,
+        });
       });
       return c;
     });

@@ -368,9 +368,9 @@ export default function AvatarsPage() {
                       <span className="absolute top-2 left-2 badge">
                         {video.duration}
                       </span>
-                      <button className="absolute bottom-2 left-2 btn-icon btn-sm">
-                        <Play className="w-4 h-4" />
-                      </button>
+                  <button className="absolute bottom-2 left-2 btn-icon btn-sm" aria-label="Play video">
+                    <Play className="w-4 h-4" />
+                  </button>
                     </div>
                     <p className="text-sm text-text-secondary line-clamp-2 mb-2">
                       {video.script}

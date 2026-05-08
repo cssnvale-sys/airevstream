@@ -458,7 +458,7 @@ export default function RepurposePage() {
                   <span className="absolute top-2 left-2 badge">
                     {clip.duration}
                   </span>
-                  <button className="absolute bottom-2 left-2 btn-icon btn-sm">
+                  <button className="absolute bottom-2 left-2 btn-icon btn-sm" aria-label="Play clip">
                     <Play className="w-4 h-4" />
                   </button>
                 </div>

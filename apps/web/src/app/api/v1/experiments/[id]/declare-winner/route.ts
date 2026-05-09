@@ -51,7 +51,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return notFound('Experiment not found');
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json().catch((err) => {
+      logger.warn('declare-winner: failed to parse JSON body', { error: err instanceof Error ? err.message : String(err) });
+      return {};
+    });
     const parsed = DeclareWinnerSchema.safeParse(body);
     if (!parsed.success) return validationError(formatZodErrors(parsed.error.errors));
     const { variantId, notes } = parsed.data;

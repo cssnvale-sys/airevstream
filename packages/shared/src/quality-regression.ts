@@ -151,7 +151,7 @@ export async function compareVMAF(
   } finally {
     // Clean up temp log file
     const { unlink } = await import('node:fs/promises');
-    await unlink(logPath).catch(() => {});
+    await unlink(logPath).catch((err) => logger.warn({ error: err instanceof Error ? err.message : String(err) }, 'Failed to clean up temp log file'));
   }
 }
 

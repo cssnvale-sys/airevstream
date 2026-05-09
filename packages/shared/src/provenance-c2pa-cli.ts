@@ -137,7 +137,7 @@ export async function embedC2PAManifest(
       error: err instanceof Error ? err.message : String(err),
     };
   } finally {
-    await unlink(manifestPath).catch(() => {});
+    await unlink(manifestPath).catch((err) => logger.warn({ error: err instanceof Error ? err.message : String(err) }, 'Failed to clean up temp manifest file'));
   }
 }
 

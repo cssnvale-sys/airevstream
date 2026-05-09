@@ -51,7 +51,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (!isUUID(id)) return error('VALIDATION_ERROR', 'Invalid click id', 400);
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json().catch((err) => {
+      logger.warn('affiliate-convert: failed to parse JSON body', { error: err instanceof Error ? err.message : String(err) });
+      return {};
+    });
     const parsed = ConvertSchema.safeParse(body);
     if (!parsed.success) return validationError(formatZodErrors(parsed.error.errors));
     const { revenue } = parsed.data;

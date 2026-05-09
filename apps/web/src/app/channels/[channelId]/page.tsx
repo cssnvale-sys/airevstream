@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { Radio, ArrowLeft, Save, Layers } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { PageHeader } from '@/components/ui/page-header';
 import { useChannelSeries } from '@/hooks/use-series';
 import { SeriesCard } from '@/components/series/series-card';
 import { CreateSeriesModal } from '@/components/series/create-series-modal';
@@ -334,25 +334,16 @@ export default function ChannelDetailPage() {
 
   return (
     <AppLayout>
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
+      <PageHeader
+        title={channel.name}
+        description={`${channel.socialAccount?.platform ?? ''} \u00b7 @${channel.socialAccount?.username ?? ''}`}
+        backHref="/channels"
+        backLabel="Back to channels"
+        breadcrumbs={[
           { label: 'Channels', href: '/channels' },
           { label: channel.name, href: '#', isActive: true },
         ]}
       />
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/channels" className="p-1.5 rounded-md text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-colors" aria-label="Back to channels">
-          <ArrowLeft size={20} />
-        </Link>
-        <div>
-          <h1 className="text-page-title text-text-primary">{channel.name}</h1>
-          <p className="text-text-secondary capitalize">
-            {channel.socialAccount?.platform} &middot; @{channel.socialAccount?.username}
-          </p>
-        </div>
-      </div>
 
       {/* Tabs */}
       <div role="tablist" aria-label="Channel sections" className="flex gap-1 border-b border-border mb-6">

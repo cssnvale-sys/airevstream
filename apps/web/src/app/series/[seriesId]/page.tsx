@@ -5,14 +5,14 @@ import { useParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useSeriesDetail } from '@/hooks/use-series';
 import { cn } from '@/lib/utils';
-import { Layers, ArrowLeft } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import Link from 'next/link';
 import { EpisodeTable } from '@/components/series/episode-table';
 import { SeriesAvatarManager } from '@/components/series/series-avatar-manager';
 import { SeriesAnalytics } from '@/components/series/series-analytics';
 import { apiPut } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface SeriesDetail {
   id: string;
@@ -95,22 +95,19 @@ export default function SeriesDetailPage() {
 
   return (
     <AppLayout>
-      <Breadcrumb items={[{ label: 'Series', href: '/series' }, { label: series?.name ?? 'Untitled', href: '#', isActive: true }]} />
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <Link href="/series" className="text-text-secondary hover:text-text-primary text-sm flex items-center gap-1 mb-2">
-            <ArrowLeft size={14} />
-            Back to Series
-          </Link>
-          <h1 className="text-page-title text-text-primary">{series.name}</h1>
-          {series.description && <p className="text-text-secondary mt-1">{series.description}</p>}
-          <div className="flex items-center gap-3 mt-2">
+      <PageHeader
+        title={series.name}
+        description={series.description ?? undefined}
+        backHref="/series"
+        backLabel="Back to Series"
+        breadcrumbs={[{ label: 'Series', href: '/series' }, { label: series?.name ?? 'Untitled', href: '#', isActive: true }]}
+        metadata={
+          <div className="flex items-center gap-3">
             <span className="text-sm text-text-secondary">Channel: <span className="text-text-primary">{series.channel.name}</span></span>
             <span className="text-sm text-text-secondary">{series._count.episodes} episodes</span>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
+        }
+        actions={
           <select
             value={series.status}
             onChange={(e) => handleStatusChange(e.target.value)}
@@ -122,8 +119,8 @@ export default function SeriesDetailPage() {
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
-        </div>
-      </div>
+        }
+      />
 
       {/* Tabs */}
       <div className="border-b border-border mb-6">

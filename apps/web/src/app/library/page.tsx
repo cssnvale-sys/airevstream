@@ -16,6 +16,8 @@ import { Pagination } from '@/components/ui/pagination';
 import { toast } from '@/lib/toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
+import { PageHeader } from '@/components/ui/page-header';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -394,48 +396,50 @@ export default function LibraryPage() {
 
   return (
     <AppLayout>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Content Library</h1>
-          <p className="text-text-secondary text-sm mt-1">Browse and manage all generated content</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowFilters((v) => !v)}
-            className={cn('btn-secondary flex items-center gap-2', showFilters && 'ring-1 ring-accent-blue')}
-          >
-            <SlidersHorizontal size={14} /> Filters
-          </button>
-          <div className="flex items-center bg-bg-secondary border border-border rounded-lg overflow-hidden">
+      <PageHeader
+        title="Content Library"
+        description="Browse and manage all generated content"
+        breadcrumbs={[
+          { label: 'Library', href: '/library', isActive: true },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setViewMode('grid')}
-              className={cn(
-                'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
-                viewMode === 'grid' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
-              )}
-              title="Grid view"
-              aria-label="Grid view"
+              onClick={() => setShowFilters((v) => !v)}
+              className={cn('btn-secondary flex items-center gap-2', showFilters && 'ring-1 ring-accent-blue')}
             >
-              <LayoutGrid size={16} />
+              <SlidersHorizontal size={14} /> Filters
             </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={cn(
-                'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
-                viewMode === 'list' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
-              )}
-              title="List view"
-              aria-label="List view"
-            >
-              <List size={16} />
-            </button>
+            <div className="flex items-center bg-bg-secondary border border-border rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
+                  viewMode === 'grid' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
+                )}
+                title="Grid view"
+                aria-label="Grid view"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'p-2 transition-colors focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:outline-none',
+                  viewMode === 'list' ? 'bg-bg-tertiary text-text-primary' : 'text-text-secondary hover:text-text-primary',
+                )}
+                title="List view"
+                aria-label="List view"
+              >
+                <List size={16} />
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filter Bar */}
       <div className="card mb-4 space-y-3">

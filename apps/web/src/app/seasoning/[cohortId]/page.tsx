@@ -7,10 +7,9 @@ import { useCohort, useEnrollments } from '@/hooks/use-seasoning';
 import { apiPost, apiPut } from '@/hooks/use-api';
 import { PhasePipeline } from '@/components/seasoning/phase-pipeline';
 import { EnrollmentTable } from '@/components/seasoning/enrollment-table';
-import { ArrowLeft, UserPlus } from 'lucide-react';
-import Link from 'next/link';
+import { UserPlus } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { PageHeader } from '@/components/ui/page-header';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 interface CohortDetail {
   id: string;
@@ -105,27 +104,16 @@ export default function CohortDetailPage() {
 
   return (
     <AppLayout>
-      <Breadcrumb
-        items={[
+      <PageHeader
+        title={cohort.name}
+        description={`${cohort.platforms.join(', ')} — ${enrollmentCount} accounts`}
+        backHref="/seasoning"
+        backLabel="Seasoning"
+        breadcrumbs={[
           { label: 'Seasoning', href: '/seasoning' },
           { label: cohort?.name ?? 'Untitled', href: '#', isActive: true },
         ]}
-      />
-      <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/seasoning" className="text-text-secondary hover:text-text-primary" aria-label="Back to seasoning cohorts">
-            <ArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="text-h2 text-text-primary">{cohort.name}</h1>
-            <p className="text-caption text-text-secondary">
-              {cohort.platforms.join(', ')} — {enrollmentCount} accounts
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
+        actions={
           <button
             type="button"
             onClick={() => setShowEnroll(!showEnroll)}
@@ -134,8 +122,10 @@ export default function CohortDetailPage() {
             <UserPlus size={14} />
             Enroll Accounts
           </button>
-        </div>
-      </div>
+        }
+      />
+
+      <div className="space-y-6">
 
       {/* Enroll panel */}
       {showEnroll && (

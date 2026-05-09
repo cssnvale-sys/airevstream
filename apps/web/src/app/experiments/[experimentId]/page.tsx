@@ -9,7 +9,7 @@ import { ArrowLeft, Play, Square, Trophy, FlaskConical, BarChart3 } from 'lucide
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { PageHeader } from '@/components/ui/page-header';
 import { useState } from 'react';
 
 interface VariantData {
@@ -124,24 +124,17 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
 
   return (
     <AppLayout>
-      <Breadcrumb
-        items={[
+      <PageHeader
+        title={exp.name}
+        description={exp.hypothesis ?? undefined}
+        backHref="/experiments"
+        backLabel="Experiments"
+        breadcrumbs={[
           { label: 'Experiments', href: '/experiments' },
           { label: exp?.name ?? 'Untitled', href: '#', isActive: true },
         ]}
-      />
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <Link href="/experiments" className="text-text-secondary hover:text-text-primary text-sm flex items-center gap-1 mb-2">
-            <ArrowLeft size={14} />
-            Experiments
-          </Link>
-          <h1 className="text-page-title text-text-primary">{exp.name}</h1>
-          {exp.hypothesis && (
-            <p className="text-text-secondary mt-1">{exp.hypothesis}</p>
-          )}
-          <div className="flex items-center gap-3 mt-2">
+        metadata={
+          <div className="flex items-center gap-3">
             <span className={cn('px-2 py-0.5 rounded-full text-caption font-medium capitalize', badge.bg, badge.text)}>
               {exp.status}
             </span>
@@ -152,28 +145,30 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ exp
               Confidence: {(exp.confidenceLevel * 100).toFixed(0)}%
             </span>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {exp.status === 'draft' && (
-            <button type="button" onClick={handleStart} className="btn-primary flex items-center gap-2">
-              <Play size={16} />
-              Start
-            </button>
-          )}
-          {exp.status === 'running' && (
-            <button type="button" onClick={handleEvaluate} className="btn-secondary flex items-center gap-2">
-              <BarChart3 size={16} />
-              Evaluate Now
-            </button>
-          )}
-          {(exp.status === 'running' || exp.status === 'evaluating') && (
-            <button type="button" onClick={() => setStopOpen(true)} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
-              <Square size={16} />
-              Stop
-            </button>
-          )}
-        </div>
-      </div>
+        }
+        actions={
+          <div className="flex items-center gap-2">
+            {exp.status === 'draft' && (
+              <button type="button" onClick={handleStart} className="btn-primary flex items-center gap-2">
+                <Play size={16} />
+                Start
+              </button>
+            )}
+            {exp.status === 'running' && (
+              <button type="button" onClick={handleEvaluate} className="btn-secondary flex items-center gap-2">
+                <BarChart3 size={16} />
+                Evaluate Now
+              </button>
+            )}
+            {(exp.status === 'running' || exp.status === 'evaluating') && (
+              <button type="button" onClick={() => setStopOpen(true)} className="btn-secondary flex items-center gap-2 text-accent-red hover:text-accent-red">
+                <Square size={16} />
+                Stop
+              </button>
+            )}
+          </div>
+        }
+      />
 
       {/* Winner banner */}
       {winnerVariant && (

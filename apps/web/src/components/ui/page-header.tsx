@@ -17,6 +17,7 @@ interface PageHeaderProps {
   backLabel?: string;
   breadcrumbs?: BreadcrumbItemDef[];
   actions?: React.ReactNode;
+  metadata?: React.ReactNode;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export function PageHeader({
   backLabel = 'Back',
   breadcrumbs,
   actions,
+  metadata,
   className = '',
 }: PageHeaderProps) {
   return (
@@ -49,6 +51,7 @@ export function PageHeader({
           {description && (
             <p className="text-sm text-text-secondary mt-1">{description}</p>
           )}
+          {metadata && <div className="mt-2">{metadata}</div>}
         </div>
         {actions && <div className="shrink-0">{actions}</div>}
       </div>

@@ -5,6 +5,8 @@ import { addJob } from '@airevstream/queue';
 import type { QueueName } from '@airevstream/queue';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 /**

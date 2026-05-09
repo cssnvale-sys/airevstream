@@ -4,6 +4,8 @@ import { authenticate, success, error, isUUID, validationError, forbidden } from
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const SnoozeSchema = z.object({
   duration: z.number().positive().max(86400).optional(),
 });

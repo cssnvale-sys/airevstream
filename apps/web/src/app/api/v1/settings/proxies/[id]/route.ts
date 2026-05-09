@@ -4,6 +4,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import net from 'node:net';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 const SETTING_KEY = 'proxy_config';

@@ -4,6 +4,8 @@ import { startAccountLifecyclePipeline } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/v1/accounts/[id]/lifecycle/retry
  * Retry a failed lifecycle pipeline

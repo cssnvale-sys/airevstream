@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const CreateSocialSchema = z.object({
   platform: z.enum(['youtube', 'tiktok', 'instagram', 'facebook']),
   platformUserId: z.string().max(255).optional().nullable(),

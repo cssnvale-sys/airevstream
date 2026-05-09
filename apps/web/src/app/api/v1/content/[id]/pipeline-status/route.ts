@@ -3,6 +3,8 @@ import { authenticate, success, error, notFound, isUUID, validationError , type 
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 interface PipelineStep {

@@ -3,6 +3,8 @@ import { authenticate, success, error, validationError, isUUID, type ApiContext 
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string; episodeId: string  }> };
 
 function tenantFilter(tenantId: string) {

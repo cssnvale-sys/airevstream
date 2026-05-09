@@ -3,6 +3,8 @@ import { authenticate, success, error, notFound, isUUID, validationError, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const VERSIONS_LIST_LIMIT = 100;
 
 type RouteParams = { params: Promise<{ id: string }> };

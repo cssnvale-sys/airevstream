@@ -5,6 +5,8 @@ import { createHash } from 'crypto';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 /** Rate limit for public redirect: 60 clicks per minute per IP */
 const REDIRECT_RATE_LIMIT = { maxAttempts: 60, windowMs: 60 * 1000 };
 

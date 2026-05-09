@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const UpdateExperimentSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   hypothesis: z.string().max(2000).optional(),

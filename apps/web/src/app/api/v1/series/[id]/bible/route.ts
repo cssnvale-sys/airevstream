@@ -4,6 +4,8 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { resolveSeriesBible } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 function tenantFilter(tenantId: string) {

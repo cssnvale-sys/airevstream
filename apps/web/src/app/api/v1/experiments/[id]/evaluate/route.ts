@@ -4,6 +4,8 @@ import { addJob } from '@airevstream/queue';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/v1/experiments/[id]/evaluate
  * Queue an experiment evaluation job

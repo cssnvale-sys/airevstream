@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const RescheduleSchema = z.object({
   scheduledAt: z.string().datetime({ message: 'scheduledAt must be a valid ISO date' }).optional(),
   publishConfig: z.record(z.unknown()).optional(),

@@ -4,6 +4,8 @@ import { addJob } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ shotId: string  }> };
 
 /**

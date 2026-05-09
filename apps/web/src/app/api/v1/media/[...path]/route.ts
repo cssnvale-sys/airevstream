@@ -5,6 +5,8 @@ import { getPresignedUrl } from '@airevstream/storage';
 import { BUCKETS, PRESIGNED_URL_TTL_SECONDS } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const ALLOWED_BUCKETS: Set<string> = new Set(Object.values(BUCKETS));
 
 export async function GET(req: NextRequest) {

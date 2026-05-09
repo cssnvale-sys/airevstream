@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, validationError, isUUID , type ApiContext } from '@/lib/api-server';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 function tenantFilter(tenantId: string) {

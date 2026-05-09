@@ -4,6 +4,8 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const UpdateStoryboardSchema = z.object({
   status: z.enum(['draft', 'approved', 'in_production']).optional(),
   scriptJson: z.record(z.unknown()).optional(),

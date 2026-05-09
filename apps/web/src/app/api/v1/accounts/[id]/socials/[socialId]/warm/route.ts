@@ -5,6 +5,8 @@ import { addJob } from '@airevstream/queue';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string; socialId: string  }> };
 
 const WarmBodySchema = z.object({

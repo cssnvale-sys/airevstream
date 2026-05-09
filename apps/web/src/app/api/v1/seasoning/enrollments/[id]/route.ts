@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const UpdateEnrollmentSchema = z.object({
   status: z.enum(['paused', 'phase_1', 'phase_2', 'phase_3', 'phase_4', 'failed']).optional(),
   failureReason: z.string().max(500).optional().nullable(),

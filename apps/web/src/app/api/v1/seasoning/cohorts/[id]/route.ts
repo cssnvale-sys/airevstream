@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const UpdateCohortSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   status: z.enum(['pending', 'enrolling', 'active', 'paused', 'completed']).optional(),

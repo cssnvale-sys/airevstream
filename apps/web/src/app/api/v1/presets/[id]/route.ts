@@ -6,6 +6,8 @@ import { FAMILY_OVERRIDE_KEYS } from '@airevstream/shared';
 import type { PresetFamily } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 const VALID_FAMILIES = [

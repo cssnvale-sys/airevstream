@@ -5,6 +5,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { updateTrustAfterAction, APPROVAL_DEFAULTS } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 const RejectSchema = z.object({

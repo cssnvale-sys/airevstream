@@ -4,6 +4,8 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const CreateVariantSchema = z.object({
   title: z.string().max(500).optional(),
   prompt: z.string().max(50000).optional(),

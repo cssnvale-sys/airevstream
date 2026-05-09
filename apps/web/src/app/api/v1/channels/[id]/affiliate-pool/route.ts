@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const AddToPoolSchema = z.object({
   affiliateProductId: z.string().uuid('affiliateProductId must be a valid UUID'),
 });

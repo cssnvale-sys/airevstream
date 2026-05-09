@@ -3,6 +3,8 @@ import { authenticateAny, success, error, notFound, isUUID, validationError } fr
 import { matchTrends } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 /**

@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const AssignAvatarSchema = z.object({
   avatarId: z.string().uuid(),
   isPrimary: z.boolean().optional().default(false),

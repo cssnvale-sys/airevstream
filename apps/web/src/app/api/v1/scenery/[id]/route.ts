@@ -6,6 +6,8 @@ import { deleteObject } from '@airevstream/storage';
 import { BUCKETS } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 const updateScenerySchema = z.object({

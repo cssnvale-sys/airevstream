@@ -3,6 +3,8 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/v1/experiments/[id]/stop
  * Set experiment status to stopped

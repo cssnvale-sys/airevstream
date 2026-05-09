@@ -3,6 +3,8 @@ import { authenticate, authenticateAny, success, error, notFound, isUUID, valida
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 // POST /api/v1/content/[id]/quality-score — Score a content item

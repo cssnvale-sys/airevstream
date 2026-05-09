@@ -2,6 +2,8 @@ import { authenticate, error, notFound, paginated, parseQuery, isUUID } from '@/
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/seasoning/cohorts/[id]/enrollments
  * List enrollments for a cohort (filterable by status, platform, phase)

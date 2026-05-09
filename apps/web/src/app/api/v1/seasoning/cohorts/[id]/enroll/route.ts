@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const EnrollSchema = z.object({
   emailAccountIds: z.array(z.string().uuid()).min(1).max(100),
   platforms: z.array(z.enum(['youtube', 'tiktok', 'instagram', 'facebook'])).min(1).optional(),

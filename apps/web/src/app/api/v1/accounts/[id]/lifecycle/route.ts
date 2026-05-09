@@ -5,6 +5,8 @@ import { startAccountLifecyclePipeline } from '@airevstream/queue';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const StartLifecycleSchema = z.object({
   targetPlatforms: z.array(z.enum(['youtube', 'tiktok', 'instagram', 'facebook'])).min(1),
   avatarId: z.string().uuid().optional(),

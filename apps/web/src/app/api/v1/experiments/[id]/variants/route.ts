@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const CreateVariantSchema = z.object({
   label: z.string().min(1).max(255),
   trafficPercent: z.number().int().min(1).max(99),

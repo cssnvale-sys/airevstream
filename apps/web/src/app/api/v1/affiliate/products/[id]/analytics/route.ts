@@ -2,6 +2,8 @@ import { authenticate, success, error, notFound, isUUID, validationError } from 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 type RouteParams = { params: Promise<{ id: string }> };
 
 /**

@@ -902,25 +902,24 @@ export default function AnalyticsPage() {
   return (
     <AppLayout>
       {/* ---- Header ---- */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-page-title text-text-primary">Analytics</h1>
-          <p className="text-text-secondary mt-1">Performance metrics and insights.</p>
-        </div>
-
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value as Period)}
-          className="input"
-          aria-label="Time period"
-        >
-          {PERIOD_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <PageHeader
+        title="Analytics"
+        description="Performance metrics and insights."
+        actions={
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as Period)}
+            className="input"
+            aria-label="Time period"
+          >
+            {PERIOD_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        }
+      />
 
       {/* ---- KPI Cards ---- */}
       {isLoading ? (

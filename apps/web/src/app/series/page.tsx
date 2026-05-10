@@ -9,6 +9,7 @@ import { Layers, Plus, BookOpen, Film, Archive } from 'lucide-react';
 import Link from 'next/link';
 import { CreateSeriesModal } from '@/components/series/create-series-modal';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface SeriesRow {
   id: string;
@@ -43,16 +44,16 @@ export default function SeriesPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-page-title text-text-primary">Series</h1>
-          <p className="text-text-secondary mt-1">Organize content into themed series within channels.</p>
-        </div>
-        <button type="button" onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
-          <Plus size={16} />
-          New Series
-        </button>
-      </div>
+      <PageHeader
+        title="Series"
+        description="Organize content into themed series within channels."
+        actions={
+          <button type="button" onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+            <Plus size={16} />
+            New Series
+          </button>
+        }
+      />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

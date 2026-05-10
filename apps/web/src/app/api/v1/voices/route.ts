@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { VoiceCloneClient } from '@airevstream/audio-engine';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,13 +22,13 @@ export async function GET(req: NextRequest) {
   // Note: Authentication should be added here - simplified for now
   try {
     if (!voiceClient) {
-      console.warn('ELEVENLABS_API_KEY not configured, returning fallback voices');
+      logger.warn('ELEVENLABS_API_KEY not configured, returning fallback voices');
       return NextResponse.json({ success: true, data: FALLBACK_VOICES, fallback: true });
     }
     const voices = await voiceClient.listVoices();
     return NextResponse.json({ success: true, data: voices });
   } catch (err) {
-    console.error('Failed to list voices, returning fallback:', err);
+    logger.error('Failed to list voices, returning fallback', err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ success: true, data: FALLBACK_VOICES, fallback: true });
   }
 }
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
-    console.error('Failed to create voice clone', err);
+    logger.error('Failed to create voice clone', err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ error: 'Failed to create voice clone' }, { status: 500 });
   }
 }

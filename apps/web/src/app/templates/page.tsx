@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   FileText,
   Video,
@@ -268,13 +269,10 @@ export default function TemplatesPage() {
   return (
     <AppLayout>
       <div className="space-y-8">
-        {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Template Gallery</h1>
-          <p className="text-text-secondary text-lg">
-            Jumpstart your content creation with AI-powered templates
-          </p>
-        </div>
+        <PageHeader
+          title="Template Gallery"
+          description="Jumpstart your content creation with AI-powered templates"
+        />
 
         {/* Featured Banner */}
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-accent-purple via-purple-600 to-pink-500 p-8 text-white">

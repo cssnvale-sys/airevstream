@@ -16,6 +16,7 @@ import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState as EmptyStateComponent } from '@/components/ui/empty-state';
 import { Pagination } from '@/components/ui/pagination';
+import { PageHeader } from '@/components/ui/page-header';
 import { PlatformSelect } from '@/components/accounts/platform-select';
 import { AvatarAssignPicker } from '@/components/accounts/avatar-assign-picker';
 import { LifecycleStatusPanel } from '@/components/accounts/lifecycle-status-panel';
@@ -1065,21 +1066,20 @@ export default function AccountsPage() {
 
   return (
     <AppLayout>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Accounts</h1>
-          <p className="text-text-secondary text-sm mt-1">Manage email accounts and connected socials</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setShowImport(true)} className="btn-secondary flex items-center gap-2">
-            <Upload size={14} /> Import
-          </button>
-          <button type="button" onClick={() => setShowAddEmail(true)} className="btn-primary flex items-center gap-2">
-            <Plus size={14} /> Add Email
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Accounts"
+        description="Manage email accounts and connected socials"
+        actions={
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setShowImport(true)} className="btn-secondary flex items-center gap-2">
+              <Upload size={14} /> Import
+            </button>
+            <button type="button" onClick={() => setShowAddEmail(true)} className="btn-primary flex items-center gap-2">
+              <Plus size={14} /> Add Email
+            </button>
+          </div>
+        }
+      />
 
       {/* Filter Bar — hidden when no accounts */}
       {filteredAccounts.length > 0 && (

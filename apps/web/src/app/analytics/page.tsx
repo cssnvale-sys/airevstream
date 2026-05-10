@@ -17,6 +17,7 @@ import {
   Play,
 } from 'lucide-react';
 import { EmptyState, ErrorState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 import { exportToCSV } from '@/lib/export';
 import { useExperiments } from '@/hooks/use-experiments';
 import { useSuggestionStats } from '@/hooks/use-suggestion-stats';

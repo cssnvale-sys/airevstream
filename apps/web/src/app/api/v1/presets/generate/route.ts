@@ -75,15 +75,15 @@ export async function POST(req: NextRequest) {
       // Strip markdown code fences if present
       const cleaned = content.replace(/^```(?:json)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
       rawPreset = JSON.parse(cleaned);
-    } catch {
-      logger.error('AI returned non-JSON content:', new Error(content));
+    } catch (err) {
+      logger.error('AI returned non-JSON content', err instanceof Error ? err : new Error(content));
       return error('AI_PARSE_ERROR', 'AI returned invalid JSON. Please try again with a different description.', 422);
     }
 
     // Validate and normalize
     const result = validateAndNormalizeAiPreset(rawPreset, description);
     if ('error' in result) {
-      console.error('AI preset validation failed:', result.error);
+      logger.error('AI preset validation failed', new Error(result.error));
       return error('AI_VALIDATION_ERROR', 'AI generated an invalid preset. Please try again.', 422);
     }
 

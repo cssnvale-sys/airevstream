@@ -9,10 +9,10 @@ beforeEach(() => {
   lastCreatedBlob = null;
   lastDownloadFilename = '';
 
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn((blob: Blob) => { lastCreatedBlob = blob; return mockUrl; }),
-    revokeObjectURL: vi.fn(),
-  });
+  const MockURL = vi.fn() as unknown as typeof URL;
+  (MockURL as any).createObjectURL = vi.fn((blob: Blob) => { lastCreatedBlob = blob; return mockUrl; });
+  (MockURL as any).revokeObjectURL = vi.fn();
+  vi.stubGlobal('URL', MockURL);
 
   const mockLink = {
     href: '',

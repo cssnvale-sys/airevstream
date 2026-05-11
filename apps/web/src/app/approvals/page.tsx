@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { QualityBadge } from '@/components/ui/quality-badge';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface ApprovalItem {
   id: string;
@@ -147,6 +148,11 @@ export default function ApprovalsPage() {
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto">
+        <PageHeader
+          title="Approval Queue"
+          description={`${meta?.total ?? items.length} pending items awaiting approval.`}
+          breadcrumbs={[{ label: 'Approvals', href: '/approvals', isActive: true }]}
+        />
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-text-primary">Approval Queue</h1>
           <div className="flex items-center gap-3">

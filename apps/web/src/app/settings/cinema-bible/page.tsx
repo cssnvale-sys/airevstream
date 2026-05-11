@@ -6,6 +6,7 @@ import { useApi, apiPost, apiPut } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { BibleEditor } from '@/components/cinema/bible-editor';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { PageHeader } from '@/components/ui/page-header';
 import { formatDate } from '@/lib/utils';
 
 interface ChannelInfo {
@@ -104,21 +105,24 @@ export default function CinemaBiblePage() {
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-text-primary">Cinema Bibles</h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Configure visual style, characters, environments, and prompts for cinema-quality production.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowCreate(!showCreate)}
-            className="btn-primary"
-          >
-            New Bible
-          </button>
-        </div>
+        <PageHeader
+          title="Cinema Bibles"
+          description="Configure visual style, characters, environments, and prompts for cinema-quality production."
+          backHref="/settings"
+          breadcrumbs={[
+            { label: 'Settings', href: '/settings' },
+            { label: 'Cinema Bibles', href: '/settings/cinema-bible', isActive: true },
+          ]}
+          actions={
+            <button
+              type="button"
+              onClick={() => setShowCreate(!showCreate)}
+              className="btn-primary"
+            >
+              New Bible
+            </button>
+          }
+        />
 
         {/* Create form */}
         {showCreate && (

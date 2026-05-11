@@ -163,19 +163,20 @@ export default function BudgetsPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-page-title text-text-primary">Cost Budgets</h1>
-          <p className="text-text-secondary mt-1">Manage spending limits for AI services.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => { setShowForm(true); setEditingId(null); setForm(INITIAL_FORM); }}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus size={16} /> New Budget
-        </button>
-      </div>
+      <PageHeader
+        title="Cost Budgets"
+        description="Manage spending limits for AI services."
+        breadcrumbs={[{ label: 'Settings', href: '/settings' }, { label: 'Budgets', href: '#', isActive: true }]}
+        actions={
+          <button
+            type="button"
+            onClick={() => { setShowForm(true); setEditingId(null); setForm(INITIAL_FORM); }}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus size={16} /> New Budget
+          </button>
+        }
+      />
 
       {/* Create/Edit Form */}
       {showForm && (

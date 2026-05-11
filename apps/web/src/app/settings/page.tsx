@@ -35,6 +35,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { PageHeader } from '@/components/ui/page-header';
 import { getToken } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------

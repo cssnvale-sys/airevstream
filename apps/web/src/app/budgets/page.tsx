@@ -8,6 +8,7 @@ import { cn, formatDate } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Trash2, Wallet, AlertTriangle, Pause, Play } from 'lucide-react';
 
 // ---------------------------------------------------------------------------

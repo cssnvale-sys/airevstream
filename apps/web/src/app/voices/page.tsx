@@ -10,6 +10,7 @@ import { useApi, apiPost, apiDelete } from '@/hooks/use-api';
 import { toast } from '@/lib/toast';
 import { Mic, Plus, Play, Trash2, Loader2, Volume2, Clock, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Link from 'next/link';
 
 interface Voice {
@@ -42,7 +43,8 @@ export default function VoicesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
-  const [deletingVoiceId, setDeletingVoiceId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const voices = (voicesRes as any)?.data ?? [];
   const clonedVoices = voices.filter((v: Voice) => v.category === 'cloned');
@@ -71,22 +73,24 @@ export default function VoicesPage() {
     );
   }
 
-  const handleDelete = useCallback(async (voiceId: string) => {
-    if (!confirm('Are you sure you want to delete this voice? This action cannot be undone.')) {
-      return;
-    }
+  const handleDelete = useCallback((voiceId: string) => {
+    setDeleteTargetId(voiceId);
+    setShowDeleteConfirm(true);
+  }, []);
 
-    setDeletingVoiceId(voiceId);
+  const executeDelete = useCallback(async () => {
+    if (!deleteTargetId) return;
     try {
-      await apiDelete(`/voices/${voiceId}`);
+      await apiDelete(`/voices/${deleteTargetId}`);
       toast.success('Voice deleted successfully');
       mutate();
     } catch (err) {
       toast.error('Failed to delete voice');
     } finally {
-      setDeletingVoiceId(null);
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
     }
-  }, [mutate]);
+  }, [deleteTargetId, mutate]);
 
   const handlePreview = useCallback(async (voice: Voice) => {
     if (!voice.previewUrl) {
@@ -169,15 +173,11 @@ export default function VoicesPage() {
                     <button
                       type="button"
                       onClick={() => handleDelete(voice.voiceId)}
-                      disabled={deletingVoiceId === voice.voiceId}
+                      disabled={deleteTargetId === voice.voiceId && showDeleteConfirm}
                       className="btn-icon btn-sm text-accent-red hover:text-accent-red"
                       title="Delete voice"
                     >
-                      {deletingVoiceId === voice.voiceId ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Trash2 size={16} />
-                      )}
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -246,6 +246,21 @@ export default function VoicesPage() {
           </div>
         )}
       </div>
+
+      {/* Delete confirm */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Voice"
+        message="Are you sure you want to delete this voice? This action cannot be undone."
+        variant="danger"
+        confirmLabel="Delete"
+        isLoading={false}
+        onConfirm={executeDelete}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTargetId(null);
+        }}
+      />
 
       {/* Create Modal */}
       {showCreateModal && (

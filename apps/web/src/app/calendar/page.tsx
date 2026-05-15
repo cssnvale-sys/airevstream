@@ -162,7 +162,6 @@ export default function CalendarPage() {
   // Context menu state for unschedule
   const [contextMenuItem, setContextMenuItem] = useState<CalendarItem | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
-  const [isUnscheduling, setIsUnscheduling] = useState(false);
 
   // Schedule modal state (KI-060)
   const [scheduleContentId, setScheduleContentId] = useState<string | null>(null);
@@ -171,6 +170,7 @@ export default function CalendarPage() {
   const [scheduleChannelId, setScheduleChannelId] = useState('');
   const [schedulePlatform, setSchedulePlatform] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
+  const [isUnscheduling, setIsUnscheduling] = useState(false);
 
   // Fetch content info when scheduling
   const { data: scheduleContentData, error: scheduleContentError } = useApi<{
@@ -1053,11 +1053,10 @@ export default function CalendarPage() {
           <button
             type="button"
             onClick={handleUnschedule}
-            disabled={isUnscheduling}
             className="w-full text-left px-3 py-2 text-sm text-accent-red hover:bg-bg-tertiary transition-colors flex items-center gap-2"
           >
             <X size={14} />
-            {isUnscheduling ? 'Unscheduling...' : 'Unschedule'}
+            Unschedule
           </button>
           <button
             type="button"

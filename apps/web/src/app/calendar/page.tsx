@@ -16,6 +16,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   startOfWeek,
   endOfWeek,
@@ -162,6 +163,7 @@ export default function CalendarPage() {
   // Context menu state for unschedule
   const [contextMenuItem, setContextMenuItem] = useState<CalendarItem | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [showUnscheduleConfirm, setShowUnscheduleConfirm] = useState(false);
 
   // Schedule modal state (KI-060)
   const [scheduleContentId, setScheduleContentId] = useState<string | null>(null);
@@ -170,7 +172,6 @@ export default function CalendarPage() {
   const [scheduleChannelId, setScheduleChannelId] = useState('');
   const [schedulePlatform, setSchedulePlatform] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
-  const [isUnscheduling, setIsUnscheduling] = useState(false);
 
   // Fetch content info when scheduling
   const { data: scheduleContentData, error: scheduleContentError } = useApi<{
@@ -434,9 +435,13 @@ export default function CalendarPage() {
   }, [handleDrop]);
 
   // Unschedule handler
-  const handleUnschedule = useCallback(async () => {
+  const handleUnschedule = useCallback(() => {
     if (!contextMenuItem) return;
-    setIsUnscheduling(true);
+    setShowUnscheduleConfirm(true);
+  }, [contextMenuItem]);
+
+  const confirmUnschedule = useCallback(async () => {
+    if (!contextMenuItem) return;
     try {
       await apiDelete(`/schedule/${contextMenuItem.id}`);
       toast.success('Post unscheduled successfully');
@@ -445,7 +450,7 @@ export default function CalendarPage() {
       console.error('Failed to unschedule post:', err);
       toast.error('Failed to unschedule post');
     } finally {
-      setIsUnscheduling(false);
+      setShowUnscheduleConfirm(false);
       setContextMenuItem(null);
       setContextMenuPos(null);
     }
@@ -1081,6 +1086,19 @@ export default function CalendarPage() {
           }}
         />
       )}
+      {/* ConfirmDialog for unschedule */}
+      <ConfirmDialog
+        isOpen={showUnscheduleConfirm}
+        title="Unschedule Post"
+        message={`Unschedule "${contextMenuItem?.content?.title || 'this post'}"? It will return to draft status.`}
+        variant="warning"
+        confirmLabel="Unschedule"
+        onConfirm={confirmUnschedule}
+        onCancel={() => {
+          setShowUnscheduleConfirm(false);
+        }}
+      />
+
     </AppLayout>
   );
 }

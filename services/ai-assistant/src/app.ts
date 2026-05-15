@@ -33,10 +33,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(generateRoutes, { prefix: '/api/generate' });
 
   // Health
-  app.get('/api/health', async () => ({
+  const healthHandler = async () => ({
     success: true,
     data: { status: 'healthy', service: 'ai-assistant', timestamp: new Date().toISOString() },
-  }));
+  });
+  app.get('/api/health', healthHandler);
+  app.get('/health', healthHandler);
 
   app.setErrorHandler((error: FastifyError, _request, reply) => {
     logger.error({ err: error }, 'Request error');

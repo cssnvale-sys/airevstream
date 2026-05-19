@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         scheduledAt: scheduledDate,
         platform,
         socialAccountId: socialAccountId ?? null,
-        publishConfig: (publishConfig ?? {}) as any,
+        publishConfig: (publishConfig ?? {}) as Prisma.InputJsonValue,
         status: 'scheduled',
       },
       include: {

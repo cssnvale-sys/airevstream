@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
           title,
           contentType,
           prompt: title,
-          generationParams: { script: script ?? null, shots: shots ?? [] } as any,
+          generationParams: { script: script ?? null, shots: shots ?? [] } as Prisma.InputJsonValue,
           affiliateProductId: affiliateProductId ?? null,
           affiliateMode: affiliateMode ?? null,
           status: status ?? 'draft',
@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
           data: {
             contentId: created.id,
             status: 'draft',
-            scriptJson: { script: script ?? '', shotCount: shots.length } as any,
+            scriptJson: { script: script ?? '', shotCount: shots.length } as Prisma.InputJsonValue,
             totalDurationSec: totalDuration > 0 ? totalDuration : null,
           },
         });

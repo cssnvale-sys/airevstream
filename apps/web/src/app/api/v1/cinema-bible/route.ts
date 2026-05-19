@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, notFound, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 const CINEMA_BIBLES_LIMIT = 100;
 
@@ -94,11 +95,11 @@ export async function POST(req: NextRequest) {
     const bible = await ctx.db.cinemaBible.create({
       data: {
         channelId,
-        lookBible: lookBible as any,
-        characterBible: characterBible as any,
-        environmentBible: environmentBible as any,
-        promptBible: promptBible as any,
-        shotspecTemplate: shotspecTemplate as any,
+        lookBible: lookBible as Prisma.InputJsonValue,
+        characterBible: characterBible as Prisma.InputJsonValue,
+        environmentBible: environmentBible as Prisma.InputJsonValue,
+        promptBible: promptBible as Prisma.InputJsonValue,
+        shotspecTemplate: shotspecTemplate as Prisma.InputJsonValue,
       },
       include: {
         channel: {

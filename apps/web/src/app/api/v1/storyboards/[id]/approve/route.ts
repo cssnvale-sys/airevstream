@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 

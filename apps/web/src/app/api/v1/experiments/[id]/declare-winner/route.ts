@@ -12,6 +12,7 @@ import {
 } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
               declaredAt: new Date().toISOString(),
               notes: notes ?? null,
             },
-          } as any,
+          } as Prisma.InputJsonValue,
         },
         include: { variants: true },
       });

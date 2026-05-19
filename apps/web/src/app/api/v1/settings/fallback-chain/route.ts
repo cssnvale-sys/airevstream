@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, validationError, requireAdmin , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,8 +85,8 @@ export async function PUT(req: NextRequest) {
 
     await ctx.db.systemSetting.upsert({
       where: { key: 'fallback_chain_ordering' },
-      create: { key: 'fallback_chain_ordering', value: { ordering: parsed.data.ordering } as any },
-      update: { value: { ordering: parsed.data.ordering } as any },
+      create: { key: 'fallback_chain_ordering', value: { ordering: parsed.data.ordering } as Prisma.InputJsonValue },
+      update: { value: { ordering: parsed.data.ordering } as Prisma.InputJsonValue },
     });
 
     return success({ ordering: parsed.data.ordering });

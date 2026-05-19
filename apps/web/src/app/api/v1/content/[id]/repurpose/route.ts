@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           targetPlatforms,
           targetDuration: targetDuration ?? (targetFormat === 'story' ? 15 : 60),
           repurposedFrom: source.id,
-        } as any,
+        } as Prisma.InputJsonValue,
       },
     });
 

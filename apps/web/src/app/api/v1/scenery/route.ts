@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 
     const [sceneryAssets, total] = await Promise.all([
       ctx.db.sceneryAsset.findMany({
-        where: where as any,
+        where,
         include: {
           _count: { select: { channelScenery: true } },
         },
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit,
       }),
-      ctx.db.sceneryAsset.count({ where: where as any }),
+      ctx.db.sceneryAsset.count({ where }),
     ]);
 
     const data = sceneryAssets.map(({ _count, ...asset }: { _count: unknown; [key: string]: unknown }) => ({

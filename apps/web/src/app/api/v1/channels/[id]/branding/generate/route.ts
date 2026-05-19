@@ -4,6 +4,7 @@ import { authenticate, success, error, notFound, validationError, isUUID, forbid
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { addJob } from '@airevstream/queue';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,8 +64,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       branding = await ctx.db.brandingPackage.create({
         data: {
           channelId: id,
-          colors: {} as any,
-          fonts: {} as any,
+          colors: {} as Prisma.InputJsonValue,
+          fonts: {} as Prisma.InputJsonValue,
           templates: [] as any,
         },
       });

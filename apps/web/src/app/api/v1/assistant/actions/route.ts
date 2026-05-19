@@ -407,8 +407,8 @@ const executors: Record<string, ActionExecutor> = {
     // Persist to SystemSetting table
     await ctx.db.systemSetting.upsert({
       where: { key: settingKey },
-      update: { value: value as any },
-      create: { key: settingKey, value: value as any },
+      update: { value: value as Prisma.InputJsonValue },
+      create: { key: settingKey, value: value as Prisma.InputJsonValue },
     });
 
     return {

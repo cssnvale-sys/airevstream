@@ -5,6 +5,7 @@ import { scoreViralPotential } from '@airevstream/shared';
 import type { ViralScoringInput } from '@airevstream/shared';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 const TRENDING_ENTRIES_LIMIT = 20;
 const VIRAL_SCORE_CACHE_AGE_MS = 3_600_000;
@@ -126,7 +127,7 @@ export async function GET(req: NextRequest) {
           viralIssues: result.issues,
           shareCoefficient: result.shareCoefficient,
           scoredAt: new Date().toISOString(),
-        } as any,
+        } as unknown as Prisma.InputJsonValue,
       },
     });
 

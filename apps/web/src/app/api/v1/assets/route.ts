@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
 
     const [assets, total] = await Promise.all([
       ctx.db.assetRegistryEntry.findMany({
-        where: where as any,
+        where,
         include: {
           avatar: { select: { id: true, name: true } },
           content: { select: { id: true, title: true } },
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit,
       }),
-      ctx.db.assetRegistryEntry.count({ where: where as any }),
+      ctx.db.assetRegistryEntry.count({ where }),
     ]);
 
     return paginated(assets, total, page, limit);

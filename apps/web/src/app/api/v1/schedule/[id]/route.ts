@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,7 +74,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     if (publishConfig !== undefined) {
-      data.publishConfig = publishConfig as any; // Prisma InputJsonValue
+      data.publishConfig = publishConfig as Prisma.InputJsonValue; // Prisma InputJsonValue
     }
 
     // Reset status to scheduled if it was failed/cancelled

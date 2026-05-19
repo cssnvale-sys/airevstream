@@ -3,6 +3,7 @@ import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,11 +119,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
           data: {
             channelId: id,
             version: 1,
-            lookBible: (lookBible ?? {}) as any,
-            characterBible: (characterBible ?? {}) as any,
-            environmentBible: (environmentBible ?? {}) as any,
-            promptBible: (promptBible ?? {}) as any,
-            shotspecTemplate: (shotspecTemplate ?? {}) as any,
+            lookBible: (lookBible ?? {}) as Prisma.InputJsonValue,
+            characterBible: (characterBible ?? {}) as Prisma.InputJsonValue,
+            environmentBible: (environmentBible ?? {}) as Prisma.InputJsonValue,
+            promptBible: (promptBible ?? {}) as Prisma.InputJsonValue,
+            shotspecTemplate: (shotspecTemplate ?? {}) as Prisma.InputJsonValue,
           },
         });
       }

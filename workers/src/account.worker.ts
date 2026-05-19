@@ -9,6 +9,7 @@ import {
   determineNextAction, calculateNextSessionTime, selectActivitiesForSession, assessRisk,
   DEFAULT_SEASONING_SCHEDULE, SEASONING_RISK_THRESHOLDS, getNextPhase,
   type SeasoningPhase, type ActivityLogEntry, type ActivityLock,
+  type Platform,
 } from '@airevstream/shared';
 import { decrypt } from '@airevstream/crypto';
 import { getConfig } from '@airevstream/shared';
@@ -195,18 +196,18 @@ async function handleCreate(data: AccountCreateJob, job: Job) {
       });
 
       try {
-        const workflow = createWorkflow(data.platform as any, contextEntry.context);
+        const workflow = createWorkflow(data.platform as Platform, contextEntry.context);
         const password = decryptCredential(emailAccount.passwordEnc);
 
         const result = await workflow.createAccount({
           email: emailAccount.email,
           password,
-          platform: data.platform as any,
+          platform: data.platform as Platform,
         });
 
         // Save session if successful
         if (result.success && sessMgr) {
-          await sessMgr.saveSession(data.emailAccountId, data.platform as any, contextEntry.context);
+          await sessMgr.saveSession(data.emailAccountId, data.platform as Platform, contextEntry.context);
         }
 
         if (result.needsHuman) {
@@ -282,23 +283,23 @@ async function handleSync(data: AccountSyncJob, job: Job) {
 
       try {
         // Restore session if available
-        if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
-          await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
+        if (sessMgr?.hasSession(data.socialAccountId, account.platform as Platform)) {
+          await sessMgr.loadSession(data.socialAccountId, account.platform as Platform, contextEntry.context);
         }
 
-        const workflow = createWorkflow(account.platform as any, contextEntry.context);
+        const workflow = createWorkflow(account.platform as Platform, contextEntry.context);
         const password = decryptCredential(account.emailAccount.passwordEnc);
 
         const loginResult = await workflow.login({
           email: account.emailAccount.email,
           password,
-          platform: account.platform as any,
+          platform: account.platform as Platform,
         });
 
         if (loginResult.success) {
           // Save refreshed session
           if (sessMgr) {
-            await sessMgr.saveSession(data.socialAccountId, account.platform as any, contextEntry.context);
+            await sessMgr.saveSession(data.socialAccountId, account.platform as Platform, contextEntry.context);
           }
 
           await db.socialAccount.update({
@@ -351,11 +352,11 @@ async function handleHealthCheck(data: AccountHealthCheckJob, job: Job) {
 
       try {
         // Restore session
-        if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
-          await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
+        if (sessMgr?.hasSession(data.socialAccountId, account.platform as Platform)) {
+          await sessMgr.loadSession(data.socialAccountId, account.platform as Platform, contextEntry.context);
         }
 
-        const workflow = createWorkflow(account.platform as any, contextEntry.context);
+        const workflow = createWorkflow(account.platform as Platform, contextEntry.context);
         const healthResult = await workflow.checkAccountHealth();
 
         isHealthy = healthResult.healthy;
@@ -440,19 +441,19 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
 
       try {
         // Restore session
-        if (sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
-          await sessMgr.loadSession(data.socialAccountId, account.platform as any, contextEntry.context);
+        if (sessMgr?.hasSession(data.socialAccountId, account.platform as Platform)) {
+          await sessMgr.loadSession(data.socialAccountId, account.platform as Platform, contextEntry.context);
         }
 
         // First login if no session
-        const workflow = createWorkflow(account.platform as any, contextEntry.context);
+        const workflow = createWorkflow(account.platform as Platform, contextEntry.context);
         const password = decryptCredential(account.emailAccount.passwordEnc);
 
-        if (!sessMgr?.hasSession(data.socialAccountId, account.platform as any)) {
+        if (!sessMgr?.hasSession(data.socialAccountId, account.platform as Platform)) {
           await workflow.login({
             email: account.emailAccount.email,
             password,
-            platform: account.platform as any,
+            platform: account.platform as Platform,
           });
         }
 
@@ -461,7 +462,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
 
         await job.updateProgress(25);
         const warmResult = await workflow.warmAccount({
-          platform: account.platform as any,
+          platform: account.platform as Platform,
           durationMinutes,
           activities: ['browse', 'watch', 'like', 'search'],
           nicheTags: nicheTags.length > 0 ? nicheTags : undefined,
@@ -471,7 +472,7 @@ async function handleWarm(data: AccountWarmJob, job: Job) {
 
         // Save session after warming
         if (sessMgr) {
-          await sessMgr.saveSession(data.socialAccountId, account.platform as any, contextEntry.context);
+          await sessMgr.saveSession(data.socialAccountId, account.platform as Platform, contextEntry.context);
         }
 
         await db.socialAccount.update({
@@ -634,13 +635,13 @@ async function handleSeasoningSignup(data: SeasoningSignupJob) {
   } as any);
 
   try {
-    const workflow = createWorkflow(data.platform as any, contextEntry.context);
+    const workflow = createWorkflow(data.platform as Platform, contextEntry.context);
     const password = decryptCredential(enrollment.emailAccount.passwordEnc);
 
     const result = await workflow.createAccount({
       email: enrollment.emailAccount.email,
       password,
-      platform: data.platform as any,
+      platform: data.platform as Platform,
     });
 
     if (result.needsHuman) {
@@ -798,26 +799,26 @@ async function handleSeasoningWarm(data: SeasoningWarmJob, job: Job) {
 
       try {
         // Restore session
-        if (sessMgr?.hasSession(data.socialAccountId, enrollment.socialAccount.platform as any)) {
-          await sessMgr.loadSession(data.socialAccountId, enrollment.socialAccount.platform as any, contextEntry.context);
+        if (sessMgr?.hasSession(data.socialAccountId, enrollment.socialAccount.platform as Platform)) {
+          await sessMgr.loadSession(data.socialAccountId, enrollment.socialAccount.platform as Platform, contextEntry.context);
         }
 
-        const workflow = createWorkflow(data.platform as any, contextEntry.context);
+        const workflow = createWorkflow(data.platform as Platform, contextEntry.context);
         await job.updateProgress(20);
 
         // Login if no session
-        if (!sessMgr?.hasSession(data.socialAccountId, enrollment.socialAccount.platform as any)) {
+        if (!sessMgr?.hasSession(data.socialAccountId, enrollment.socialAccount.platform as Platform)) {
           const password = decryptCredential(enrollment.emailAccount.passwordEnc);
           await workflow.login({
             email: enrollment.emailAccount.email,
             password,
-            platform: data.platform as any,
+            platform: data.platform as Platform,
           });
         }
         await job.updateProgress(30);
 
         const warmResult = await workflow.warmAccount({
-          platform: data.platform as any,
+          platform: data.platform as Platform,
           durationMinutes,
           activities: selectedActivities,
           intensity: phaseConfig.intensity,
@@ -826,7 +827,7 @@ async function handleSeasoningWarm(data: SeasoningWarmJob, job: Job) {
 
         // Save session
         if (sessMgr) {
-          await sessMgr.saveSession(data.socialAccountId, data.platform as any, contextEntry.context);
+          await sessMgr.saveSession(data.socialAccountId, data.platform as Platform, contextEntry.context);
         }
 
         success = !warmResult.flagged;

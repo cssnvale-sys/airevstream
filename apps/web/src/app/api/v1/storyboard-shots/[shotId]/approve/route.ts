@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, notFound, isUUID, validationError, forbidden, formatZodErrors , type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         where: { id: shotId },
         data: {
           status: 'pending',
-          shotspec: { ...spec, seed: currentSeed + 1 } as any,
+          shotspec: { ...spec, seed: currentSeed + 1 } as Prisma.InputJsonValue,
         },
       });
 

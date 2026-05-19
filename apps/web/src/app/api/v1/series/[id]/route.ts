@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, success, error, validationError, isUUID, type ApiContext } from '@/lib/api-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +73,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         ...(tags !== undefined ? { tags } : {}),
         ...(defaultPresetIds !== undefined ? { defaultPresetIds } : {}),
         ...(defaultRecipeId !== undefined ? { defaultRecipeId } : {}),
-        ...(bibleOverrides !== undefined ? { bibleOverrides: bibleOverrides as any } : {}),
+        ...(bibleOverrides !== undefined ? { bibleOverrides: bibleOverrides as Prisma.InputJsonValue } : {}),
         ...(postingCadence !== undefined ? { postingCadence: postingCadence as any } : {}),
         ...(youtubePlaylistId !== undefined ? { youtubePlaylistId } : {}),
         ...(baseSeed !== undefined ? { baseSeed } : {}),

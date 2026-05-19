@@ -3,6 +3,7 @@ import { authenticate, success, error, notFound, requireAdmin, isUUID, validatio
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import net from 'node:net';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +49,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     await ctx.db.systemSetting.update({
       where: { key: SETTING_KEY },
-      data: { value: proxies as any },
+      data: { value: proxies as unknown as Prisma.InputJsonValue },
     });
 
     return success({ id, deleted: true });
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     await ctx.db.systemSetting.update({
       where: { key: SETTING_KEY },
-      data: { value: updatedProxies as any },
+      data: { value: updatedProxies as unknown as Prisma.InputJsonValue },
     });
 
     return success({

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate, success, error, notFound, validationError, isUUID, forbidden } from '@/lib/api-server';
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,11 +99,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     const updateData: Record<string, unknown> = {};
-    if (parsed.data.lookBible !== undefined) updateData.lookBible = parsed.data.lookBible as any;
-    if (parsed.data.characterBible !== undefined) updateData.characterBible = parsed.data.characterBible as any;
-    if (parsed.data.environmentBible !== undefined) updateData.environmentBible = parsed.data.environmentBible as any;
-    if (parsed.data.promptBible !== undefined) updateData.promptBible = parsed.data.promptBible as any;
-    if (parsed.data.shotspecTemplate !== undefined) updateData.shotspecTemplate = parsed.data.shotspecTemplate as any;
+    if (parsed.data.lookBible !== undefined) updateData.lookBible = parsed.data.lookBible as Prisma.InputJsonValue;
+    if (parsed.data.characterBible !== undefined) updateData.characterBible = parsed.data.characterBible as Prisma.InputJsonValue;
+    if (parsed.data.environmentBible !== undefined) updateData.environmentBible = parsed.data.environmentBible as Prisma.InputJsonValue;
+    if (parsed.data.promptBible !== undefined) updateData.promptBible = parsed.data.promptBible as Prisma.InputJsonValue;
+    if (parsed.data.shotspecTemplate !== undefined) updateData.shotspecTemplate = parsed.data.shotspecTemplate as Prisma.InputJsonValue;
 
     const bible = await ctx.db.cinemaBible.update({
       where: { id },

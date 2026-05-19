@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+*Last updated: 2026-05-18*
+
 ### Added
 - **Public storefront page** (Session 50): `/p/[slug]` public server component + `GET /api/v1/public/storefronts/[slug]` API. Renders published storefronts with featured/rest product grids, OpenGraph metadata, 60 s ISR revalidation, and `rel="sponsored nofollow noopener"` on outbound affiliate links. Public API rate-limited to 120 req/min per IP; drafts and archived storefronts 404 so unpublished slugs can't be scraped. Closes Wave-1 A4 blocker.
 - **Affiliate click conversion endpoint** (Session 50): `POST /api/v1/affiliate/clicks/[id]/convert` accepts Bearer JWT (manual UI) or X-API-Key (network postback), tenant-scopes through channel→socialAccount→emailAccount, 409s on double-conversion, and atomically bumps `AffiliateProduct.totalRevenue`/`totalConversions`. Revenue dashboards now report real numbers. Closes Wave-1 A4 blocker.

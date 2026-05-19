@@ -3,6 +3,7 @@ import { authenticate, success, error, validationError, isUUID, type ApiContext 
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { resolveSeriesBible } from '@airevstream/shared';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,7 +86,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     const series = await ctx.db.series.update({
       where: { id },
-      data: { bibleOverrides: bibleOverrides as any },
+      data: { bibleOverrides: bibleOverrides as Prisma.InputJsonValue },
       select: { id: true, bibleOverrides: true },
     });
 

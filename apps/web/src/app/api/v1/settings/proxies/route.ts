@@ -4,6 +4,7 @@ import { authenticate, success, error, validationError, formatZodErrors, require
 import { checkRateLimit, RATE_LIMITS, getClientIp } from '@/lib/rate-limit';
 import { randomUUID } from 'node:crypto';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,8 +97,8 @@ export async function POST(req: NextRequest) {
 
     await ctx.db.systemSetting.upsert({
       where: { key: SETTING_KEY },
-      update: { value: proxies as any },
-      create: { key: SETTING_KEY, value: proxies as any },
+      update: { value: proxies as unknown as Prisma.InputJsonValue },
+      create: { key: SETTING_KEY, value: proxies as unknown as Prisma.InputJsonValue },
     });
 
     return success({

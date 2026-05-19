@@ -60,12 +60,12 @@ export async function GET(req: NextRequest) {
 
     const [presets, total] = await Promise.all([
       ctx.db.userPreset.findMany({
-        where: where as any,
+        where,
         orderBy: { [sortField]: sortOrder },
         skip,
         take: limit,
       }),
-      ctx.db.userPreset.count({ where: where as any }),
+      ctx.db.userPreset.count({ where }),
     ]);
 
     return paginated(presets, total, page, limit);

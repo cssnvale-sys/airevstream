@@ -68,7 +68,7 @@ class Logger {
         if (this.isDev) console.debug(output);
         break;
       case 'info':
-        console.log(output);
+        console.info(output);
         break;
       case 'warn':
         console.warn(output);

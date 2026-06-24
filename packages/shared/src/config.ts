@@ -46,6 +46,14 @@ const envSchema = z.object({
   TIKTOK_CLIENT_KEY: z.string().min(1).optional(),
   TIKTOK_CLIENT_SECRET: z.string().min(1).optional(),
 
+  // OAuth — Instagram
+  INSTAGRAM_CLIENT_ID: z.string().min(1).optional(),
+  INSTAGRAM_CLIENT_SECRET: z.string().min(1).optional(),
+
+  // OAuth — Facebook
+  FACEBOOK_APP_ID: z.string().min(1).optional(),
+  FACEBOOK_APP_SECRET: z.string().min(1).optional(),
+
   // Frontend URL for OAuth redirects
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 });

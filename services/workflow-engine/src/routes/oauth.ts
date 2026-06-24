@@ -13,8 +13,8 @@ const logger = createLogger('routes:oauth');
 // Helpers
 // ============================================================================
 
-function getRedirectUri(platform: 'google' | 'tiktok', request: FastifyRequest): string {
-  // Use the workflow engine's own URL for callbacks so Google/TikTok redirect back here
+function getRedirectUri(platform: 'google' | 'tiktok' | 'instagram' | 'facebook', request: FastifyRequest): string {
+  // Use the workflow engine's own URL for callbacks so Google/TikTok/Instagram/Facebook redirect back here
   const proto = request.headers['x-forwarded-proto'] ?? 'http';
   const host = request.headers['x-forwarded-host'] ?? request.headers.host ?? 'localhost:3011';
   return `${proto}://${host}/api/accounts/oauth/callback/${platform}`;
@@ -454,6 +454,335 @@ export async function oauthRoutes(app: FastifyInstance) {
       return reply.redirect(redirect('/accounts?success=tiktok_connected').redirect);
     } catch (err) {
       logger.error({ err, emailAccountId }, 'TikTok OAuth callback failed');
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Callback processing failed').redirect);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Instagram OAuth Init
+  // ---------------------------------------------------------------------------
+  app.get<{ Params: { id: string } }>('/:id/instagram', { onRequest: [app.authenticate] }, async (request, reply) => {
+    const { id: emailAccountId } = request.params;
+    const config = getConfig();
+    const db = getDb();
+
+    try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
+      const account = await db.emailAccount.findFirst({
+        where: { id: emailAccountId, tenantId },
+      });
+      if (!account) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Email account not found' } });
+      }
+
+      if (!config.INSTAGRAM_CLIENT_ID || !config.JWT_SECRET) {
+        return reply.status(500).send({ success: false, error: { code: 'CONFIG_ERROR', message: 'INSTAGRAM_CLIENT_ID or JWT_SECRET not configured' } });
+      }
+
+      const state = await buildState({ emailAccountId, platform: 'instagram' }, config.JWT_SECRET);
+      const scopes = [
+        'instagram_basic',
+        'instagram_content_publish',
+        'pages_show_list',
+        'pages_read_engagement',
+      ];
+      const redirectUri = getRedirectUri('instagram', request);
+
+      const url = new URL('https://api.instagram.com/oauth/authorize');
+      url.searchParams.append('client_id', config.INSTAGRAM_CLIENT_ID);
+      url.searchParams.append('redirect_uri', redirectUri);
+      url.searchParams.append('response_type', 'code');
+      url.searchParams.append('scope', scopes.join(','));
+      url.searchParams.append('state', state);
+
+      return reply.redirect(url.toString(), 302);
+    } catch (err) {
+      logger.error({ err, emailAccountId }, 'OAuth init (instagram) failed');
+      return reply.status(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'OAuth initiation failed' } });
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Facebook OAuth Init
+  // ---------------------------------------------------------------------------
+  app.get<{ Params: { id: string } }>('/:id/facebook', { onRequest: [app.authenticate] }, async (request, reply) => {
+    const { id: emailAccountId } = request.params;
+    const config = getConfig();
+    const db = getDb();
+
+    try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
+      const account = await db.emailAccount.findFirst({
+        where: { id: emailAccountId, tenantId },
+      });
+      if (!account) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Email account not found' } });
+      }
+
+      if (!config.FACEBOOK_APP_ID || !config.JWT_SECRET) {
+        return reply.status(500).send({ success: false, error: { code: 'CONFIG_ERROR', message: 'FACEBOOK_APP_ID or JWT_SECRET not configured' } });
+      }
+
+      const state = await buildState({ emailAccountId, platform: 'facebook' }, config.JWT_SECRET);
+      const scopes = [
+        'pages_show_list',
+        'pages_read_engagement',
+        'pages_manage_posts',
+        'pages_manage_engagement',
+        'publish_to_pages',
+      ];
+      const redirectUri = getRedirectUri('facebook', request);
+
+      const url = new URL('https://www.facebook.com/v18.0/dialog/oauth');
+      url.searchParams.append('client_id', config.FACEBOOK_APP_ID);
+      url.searchParams.append('redirect_uri', redirectUri);
+      url.searchParams.append('response_type', 'code');
+      url.searchParams.append('scope', scopes.join(','));
+      url.searchParams.append('state', state);
+
+      return reply.redirect(url.toString(), 302);
+    } catch (err) {
+      logger.error({ err, emailAccountId }, 'OAuth init (facebook) failed');
+      return reply.status(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'OAuth initiation failed' } });
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Instagram OAuth Callback (NO auth — external redirect)
+  // ---------------------------------------------------------------------------
+  app.get('/callback/instagram', async (request, reply) => {
+    const { code, state, error: oauthError } = request.query as Record<string, string>;
+    const config = getConfig();
+
+    if (oauthError) {
+      logger.error({ error: oauthError }, 'Instagram OAuth callback returned error');
+      return reply.redirect(redirect('/accounts?error=oauth_denied', oauthError).redirect);
+    }
+
+    if (!code || !state) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Missing code or state').redirect);
+    }
+
+    if (!config.JWT_SECRET) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'JWT_SECRET not configured').redirect);
+    }
+
+    const stateData = await verifyState(state, config.JWT_SECRET);
+    if (!stateData) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Invalid or expired state').redirect);
+    }
+
+    const { emailAccountId, platform } = stateData;
+    if (!emailAccountId || platform !== 'instagram') {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Bad state payload').redirect);
+    }
+
+    try {
+      if (!config.INSTAGRAM_CLIENT_ID || !config.INSTAGRAM_CLIENT_SECRET) {
+        return reply.redirect(redirect('/accounts?error=oauth_failed', 'Instagram credentials not configured').redirect);
+      }
+
+      const redirectUri = getRedirectUri('instagram', request);
+
+      // 1. Exchange code for tokens
+      const tokenRes = await postJson('https://api.instagram.com/oauth/access_token', {
+        client_id: config.INSTAGRAM_CLIENT_ID,
+        client_secret: config.INSTAGRAM_CLIENT_SECRET,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
+      });
+
+      if (tokenRes.statusCode === 429) {
+        return reply.redirect(redirect('/accounts?error=rate_limited').redirect);
+      }
+      if (tokenRes.statusCode !== 200) {
+        logger.error({ data: tokenRes.data, statusCode: tokenRes.statusCode }, 'Instagram token exchange failed');
+        return reply.redirect(
+          redirect('/accounts?error=oauth_failed', `Instagram token exchange failed: ${(tokenRes.data as Record<string, string>)?.error_message ?? tokenRes.statusMessage}`).redirect,
+        );
+      }
+
+      const tokenData = tokenRes.data as {
+        access_token: string;
+        user_id: number;
+      };
+
+      // 2. Fetch profile (long-lived token exchange + profile)
+      const profileRes = await getJson(
+        `https://graph.facebook.com/v18.0/${tokenData.user_id}?fields=id,username,account_type,media_count&access_token=${encodeURIComponent(tokenData.access_token)}`
+      );
+      const profile = profileRes.data as { id?: string; username?: string; account_type?: string; media_count?: number } | undefined;
+
+      const platformUserId = String(tokenData.user_id);
+      const username = profile?.username ?? '';
+
+      // 3. Store SocialAccount
+      const db = getDb();
+      const credentials = {
+        accessToken: tokenData.access_token,
+        userId: tokenData.user_id,
+        scope: 'instagram_basic,instagram_content_publish',
+        profile,
+      };
+      const credentialsEnc = config.ENCRYPTION_KEY
+        ? encrypt(JSON.stringify(credentials), config.ENCRYPTION_KEY)
+        : JSON.stringify(credentials);
+
+      await db.socialAccount.upsert({
+        where: {
+          emailAccountId_platform: {
+            emailAccountId,
+            platform: 'instagram',
+          },
+        },
+        create: {
+          emailAccountId,
+          platform: 'instagram',
+          platformUserId,
+          username,
+          status: 'active',
+          credentialsEnc,
+          lastLoginAt: new Date(),
+          metadata: { scope: credentials.scope, connectedVia: 'oauth' },
+        },
+        update: {
+          platformUserId,
+          username,
+          status: 'active',
+          credentialsEnc,
+          lastLoginAt: new Date(),
+          metadata: { scope: credentials.scope, connectedVia: 'oauth', updatedAt: new Date().toISOString() },
+        },
+      });
+
+      logger.info({ emailAccountId, platform: 'instagram', platformUserId }, 'OAuth connected');
+      return reply.redirect(redirect('/accounts?success=instagram_connected').redirect);
+    } catch (err) {
+      logger.error({ err, emailAccountId }, 'Instagram OAuth callback failed');
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Callback processing failed').redirect);
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Facebook OAuth Callback (NO auth — external redirect)
+  // ---------------------------------------------------------------------------
+  app.get('/callback/facebook', async (request, reply) => {
+    const { code, state, error: oauthError } = request.query as Record<string, string>;
+    const config = getConfig();
+
+    if (oauthError) {
+      logger.error({ error: oauthError }, 'Facebook OAuth callback returned error');
+      return reply.redirect(redirect('/accounts?error=oauth_denied', oauthError).redirect);
+    }
+
+    if (!code || !state) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Missing code or state').redirect);
+    }
+
+    if (!config.JWT_SECRET) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'JWT_SECRET not configured').redirect);
+    }
+
+    const stateData = await verifyState(state, config.JWT_SECRET);
+    if (!stateData) {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Invalid or expired state').redirect);
+    }
+
+    const { emailAccountId, platform } = stateData;
+    if (!emailAccountId || platform !== 'facebook') {
+      return reply.redirect(redirect('/accounts?error=oauth_failed', 'Bad state payload').redirect);
+    }
+
+    try {
+      if (!config.FACEBOOK_APP_ID || !config.FACEBOOK_APP_SECRET) {
+        return reply.redirect(redirect('/accounts?error=oauth_failed', 'Facebook credentials not configured').redirect);
+      }
+
+      const redirectUri = getRedirectUri('facebook', request);
+
+      // 1. Exchange code for tokens
+      const tokenRes = await postJson('https://graph.facebook.com/v18.0/oauth/access_token', {
+        client_id: config.FACEBOOK_APP_ID,
+        client_secret: config.FACEBOOK_APP_SECRET,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
+      });
+
+      if (tokenRes.statusCode === 429) {
+        return reply.redirect(redirect('/accounts?error=rate_limited').redirect);
+      }
+      if (tokenRes.statusCode !== 200) {
+        logger.error({ data: tokenRes.data, statusCode: tokenRes.statusCode }, 'Facebook token exchange failed');
+        return reply.redirect(
+          redirect('/accounts?error=oauth_failed', `Facebook token exchange failed: ${(tokenRes.data as Record<string, { message?: string }>)?.error?.message ?? tokenRes.statusMessage}`).redirect,
+        );
+      }
+
+      const tokenData = tokenRes.data as {
+        access_token: string;
+        token_type: string;
+        expires_in?: number;
+      };
+
+      // 2. Fetch profile
+      const profileRes = await getJson(
+        `https://graph.facebook.com/v18.0/me?fields=id,name,email&access_token=${encodeURIComponent(tokenData.access_token)}`
+      );
+      const profile = profileRes.data as { id?: string; name?: string; email?: string } | undefined;
+
+      const platformUserId = profile?.id ?? '';
+      const username = profile?.name ?? '';
+
+      // 3. Store SocialAccount
+      const db = getDb();
+      const credentials = {
+        accessToken: tokenData.access_token,
+        tokenType: tokenData.token_type,
+        expiresAt: tokenData.expires_in ? Date.now() + tokenData.expires_in * 1000 : undefined,
+        scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,publish_to_pages',
+        profile,
+      };
+      const credentialsEnc = config.ENCRYPTION_KEY
+        ? encrypt(JSON.stringify(credentials), config.ENCRYPTION_KEY)
+        : JSON.stringify(credentials);
+
+      await db.socialAccount.upsert({
+        where: {
+          emailAccountId_platform: {
+            emailAccountId,
+            platform: 'facebook',
+          },
+        },
+        create: {
+          emailAccountId,
+          platform: 'facebook',
+          platformUserId,
+          username,
+          status: 'active',
+          credentialsEnc,
+          lastLoginAt: new Date(),
+          metadata: { scope: credentials.scope, connectedVia: 'oauth' },
+        },
+        update: {
+          platformUserId,
+          username,
+          status: 'active',
+          credentialsEnc,
+          lastLoginAt: new Date(),
+          metadata: { scope: credentials.scope, connectedVia: 'oauth', updatedAt: new Date().toISOString() },
+        },
+      });
+
+      logger.info({ emailAccountId, platform: 'facebook', platformUserId }, 'OAuth connected');
+      return reply.redirect(redirect('/accounts?success=facebook_connected').redirect);
+    } catch (err) {
+      logger.error({ err, emailAccountId }, 'Facebook OAuth callback failed');
       return reply.redirect(redirect('/accounts?error=oauth_failed', 'Callback processing failed').redirect);
     }
   });

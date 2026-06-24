@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/v1/accounts/[id]/oauth/[provider]
  * Proxies OAuth initiation to the workflow engine.
- * Provider must be 'google' or 'tiktok'.
+ * Provider must be 'google', 'youtube', 'tiktok', 'instagram', or 'facebook'.
  */
 export async function GET(
   req: NextRequest,
@@ -17,8 +17,8 @@ export async function GET(
   if (ctx instanceof NextResponse) return ctx;
 
   const { id, provider } = await params;
-  if (!['google', 'youtube', 'tiktok'].includes(provider)) {
-    return error('BAD_REQUEST', "Provider must be 'google', 'youtube' or 'tiktok'", 400);
+  if (!['google', 'youtube', 'tiktok', 'instagram', 'facebook'].includes(provider)) {
+    return error('BAD_REQUEST', "Provider must be 'google', 'youtube', 'tiktok', 'instagram' or 'facebook'", 400);
   }
 
   // Normalize youtube to google for upstream routing

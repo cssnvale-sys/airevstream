@@ -664,17 +664,241 @@ export class FacebookWorkflow extends BasePlatformWorkflow {
     return [capitalize(local), 'Smith'];
   }
 
-  // ─── Discovery (D064 stub) ───
+  // ─── Discovery ───
 
+  /**
+   * Discover whether a Facebook account exists for this email.
+   * Uses login probe: enter email on Facebook login, check for password prompt vs error.
+   */
   async discoverAccount(credentials: AccountCredentials): Promise<DiscoveryResult> {
-    this.logger.info({ email: credentials.email, platform: credentials.platform }, 'Discovery not yet implemented — returning unknown');
-    return { exists: 'unknown', needsHuman: true, humanTaskDescription: `${credentials.platform} discovery not yet implemented. Check manually.` };
+    await this.init();
+    this.logger.info({ email: credentials.email }, 'Starting Facebook account discovery');
+
+    try {
+      // Step 1: Navigate to Facebook login page
+      const navStep = await this.executeStep('navigate-to-facebook-login', async () => {
+        await this.page.goto(this.FACEBOOK_LOGIN_URL, { waitUntil: 'domcontentloaded' });
+        await this.dismissCookieDialog();
+        await this.humanBehavior.delay(1500, 3000);
+      });
+      if (!navStep.success) return { exists: 'unknown', error: navStep.error };
+
+      // Step 2: Enter email
+      const emailStep = await this.executeStep('enter-email', async () => {
+        const emailInput = 'input#email, input[name="email"]';
+        await this.page.waitForSelector(emailInput, { timeout: 10_000 });
+        await this.humanBehavior.type(this.page, emailInput, credentials.email);
+        await this.humanBehavior.delay(300, 600);
+      });
+      if (!emailStep.success) return { exists: 'unknown', error: emailStep.error };
+
+      // Step 3: Click into password field to trigger validation
+      const probeStep = await this.executeStep('probe-account', async () => {
+        const passwordInput = 'input#pass, input[name="pass"]';
+        await this.page.waitForSelector(passwordInput, { timeout: 10_000 });
+        await this.humanBehavior.click(this.page, passwordInput);
+        await this.humanBehavior.delay(2000, 4000);
+      });
+      if (!probeStep.success) return { exists: 'unknown', error: probeStep.error };
+
+      // Step 4: Check for CAPTCHA
+      const captchaCheck = await this.handleCaptcha();
+      if (captchaCheck.needsHuman) {
+        return {
+          exists: 'unknown',
+          needsHuman: true,
+          humanTaskDescription: captchaCheck.taskDescription,
+        };
+      }
+
+      // Step 5: Check what Facebook shows after entering email
+      const result = await this.executeStep('check-result', async () => {
+        // Check for "The email you entered isn't connected to an account" error
+        const notFoundSelectors = [
+          'text=isn\'t connected to an account',
+          'text=doesn\'t match any account',
+          'text=The email you entered isn',
+          'div[class*="error"]:has-text("email")',
+          'div[class*="_9ay7"]:has-text("doesn\'t")',
+          'div[role="alert"]:has-text("email")',
+        ];
+        for (const selector of notFoundSelectors) {
+          const notFoundEl = await this.page.$(selector);
+          if (notFoundEl) {
+            return { found: false };
+          }
+        }
+
+        // Check for password input being present and no error (account exists)
+        const passwordInput = await this.page.$('input#pass, input[name="pass"]');
+        if (passwordInput) {
+          // Try to extract profile info from the page
+          const profileInfo = await this.page.$eval(
+            'div[class*="account-info"], img[class*="avatar"], div[class*="user-info"]',
+            (el) => el.getAttribute('alt') || el.textContent?.trim() || undefined,
+          ).catch(() => undefined);
+          return { found: true, displayName: profileInfo };
+        }
+
+        return { ambiguous: true };
+      });
+
+      if (!result.success || !result.data) {
+        return { exists: 'unknown', error: result.error ?? 'Discovery step failed' };
+      }
+
+      if (result.data.found === false) {
+        return { exists: false };
+      }
+
+      if (result.data.found === true) {
+        return {
+          exists: true,
+          accountInfo: {
+            username: result.data.displayName as string | undefined,
+          },
+        };
+      }
+
+      return { exists: 'unknown' };
+    } catch (err) {
+      this.logger.error({ err, email: credentials.email }, 'Facebook discovery failed');
+      return { exists: 'unknown', error: String(err) };
+    }
   }
 
-  // ─── Profile Setup (D064 stub) ───
+  // ─── Profile Setup ───
 
+  /**
+   * Upload profile picture, set bio, and configure settings on Facebook profile page.
+   */
   async setProfileAssets(config: ProfileAssetsConfig): Promise<WorkflowResult> {
-    this.logger.info({ platform: 'facebook' }, 'Profile asset setup not yet implemented — returning success');
-    return this.buildResult(true);
+    await this.init();
+    this.logger.info('Starting Facebook profile asset setup');
+
+    try {
+      // Step 1: Navigate to Facebook profile editing page
+      const navStep = await this.executeStep('navigate-to-profile-edit', async () => {
+        await this.page.goto(`${this.FACEBOOK_URL}/profile.php?sk=edit`, { waitUntil: 'domcontentloaded' });
+        await this.humanBehavior.delay(2000, 4000);
+      });
+      if (!navStep.success) return this.buildResult(false, navStep.error);
+
+      // Step 2: Upload profile picture
+      if (config.profileImagePath) {
+        const uploadStep = await this.executeStep('upload-profile-picture', async () => {
+          // Facebook profile photo upload button
+          const uploadButton = await this.page.$('a[aria-label*="Update"], div[aria-label*="Add Photo"], button:has-text("Add Photo")');
+          if (uploadButton) {
+            await uploadButton.click();
+            await this.humanBehavior.delay(1000, 2000);
+          }
+          // Set file via input
+          const fileInput = await this.page.$('input[type="file"][accept*="image"]');
+          if (fileInput) {
+            await fileInput.setInputFiles(config.profileImagePath!);
+            await this.humanBehavior.delay(3000, 5000);
+            // If a crop/save dialog appears, click Save
+            const saveButton = await this.page.$('button:has-text("Save"), button:has-text("Done"), button:has-text("Apply")');
+            if (saveButton) {
+              await this.humanBehavior.click(this.page, 'button:has-text("Save"), button:has-text("Done"), button:has-text("Apply")');
+              await this.humanBehavior.delay(2000, 4000);
+            }
+          }
+        });
+        if (!uploadStep.success) {
+          this.logger.warn({ error: uploadStep.error }, 'Facebook profile picture upload failed, continuing');
+        }
+      }
+
+      // Step 3: Upload cover photo (banner)
+      if (config.bannerImagePath) {
+        const bannerStep = await this.executeStep('upload-cover-photo', async () => {
+          // Facebook cover photo upload button
+          const coverButton = await this.page.$('div[aria-label*="Add Cover Photo"], a:has-text("Add Cover Photo"), button:has-text("Add Cover")');
+          if (coverButton) {
+            await coverButton.click();
+            await this.humanBehavior.delay(1000, 2000);
+          }
+          const fileInputs = await this.page.$$('input[type="file"][accept*="image"]');
+          if (fileInputs.length > 0) {
+            await fileInputs[0].setInputFiles(config.bannerImagePath!);
+            await this.humanBehavior.delay(3000, 5000);
+            const saveButton = await this.page.$('button:has-text("Save"), button:has-text("Save Changes")');
+            if (saveButton) {
+              await this.humanBehavior.click(this.page, 'button:has-text("Save"), button:has-text("Save Changes")');
+              await this.humanBehavior.delay(2000, 4000);
+            }
+          }
+        });
+        if (!bannerStep.success) {
+          this.logger.warn({ error: bannerStep.error }, 'Facebook cover photo upload failed, continuing');
+        }
+      }
+
+      // Step 4: Set display name
+      if (config.displayName) {
+        const nameStep = await this.executeStep('set-display-name', async () => {
+          // Facebook name fields — first and last name
+          const firstNameInput = 'input[name="primary_name_first_name"], input[id="first_name"]';
+          const lastNameInput = 'input[name="primary_name_last_name"], input[id="last_name"]';
+          const firstNameEl = await this.page.$(firstNameInput);
+          if (firstNameEl) {
+            await this.humanBehavior.click(this.page, firstNameInput);
+            await this.page.keyboard.press('Control+a');
+            const parts = config.displayName!.split(' ');
+            await this.humanBehavior.type(this.page, firstNameInput, parts[0] || config.displayName!);
+            await this.humanBehavior.delay(500, 1000);
+            const lastNameEl = await this.page.$(lastNameInput);
+            if (lastNameEl && parts.length > 1) {
+              await this.humanBehavior.click(this.page, lastNameInput);
+              await this.page.keyboard.press('Control+a');
+              await this.humanBehavior.type(this.page, lastNameInput, parts.slice(1).join(' '));
+            }
+          }
+        });
+        if (!nameStep.success) {
+          this.logger.warn({ error: nameStep.error }, 'Facebook display name setup failed, continuing');
+        }
+      }
+
+      // Step 5: Set bio
+      if (config.bio) {
+        const bioStep = await this.executeStep('set-bio', async () => {
+          // Facebook bio/introduction field
+          const bioInput = 'textarea[name="bio"], textarea[id="bio"], textarea[aria-label*="Bio"]';
+          const bioEl = await this.page.$(bioInput);
+          if (bioEl) {
+            await this.humanBehavior.click(this.page, bioInput);
+            await this.page.keyboard.press('Control+a');
+            await this.humanBehavior.type(this.page, bioInput, config.bio!);
+            await this.humanBehavior.delay(500, 1000);
+          }
+        });
+        if (!bioStep.success) {
+          this.logger.warn({ error: bioStep.error }, 'Facebook bio setup failed, continuing');
+        }
+      }
+
+      // Step 6: Save changes
+      const saveStep = await this.executeStep('save-changes', async () => {
+        const saveButton = 'button:has-text("Save"), button:has-text("Save Changes"), input[type="submit"][value="Save"]';
+        const saveEl = await this.page.$(saveButton);
+        if (saveEl) {
+          await this.humanBehavior.click(this.page, saveButton);
+          await this.humanBehavior.delay(2000, 4000);
+        }
+      });
+      if (!saveStep.success) {
+        this.logger.warn({ error: saveStep.error }, 'Facebook save step failed, continuing');
+      }
+
+      await this.takeScreenshot('facebook-profile-assets-complete');
+      return this.buildResult(true);
+    } catch (err) {
+      this.logger.error({ err }, 'Facebook profile setup failed');
+      await this.takeScreenshot('facebook-profile-assets-error');
+      return this.buildResult(false, String(err));
+    }
   }
 }

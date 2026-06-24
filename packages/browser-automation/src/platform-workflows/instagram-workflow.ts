@@ -612,17 +612,202 @@ export class InstagramWorkflow extends BasePlatformWorkflow {
     return capitalize(local);
   }
 
-  // ─── Discovery (D064 stub) ───
+  // ─── Discovery ───
 
+  /**
+   * Discover whether an Instagram account exists for this email.
+   * Uses login probe: enter email on Instagram login, check for password prompt vs error.
+   */
   async discoverAccount(credentials: AccountCredentials): Promise<DiscoveryResult> {
-    this.logger.info({ email: credentials.email, platform: credentials.platform }, 'Discovery not yet implemented — returning unknown');
-    return { exists: 'unknown', needsHuman: true, humanTaskDescription: `${credentials.platform} discovery not yet implemented. Check manually.` };
+    await this.init();
+    this.logger.info({ email: credentials.email }, 'Starting Instagram account discovery');
+
+    try {
+      // Step 1: Navigate to Instagram login page
+      const navStep = await this.executeStep('navigate-to-instagram-login', async () => {
+        await this.page.goto(this.INSTAGRAM_LOGIN_URL, { waitUntil: 'domcontentloaded' });
+        await this.dismissCookieDialog();
+        await this.humanBehavior.delay(1500, 3000);
+      });
+      if (!navStep.success) return { exists: 'unknown', error: navStep.error };
+
+      // Step 2: Enter email/username
+      const emailStep = await this.executeStep('enter-email', async () => {
+        const emailInput = 'input[name="username"], input[aria-label="Phone number, username, or email"]';
+        await this.page.waitForSelector(emailInput, { timeout: 10_000 });
+        await this.humanBehavior.type(this.page, emailInput, credentials.email);
+        await this.humanBehavior.delay(300, 600);
+      });
+      if (!emailStep.success) return { exists: 'unknown', error: emailStep.error };
+
+      // Step 3: Click into password field to trigger validation
+      const probeStep = await this.executeStep('probe-account', async () => {
+        // Click the password field to trigger Instagram's account check
+        const passwordInput = 'input[name="password"], input[aria-label="Password"]';
+        await this.page.waitForSelector(passwordInput, { timeout: 10_000 });
+        await this.humanBehavior.click(this.page, passwordInput);
+        await this.humanBehavior.delay(2000, 4000);
+      });
+      if (!probeStep.success) return { exists: 'unknown', error: probeStep.error };
+
+      // Step 4: Check for CAPTCHA
+      const captchaCheck = await this.handleCaptcha();
+      if (captchaCheck.needsHuman) {
+        return {
+          exists: 'unknown',
+          needsHuman: true,
+          humanTaskDescription: captchaCheck.taskDescription,
+        };
+      }
+
+      // Step 5: Check what Instagram shows after entering email
+      const result = await this.executeStep('check-result', async () => {
+        // Check for "The username you entered doesn't belong to an account" error
+        const notFoundSelectors = [
+          'text=doesn\'t belong to an account',
+          'text=doesn\'t match an existing account',
+          'div[class*="error"]:has-text("user doesn\'t exist")',
+          'span[id="usernameError"]:has-text("doesn\'t")',
+          'p:has-text("Sorry, your username was incorrect")',
+          'div:has-text("The username you entered")',
+        ];
+        for (const selector of notFoundSelectors) {
+          const notFoundEl = await this.page.$(selector);
+          if (notFoundEl) {
+            return { found: false };
+          }
+        }
+
+        // Check for password input being present and active (account exists)
+        const passwordInput = await this.page.$('input[name="password"]');
+        if (passwordInput) {
+          // Try to extract profile info if Instagram shows it
+          const profileInfo = await this.page.$eval(
+            'div[class*="account-info"], img[class*="avatar"]',
+            (el) => el.getAttribute('alt') || el.textContent?.trim() || undefined,
+          ).catch(() => undefined);
+          return { found: true, displayName: profileInfo };
+        }
+
+        return { ambiguous: true };
+      });
+
+      if (!result.success || !result.data) {
+        return { exists: 'unknown', error: result.error ?? 'Discovery step failed' };
+      }
+
+      if (result.data.found === false) {
+        return { exists: false };
+      }
+
+      if (result.data.found === true) {
+        return {
+          exists: true,
+          accountInfo: {
+            username: result.data.displayName as string | undefined,
+          },
+        };
+      }
+
+      return { exists: 'unknown' };
+    } catch (err) {
+      this.logger.error({ err, email: credentials.email }, 'Instagram discovery failed');
+      return { exists: 'unknown', error: String(err) };
+    }
   }
 
-  // ─── Profile Setup (D064 stub) ───
+  // ─── Profile Setup ───
 
+  /**
+   * Upload profile picture and set bio/display name on Instagram profile page.
+   */
   async setProfileAssets(config: ProfileAssetsConfig): Promise<WorkflowResult> {
-    this.logger.info({ platform: 'instagram' }, 'Profile asset setup not yet implemented — returning success');
-    return this.buildResult(true);
+    await this.init();
+    this.logger.info('Starting Instagram profile asset setup');
+
+    try {
+      // Step 1: Navigate to Instagram profile edit page
+      const navStep = await this.executeStep('navigate-to-profile-edit', async () => {
+        await this.page.goto(this.INSTAGRAM_SETTINGS_URL, { waitUntil: 'domcontentloaded' });
+        await this.humanBehavior.delay(2000, 4000);
+      });
+      if (!navStep.success) return this.buildResult(false, navStep.error);
+
+      // Step 2: Upload profile picture
+      if (config.profileImagePath) {
+        const uploadStep = await this.executeStep('upload-profile-picture', async () => {
+          // Instagram profile photo upload via file input
+          const fileInputSelector = 'input[type="file"][accept*="image"]';
+          const fileInput = await this.page.$(fileInputSelector);
+          if (fileInput) {
+            await fileInput.setInputFiles(config.profileImagePath!);
+            await this.humanBehavior.delay(3000, 5000);
+            // If a crop dialog appears, click Save/Apply
+            const saveCropButton = await this.page.$('button:has-text("Save"), button:has-text("Apply"), button:has-text("Done")');
+            if (saveCropButton) {
+              await this.humanBehavior.click(this.page, 'button:has-text("Save"), button:has-text("Apply"), button:has-text("Done")');
+              await this.humanBehavior.delay(2000, 4000);
+            }
+          }
+        });
+        if (!uploadStep.success) {
+          this.logger.warn({ error: uploadStep.error }, 'Instagram profile picture upload failed, continuing');
+        }
+      }
+
+      // Step 3: Set display name
+      if (config.displayName) {
+        const nameStep = await this.executeStep('set-display-name', async () => {
+          const nameInput = 'input[name="fullName"], input[aria-label="Name"]';
+          const nameEl = await this.page.$(nameInput);
+          if (nameEl) {
+            await this.humanBehavior.click(this.page, nameInput);
+            await this.page.keyboard.press('Control+a');
+            await this.humanBehavior.type(this.page, nameInput, config.displayName!);
+            await this.humanBehavior.delay(500, 1000);
+          }
+        });
+        if (!nameStep.success) {
+          this.logger.warn({ error: nameStep.error }, 'Instagram display name setup failed, continuing');
+        }
+      }
+
+      // Step 4: Set bio
+      if (config.bio) {
+        const bioStep = await this.executeStep('set-bio', async () => {
+          const bioInput = 'textarea[name="biography"], textarea[aria-label="Bio"], textarea[placeholder*="bio" i]';
+          const bioEl = await this.page.$(bioInput);
+          if (bioEl) {
+            await this.humanBehavior.click(this.page, bioInput);
+            await this.page.keyboard.press('Control+a');
+            await this.humanBehavior.type(this.page, bioInput, config.bio!);
+            await this.humanBehavior.delay(500, 1000);
+          }
+        });
+        if (!bioStep.success) {
+          this.logger.warn({ error: bioStep.error }, 'Instagram bio setup failed, continuing');
+        }
+      }
+
+      // Step 5: Save changes
+      const saveStep = await this.executeStep('save-changes', async () => {
+        const saveButton = 'button:has-text("Submit"), button[type="submit"], button:has-text("Save")';
+        const saveEl = await this.page.$(saveButton);
+        if (saveEl) {
+          await this.humanBehavior.click(this.page, saveButton);
+          await this.humanBehavior.delay(2000, 4000);
+        }
+      });
+      if (!saveStep.success) {
+        this.logger.warn({ error: saveStep.error }, 'Instagram save step failed, continuing');
+      }
+
+      await this.takeScreenshot('instagram-profile-assets-complete');
+      return this.buildResult(true);
+    } catch (err) {
+      this.logger.error({ err }, 'Instagram profile setup failed');
+      await this.takeScreenshot('instagram-profile-assets-error');
+      return this.buildResult(false, String(err));
+    }
   }
 }

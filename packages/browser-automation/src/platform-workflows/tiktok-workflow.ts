@@ -541,17 +541,214 @@ export class TikTokWorkflow extends BasePlatformWorkflow {
     }
   }
 
-  // ─── Discovery (D064 stub) ───
+  // ─── Discovery ───
 
+  /**
+   * Discover whether a TikTok account exists for this email.
+   * Uses login probe: enter email on TikTok login, check for password prompt vs error.
+   */
   async discoverAccount(credentials: AccountCredentials): Promise<DiscoveryResult> {
-    this.logger.info({ email: credentials.email, platform: credentials.platform }, 'Discovery not yet implemented — returning unknown');
-    return { exists: 'unknown', needsHuman: true, humanTaskDescription: `${credentials.platform} discovery not yet implemented. Check manually.` };
+    await this.init();
+    this.logger.info({ email: credentials.email }, 'Starting TikTok account discovery');
+
+    try {
+      // Step 1: Navigate to TikTok login page
+      const navStep = await this.executeStep('navigate-to-tiktok-login', async () => {
+        await this.page.goto(this.TIKTOK_LOGIN_URL, { waitUntil: 'domcontentloaded' });
+        await this.dismissCookieDialog();
+        await this.humanBehavior.delay(2000, 4000);
+      });
+      if (!navStep.success) return { exists: 'unknown', error: navStep.error };
+
+      // Step 2: Select email/password login method
+      const selectMethodStep = await this.executeStep('select-email-login', async () => {
+        const emailLoginOption = 'div[class*="channel-item"]:has-text("email"), a:has-text("Use phone / email / username")';
+        await this.page.waitForSelector(emailLoginOption, { timeout: 10_000 });
+        await this.humanBehavior.click(this.page, emailLoginOption);
+        await this.humanBehavior.delay(1000, 2000);
+        // Switch to "Log in with email or username" tab
+        const emailTab = 'a:has-text("Log in with email or username"), a[href*="email"]';
+        const emailTabEl = await this.page.$(emailTab);
+        if (emailTabEl) {
+          await this.humanBehavior.click(this.page, emailTab);
+          await this.humanBehavior.delay(500, 1000);
+        }
+      });
+      if (!selectMethodStep.success) return { exists: 'unknown', error: selectMethodStep.error };
+
+      // Step 3: Enter email
+      const emailStep = await this.executeStep('enter-email', async () => {
+        const emailInput = 'input[name="username"], input[placeholder*="Email" i], input[placeholder*="email" i]';
+        await this.page.waitForSelector(emailInput, { timeout: 10_000 });
+        await this.humanBehavior.type(this.page, emailInput, credentials.email);
+        await this.humanBehavior.delay(300, 600);
+      });
+      if (!emailStep.success) return { exists: 'unknown', error: emailStep.error };
+
+      // Step 4: Check for CAPTCHA
+      const captchaCheck = await this.handleCaptcha();
+      if (captchaCheck.needsHuman) {
+        return {
+          exists: 'unknown',
+          needsHuman: true,
+          humanTaskDescription: captchaCheck.taskDescription,
+        };
+      }
+
+      // Step 5: Check what TikTok shows after entering email
+      const result = await this.executeStep('check-result', async () => {
+        // Check for "account doesn't exist" or similar error messages
+        const notFoundSelectors = [
+          'text=Couldn\'t find this account',
+          'text=Account does not exist',
+          'text=Please check your username',
+          'div[class*="error"]:has-text("doesn\'t exist")',
+          'div[class*="error"]:has-text("not found")',
+        ];
+        for (const selector of notFoundSelectors) {
+          const notFoundEl = await this.page.$(selector);
+          if (notFoundEl) {
+            return { found: false };
+          }
+        }
+
+        // Check for password input (account exists)
+        const passwordInput = await this.page.$('input[type="password"]');
+        if (passwordInput) {
+          // Try to extract profile info from the page
+          const profileInfo = await this.page.$eval(
+            '[data-e2e="login-account-info"], div[class*="account-info"]',
+            (el) => el.textContent?.trim() || undefined,
+          ).catch(() => undefined);
+          return { found: true, displayName: profileInfo };
+        }
+
+        // Check if the "Next" button is enabled (indicating email was accepted)
+        const nextButton = await this.page.$('button[type="submit"], button[data-e2e="login-button"]');
+        if (nextButton) {
+          // If we got here without password field but with a submit button, ambiguous
+          return { ambiguous: true };
+        }
+
+        return { ambiguous: true };
+      });
+
+      if (!result.success || !result.data) {
+        return { exists: 'unknown', error: result.error ?? 'Discovery step failed' };
+      }
+
+      if (result.data.found === false) {
+        return { exists: false };
+      }
+
+      if (result.data.found === true) {
+        return {
+          exists: true,
+          accountInfo: {
+            username: result.data.displayName as string | undefined,
+          },
+        };
+      }
+
+      return { exists: 'unknown' };
+    } catch (err) {
+      this.logger.error({ err, email: credentials.email }, 'TikTok discovery failed');
+      return { exists: 'unknown', error: String(err) };
+    }
   }
 
-  // ─── Profile Setup (D064 stub) ───
+  // ─── Profile Setup ───
 
+  /**
+   * Upload profile picture and set bio/display name on TikTok profile page.
+   */
   async setProfileAssets(config: ProfileAssetsConfig): Promise<WorkflowResult> {
-    this.logger.info({ platform: 'tiktok' }, 'Profile asset setup not yet implemented — returning success');
-    return this.buildResult(true);
+    await this.init();
+    this.logger.info('Starting TikTok profile asset setup');
+
+    try {
+      // Step 1: Navigate to TikTok profile editing page
+      const navStep = await this.executeStep('navigate-to-profile-edit', async () => {
+        await this.page.goto(`${this.TIKTOK_URL}/setting?lang=en`, { waitUntil: 'domcontentloaded' });
+        await this.humanBehavior.delay(2000, 4000);
+      });
+      if (!navStep.success) return this.buildResult(false, navStep.error);
+
+      // Step 2: Upload profile picture
+      if (config.profileImagePath) {
+        const uploadStep = await this.executeStep('upload-profile-picture', async () => {
+          // TikTok profile photo upload button
+          const uploadButtonSelector = 'div[class*="avatar"] input[type="file"], input[type="file"][accept*="image"]';
+          const fileInput = await this.page.$(uploadButtonSelector);
+          if (fileInput) {
+            await fileInput.setInputFiles(config.profileImagePath!);
+            await this.humanBehavior.delay(3000, 5000);
+            // If a crop/confirm dialog appears, click Confirm
+            const confirmButton = await this.page.$('button:has-text("Confirm"), button:has-text("Done"), button:has-text("Apply")');
+            if (confirmButton) {
+              await this.humanBehavior.click(this.page, 'button:has-text("Confirm"), button:has-text("Done"), button:has-text("Apply")');
+              await this.humanBehavior.delay(2000, 4000);
+            }
+          }
+        });
+        if (!uploadStep.success) {
+          this.logger.warn({ error: uploadStep.error }, 'TikTok profile picture upload failed, continuing');
+        }
+      }
+
+      // Step 3: Set display name
+      if (config.displayName) {
+        const nameStep = await this.executeStep('set-display-name', async () => {
+          const nameInput = 'input[name="unique_id"], input[placeholder*="Username" i], input[data-e2e="profile-unique-id-input"]';
+          const nameEl = await this.page.$(nameInput);
+          if (nameEl) {
+            await this.humanBehavior.click(this.page, nameInput);
+            await this.page.keyboard.press('Control+a');
+            await this.humanBehavior.type(this.page, nameInput, config.displayName!);
+            await this.humanBehavior.delay(500, 1000);
+          }
+        });
+        if (!nameStep.success) {
+          this.logger.warn({ error: nameStep.error }, 'TikTok display name setup failed, continuing');
+        }
+      }
+
+      // Step 4: Set bio
+      if (config.bio) {
+        const bioStep = await this.executeStep('set-bio', async () => {
+          const bioInput = 'textarea[name="signature"], textarea[placeholder*="Bio" i], textarea[data-e2e="profile-bio-input"]';
+          const bioEl = await this.page.$(bioInput);
+          if (bioEl) {
+            await this.humanBehavior.click(this.page, bioInput);
+            await this.page.keyboard.press('Control+a');
+            await this.humanBehavior.type(this.page, bioInput, config.bio!);
+            await this.humanBehavior.delay(500, 1000);
+          }
+        });
+        if (!bioStep.success) {
+          this.logger.warn({ error: bioStep.error }, 'TikTok bio setup failed, continuing');
+        }
+      }
+
+      // Step 5: Save changes
+      const saveStep = await this.executeStep('save-changes', async () => {
+        const saveButton = 'button:has-text("Save"), button[data-e2e="save-button"], button[type="submit"]';
+        const saveEl = await this.page.$(saveButton);
+        if (saveEl) {
+          await this.humanBehavior.click(this.page, saveButton);
+          await this.humanBehavior.delay(2000, 4000);
+        }
+      });
+      if (!saveStep.success) {
+        this.logger.warn({ error: saveStep.error }, 'TikTok save step failed, continuing');
+      }
+
+      await this.takeScreenshot('tiktok-profile-assets-complete');
+      return this.buildResult(true);
+    } catch (err) {
+      this.logger.error({ err }, 'TikTok profile setup failed');
+      await this.takeScreenshot('tiktok-profile-assets-error');
+      return this.buildResult(false, String(err));
+    }
   }
 }

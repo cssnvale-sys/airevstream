@@ -21,7 +21,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: airevstream-redis
-    command: redis-server --maxmemory-policy allkeys-lru --appendonly yes
+    command: redis-server --maxmemory-policy noeviction --appendonly yes
     ports:
       # Host port 6389 → container 6379, so we don't clash with Homebrew redis on 6379
       - "6389:6379"

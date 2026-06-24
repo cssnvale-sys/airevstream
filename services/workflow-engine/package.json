@@ -16,6 +16,7 @@
     "@airevstream/queue": "*",
     "@airevstream/shared": "*",
     "@fastify/cors": "^10.1.0",
+    "@fastify/helmet": "^13.0.2",
     "@fastify/jwt": "^10.0.0",
     "@fastify/rate-limit": "^10.3.0",
     "bcrypt": "^6.0.0",

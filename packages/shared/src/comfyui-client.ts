@@ -72,12 +72,24 @@ export class ComfyUIClient {
     return (await res.json()) as ComfyUISystemStats;
   }
 
+  /** Strip non-node metadata keys (like resolvedSeed) that cause ComfyUI 500 errors */
+  private stripWorkflowMeta(workflow: ComfyUIWorkflow): Record<string, unknown> {
+    const clean: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(workflow)) {
+      // Only include keys that are node objects (have class_type and inputs)
+      if (value && typeof value === 'object' && 'class_type' in value && 'inputs' in value) {
+        clean[key] = value;
+      }
+    }
+    return clean;
+  }
+
   /** Queue a workflow prompt for execution */
   async queuePrompt(workflow: ComfyUIWorkflow): Promise<string> {
     const res = await fetch(`${this.baseUrl}/prompt`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: workflow }),
+      body: JSON.stringify({ prompt: this.stripWorkflowMeta(workflow) }),
       signal: AbortSignal.timeout(this.timeoutMs),
     });
     if (!res.ok) {

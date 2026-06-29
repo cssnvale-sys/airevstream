@@ -155,7 +155,7 @@ const Shot: React.FC<ShotProps> = ({ shot, width, height, isFirst, isLast }) => 
       }}
     >
       <Img
-        src={shot.src}
+        src={shot.src || `https://placehold.co/${width}x${height}/1a1a3e/ffffff?text=Shot+${shot.id || ''}`}
         style={{
           width: '100%',
           height: '100%',

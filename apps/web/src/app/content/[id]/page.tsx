@@ -259,6 +259,9 @@ export default function ContentDetailPage() {
                 </button>
               </>
             )}
+            <Link href={`/studio/${item.id}`} className="btn-secondary flex items-center gap-1.5">
+              <Film size={14} /> Open in Studio
+            </Link>
             {item.status === 'approved' && (
               <>
                 <button type="button" onClick={() => handleAction('schedule')} disabled={acting} className="btn-primary flex items-center gap-1.5">

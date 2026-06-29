@@ -884,6 +884,24 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
         }
       }
 
+      // Strip LoRAs that don't exist in ComfyUI — agents may generate fictional LoRA names
+      // FLUX schnell doesn't need LoRAs, so stripping them is safe
+      if (spec.generation?.loras && spec.generation.loras.length > 0) {
+        logger.info({ shotId, loraCount: spec.generation.loras.length }, 'Stripping agent-generated LoRAs (may not exist in ComfyUI)');
+        spec = {
+          ...spec,
+          generation: {
+            ...spec.generation,
+            loras: [],
+          },
+        };
+      }
+
+      // Set model to FLUX schnell (the only model installed in ComfyUI)
+      if (!spec.model) {
+        spec = { ...spec, model: 'flux1-schnell-fp8.safetensors' };
+      }
+
       // Compose and run workflow
       const workflow = composeWorkflow(spec, promptBible);
       const images = await comfyClient.queueAndWait(workflow);

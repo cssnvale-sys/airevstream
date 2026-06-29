@@ -20,6 +20,7 @@ const TRENDS_PAGE_SIZE = 20;
 const CONTENT_RESCORE_INTERVAL_MS = 5 * 60 * 1000;
 
 async function processContentJob(job: Job<ContentGenerateJob | ContentPublishJob | ContentApproveJob | ContentFinalReviewJob | ContentViralScoreJob>) {
+  console.log('[Content] JOB RECEIVED:', job.id, job.name, JSON.stringify(job.data).substring(0, 200));
   logger.info({ jobId: job.id, jobName: job.name }, 'Processing content job');
 
   if (job.name === 'content:check-approval-timeouts') {

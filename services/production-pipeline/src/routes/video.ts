@@ -99,7 +99,7 @@ export async function videoRoutes(app: FastifyInstance) {
     }
 
     try {
-      const job = await addJob('production', 'production:storyboard', {
+      const job = await addJob('production', 'production:generate-storyboard', {
         contentId: parsed.data.contentId,
         channelId: parsed.data.channelId,
         scriptJson: parsed.data.scriptJson,

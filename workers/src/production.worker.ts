@@ -721,14 +721,41 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
   logger.info({ storyboardId: data.storyboardId, shotCount: data.shotIds.length }, 'Processing cinema shot generation');
   await job.updateProgress(5);
 
+  // If storyboardId is empty (BullMQ flow created before storyboard exists), look it up by contentId
+  let storyboardId = data.storyboardId;
+  let shotIds = data.shotIds;
+  if (!storyboardId && data.contentId) {
+    const sb = await db.storyboard.findFirst({ where: { contentId: data.contentId }, orderBy: { createdAt: 'desc' } });
+    if (sb) {
+      storyboardId = sb.id;
+      logger.info({ storyboardId, contentId: data.contentId }, 'Resolved storyboard from contentId');
+      // If no shotIds provided, load them from the storyboard
+      if (shotIds.length === 0) {
+        const shots = await db.storyboardShot.findMany({ where: { storyboardId }, orderBy: { shotNumber: 'asc' } });
+        shotIds = shots.map(s => s.id);
+        logger.info({ shotCount: shotIds.length }, 'Loaded shots from storyboard');
+      }
+    }
+  }
+
+  if (!storyboardId) {
+    logger.error({ contentId: data.contentId }, 'No storyboard found for content — skipping shot generation');
+    return;
+  }
+
   const healthy = await comfyClient.isHealthy();
   if (!healthy) {
     logger.warn('ComfyUI not available for shot generation');
     return;
   }
 
-  // Load cinema bible
-  const bible = await db.cinemaBible.findUnique({ where: { id: data.cinemaBibleId } });
+  // Load cinema bible — use provided ID or find the most recent one
+  let cinemaBibleId = data.cinemaBibleId;
+  if (!cinemaBibleId) {
+    const latestBible = await db.cinemaBible.findFirst({ orderBy: { updatedAt: 'desc' } });
+    cinemaBibleId = latestBible?.id ?? '';
+  }
+  const bible = cinemaBibleId ? await db.cinemaBible.findUnique({ where: { id: cinemaBibleId } }) : null;
   const promptBible = (bible?.promptBible as PromptBible | null) ?? undefined;
 
   // Process each shot

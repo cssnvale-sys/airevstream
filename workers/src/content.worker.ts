@@ -362,15 +362,31 @@ async function handleApprove(data: ContentApproveJob) {
 
 async function handleFinalReview(data: ContentFinalReviewJob) {
   const db = getDb();
-  logger.info({ contentId: data.contentId, storyboardId: data.storyboardId }, 'Processing final review');
+
+  // If storyboardId is empty (BullMQ flow created before storyboard exists), look it up by contentId
+  let storyboardId = data.storyboardId;
+  if (!storyboardId && data.contentId) {
+    const sb = await db.storyboard.findFirst({ where: { contentId: data.contentId }, orderBy: { createdAt: 'desc' } });
+    if (sb) {
+      storyboardId = sb.id;
+      logger.info({ storyboardId, contentId: data.contentId }, 'Resolved storyboard from contentId for final review');
+    }
+  }
+
+  logger.info({ contentId: data.contentId, storyboardId }, 'Processing final review');
 
   try {
+    // Build storyboard filter — only filter by id if we have a valid storyboardId
+    const storyboardFilter = storyboardId
+      ? { where: { id: storyboardId }, take: 1 }
+      : { take: 1, orderBy: { createdAt: 'desc' as const } };
+
     const content = await db.contentItem.findUnique({
       where: { id: data.contentId },
       include: {
         channel: { select: { socialAccount: { select: { platform: true, emailAccount: { select: { tenantId: true } } } } } },
         storyboards: {
-          where: { id: data.storyboardId },
+          ...storyboardFilter,
           select: {
             totalDurationSec: true,
             shots: {
@@ -378,7 +394,6 @@ async function handleFinalReview(data: ContentFinalReviewJob) {
               orderBy: { shotNumber: 'asc' },
             },
           },
-          take: 1,
         },
       },
     });

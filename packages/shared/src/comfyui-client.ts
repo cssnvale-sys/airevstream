@@ -41,13 +41,22 @@ export class ComfyUIClient {
     this.timeoutMs = timeoutMs ?? 120_000;
   }
 
-  /** Check if ComfyUI server is reachable */
+  /** Check if ComfyUI server is reachable and has at least one checkpoint model loaded */
   async isHealthy(): Promise<boolean> {
     try {
       const res = await fetch(`${this.baseUrl}/system_stats`, {
         signal: AbortSignal.timeout(5000),
       });
-      return res.ok;
+      if (!res.ok) return false;
+      // Also verify that at least one checkpoint model is available
+      // This prevents treating ComfyUI as healthy when models haven't been scanned yet
+      const ckptRes = await fetch(`${this.baseUrl}/object_info/CheckpointLoaderSimple`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!ckptRes.ok) return false;
+      const data = await ckptRes.json() as Record<string, { input?: { required?: { ckpt_name?: [string[]] } } }>;
+      const checkpoints = data.CheckpointLoaderSimple?.input?.required?.ckpt_name?.[0] ?? [];
+      return checkpoints.length > 0;
     } catch (err) {
       logger.warn({ error: err instanceof Error ? err.message : String(err) }, 'ComfyUI health check failed');
       return false;

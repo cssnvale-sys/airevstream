@@ -268,7 +268,11 @@ export default function StudioPage() {
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-bg-secondary shrink-0">
         <div className="flex items-center gap-3">
           <Link href="/library" className="text-text-secondary hover:text-text-primary text-sm">
-            Back
+            Back to Dashboard
+          </Link>
+          <span className="text-border">|</span>
+          <Link href={`/content/${contentId}`} className="text-text-secondary hover:text-text-primary text-sm">
+            View Content Detail
           </Link>
           <span className="text-border">|</span>
           <h1 className="text-sm font-medium text-text-primary truncate max-w-md" title={content.title ?? undefined}>{content.title}</h1>

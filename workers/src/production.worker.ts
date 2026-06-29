@@ -1318,6 +1318,8 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
   const mixer = new AudioMixer();
   const ttsClient = new TTSClient();
   const tracks: Array<{ buffer: Buffer; startMs: number; volume: number; fadeInMs?: number; fadeOutMs?: number; loop?: boolean }> = [];
+  const bgTrackIndices: number[] = [];
+  const fgTrackIndices: number[] = [];
 
   // Process all three audio layers (BG, MG, FG) for each shot
   for (const shot of storyboard.shots) {
@@ -1350,6 +1352,7 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
             fadeOutMs: audioPlan.bg.fadeOutMs ?? 2000,
             loop: audioPlan.bg.loop ?? true,
           });
+          bgTrackIndices.push(tracks.length - 1);
         }
       } catch (err) {
         logger.warn({ err, shotId: shot.id, layer: 'bg' }, 'Background audio load failed');
@@ -1400,6 +1403,7 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
           fadeInMs: audioPlan.fg?.fadeInMs,
           fadeOutMs: audioPlan.fg?.fadeOutMs,
         });
+        fgTrackIndices.push(tracks.length - 1);
 
         // ─── AV Sync validation ───
         if (ttsResult.wordTimings && ttsResult.wordTimings.length > 0) {
@@ -1446,6 +1450,15 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
   }
 
   try {
+    // Build ducking config: FG dialogue triggers ducking of BG music tracks
+    const duckingConfig = (fgTrackIndices.length > 0 && bgTrackIndices.length > 0)
+      ? {
+          triggerTrackIndex: fgTrackIndices[0],
+          targetTrackIndices: bgTrackIndices,
+          duckingDb: -9,
+        }
+      : undefined;
+
     const mixResult = await mixer.mix({
       tracks: tracks.map(t => ({
         buffer: t.buffer,
@@ -1457,6 +1470,8 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
       })),
       outputFormat: 'wav',
       totalDurationMs: Number(storyboard.totalDurationSec ?? 60) * 1000,
+      ducking: duckingConfig,
+      loudness: { targetLufs: -14, truePeakDbtp: -1 },
     });
 
     // Upload mixed audio

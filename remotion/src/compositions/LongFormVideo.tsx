@@ -48,6 +48,7 @@ export const LongFormVideo: React.FC<LongFormVideoProps> = ({
   beatPreset,
   showAudioVisualization,
   showLowerThird,
+  showCaptions = true,
 }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
@@ -108,17 +109,19 @@ export const LongFormVideo: React.FC<LongFormVideoProps> = ({
       )}
 
       {/* Layer 6: Script text for current H.I.C.C. section */}
-      <ScriptText
-        script={script}
-        section={currentSection}
-        frame={frame}
-        timings={timings}
-        width={width}
-        height={height}
-      />
+      {showCaptions && (
+        <ScriptText
+          script={script}
+          section={currentSection}
+          frame={frame}
+          timings={timings}
+          width={width}
+          height={height}
+        />
+      )}
 
       {/* Layer 7: Custom text overlays */}
-      {textOverlays.map((overlay, i) => (
+      {showCaptions && textOverlays.map((overlay, i) => (
         <TextOverlay
           key={`overlay-${i}`}
           config={overlay}

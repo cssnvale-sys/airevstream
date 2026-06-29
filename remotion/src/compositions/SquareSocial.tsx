@@ -47,6 +47,7 @@ export const SquareSocial: React.FC<SquareSocialProps> = ({
   textOverlays,
   beatPreset,
   showAudioVisualization,
+  showCaptions = true,
 }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
@@ -98,17 +99,19 @@ export const SquareSocial: React.FC<SquareSocialProps> = ({
       />
 
       {/* Layer 5: Script text for current section */}
-      <ScriptText
-        script={script}
-        section={currentSection}
-        frame={frame}
-        timings={timings}
-        width={width}
-        height={height}
-      />
+      {showCaptions && (
+        <ScriptText
+          script={script}
+          section={currentSection}
+          frame={frame}
+          timings={timings}
+          width={width}
+          height={height}
+        />
+      )}
 
       {/* Layer 6: Custom text overlays */}
-      {textOverlays.map((overlay, i) => (
+      {showCaptions && textOverlays.map((overlay, i) => (
         <TextOverlay
           key={`overlay-${i}`}
           config={overlay}

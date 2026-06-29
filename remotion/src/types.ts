@@ -201,6 +201,8 @@ export interface ShortFormVideoProps {
   beatPreset: BeatPreset;
   /** Whether to show audio visualization */
   showAudioVisualization: boolean;
+  /** Whether to show captions/subtitle text overlays (default: true) */
+  showCaptions?: boolean;
 }
 
 /** Props for LongFormVideo (16:9 horizontal, e.g., YouTube) */
@@ -223,6 +225,8 @@ export interface LongFormVideoProps {
   showAudioVisualization: boolean;
   /** Optional lower-third title display */
   showLowerThird: boolean;
+  /** Whether to show captions/subtitle text overlays (default: true) */
+  showCaptions?: boolean;
 }
 
 /** Still variant affecting layout */
@@ -442,6 +446,8 @@ export interface SquareSocialProps {
   beatPreset: BeatPreset;
   /** Whether to show audio visualization */
   showAudioVisualization: boolean;
+  /** Whether to show captions/subtitle text overlays (default: true) */
+  showCaptions?: boolean;
 }
 
 /** Props for UltrawideCinema (21:9 ultrawide, 2560x1080, 24fps premium cinematic) */

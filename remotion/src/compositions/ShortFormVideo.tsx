@@ -45,6 +45,7 @@ export const ShortFormVideo: React.FC<ShortFormVideoProps> = ({
   textOverlays,
   beatPreset,
   showAudioVisualization,
+  showCaptions = true,
 }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
@@ -96,18 +97,20 @@ export const ShortFormVideo: React.FC<ShortFormVideoProps> = ({
       />
 
       {/* Layer 5: Script text for current section */}
-      <ScriptText
-        script={script}
-        section={currentSection}
-        frame={frame}
-        timings={timings}
-        width={width}
-        height={height}
-        isVertical
-      />
+      {showCaptions && (
+        <ScriptText
+          script={script}
+          section={currentSection}
+          frame={frame}
+          timings={timings}
+          width={width}
+          height={height}
+          isVertical
+        />
+      )}
 
       {/* Layer 6: Custom text overlays */}
-      {textOverlays.map((overlay, i) => (
+      {showCaptions && textOverlays.map((overlay, i) => (
         <TextOverlay
           key={`overlay-${i}`}
           config={overlay}

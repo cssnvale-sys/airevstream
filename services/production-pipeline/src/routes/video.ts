@@ -5,10 +5,21 @@ import { createLogger } from '@airevstream/shared';
 
 const videoLogger = createLogger('production-pipeline:video');
 
+const exportVariantSchema = z.object({
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  fps: z.number().int().positive().optional(),
+  aspect: z.string().optional(),
+  codec: z.string().optional(),
+});
+
 const renderVideoSchema = z.object({
   contentId: z.string().uuid(),
   storyboardId: z.string().uuid(),
   channelId: z.string().uuid(),
+  exportVariant: exportVariantSchema.optional(),
+  autoVariants: z.boolean().optional(),
+  variantConfigs: z.array(exportVariantSchema).optional(),
 });
 
 const generateAudioSchema = z.object({
@@ -42,6 +53,9 @@ export async function videoRoutes(app: FastifyInstance) {
         contentId: parsed.data.contentId,
         storyboardId: parsed.data.storyboardId,
         channelId: parsed.data.channelId,
+        ...(parsed.data.exportVariant ? { exportVariant: parsed.data.exportVariant } : {}),
+        ...(parsed.data.autoVariants !== undefined ? { autoVariants: parsed.data.autoVariants } : {}),
+        ...(parsed.data.variantConfigs ? { variantConfigs: parsed.data.variantConfigs } : {}),
       });
 
       return reply.status(202).send({

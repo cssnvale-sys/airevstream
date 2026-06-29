@@ -315,15 +315,29 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
   logger.info({ contentId: data.contentId, storyboardId: data.storyboardId }, 'Processing video render job');
   await job.updateProgress(5);
 
+  // If storyboardId is empty (BullMQ flow created before storyboard exists), look it up by contentId
+  let storyboardId = data.storyboardId;
+  if (!storyboardId && data.contentId) {
+    const sb = await db.storyboard.findFirst({ where: { contentId: data.contentId }, orderBy: { createdAt: 'desc' } });
+    if (sb) {
+      storyboardId = sb.id;
+      logger.info({ storyboardId, contentId: data.contentId }, 'Resolved storyboard from contentId');
+    }
+  }
+
+  if (!storyboardId) {
+    throw new Error('No storyboardId and could not resolve from contentId');
+  }
+
   // Update storyboard status
   await db.storyboard.update({
-    where: { id: data.storyboardId },
+    where: { id: storyboardId },
     data: { status: 'in_production' },
   });
 
   // Load storyboard data for render
   const storyboard = await db.storyboard.findUnique({
-    where: { id: data.storyboardId },
+    where: { id: storyboardId },
     include: {
       shots: { orderBy: { shotNumber: 'asc' } },
       content: { select: { contentType: true, title: true, platformMetadata: true } },
@@ -331,7 +345,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
   });
 
   if (!storyboard) {
-    throw new Error(`Storyboard ${data.storyboardId} not found`);
+    throw new Error(`Storyboard ${storyboardId} not found`);
   }
 
   // Check if scriptJson contains an assembly manifest (new pipeline path)
@@ -543,7 +557,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
 
     // Update storyboard with result
     await db.storyboard.update({
-      where: { id: data.storyboardId },
+      where: { id: storyboardId },
       data: { status: 'approved' },
     });
 
@@ -567,7 +581,7 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
       for (const variantConfig of renderJobData.variantConfigs) {
         await addJob('production', 'production:render-video', {
           contentId: data.contentId,
-          storyboardId: data.storyboardId,
+          storyboardId,
           channelId: data.channelId,
           qualityTier: data.qualityTier,
           exportVariant: variantConfig,
@@ -885,7 +899,7 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
           firstImageSizeBytes = imageData.length;
         }
         const timestamp = Date.now();
-        const key = `shots/${data.storyboardId}/${shotId}/${timestamp}-${img.filename}`;
+        const key = `shots/${storyboardId}/${shotId}/${timestamp}-${img.filename}`;
         await uploadBuffer(BUCKET, key, imageData, 'image/png');
         uploadedUrls.push(`${BUCKET}/${key}`);
 
@@ -986,8 +1000,18 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
   logger.info({ storyboardId: data.storyboardId }, 'Processing QC gate');
   await job.updateProgress(5);
 
+  // If storyboardId is empty (BullMQ flow created before storyboard exists), look it up by contentId
+  let storyboardId = data.storyboardId;
+  if (!storyboardId && data.contentId) {
+    const sb = await db.storyboard.findFirst({ where: { contentId: data.contentId }, orderBy: { createdAt: 'desc' } });
+    if (sb) {
+      storyboardId = sb.id;
+      logger.info({ storyboardId, contentId: data.contentId }, 'Resolved storyboard from contentId');
+    }
+  }
+
   const shots = await db.storyboardShot.findMany({
-    where: { storyboardId: data.storyboardId },
+    where: { storyboardId },
     orderBy: { shotNumber: 'asc' },
   });
 
@@ -995,7 +1019,7 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
   let referenceFingerprint: ImageFingerprint | undefined;
   try {
     const storyboard = await db.storyboard.findUnique({
-      where: { id: data.storyboardId },
+      where: { id: storyboardId },
       select: { contentId: true },
     });
     if (storyboard) {
@@ -1179,7 +1203,7 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
     const flickerResult = detectFlicker(allShotBuffers);
     if (flickerResult.flickering) {
       logger.warn(
-        { storyboardId: data.storyboardId, flickerScore: flickerResult.flickerScore, transitions: flickerResult.transitionCount },
+        { storyboardId, flickerScore: flickerResult.flickerScore, transitions: flickerResult.transitionCount },
         `Flicker detected: ${flickerResult.message}`,
       );
     }
@@ -1196,7 +1220,7 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
         // Build the agent input payload
         const agentInput = {
           shots: qcDecisionInputs,
-          renderOutput: { storyboardId: data.storyboardId },
+          renderOutput: { storyboardId },
           lookDevOutput: {},
           qualityTier: 'standard',
         };
@@ -1204,7 +1228,7 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
         // Log the agent input for diagnostics (actual LLM call is deferred to orchestrator)
         logger.info(
           {
-            storyboardId: data.storyboardId,
+            storyboardId,
             shotCount: qcDecisionInputs.length,
             avgScore: Math.round(qcDecisionInputs.reduce((s, i) => s + i.qcScores.overall, 0) / qcDecisionInputs.length),
           },
@@ -1254,7 +1278,7 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
 
         if (regenerateCount > qcDecisionInputs.length / 2) {
           allApproved = false;
-          logger.info({ storyboardId: data.storyboardId, regenerateCount }, 'QC decision: >50% shots need regeneration');
+          logger.info({ storyboardId, regenerateCount }, 'QC decision: >50% shots need regeneration');
         }
       }
     } catch (err) {
@@ -1267,14 +1291,14 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
   if (allApproved && qualityTier === 'draft') {
     // Draft quality — skip review, auto-approve
     await db.storyboard.update({
-      where: { id: data.storyboardId },
+      where: { id: storyboardId },
       data: { status: 'approved' },
     });
-    logger.info({ storyboardId: data.storyboardId }, 'QC gate passed — all shots approved (draft quality, skipping review)');
+    logger.info({ storyboardId }, 'QC gate passed — all shots approved (draft quality, skipping review)');
   } else if (allApproved) {
     // Non-draft quality — pause for user review
     await db.storyboard.update({
-      where: { id: data.storyboardId },
+      where: { id: storyboardId },
       data: { status: 'pending_review' },
     });
 
@@ -1287,7 +1311,7 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
     // Create alert for storyboard review
     try {
       const storyboard = await db.storyboard.findUnique({
-        where: { id: data.storyboardId },
+        where: { id: storyboardId },
         select: { content: { select: { title: true, channelId: true, channel: { select: { socialAccount: { select: { emailAccount: { select: { tenantId: true } } } } } } } } },
       });
       const tenantId = storyboard?.content?.channel?.socialAccount?.emailAccount?.tenantId ?? null;
@@ -1299,16 +1323,16 @@ async function handleQCGate(data: ProductionQCGateJob, job: Job<any>): Promise<v
           title: 'Storyboard ready for review',
           message: `${approvedCount}/${shots.length} shots approved — review to proceed to rendering`,
           source: 'production-worker',
-          metadata: { storyboardId: data.storyboardId, contentId: data.contentId, link: `/studio/${data.contentId}` },
+          metadata: { storyboardId, contentId: data.contentId, link: `/studio/${data.contentId}` },
         },
       });
     } catch (alertErr) {
       logger.warn({ alertErr }, 'Failed to create storyboard review alert');
     }
 
-    logger.info({ storyboardId: data.storyboardId }, 'QC gate passed — storyboard set to pending_review');
+    logger.info({ storyboardId }, 'QC gate passed — storyboard set to pending_review');
   } else {
-    logger.info({ storyboardId: data.storyboardId }, 'QC gate — some shots need review or regeneration');
+    logger.info({ storyboardId }, 'QC gate — some shots need review or regeneration');
   }
   await job.updateProgress(100);
 }
@@ -1319,15 +1343,25 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
   const db = getDb();
   logger.info({ storyboardId: data.storyboardId }, 'Processing audio mix');
 
+  // If storyboardId is empty (BullMQ flow created before storyboard exists), look it up by contentId
+  let storyboardId = data.storyboardId;
+  if (!storyboardId && data.contentId) {
+    const sb = await db.storyboard.findFirst({ where: { contentId: data.contentId }, orderBy: { createdAt: 'desc' } });
+    if (sb) {
+      storyboardId = sb.id;
+      logger.info({ storyboardId, contentId: data.contentId }, 'Resolved storyboard from contentId');
+    }
+  }
+
   const storyboard = await db.storyboard.findUnique({
-    where: { id: data.storyboardId },
+    where: { id: storyboardId },
     include: {
       shots: { orderBy: { shotNumber: 'asc' } },
     },
   });
 
   if (!storyboard) {
-    throw new Error(`Storyboard ${data.storyboardId} not found`);
+    throw new Error(`Storyboard ${storyboardId} not found`);
   }
 
   // Check if audio engine is available
@@ -1511,18 +1545,18 @@ async function handleMixAudio(data: ProductionMixAudioJob): Promise<void> {
     // Persist mixed audio key in the storyboard manifest so render handler can reference it
     try {
       const currentSb = await db.storyboard.findUnique({
-        where: { id: data.storyboardId },
+        where: { id: storyboardId },
         select: { scriptJson: true },
       });
       const manifest = currentSb?.scriptJson as Record<string, unknown> | null;
       if (manifest?.schemaVersion === '1.0.0') {
         await db.storyboard.update({
-          where: { id: data.storyboardId },
+          where: { id: storyboardId },
           data: {
             scriptJson: { ...manifest, mixedAudioKey: `${BUCKETS.AUDIO}/${key}` } as any,
           },
         });
-        logger.info({ storyboardId: data.storyboardId, mixedAudioKey: key }, 'Updated manifest with mixed audio key');
+        logger.info({ storyboardId, mixedAudioKey: key }, 'Updated manifest with mixed audio key');
       }
     } catch (persistErr) {
       logger.warn({ err: persistErr }, 'Failed to persist mixed audio key in manifest — render will use per-shot stems');

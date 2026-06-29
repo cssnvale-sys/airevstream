@@ -2,6 +2,7 @@ import { readFile, unlink, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector } from '@airevstream/shared';
 import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming, AssemblyManifest, AssembledShot } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
@@ -21,6 +22,9 @@ import { getDb } from '@airevstream/db';
 import { uploadBuffer, ensureBucket, downloadBuffer } from '@airevstream/storage';
 
 const logger = createLogger('production-worker');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = resolve(__filename, '..');
 
 const BUCKET = BUCKETS.PRODUCTION;
 const TEMPLATES_DIR = resolve(__dirname, '../../comfyui-workflows');

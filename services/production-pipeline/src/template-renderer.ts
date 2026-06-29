@@ -1,10 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createLogger } from '@airevstream/shared';
 
 const logger = createLogger('template-renderer');
 
 // Path to workflow templates directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = resolve(__filename, '..');
 const TEMPLATES_DIR = resolve(__dirname, '../../../comfyui-workflows');
 
 export type WorkflowTemplate =

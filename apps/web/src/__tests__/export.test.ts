@@ -1,3 +1,6 @@
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+chdir: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock DOM APIs needed by exportToCSV

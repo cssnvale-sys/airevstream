@@ -795,6 +795,13 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
     try {
       let spec = (shot.shotspec as unknown as ShotSpec) ?? { promptBlocks: ['default scene'] };
 
+      // Skip shots without promptBlocks — they were created without generation specs
+      if (!spec.promptBlocks || !Array.isArray(spec.promptBlocks) || spec.promptBlocks.length === 0) {
+        logger.warn({ shotId, shotNumber: shot.shotNumber }, 'Shot has no promptBlocks — skipping ComfyUI generation');
+        await db.storyboardShot.update({ where: { id: shotId }, data: { status: 'pending' } });
+        continue;
+      }
+
       // Apply identity drift adjustments if present (set by QC gate retry)
       const driftAdj = (shot.shotspec as Record<string, unknown>)?.driftAdjustments as Record<string, unknown> | undefined;
       if (driftAdj) {

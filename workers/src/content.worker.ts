@@ -1,8 +1,8 @@
 import { createWorker, getQueue, type ContentGenerateJob, type ContentPublishJob, type ContentApproveJob, type ContentFinalReviewJob, type ContentViralScoreJob } from '@airevstream/queue';
 import { getDb } from '@airevstream/db';
 import { generateText, createServiceRegistry } from '@airevstream/ai-client';
-import { createLogger, scoreViralPotential, APPROVAL_DEFAULTS, evaluateApprovalGate } from '@airevstream/shared';
-import type { ViralScoringInput } from '@airevstream/shared';
+import { createLogger, scoreViralPotential, APPROVAL_DEFAULTS, evaluateApprovalGate, AgentOrchestrator, OllamaAgentRunner } from '@airevstream/shared';
+import type { ViralScoringInput, DirectorInput } from '@airevstream/shared';
 import type { Job } from 'bullmq';
 
 let _registry: ReturnType<typeof createServiceRegistry> | null = null;
@@ -75,6 +75,7 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
           include: {
             channelAvatars: { include: { avatar: true } },
             cinemaBibles: { take: 1, orderBy: { version: 'desc' } },
+            socialAccount: { select: { platform: true } },
           },
         },
       },
@@ -154,6 +155,60 @@ async function handleGenerate(data: ContentGenerateJob, job: Job) {
         },
       },
     });
+
+    // ─── Run Agent Orchestrator (Director → LookDev → ShotSpec → Render → Dialogue → Sound → Finishing) ───
+    let agentOutputs: Record<string, unknown> | undefined;
+    try {
+      logger.info({ contentId: data.contentId }, 'Starting agent pipeline');
+
+      const runner = new OllamaAgentRunner();
+      const orchestrator = new AgentOrchestrator({
+        runner,
+        complexityMode: 'advanced',
+        maxRetries: 1,
+        onTaskUpdate: (role, task) => {
+          logger.info({ contentId: data.contentId, role, status: task.status, qcScore: task.qcScore }, 'Agent task update');
+        },
+      });
+
+      const directorInput: DirectorInput = {
+        topic: content.title ?? data.prompt ?? 'cinematic content',
+        contentType: content.contentType,
+        targetPlatform: channel.socialAccount?.platform ?? 'youtube',
+        channelIdentity: {
+          name: channel.name,
+          niches: channel.niches,
+          tone: channel.tone ?? undefined,
+          audience: channel.targetAudience ?? undefined,
+        },
+      };
+
+      const pipelineState = await orchestrator.execute(directorInput, data.contentId);
+      agentOutputs = pipelineState.agentOutputs as Record<string, unknown> | undefined;
+
+      logger.info({ contentId: data.contentId, pipelineStatus: pipelineState.status, agentRoles: agentOutputs ? Object.keys(agentOutputs) : [] }, 'Agent pipeline completed');
+
+      // Persist agent outputs into generationParams for downstream cinema pipeline
+      if (agentOutputs && Object.keys(agentOutputs).length > 0) {
+        const existingParams = await db.contentItem.findUnique({
+          where: { id: data.contentId },
+          select: { generationParams: true },
+        });
+        const currentParams = (existingParams?.generationParams as Record<string, unknown>) ?? {};
+        await db.contentItem.update({
+          where: { id: data.contentId },
+          data: {
+            generationParams: {
+              ...currentParams,
+              agentOutputs,
+            } as any,
+          },
+        });
+        logger.info({ contentId: data.contentId, agentRoles: Object.keys(agentOutputs) }, 'Agent outputs saved to generationParams');
+      }
+    } catch (agentErr) {
+      logger.error({ err: agentErr, contentId: data.contentId }, 'Agent pipeline failed — continuing without agent outputs');
+    }
 
     // Create alert for pending approval
     try {

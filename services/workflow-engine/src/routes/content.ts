@@ -282,7 +282,7 @@ export async function contentRoutes(app: FastifyInstance) {
       // Verify content belongs to tenant and fetch fields needed for pipeline
       const existing = await db.contentItem.findFirst({
         where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
-        select: { id: true, channelId: true, contentType: true, title: true, prompt: true, generationParams: true },
+        select: { id: true, channelId: true, contentType: true, title: true, prompt: true, generationParams: true, channel: { select: { name: true, niches: true, tone: true, targetAudience: true } } },
       });
       if (!existing) {
         return reply.status(404).send({
@@ -298,7 +298,9 @@ export async function contentRoutes(app: FastifyInstance) {
 
       // Trigger cinema pipeline after approval commit
       try {
-        const qualityTier = ((existing.generationParams as Record<string, unknown> | null)?.qualityTier as string) ?? 'standard';
+        const genParams = (existing.generationParams as Record<string, unknown>) ?? {};
+        const qualityTier = (genParams.qualityTier as string) ?? 'standard';
+        const agentOutputs = genParams.agentOutputs as Record<string, unknown> | undefined;
         // Map DB contentType to pipeline contentType
         const rawType = existing.contentType ?? 'video_long';
         const pipelineContentType = rawType === 'video_short' ? 'short'
@@ -312,6 +314,8 @@ export async function contentRoutes(app: FastifyInstance) {
           topic: existing.title ?? existing.prompt ?? 'approved content',
           contentType: pipelineContentType as 'short' | 'long' | 'thumbnail' | 'image',
           qualityTier: qualityTier as 'draft' | 'standard' | 'cinema',
+          // Pass agent outputs to the cinema pipeline so shots get real prompts, LoRAs, seeds
+          directives: agentOutputs ? { agentOutputs } : undefined,
         });
         logger.info({ contentId: id }, 'Cinema pipeline triggered after approval');
       } catch (pipelineErr) {

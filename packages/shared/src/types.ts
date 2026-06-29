@@ -744,6 +744,7 @@ export interface AssemblyManifest {
   agentOutputs?: {
     director?: Record<string, unknown>;
     lookdev?: Record<string, unknown>;
+    shotspec?: Record<string, unknown>;
     dialogue?: Record<string, unknown>;
     sound?: Record<string, unknown>;
     psychology?: Record<string, unknown>;

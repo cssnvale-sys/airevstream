@@ -1605,12 +1605,28 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
     : 'cinema';
   const qualityTier = ((data as unknown as Record<string, unknown>).qualityTier as string) ?? 'standard';
 
-  // Check if agent pipeline state is available from job data (via directives)
+  // Check if agent pipeline state is available from job data (via directives) or content item's generationParams
   const directives = (data as unknown as Record<string, unknown>).directives as Record<string, unknown> | undefined;
-  const agentOutputs = directives?.agentOutputs as Record<string, unknown> | undefined;
+  let agentOutputs = directives?.agentOutputs as Record<string, unknown> | undefined;
+
+  // Fallback: read agentOutputs from content item's generationParams if not in directives
+  if (!agentOutputs) {
+    const contentWithParams = await db.contentItem.findUnique({
+      where: { id: data.contentId },
+      select: { generationParams: true },
+    });
+    const genParams = (contentWithParams?.generationParams as Record<string, unknown>) ?? {};
+    if (genParams.agentOutputs) {
+      agentOutputs = genParams.agentOutputs as Record<string, unknown>;
+      logger.info({ contentId: data.contentId }, 'Loaded agent outputs from generationParams fallback');
+    }
+  }
+
   const directorOutput = agentOutputs?.director as Record<string, unknown> | undefined;
   const dialogueOutput = agentOutputs?.dialogue as { tracks?: Array<{ shotNumber: number; text: string; voice: string; emotion: string; pacing: string }> } | undefined;
   const soundOutput = agentOutputs?.sound as { audioLayers?: Array<{ shotNumber: number; bg?: unknown; mg?: unknown; fg?: unknown }> } | undefined;
+  const shotSpecOutput = agentOutputs?.shotspec as { shots?: Array<{ shotNumber: number; promptBlocks?: string[]; camera?: { lens?: string; framing?: string; movement?: string; dof?: string }; lighting?: string; duration?: number; transition?: string; beat?: string; generation?: { steps?: number; cfg?: number; sampler?: string; width?: number; height?: number } }> } | undefined;
+  const lookdevOutput = agentOutputs?.lookdev as { colorPalette?: string[]; loraRecommendations?: Array<{ name: string; strength: number; purpose?: string }>; lensKit?: string[]; lightingScheme?: string; aspectRatio?: string; globalStyle?: string } | undefined;
 
   const totalDurationSec = estimateDuration(script, content.contentType);
 
@@ -1677,6 +1693,7 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
       agentOutputs: agentOutputs ? {
         director: agentOutputs.director as Record<string, unknown> | undefined,
         lookdev: agentOutputs.lookdev as Record<string, unknown> | undefined,
+        shotspec: agentOutputs.shotspec as Record<string, unknown> | undefined,
         dialogue: agentOutputs.dialogue as Record<string, unknown> | undefined,
         sound: agentOutputs.sound as Record<string, unknown> | undefined,
         psychology: agentOutputs.psychology as Record<string, unknown> | undefined,
@@ -1709,20 +1726,77 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
     manifest.storyboardId = sb.id;
 
     await tx.storyboardShot.createMany({
-      data: shotDataList.map(({ section, beat, durationSec, startSec }, i) => ({
-        storyboardId: sb.id,
-        shotNumber: i + 1,
-        startSec,
-        endSec: startSec + durationSec,
-        shotspec: {
+      data: shotDataList.map(({ section, beat, durationSec, startSec }, i) => {
+        const shotNumber = i + 1;
+
+        // Map ShotSpec agent output to shot's shotspec field
+        const agentShot = shotSpecOutput?.shots?.find(s => s.shotNumber === shotNumber);
+        const loraRecs = lookdevOutput?.loraRecommendations;
+
+        const shotspec: Record<string, unknown> = {
           section: section.type,
           text: section.text,
-          visualDescription: `${beat.preset.toLowerCase()} mood, ${section.type} section`,
+          visualDescription: agentShot?.promptBlocks?.join(', ') ?? `${beat.preset.toLowerCase()} mood, ${section.type} section`,
           cameraMotion: section.type === 'hook' ? 'zoom-in' : 'slow-pan',
           transition: i === 0 ? 'fade' : 'cut',
-        } as any,
-        status: 'pending',
-      })),
+        };
+
+        // If we have agent ShotSpec output, populate the full ShotSpec for image generation
+        if (agentShot) {
+          shotspec.promptBlocks = agentShot.promptBlocks ?? shotspec.visualDescription as string[];
+          if (agentShot.camera) {
+            shotspec.camera = {
+              lens: agentShot.camera.lens,
+              framing: agentShot.camera.framing,
+              movement: agentShot.camera.movement,
+              dof: agentShot.camera.dof as 'shallow' | 'medium' | 'deep' | undefined,
+            };
+          }
+          if (agentShot.lighting) shotspec.lighting = agentShot.lighting;
+          if (agentShot.beat) shotspec.beat = agentShot.beat;
+          if (agentShot.transition) shotspec.transition = agentShot.transition;
+          if (agentShot.duration) shotspec.duration = agentShot.duration;
+
+          // Generation params — these are what ComfyUI uses
+          if (agentShot.generation) {
+            shotspec.generation = {
+              steps: agentShot.generation.steps ?? 30,
+              cfg: agentShot.generation.cfg ?? 7,
+              sampler: agentShot.generation.sampler ?? 'dpmpp_2m',
+              width: agentShot.generation.width ?? 1920,
+              height: agentShot.generation.height ?? 1080,
+            };
+          }
+
+          // LoRA recommendations from lookdev agent
+          if (loraRecs && loraRecs.length > 0) {
+            shotspec.generation = {
+              ...(shotspec.generation as Record<string, unknown>),
+              loras: loraRecs.map(rec => ({
+                name: rec.name,
+                strength: rec.strength,
+              })),
+            };
+          }
+
+          // Assign a stable seed for reproducibility
+          shotspec.seed = 1000 + shotNumber;
+
+          // Shot class for workflow registry
+          shotspec.shotClass = section.type === 'hook' ? 'Establishing_Wide'
+            : section.type === 'cta' ? 'Product_Close'
+            : undefined;
+        }
+
+        return {
+          storyboardId: sb.id,
+          shotNumber,
+          startSec,
+          endSec: startSec + durationSec,
+          shotspec: shotspec as any,
+          status: 'pending',
+        };
+      }),
     });
 
     // Update scriptJson with the final manifest (including real storyboardId)

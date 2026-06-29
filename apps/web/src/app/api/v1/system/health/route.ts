@@ -90,11 +90,12 @@ export async function GET(req: NextRequest) {
     // External service health checks (non-blocking — don't fail the endpoint)
     const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
     const comfyuiUrl = process.env.COMFYUI_URL || 'http://localhost:8188';
+    const ttsUrl = process.env.TTS_BASE_URL || 'http://localhost:5500';
     const minioEndpoint = process.env.MINIO_ENDPOINT || 'localhost';
     const minioPort = process.env.MINIO_PORT || '9000';
     const minioUrl = `http://${minioEndpoint}:${minioPort}/minio/health/live`;
 
-    const [allMetrics, serviceStatuses, alertCounts, activeJobs, pendingPosts, ollamaCheck, comfyuiCheck, minioCheck, redisCheck] = await Promise.all([
+    const [allMetrics, serviceStatuses, alertCounts, activeJobs, pendingPosts, ollamaCheck, comfyuiCheck, ttsCheck, minioCheck, redisCheck] = await Promise.all([
       ctx.db.systemMetric.findMany({
         where: { metricType: { in: metricTypes } },
         orderBy: { createdAt: 'desc' },
@@ -125,6 +126,7 @@ export async function GET(req: NextRequest) {
       }),
       checkService('ollama', `${ollamaUrl}/api/tags`, 3000),
       checkService('comfyui', `${comfyuiUrl}/system_stats`, 3000),
+      checkService('tts', `${ttsUrl}/api/voices`, 3000),
       checkService('minio', minioUrl, 3000),
       checkRedis(3000),
     ]);
@@ -142,7 +144,7 @@ export async function GET(req: NextRequest) {
     const healthyServices = serviceStatuses.find((s) => s.status === 'active')?._count.id ?? 0;
 
     // Determine overall status: healthy if DB + all infra up, degraded if partial, unhealthy if DB down
-    const infraChecks = [ollamaCheck, comfyuiCheck, minioCheck, redisCheck];
+    const infraChecks = [ollamaCheck, comfyuiCheck, ttsCheck, minioCheck, redisCheck];
     const infraDown = infraChecks.filter(c => c.status === 'down').length;
     let overallStatus: string;
     if (totalServices === 0 && infraDown === infraChecks.length) {
@@ -165,6 +167,7 @@ export async function GET(req: NextRequest) {
       infrastructure: {
         ollama: ollamaCheck,
         comfyui: comfyuiCheck,
+        tts: ttsCheck,
         minio: minioCheck,
         redis: redisCheck,
         database: { name: 'postgresql', status: 'up', lastChecked: new Date().toISOString(), latencyMs: 0 },

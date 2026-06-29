@@ -739,17 +739,23 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
   let storyboardId = data.storyboardId;
   let shotIds = data.shotIds;
   if (!storyboardId && data.contentId) {
-    const sb = await db.storyboard.findFirst({ where: { contentId: data.contentId }, orderBy: { createdAt: 'desc' } });
-    if (sb) {
-      storyboardId = sb.id;
-      logger.info({ storyboardId, contentId: data.contentId }, 'Resolved storyboard from contentId');
-      // If no shotIds provided, load them from the storyboard
-      if (shotIds.length === 0) {
-        const shots = await db.storyboardShot.findMany({ where: { storyboardId }, orderBy: { shotNumber: 'asc' } });
-        shotIds = shots.map(s => s.id);
-        logger.info({ shotCount: shotIds.length }, 'Loaded shots from storyboard');
+      // Retry loop — storyboard may not be committed to DB yet (race condition with parent job)
+      for (let attempt = 0; attempt < 5; attempt++) {
+          const sb = await db.storyboard.findFirst({ where: { contentId: data.contentId }, orderBy: { createdAt: 'desc' } });
+          if (sb) {
+              storyboardId = sb.id;
+              logger.info({ storyboardId, contentId: data.contentId }, 'Resolved storyboard from contentId');
+              // If no shotIds provided, load them from the storyboard
+              if (shotIds.length === 0) {
+                  const shots = await db.storyboardShot.findMany({ where: { storyboardId }, orderBy: { shotNumber: 'asc' } });
+                  shotIds = shots.map(s => s.id);
+                  logger.info({ shotCount: shotIds.length }, 'Loaded shots from storyboard');
+              }
+              break;
+          }
+          // Wait 500ms before retrying — storyboard might still be committing
+          if (attempt < 4) await new Promise(r => setTimeout(r, 500));
       }
-    }
   }
 
   if (!storyboardId) {

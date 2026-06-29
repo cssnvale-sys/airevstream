@@ -1,7 +1,7 @@
 import { type FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '@airevstream/db';
-import { addJob } from '@airevstream/queue';
+import { addJob, startCinemaPipeline } from '@airevstream/queue';
 import { createLogger } from '@airevstream/shared';
 import type { Prisma } from '@prisma/client';
 import '../plugins/auth.js';
@@ -279,10 +279,10 @@ export async function contentRoutes(app: FastifyInstance) {
       const { id } = request.params as { id: string };
       const db = getDb();
 
-      // Verify content belongs to tenant
+      // Verify content belongs to tenant and fetch fields needed for pipeline
       const existing = await db.contentItem.findFirst({
         where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
-        select: { id: true },
+        select: { id: true, channelId: true, contentType: true, title: true, prompt: true, generationParams: true },
       });
       if (!existing) {
         return reply.status(404).send({
@@ -295,6 +295,22 @@ export async function contentRoutes(app: FastifyInstance) {
         where: { id },
         data: { status: 'approved', approvedAt: new Date(), approvedBy: request.user?.sub ?? 'system' },
       });
+
+      // Trigger cinema pipeline after approval commit
+      try {
+        const qualityTier = ((existing.generationParams as Record<string, unknown> | null)?.qualityTier as string) ?? 'standard';
+        await startCinemaPipeline({
+          tenantId,
+          contentId: id,
+          channelId: existing.channelId,
+          topic: existing.title ?? existing.prompt ?? 'approved content',
+          contentType: existing.contentType as 'short' | 'long' | 'thumbnail' | 'image',
+          qualityTier: qualityTier as 'draft' | 'standard' | 'cinema',
+        });
+        logger.info({ contentId: id }, 'Cinema pipeline triggered after approval');
+      } catch (pipelineErr) {
+        logger.error({ err: pipelineErr, contentId: id }, 'Failed to trigger cinema pipeline after approval');
+      }
 
       return reply.send({ success: true, data: serializeContentItem(content) });
     } catch (err) {

@@ -908,6 +908,23 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
         spec = { ...spec, model: 'flux1-schnell-fp8.safetensors' };
       }
 
+      // Override generation params for FLUX schnell compatibility
+      // FLUX schnell requires: euler sampler, simple scheduler, 4 steps, CFG 1.0
+      if (spec.model === 'flux1-schnell-fp8.safetensors' && spec.generation) {
+        spec = {
+          ...spec,
+          generation: {
+            ...spec.generation,
+            sampler: 'euler',
+            scheduler: 'simple',
+            steps: 4,
+            cfg: 1.0,
+            denoise: 1.0,
+          },
+        };
+        logger.info({ shotId, model: spec.model }, 'Applied FLUX schnell generation overrides (euler/simple/4steps/cfg1.0)');
+      }
+
       // Compose and run workflow
       const workflow = composeWorkflow(spec, promptBible);
       const images = await comfyClient.queueAndWait(workflow);

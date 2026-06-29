@@ -312,6 +312,28 @@ export const WORKFLOW_REGISTRY: WorkflowMetadata[] = [
     supportsFrameAnchoring: true,
     tags: ['environment', 'reveal', 'establishing', 'cinematic', 'crane'],
   },
+  // ── FLUX schnell Storyboard ──
+  {
+    id: 'flux-storyboard',
+    name: 'FLUX Storyboard Frame',
+    version: '1.0.0',
+    useCase: 'FLUX schnell-based storyboard keyframe generation with 4-step fast sampling',
+    provider: 'comfyui',
+    shotClasses: ['Establishing_Wide', 'Montage_Quick', 'Dialogue_Closeup', 'Action_Tracking'],
+    allowedOverrides: ['generation.steps', 'generation.cfg', 'generation.width', 'generation.height', 'generation.sampler', 'generation.seed'],
+    qualityTiers: ['draft', 'standard', 'cinema'],
+    continuityTier: 'standard',
+    tierDefaults: {
+      draft: { steps: 4, cfg: 1.0, sampler: 'euler', scheduler: 'simple', width: 1024, height: 576 },
+      standard: { steps: 4, cfg: 1.0, sampler: 'euler', scheduler: 'simple', width: 1280, height: 720 },
+      cinema: { steps: 8, cfg: 1.0, sampler: 'euler', scheduler: 'simple', width: 1536, height: 896 },
+    },
+    outputFormat: { type: 'image', formats: ['png'] },
+    estimatedTimeSec: { draft: 3, standard: 5, cinema: 12 },
+    requiredFields: ['promptBlocks'],
+    supportsFrameAnchoring: true,
+    tags: ['flux', 'schnell', 'storyboard', 'keyframe', 'fast', 'fp8'],
+  },
 ];
 
 /**

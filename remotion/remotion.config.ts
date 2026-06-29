@@ -3,6 +3,9 @@ import { Config } from '@remotion/cli/config';
 // ─── Remotion Configuration ───
 // See: https://www.remotion.dev/docs/config
 
+// Entry point — must call registerRoot()
+Config.setEntryPoint('src/entry.tsx');
+
 // Output codec for renders
 Config.setVideoImageFormat('jpeg');
 Config.setOverwriteOutput(true);

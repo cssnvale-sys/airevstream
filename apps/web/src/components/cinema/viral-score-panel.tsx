@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useApi, apiPost, apiPatch } from '@/hooks/use-api';
 import { FlaskConical, Sparkles, ChevronDown, ChevronUp, Check, X as XIcon } from 'lucide-react';
 import { LoadingButton } from '@/components/ui/loading-button';
+import { EmptyState } from '@/components/ui/empty-state';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
 
@@ -107,7 +108,16 @@ export function ViralScorePanel({ contentId }: ViralScorePanelProps) {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const score = data?.data;
-  if (!score) return null;
+  if (!score) {
+    return (
+      <EmptyState
+        icon={Sparkles}
+        title="No viral score data yet"
+        description="Generate content to see viral potential"
+        compact
+      />
+    );
+  }
 
   const tierColor = TIER_COLORS[score.tier] ?? 'text-text-secondary';
   const tierBg = TIER_BG[score.tier] ?? '';

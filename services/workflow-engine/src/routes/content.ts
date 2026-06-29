@@ -299,12 +299,18 @@ export async function contentRoutes(app: FastifyInstance) {
       // Trigger cinema pipeline after approval commit
       try {
         const qualityTier = ((existing.generationParams as Record<string, unknown> | null)?.qualityTier as string) ?? 'standard';
+        // Map DB contentType to pipeline contentType
+        const rawType = existing.contentType ?? 'video_long';
+        const pipelineContentType = rawType === 'video_short' ? 'short'
+          : rawType === 'thumbnail' ? 'thumbnail'
+          : rawType === 'image' ? 'image'
+          : 'long'; // video_long, cinema, etc.
         await startCinemaPipeline({
           tenantId,
           contentId: id,
           channelId: existing.channelId,
           topic: existing.title ?? existing.prompt ?? 'approved content',
-          contentType: existing.contentType as 'short' | 'long' | 'thumbnail' | 'image',
+          contentType: pipelineContentType as 'short' | 'long' | 'thumbnail' | 'image',
           qualityTier: qualityTier as 'draft' | 'standard' | 'cinema',
         });
         logger.info({ contentId: id }, 'Cinema pipeline triggered after approval');

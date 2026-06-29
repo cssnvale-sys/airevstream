@@ -237,8 +237,8 @@ async function handlePopulateKnowledge(data: ResearchPopulateKnowledgeJob, job: 
         newEntries.push({
           tenantId: data.tenantId,
           domain,
-          category: `research:${topic}`,
-          title,
+          category: `research:${(topic || '').substring(0, 90)}`,
+          title: (title || '').substring(0, 500),
           content: contentSummary.substring(0, RESEARCH_CONTENT_SUMMARY_MAX_CHARS),
           sourceUrl: url,
           relevanceScore,
@@ -332,8 +332,8 @@ Return a JSON array of objects with: title, content (informative summary, max 50
       newKbEntries.push({
         tenantId: data.tenantId,
         domain,
-        category: `research:${topic}`,
-        title: entry.title,
+        category: `research:${(topic || '').substring(0, 90)}`,
+        title: (entry.title || '').substring(0, 500),
         content: (entry.content ?? '').substring(0, RESEARCH_CONTENT_SUMMARY_MAX_CHARS),
         sourceUrl: entry.sourceUrl ?? null,
         relevanceScore,

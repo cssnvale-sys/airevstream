@@ -779,9 +779,9 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
   const promptBible = (bible?.promptBible as PromptBible | null) ?? undefined;
 
   // Process each shot
-  const totalShots = data.shotIds.length;
+  const totalShots = shotIds.length;
   for (let shotIdx = 0; shotIdx < totalShots; shotIdx++) {
-    const shotId = data.shotIds[shotIdx];
+      const shotId = shotIds[shotIdx];
     // Report progress: 10–90 range spread across shots
     await job.updateProgress(10 + Math.round((shotIdx / totalShots) * 80));
     const shot = await db.storyboardShot.findUnique({ where: { id: shotId } });

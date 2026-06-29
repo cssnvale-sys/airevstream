@@ -4,7 +4,7 @@ import { getDb } from '@airevstream/db';
 import { addJob } from '@airevstream/queue';
 import { createLogger } from '@airevstream/shared';
 import type { Prisma } from '@prisma/client';
-import '../plugins/auth';
+import '../plugins/auth.js';
 import { resolveTenantId, getTenantScope } from '../lib/tenant.js';
 
 const logger = createLogger('routes:content');

@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector, buildProductionScript } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, composeFramePackForShot, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector, buildProductionScript } from '@airevstream/shared';
 import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming, AssemblyManifest, AssembledShot, SeedContext } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
@@ -87,7 +87,7 @@ function toAudioLayerSpec(layer: { source: string; volume: number; description: 
 
 const comfyClient = new ComfyUIClient(
   process.env.COMFYUI_URL ?? 'http://localhost:8188',
-  parseInt(process.env.COMFYUI_TIMEOUT_MS ?? '120000', 10),
+  parseInt(process.env.COMFYUI_TIMEOUT_MS ?? '600000', 10),
 );
 
 // ─── Template Renderer ───
@@ -366,10 +366,11 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
     // Merge keyframe URLs from storyboard_shots table into manifest
     // The manifest was created before ComfyUI ran, so keyframeUrl is empty
     // We need to fill it with the actual generated image URLs
+    // Also merge video clip URLs from FramePack (if available)
     const dbShots = await db.storyboardShot.findMany({
       where: { storyboardId },
       orderBy: { shotNumber: 'asc' },
-      select: { shotNumber: true, keyframeUrls: true },
+      select: { shotNumber: true, keyframeUrls: true, shotspec: true },
     });
     if (manifest.shots && Array.isArray(manifest.shots)) {
       const { getPresignedUrl } = await import('@airevstream/storage');
@@ -377,19 +378,37 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
         const dbShot = dbShots.find(s => s.shotNumber === idx + 1);
         const urls = dbShot?.keyframeUrls as unknown as string[] | null;
         const storageKey = urls?.[0] ?? '';
+        
+        // Check for FramePack video clip URLs in shotspec
+        const shotSpec = dbShot?.shotspec as Record<string, unknown> | null;
+        const videoClipUrls = shotSpec?.videoClipUrls as string[] | null;
+        const videoClipKey = videoClipUrls?.[0] ?? '';
+        
+        let presignedVideoUrl: string | undefined;
+        if (videoClipKey) {
+          try {
+            const vBucket = videoClipKey.split('/')[0];
+            const vKey = videoClipKey.substring(videoClipKey.indexOf('/') + 1);
+            presignedVideoUrl = await getPresignedUrl(vBucket, vKey, 3600);
+            logger.info({ shotNumber: idx + 1 }, 'Merged presigned video clip URL into manifest');
+          } catch (e) {
+            logger.warn({ shotNumber: idx + 1, err: e }, 'Failed to presign video clip URL');
+          }
+        }
+        
         if (storageKey) {
           try {
             const bucket = storageKey.split('/')[0];
             const key = storageKey.substring(storageKey.indexOf('/') + 1);
             const presignedUrl = await getPresignedUrl(bucket, key, 3600);
-            logger.info({ shotNumber: idx + 1, presignedUrl: presignedUrl.substring(0, 80) + '...' }, 'Merged presigned keyframe URL into manifest');
-            return { ...shot, keyframeUrl: presignedUrl };
+            logger.info({ shotNumber: idx + 1, presignedUrl: presignedUrl.substring(0, 80) + '...', hasVideo: !!presignedVideoUrl }, 'Merged presigned keyframe URL into manifest');
+            return { ...shot, keyframeUrl: presignedUrl, videoClipUrl: presignedVideoUrl };
           } catch (e) {
             logger.warn({ shotNumber: idx + 1, err: e }, 'Failed to presign keyframe URL — using storage key directly');
-            return { ...shot, keyframeUrl: storageKey };
+            return { ...shot, keyframeUrl: storageKey, videoClipUrl: presignedVideoUrl };
           }
         }
-        return { ...shot, keyframeUrl: shot.keyframeUrl };
+        return { ...shot, keyframeUrl: shot.keyframeUrl, videoClipUrl: presignedVideoUrl };
       });
       manifest.shots = await Promise.all(shotPromises);
     }
@@ -1045,6 +1064,69 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
         });
       }
 
+      // ─── FramePack Video Generation (Phase 1: image-to-video) ───
+      // After generating the keyframe image, use FramePack to animate it into a short video clip
+      // This replaces the static image + Ken Burns zoom with real AI-generated motion
+      let videoClipUrls: string[] = [];
+      try {
+        // Upload the first keyframe image to ComfyUI's input directory for FramePack
+        // ComfyUI is at ~/ComfyUI, not inside the project directory
+        const firstImageData = await comfyClient.downloadImage(images[0].filename, images[0].subfolder, images[0].type);
+        const comfyuiInputPath = process.env.COMFYUI_INPUT_PATH ?? resolve(process.env.HOME ?? '/Users/cassianvale', 'ComfyUI/input');
+        const framepackInputFile = `airevstream_shot_${shotId}_${Date.now()}.png`;
+        const fullInputPath = resolve(comfyuiInputPath, framepackInputFile);
+        await mkdir(comfyuiInputPath, { recursive: true });
+        await (await import('node:fs/promises')).writeFile(fullInputPath, firstImageData);
+
+        // Compose FramePack workflow from shot prompt and keyframe
+        const shotPrompt = spec.promptBlocks.join(', ');
+        const videoSeed = (workflow.resolvedSeed ?? 0) + 1000; // Offset seed for video gen
+        const videoDuration = 2.0; // 2 seconds per shot clip (can be adjusted per shot class)
+
+        const framepackWorkflow = composeFramePackForShot(
+          framepackInputFile,
+          shotPrompt,
+          videoSeed,
+          videoDuration,
+        );
+
+        logger.info({ shotId, framepackInputFile, videoSeed, videoDuration }, 'Starting FramePack video generation');
+
+        // Queue and wait for video (uses longer timeout — 300s default)
+        const videoClient = new ComfyUIClient(undefined, 600_000); // 10 min timeout for video gen
+        const videos = await videoClient.queueAndWaitForVideo(framepackWorkflow);
+
+        // Download and upload video clips to MinIO
+        for (const vid of videos) {
+          const videoData = await videoClient.downloadVideo(vid.filename, vid.subfolder, vid.type);
+          const timestamp = Date.now();
+          const key = `video-clips/${storyboardId}/${shotId}/${timestamp}-${vid.filename}`;
+          await uploadBuffer(BUCKET, key, videoData, 'video/mp4');
+          videoClipUrls.push(`${BUCKET}/${key}`);
+
+          // Register video clip asset
+          await registerAsset({
+            type: 'video',
+            storageKey: `${BUCKET}/${key}`,
+            fileSize: videoData.length,
+            mimeType: 'video/mp4',
+            generatedBy: 'framepack',
+            contentId: data.contentId,
+            shotId,
+            metadata: {
+              seed: videoSeed,
+              duration: videoDuration,
+              model: 'FramePackI2V_HY',
+            },
+          });
+        }
+
+        logger.info({ shotId, videoClipCount: videoClipUrls.length }, 'FramePack video clips generated');
+      } catch (framepackErr) {
+        // FramePack failure is non-fatal — fall back to static keyframe images
+        logger.warn({ err: framepackErr, shotId }, 'FramePack video generation failed — falling back to static keyframe');
+      }
+
       // ─── Post-generation QC gate (Stage 2) ───
       const expectedWidth = spec.generation?.width ?? 1024;
       const expectedHeight = spec.generation?.height ?? 1024;
@@ -1105,11 +1187,11 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
           keyframeUrls: uploadedUrls as any,
           status: 'generated',
           qualityScore: clampedQCScore,
-          shotspec: { ...spec, seed: workflow.resolvedSeed, provenance: provenance.id, safetyScore: safetyResult.riskScore } as any,
+          shotspec: { ...spec, seed: workflow.resolvedSeed, provenance: provenance.id, safetyScore: safetyResult.riskScore, videoClipUrls: videoClipUrls.length > 0 ? videoClipUrls : undefined } as any,
         },
       });
 
-      logger.info({ shotId, imageCount: images.length }, 'Shot generated successfully');
+      logger.info({ shotId, imageCount: images.length, videoClipCount: videoClipUrls.length }, 'Shot generated successfully');
     } catch (err) {
       logger.error({ err, shotId }, 'Shot generation failed');
       await db.storyboardShot.update({ where: { id: shotId }, data: { status: 'failed' } });

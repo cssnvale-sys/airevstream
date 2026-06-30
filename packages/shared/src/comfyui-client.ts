@@ -12,6 +12,14 @@ export interface OutputImage {
   type: string;
 }
 
+/** Output from a video-generating workflow (VHS_VideoCombine) */
+export interface OutputVideo {
+  filename: string;
+  subfolder: string;
+  type: string;
+  format: string;
+}
+
 export interface ComfyUISystemStats {
   system: {
     os: string;
@@ -38,7 +46,7 @@ export class ComfyUIClient {
 
   constructor(baseUrl?: string, timeoutMs?: number) {
     this.baseUrl = baseUrl ?? process.env.COMFYUI_URL ?? 'http://localhost:8188';
-    this.timeoutMs = timeoutMs ?? 120_000;
+    this.timeoutMs = timeoutMs ?? 300_000; // 5 min default for video generation
   }
 
   /** Check if ComfyUI server is reachable and has at least one checkpoint model loaded */
@@ -153,6 +161,34 @@ export class ComfyUIClient {
     return images;
   }
 
+  /** Get output videos from a completed prompt (VHS_VideoCombine outputs) */
+  async getOutputVideos(promptId: string): Promise<OutputVideo[]> {
+    const res = await fetch(`${this.baseUrl}/history/${promptId}`, {
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) throw new Error(`Failed to get history for prompt ${promptId}`);
+    const data = (await res.json()) as Record<string, { outputs?: Record<string, { gifs?: Array<{ filename: string; subfolder?: string; type?: string; format?: string }> }> }>;
+    const entry = data[promptId];
+    if (!entry?.outputs) throw new Error(`No outputs for prompt ${promptId}`);
+
+    const videos: OutputVideo[] = [];
+    for (const nodeId of Object.keys(entry.outputs)) {
+      const nodeOutput = entry.outputs[nodeId];
+      // VHS_VideoCombine outputs under "gifs" key (even for MP4)
+      if (nodeOutput.gifs) {
+        for (const vid of nodeOutput.gifs) {
+          videos.push({
+            filename: vid.filename,
+            subfolder: vid.subfolder ?? '',
+            type: vid.type ?? 'output',
+            format: vid.format ?? 'video/h264-mp4',
+          });
+        }
+      }
+    }
+    return videos;
+  }
+
   /** Download a single image from ComfyUI */
   async downloadImage(filename: string, subfolder: string, type: string): Promise<Buffer> {
     const params = new URLSearchParams({ filename, subfolder, type });
@@ -168,6 +204,23 @@ export class ComfyUIClient {
     const promptId = await this.queuePrompt(workflow);
     await this.waitForCompletion(promptId);
     return this.getOutputImages(promptId);
+  }
+
+  /** Queue a video-generating workflow, wait for completion, and return output videos */
+  async queueAndWaitForVideo(workflow: ComfyUIWorkflow): Promise<OutputVideo[]> {
+    const promptId = await this.queuePrompt(workflow);
+    await this.waitForCompletion(promptId);
+    return this.getOutputVideos(promptId);
+  }
+
+  /** Download a video file from ComfyUI */
+  async downloadVideo(filename: string, subfolder: string, type: string): Promise<Buffer> {
+    const params = new URLSearchParams({ filename, subfolder, type });
+    const res = await fetch(`${this.baseUrl}/view?${params}`, {
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!res.ok) throw new Error(`Failed to download video ${filename}`);
+    return Buffer.from(await res.arrayBuffer());
   }
 
   /** List available checkpoint models */

@@ -808,6 +808,8 @@ export interface AssembledShot {
   keyframeUrl?: string;
   /** Video plate URL (populated after video generation) */
   videoPlateUrl?: string;
+  /** FramePack video clip URL (populated after FramePack image-to-video generation) */
+  videoClipUrl?: string;
   /** Audio stem URLs per layer */
   audioStemUrls?: { fg?: string; mg?: string; bg?: string };
 

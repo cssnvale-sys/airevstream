@@ -172,8 +172,8 @@ export function toCinemaShotData(shots: AssembledShot[], fps: number): CinemaSho
     return {
       id: shot.shotId,
       src: shot.keyframeUrl ?? '',
-      videoSrc: shot.videoPlateUrl,
-      isVideo: !!shot.videoPlateUrl,
+      videoSrc: shot.videoClipUrl ?? shot.videoPlateUrl,
+      isVideo: !!(shot.videoClipUrl ?? shot.videoPlateUrl),
       durationInFrames: Math.max(1, Math.round(shot.durationSec * fps)),
       transitionIn: idx === 0 ? 'fade' : (shot.transition ?? 'cut'),
       transitionOut: 'cut',

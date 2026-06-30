@@ -2,6 +2,7 @@ import React from 'react';
 import {
   useCurrentFrame,
   Img,
+  Video,
   interpolate,
   Easing,
   Sequence,
@@ -154,14 +155,26 @@ const Shot: React.FC<ShotProps> = ({ shot, width, height, isFirst, isLast }) => 
         willChange: 'transform, opacity',
       }}
     >
-      <Img
-        src={shot.src || `https://placehold.co/${width}x${height}/1a1a3e/ffffff?text=Shot+${shot.id || ''}`}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-        }}
-      />
+      {(shot as any).videoSrc ? (
+        <Video
+          src={(shot as any).videoSrc}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+          loop
+        />
+      ) : (
+        <Img
+          src={shot.src || `https://placehold.co/${width}x${height}/1a1a3e/ffffff?text=Shot+${shot.id || ''}`}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      )}
     </div>
   );
 };

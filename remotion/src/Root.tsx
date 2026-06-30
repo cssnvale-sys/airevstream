@@ -124,10 +124,13 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="LongFormVideo"
         component={LongFormVideoComponent}
-        durationInFrames={9000} // 300 seconds (5 minutes) at 30fps
+        durationInFrames={9000}
         fps={30}
         width={1920}
         height={1080}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: Math.max(1, (props as any)?.shots?.reduce((sum: number, s: any) => sum + (s.durationInFrames || 0), 0) || 9000),
+        })}
         defaultProps={{
           title: 'Long Form Video',
           script: {

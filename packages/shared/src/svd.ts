@@ -100,26 +100,18 @@ export function composeSVDWorkflow(params: SVDParams): ComfyUIWorkflow {
 
   const workflow: ComfyUIWorkflow = {};
 
-  // Node 1: CheckpointLoaderSimple (SVD model)
+  // Node 1: ImageOnlyCheckpointLoader (SVD model — SVD requires image-only checkpoint loader)
   workflow['1'] = {
-    class_type: 'CheckpointLoaderSimple',
+    class_type: 'ImageOnlyCheckpointLoader',
     inputs: { ckpt_name: modelFile },
     _meta: { title: 'Load SVD Model' },
   };
 
-  // Node 2: VAELoader (separate VAE for SVD decoding)
-  workflow['2'] = {
-    class_type: 'VAELoader',
-    inputs: { vae_name: vaeFile },
-    _meta: { title: 'Load VAE' },
-  };
+  // Node 2: VAELoader — removed, use VAE from checkpoint (index 2) instead
+  // The SVD checkpoint includes a VAE, so we don't need a separate one
 
-  // Node 3: CLIPVisionLoader (CLIP Vision for image conditioning)
-  workflow['3'] = {
-    class_type: 'CLIPVisionLoader',
-    inputs: { clip_name: clipVisionFile },
-    _meta: { title: 'Load CLIP Vision' },
-  };
+  // Node 3: CLIPVisionLoader — removed, use CLIP_VISION from ImageOnlyCheckpointLoader (index 1)
+  // SVD checkpoint includes CLIP Vision, so we use the checkpoint's output
 
   // Node 4: LoadImage (keyframe)
   workflow['4'] = {
@@ -132,9 +124,9 @@ export function composeSVDWorkflow(params: SVDParams): ComfyUIWorkflow {
   workflow['5'] = {
     class_type: 'SVD_img2vid_Conditioning',
     inputs: {
-      clip_vision: ['3', 0],
+      clip_vision: ['1', 1], // CLIP_VISION from ImageOnlyCheckpointLoader (index 1)
       init_image: ['4', 0],
-      vae: ['2', 0],
+      vae: ['1', 2], // VAE from ImageOnlyCheckpointLoader (index 2)
       width,
       height,
       video_frames: videoFrames,
@@ -168,7 +160,7 @@ export function composeSVDWorkflow(params: SVDParams): ComfyUIWorkflow {
     class_type: 'VAEDecode',
     inputs: {
       samples: ['6', 0],
-      vae: ['2', 0],
+      vae: ['1', 2], // Use VAE from checkpoint
     },
     _meta: { title: 'VAE Decode' },
   };

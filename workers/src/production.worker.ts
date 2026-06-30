@@ -360,6 +360,37 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
   if (hasManifest) {
     // ─── New path: Assembly manifest → Remotion resolver ───
     const manifest = scriptJson as unknown as AssemblyManifest;
+
+    // Merge keyframe URLs from storyboard_shots table into manifest
+    // The manifest was created before ComfyUI ran, so keyframeUrl is empty
+    // We need to fill it with the actual generated image URLs
+    const dbShots = await db.storyboardShot.findMany({
+      where: { storyboardId },
+      orderBy: { shotNumber: 'asc' },
+      select: { shotNumber: true, keyframeUrls: true },
+    });
+    if (manifest.shots && Array.isArray(manifest.shots)) {
+      const { presignUrl } = await import('@airevstream/storage');
+      manifest.shots = manifest.shots.map((shot, idx) => {
+        const dbShot = dbShots.find(s => s.shotNumber === idx + 1);
+        const storageKey = dbShot?.keyframeUrls?.[0] ?? '';
+        if (storageKey) {
+          // Convert storage key to presigned URL for Remotion to fetch
+          try {
+            const bucket = storageKey.split('/')[0];
+            const key = storageKey.substring(storageKey.indexOf('/') + 1);
+            const presignedUrl = presignUrl(bucket, key, 3600);
+            logger.info({ shotNumber: idx + 1, presignedUrl: presignedUrl.substring(0, 80) + '...' }, 'Merged presigned keyframe URL into manifest');
+            return { ...shot, keyframeUrl: presignedUrl };
+          } catch (e) {
+            logger.warn({ shotNumber: idx + 1, err: e }, 'Failed to presign keyframe URL — using storage key directly');
+            return { ...shot, keyframeUrl: storageKey };
+          }
+        }
+        return { ...shot, keyframeUrl: shot.keyframeUrl };
+      });
+    }
+
     const resolved = resolveForRemotion(manifest);
 
     // Override title with actual content title

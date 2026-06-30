@@ -6,6 +6,7 @@ export * from './lip-sync.js';
 export * from './identity-drift.js';
 export * from './comfyui-composer.js';
 export * from './framepack.js';
+export * from './svd.js';
 export * from './config.js';
 export * from './constants.js';
 export * from './constraint-validator.js';

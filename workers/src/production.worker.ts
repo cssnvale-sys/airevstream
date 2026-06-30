@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, composeFramePackForShot, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector, buildProductionScript } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, composeSVDForShot, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector, buildProductionScript } from '@airevstream/shared';
 import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming, AssemblyManifest, AssembledShot, SeedContext } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
@@ -1064,37 +1064,37 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
         });
       }
 
-      // ─── FramePack Video Generation (Phase 1: image-to-video) ───
-      // After generating the keyframe image, use FramePack to animate it into a short video clip
-      // This replaces the static image + Ken Burns zoom with real AI-generated motion
+      // ─── SVD Video Generation (image-to-video) ───
+      // After generating the keyframe image, use Stable Video Diffusion to animate it
+      // SVD works natively on Apple Silicon MPS (unlike FramePack which crashes on MPS)
       let videoClipUrls: string[] = [];
       try {
-        // Upload the first keyframe image to ComfyUI's input directory for FramePack
-        // ComfyUI is at ~/ComfyUI, not inside the project directory
+        // Upload the first keyframe image to ComfyUI's input directory for SVD
         const firstImageData = await comfyClient.downloadImage(images[0].filename, images[0].subfolder, images[0].type);
         const comfyuiInputPath = process.env.COMFYUI_INPUT_PATH ?? resolve(process.env.HOME ?? '/Users/cassianvale', 'ComfyUI/input');
-        const framepackInputFile = `airevstream_shot_${shotId}_${Date.now()}.png`;
-        const fullInputPath = resolve(comfyuiInputPath, framepackInputFile);
+        const svdInputFile = `airevstream_shot_${shotId}_${Date.now()}.png`;
+        const fullInputPath = resolve(comfyuiInputPath, svdInputFile);
         await mkdir(comfyuiInputPath, { recursive: true });
         await (await import('node:fs/promises')).writeFile(fullInputPath, firstImageData);
 
-        // Compose FramePack workflow from shot prompt and keyframe
+        // Compose SVD workflow from shot parameters and keyframe
         const shotPrompt = spec.promptBlocks.join(', ');
         const videoSeed = (workflow.resolvedSeed ?? 0) + 1000; // Offset seed for video gen
-        const videoDuration = 2.0; // 2 seconds per shot clip (can be adjusted per shot class)
+        const cameraMovement = spec.camera?.movement;
 
-        const framepackWorkflow = composeFramePackForShot(
-          framepackInputFile,
+        const svdWorkflow = composeSVDForShot(
+          svdInputFile,
           shotPrompt,
           videoSeed,
-          videoDuration,
+          3.0, // SVD generates ~25 frames at 8fps = ~3 sec
+          cameraMovement,
         );
 
-        logger.info({ shotId, framepackInputFile, videoSeed, videoDuration }, 'Starting FramePack video generation');
+        logger.info({ shotId, svdInputFile, videoSeed, cameraMovement }, 'Starting SVD video generation');
 
-        // Queue and wait for video (uses longer timeout — 300s default)
-        const videoClient = new ComfyUIClient(undefined, 120_000); // 2 min timeout — fail fast on FramePack, fall back to static keyframe
-        const videos = await videoClient.queueAndWaitForVideo(framepackWorkflow);
+        // SVD takes 2-5 min per clip on Apple Silicon — use 300s timeout
+        const videoClient = new ComfyUIClient(undefined, 300_000);
+        const videos = await videoClient.queueAndWaitForVideo(svdWorkflow);
 
         // Download and upload video clips to MinIO
         for (const vid of videos) {
@@ -1110,21 +1110,21 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
             storageKey: `${BUCKET}/${key}`,
             fileSize: videoData.length,
             mimeType: 'video/mp4',
-            generatedBy: 'framepack',
+            generatedBy: 'svd',
             contentId: data.contentId,
             shotId,
             metadata: {
               seed: videoSeed,
-              duration: videoDuration,
-              model: 'FramePackI2V_HY',
+              duration: 3.0,
+              model: 'svd_xt_1_1',
             },
           });
         }
 
-        logger.info({ shotId, videoClipCount: videoClipUrls.length }, 'FramePack video clips generated');
-      } catch (framepackErr) {
-        // FramePack failure is non-fatal — fall back to static keyframe images
-        logger.warn({ err: framepackErr, shotId }, 'FramePack video generation failed — falling back to static keyframe');
+        logger.info({ shotId, videoClipCount: videoClipUrls.length }, 'SVD video clips generated');
+      } catch (svdErr) {
+        // SVD failure is non-fatal — fall back to static keyframe images
+        logger.warn({ err: svdErr, shotId }, 'SVD video generation failed — falling back to static keyframe');
       }
 
       // ─── Post-generation QC gate (Stage 2) ───

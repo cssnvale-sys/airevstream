@@ -4,7 +4,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector, buildProductionScript } from '@airevstream/shared';
-import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming, AssemblyManifest, AssembledShot } from '@airevstream/shared';
+import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming, AssemblyManifest, AssembledShot, SeedContext } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
   ProductionGenerateImageJob,
@@ -810,6 +810,34 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
   const bible = cinemaBibleId ? await db.cinemaBible.findUnique({ where: { id: cinemaBibleId } }) : null;
   const promptBible = (bible?.promptBible as PromptBible | null) ?? undefined;
 
+  // Epic H1: Build PromptBible from lookdevOutput and merge with existing promptBible
+  // for character/style consistency across all shots
+  const contentWithParams = await db.contentItem.findUnique({
+    where: { id: data.contentId },
+    select: { generationParams: true },
+  });
+  const genParams = (contentWithParams?.generationParams as Record<string, unknown>) ?? {};
+  const agentOutputs = genParams.agentOutputs as Record<string, unknown> | undefined;
+  const lookdevOutput = agentOutputs?.lookdev as { colorPalette?: string[]; loraRecommendations?: Array<{ name: string; strength: number; purpose?: string }>; lensKit?: string[]; lightingScheme?: string; aspectRatio?: string; globalStyle?: string } | undefined;
+
+  // Single deterministic baseSeed per content item for series-lock seed policy
+  const contentBaseSeed = Math.abs(
+    [...data.contentId].reduce((hash, ch) => ((hash << 5) - hash + ch.charCodeAt(0)) | 0, 7)
+  ) % 2147483647;
+
+  // Build/merge PromptBible from lookdevOutput so composePrompt() prepends style tokens
+  const lookdevPromptBible: PromptBible = {
+    ...promptBible,
+    globalStyle: lookdevOutput?.globalStyle ?? promptBible?.globalStyle,
+    styleTokens: lookdevOutput?.colorPalette ? `color palette: ${lookdevOutput.colorPalette.join(', ')}` : promptBible?.styleTokens,
+    baseSeed: contentBaseSeed,
+    defaultSeedPolicy: 'series-lock',
+  };
+  if (lookdevOutput?.lightingScheme) {
+    // Store lighting scheme in qualityTokens as a prefix so it's always prepended
+    lookdevPromptBible.qualityTokens = [lookdevOutput.lightingScheme, promptBible?.qualityTokens].filter(Boolean).join(', ');
+  }
+
   // Process each shot
   const totalShots = shotIds.length;
   for (let shotIdx = 0; shotIdx < totalShots; shotIdx++) {
@@ -876,7 +904,7 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
       // ─── Safety defaults ───
       if (provider === 'veo' || provider === 'sora') {
         // Apply person generation safety default unless explicitly overridden in bible
-        const personGenOverride = promptBible?.slotRules?.['personGeneration']?.[0];
+        const personGenOverride = lookdevPromptBible?.slotRules?.['personGeneration']?.[0];
         if (!personGenOverride || personGenOverride === SAFETY_DEFAULTS.personGeneration) {
           const promptText2 = spec.promptBlocks?.join(' ') ?? '';
           const personTerms = /\b(person|people|face|human|man|woman|child|boy|girl)\b/i;
@@ -964,8 +992,9 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
         logger.info({ shotId, model: spec.model }, 'Applied FLUX schnell generation overrides (euler/simple/4steps/cfg1.0)');
       }
 
-      // Compose and run workflow
-      const workflow = composeWorkflow(spec, promptBible);
+      // Compose and run workflow — pass lookdevPromptBible and SeedContext for series-lock consistency
+      const seedCtx: SeedContext = { shotIndex: shotIdx, seriesId: data.contentId };
+      const workflow = composeWorkflow(spec, lookdevPromptBible, seedCtx);
       const images = await comfyClient.queueAndWait(workflow);
 
       // Download and upload to storage
@@ -1710,6 +1739,23 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
   const shotSpecOutput = agentOutputs?.shotspec as { shots?: Array<{ shotNumber: number; promptBlocks?: string[]; camera?: { lens?: string; framing?: string; movement?: string; dof?: string }; lighting?: string; duration?: number; transition?: string; beat?: string; generation?: { steps?: number; cfg?: number; sampler?: string; width?: number; height?: number } }> } | undefined;
   const lookdevOutput = agentOutputs?.lookdev as { colorPalette?: string[]; loraRecommendations?: Array<{ name: string; strength: number; purpose?: string }>; lensKit?: string[]; lightingScheme?: string; aspectRatio?: string; globalStyle?: string } | undefined;
 
+  // ─── Epic H1: Character/Style Consistency ───
+  // Build a single deterministic baseSeed per content item so all shots in this content
+  // share the same seed when seedPolicy='series-lock'. This ensures cross-shot
+  // character/visual consistency.
+  const contentBaseSeed = Math.abs(
+    [...data.contentId].reduce((hash, ch) => ((hash << 5) - hash + ch.charCodeAt(0)) | 0, 7)
+  ) % 2147483647;
+
+  // Prepend lookdev style descriptors to every shot's promptBlocks for visual consistency.
+  // These are prepended so the ShotSpec agent's shot-specific description still comes through.
+  const lookdevStyleBlocks: string[] = [];
+  if (lookdevOutput?.globalStyle) lookdevStyleBlocks.push(lookdevOutput.globalStyle);
+  if (lookdevOutput?.colorPalette && lookdevOutput.colorPalette.length > 0) {
+    lookdevStyleBlocks.push(`color palette: ${lookdevOutput.colorPalette.join(', ')}`);
+  }
+  if (lookdevOutput?.lightingScheme) lookdevStyleBlocks.push(`lighting: ${lookdevOutput.lightingScheme}`);
+
   const totalDurationSec = estimateDuration(script, content.contentType);
 
   const storyboard = await db.$transaction(async (tx) => {
@@ -1825,7 +1871,9 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
 
         // If we have agent ShotSpec output, populate the full ShotSpec for image generation
         if (agentShot) {
-          shotspec.promptBlocks = agentShot.promptBlocks ?? shotspec.visualDescription as string[];
+          // Epic H1: Prepend lookdev style descriptors to every shot for visual consistency
+          const shotPromptBlocks = agentShot.promptBlocks ?? (shotspec.visualDescription ? [shotspec.visualDescription as string] : []);
+          shotspec.promptBlocks = [...lookdevStyleBlocks, ...shotPromptBlocks];
           if (agentShot.camera) {
             shotspec.camera = {
               lens: agentShot.camera.lens,
@@ -1861,8 +1909,10 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
             };
           }
 
-          // Assign a stable seed for reproducibility
-          shotspec.seed = 1000 + shotNumber;
+          // Epic H1: Use series-lock seed policy with a single baseSeed per content item
+          // so all shots share the same seed → consistent character/style across shots
+          shotspec.seed = contentBaseSeed;
+          shotspec.seedPolicy = 'series-lock';
 
           // Shot class for workflow registry
           shotspec.shotClass = section.type === 'hook' ? 'Establishing_Wide'

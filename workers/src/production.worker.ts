@@ -356,6 +356,8 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
   const variant: ExportVariant | undefined = data.exportVariant;
   let compositionId: string;
   let inputProps: string;
+  // Epic H3: Track total duration in frames so Remotion renders the actual storyboard duration, not the composition default
+  let totalDurationInFrames: number | undefined;
 
   if (hasManifest) {
     // ─── New path: Assembly manifest → Remotion resolver ───
@@ -417,7 +419,9 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
 
     compositionId = resolved.compositionId;
     inputProps = JSON.stringify(resolved.inputProps);
-    logger.info({ compositionId, manifestVersion: manifest.schemaVersion }, 'Using assembly manifest for render');
+    // Epic H3: Use resolved duration from manifest (totalDurationSec * fps) instead of Remotion default
+    totalDurationInFrames = resolved.durationInFrames;
+    logger.info({ compositionId, manifestVersion: manifest.schemaVersion, totalDurationInFrames }, 'Using assembly manifest for render');
   } else if (isCinema) {
     // ─── Legacy path: inline props building ───
     // Use composition registry for selection
@@ -428,6 +432,9 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
     const renderWidth = variant?.width ?? registryComp?.defaultWidth ?? 1920;
     const renderHeight = variant?.height ?? registryComp?.defaultHeight ?? 1080;
     const renderFps = variant?.fps ?? registryComp?.defaultFps ?? 24;
+
+    // Epic H3: Calculate total durationInFrames from storyboard.totalDurationSec * fps instead of Remotion 5-min default
+    totalDurationInFrames = Math.max(1, Math.round(Number(storyboard.totalDurationSec ?? 60) * renderFps));
 
     // Build CinemaVideoProps from storyboard/shots data
     const cinemaShots = storyboard.shots.map((s, idx) => {
@@ -495,6 +502,10 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
     const prodType = contentType === 'video_short' ? 'short' : 'long';
     const registryComp = getCompositionForProduction(prodType);
     compositionId = registryComp?.id ?? (contentType === 'video_short' ? 'ShortFormVideo' : 'LongFormVideo');
+    const legacyFps = variant?.fps ?? registryComp?.defaultFps ?? 30;
+
+    // Epic H3: Calculate total durationInFrames from storyboard.totalDurationSec * fps instead of Remotion 5-min default
+    totalDurationInFrames = Math.max(1, Math.round(Number(storyboard.totalDurationSec ?? 60) * legacyFps));
 
     inputProps = JSON.stringify({
       title: storyboard.content.title,
@@ -516,16 +527,21 @@ async function handleRenderVideo(data: ProductionRenderVideoJob, job: Job<any>):
   try {
     // Invoke Remotion CLI render
     const codec = useProres ? 'prores' : 'h264';
+    // Epic H3: Build render args, adding --duration-in-frames when we have a calculated value
+    const renderArgs = [
+      'remotion', 'render',
+      compositionId,
+      outputPath,
+      '--props', inputProps,
+      '--codec', codec,
+      '--log', 'error',
+    ];
+    if (totalDurationInFrames && totalDurationInFrames > 0) {
+      renderArgs.push('--duration-in-frames', String(totalDurationInFrames));
+    }
     const { stdout, stderr } = await execFileAsync(
       'npx',
-      [
-        'remotion', 'render',
-        compositionId,
-        outputPath,
-        '--props', inputProps,
-        '--codec', codec,
-        '--log', 'error',
-      ],
+      renderArgs,
       {
         cwd: REMOTION_DIR,
         timeout: 600_000, // 10 min max
@@ -1701,21 +1717,6 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
   // Create storyboard + shots in a transaction for atomicity
   const beatTags = (content.beatTags as Array<{ section: string; preset: string }>) ?? [];
 
-  // Pre-compute shot data
-  const shotDataList = sections.map((section, i) => {
-    const beat = beatTags.find((b) => b.section === section.type) ?? { preset: 'CALM' };
-    const durationSec = Math.max(3, Math.round(section.text.split(/\s+/).length / 2.5));
-    const startSec = sections.slice(0, i).reduce((sum, s) => sum + Math.max(3, Math.round(s.text.split(/\s+/).length / 2.5)), 0);
-    return { section, beat, durationSec, startSec };
-  });
-
-  // Determine production type from content type
-  const productionType = content.contentType === 'video_short' ? 'short'
-    : content.contentType === 'thumbnail' ? 'thumbnail'
-    : content.contentType === 'video_long' ? 'long'
-    : 'cinema';
-  const qualityTier = ((data as unknown as Record<string, unknown>).qualityTier as string) ?? 'standard';
-
   // Check if agent pipeline state is available from job data (via directives) or content item's generationParams
   const directives = (data as unknown as Record<string, unknown>).directives as Record<string, unknown> | undefined;
   let agentOutputs = directives?.agentOutputs as Record<string, unknown> | undefined;
@@ -1733,10 +1734,38 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
     }
   }
 
+  const shotSpecOutput = agentOutputs?.shotspec as { shots?: Array<{ shotNumber: number; promptBlocks?: string[]; camera?: { lens?: string; framing?: string; movement?: string; dof?: string }; lighting?: string; duration?: number; transition?: string; beat?: string; generation?: { steps?: number; cfg?: number; sampler?: string; width?: number; height?: number } }> } | undefined;
+
+  // Pre-compute shot data
+  // Epic H3: When agent ShotSpec output provides a shot count, use it instead of parseScriptSections().length
+  const agentShots = shotSpecOutput?.shots;
+  const shotCount = (agentShots && agentShots.length > 0) ? agentShots.length : sections.length;
+
+  const shotDataList = (() => {
+    let runningStart = 0;
+    return Array.from({ length: shotCount }, (_, i) => {
+      const section = sections[i % sections.length] ?? { type: 'content' as const, text: '' };
+      const beat = beatTags.find((b) => b.section === section.type) ?? { preset: 'CALM' };
+      const agentDuration = agentShots?.[i]?.duration;
+      const durationSec = agentDuration
+        ? Math.max(3, Math.round(agentDuration))
+        : Math.max(3, Math.round(section.text.split(/\s+/).length / 2.5));
+      const startSec = runningStart;
+      runningStart += durationSec;
+      return { section, beat, durationSec, startSec };
+    });
+  })();
+
+  // Determine production type from content type
+  const productionType = content.contentType === 'video_short' ? 'short'
+    : content.contentType === 'thumbnail' ? 'thumbnail'
+    : content.contentType === 'video_long' ? 'long'
+    : 'cinema';
+  const qualityTier = ((data as unknown as Record<string, unknown>).qualityTier as string) ?? 'standard';
+
   const directorOutput = agentOutputs?.director as Record<string, unknown> | undefined;
   const dialogueOutput = agentOutputs?.dialogue as { tracks?: Array<{ shotNumber: number; text: string; voice: string; emotion: string; pacing: string }> } | undefined;
   const soundOutput = agentOutputs?.sound as { audioLayers?: Array<{ shotNumber: number; bg?: unknown; mg?: unknown; fg?: unknown }> } | undefined;
-  const shotSpecOutput = agentOutputs?.shotspec as { shots?: Array<{ shotNumber: number; promptBlocks?: string[]; camera?: { lens?: string; framing?: string; movement?: string; dof?: string }; lighting?: string; duration?: number; transition?: string; beat?: string; generation?: { steps?: number; cfg?: number; sampler?: string; width?: number; height?: number } }> } | undefined;
   const lookdevOutput = agentOutputs?.lookdev as { colorPalette?: string[]; loraRecommendations?: Array<{ name: string; strength: number; purpose?: string }>; lensKit?: string[]; lightingScheme?: string; aspectRatio?: string; globalStyle?: string } | undefined;
 
   // ─── Epic H1: Character/Style Consistency ───
@@ -1756,7 +1785,10 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
   }
   if (lookdevOutput?.lightingScheme) lookdevStyleBlocks.push(`lighting: ${lookdevOutput.lightingScheme}`);
 
-  const totalDurationSec = estimateDuration(script, content.contentType);
+  // Epic H3: Use actual sum of shot durations when agent ShotSpec provides them, instead of estimateDuration
+  const totalDurationSec = (agentShots && agentShots.length > 0)
+    ? shotDataList.reduce((sum, s) => sum + s.durationSec, 0)
+    : estimateDuration(script, content.contentType);
 
   const storyboard = await db.$transaction(async (tx) => {
     // Build assembled shots for the manifest

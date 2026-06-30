@@ -29,6 +29,15 @@ export interface CinemaShotData {
     dof?: 'shallow' | 'medium' | 'deep';
     stabilization?: 'handheld' | 'steadicam' | 'tripod' | 'gimbal';
   };
+  /** Ken Burns motion keyframes — derived from camera.movement when not explicitly set */
+  motion?: {
+    startScale: number;
+    endScale: number;
+    startX: number;
+    endX: number;
+    startY: number;
+    endY: number;
+  };
   colorGrade?: {
     temperature?: number;
     tint?: number;
@@ -152,19 +161,29 @@ export function resolveForRemotion(manifest: AssemblyManifest): ResolveResult {
  * Convert sec-based AssembledShot[] to frame-based CinemaShotData[].
  */
 export function toCinemaShotData(shots: AssembledShot[], fps: number): CinemaShotData[] {
-  return shots.map((shot, idx) => ({
-    id: shot.shotId,
-    src: shot.keyframeUrl ?? '',
-    videoSrc: shot.videoPlateUrl,
-    isVideo: !!shot.videoPlateUrl,
-    durationInFrames: Math.max(1, Math.round(shot.durationSec * fps)),
-    transitionIn: idx === 0 ? 'fade' : (shot.transition ?? 'cut'),
-    transitionOut: 'cut',
-    transitionDurationInFrames: idx === 0 ? 12 : 6,
-    camera: shot.camera,
-    colorGrade: shot.colorGrade ? toColorGrade(shot.colorGrade) : undefined,
-    section: shot.beat,
-  }));
+  return shots.map((shot, idx) => {
+    const camera = shot.camera;
+    const movement = camera?.movement;
+    // Derive Ken Burns motion keyframes from camera.movement string
+    const motion = movement && movement !== 'static'
+      ? movementToKenBurns(movement)
+      : undefined;
+
+    return {
+      id: shot.shotId,
+      src: shot.keyframeUrl ?? '',
+      videoSrc: shot.videoPlateUrl,
+      isVideo: !!shot.videoPlateUrl,
+      durationInFrames: Math.max(1, Math.round(shot.durationSec * fps)),
+      transitionIn: idx === 0 ? 'fade' : (shot.transition ?? 'cut'),
+      transitionOut: 'cut',
+      transitionDurationInFrames: idx === 0 ? 12 : 6,
+      camera,
+      motion,
+      colorGrade: shot.colorGrade ? toColorGrade(shot.colorGrade) : undefined,
+      section: shot.beat,
+    };
+  });
 }
 
 /**
@@ -317,6 +336,49 @@ export function toDraftManifest(manifest: AssemblyManifest): AssemblyManifest {
 }
 
 // ─── Internal Helpers ───
+
+/**
+ * Convert a camera.movement string preset into Ken Burns motion keyframes
+ * (start/end scale + translate).  Values mirror the transforms in
+ * CameraMotion.tsx's getMovementTransform() but as explicit start/end pairs
+ * for the linear-interpolation Ken Burns path.
+ */
+function movementToKenBurns(movement: string): NonNullable<CinemaShotData['motion']> {
+  switch (movement) {
+    case 'pan-left':
+      return { startScale: 1.05, endScale: 1.05, startX: 0, endX: -80, startY: 0, endY: 0 };
+    case 'pan-right':
+      return { startScale: 1.05, endScale: 1.05, startX: 0, endX: 80, startY: 0, endY: 0 };
+    case 'tilt-up':
+      return { startScale: 1.05, endScale: 1.05, startX: 0, endX: 0, startY: 0, endY: -60 };
+    case 'tilt-down':
+      return { startScale: 1.05, endScale: 1.05, startX: 0, endX: 0, startY: 0, endY: 60 };
+    case 'dolly-in':
+      return { startScale: 1.0, endScale: 1.3, startX: 0, endX: 0, startY: 0, endY: 0 };
+    case 'dolly-out':
+      return { startScale: 1.3, endScale: 1.0, startX: 0, endX: 0, startY: 0, endY: 0 };
+    case 'crane-up':
+      return { startScale: 1.1, endScale: 1.0, startX: 0, endX: 0, startY: 20, endY: -40 };
+    case 'crane-down':
+      return { startScale: 1.0, endScale: 1.1, startX: 0, endX: 0, startY: -40, endY: 20 };
+    case 'zoom-in':
+      return { startScale: 1.0, endScale: 1.5, startX: 0, endX: 0, startY: 0, endY: 0 };
+    case 'zoom-out':
+      return { startScale: 1.5, endScale: 1.0, startX: 0, endX: 0, startY: 0, endY: 0 };
+    case 'orbit-left':
+      return { startScale: 1.05, endScale: 1.05, startX: 0, endX: -50, startY: 0, endY: 0 };
+    case 'orbit-right':
+      return { startScale: 1.05, endScale: 1.05, startX: 0, endX: 50, startY: 0, endY: 0 };
+    case 'tracking-left':
+      return { startScale: 1.0, endScale: 1.0, startX: 0, endX: -120, startY: 0, endY: 0 };
+    case 'tracking-right':
+      return { startScale: 1.0, endScale: 1.0, startX: 0, endX: 120, startY: 0, endY: 0 };
+    case 'handheld-subtle':
+      return { startScale: 1.0, endScale: 1.0, startX: 0, endX: 0, startY: 0, endY: 0 };
+    default:
+      return { startScale: 1.0, endScale: 1.0, startX: 0, endX: 0, startY: 0, endY: 0 };
+  }
+}
 
 function toColorGrade(spec: ColorGradeSpec): Record<string, unknown> {
   const grade: Record<string, unknown> = {};

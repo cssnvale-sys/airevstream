@@ -1,9 +1,11 @@
 import React from 'react';
 import { useCurrentFrame, interpolate, spring, useVideoConfig } from 'remotion';
-import type { CinemaCamera } from '../types';
+import type { CinemaCamera, ShotData } from '../types';
 
 interface CameraMotionProps {
   camera?: CinemaCamera;
+  /** Explicit Ken Burns motion keyframes (takes priority over camera.movement) */
+  motion?: ShotData['motion'];
   durationInFrames: number;
   children: React.ReactNode;
 }
@@ -12,11 +14,50 @@ interface CameraMotionProps {
  * CameraMotion — Applies animated camera transforms to children.
  *
  * Supports pan, tilt, zoom, dolly, crane movements with spring easing.
+ * When `motion` (explicit Ken Burns keyframes) is provided, it takes priority
+ * over the `camera.movement` string preset.
  */
-export const CameraMotion: React.FC<CameraMotionProps> = ({ camera, durationInFrames, children }) => {
+export const CameraMotion: React.FC<CameraMotionProps> = ({ camera, motion, durationInFrames, children }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
+  // If explicit Ken Burns motion keyframes are provided, use them directly
+  if (motion) {
+    const progress = interpolate(frame, [0, durationInFrames], [0, 1], {
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    });
+
+    const scale = interpolate(progress, [0, 1], [motion.startScale, motion.endScale]);
+    const translateX = interpolate(progress, [0, 1], [motion.startX, motion.endX]);
+    const translateY = interpolate(progress, [0, 1], [motion.startY, motion.endY]);
+
+    // Stabilization jitter (applied on top of Ken Burns motion)
+    const jitter = camera?.stabilization === 'handheld'
+      ? {
+          x: Math.sin(frame * 0.3) * 1.5 + Math.cos(frame * 0.7) * 0.8,
+          y: Math.cos(frame * 0.4) * 1.2 + Math.sin(frame * 0.6) * 0.6,
+        }
+      : { x: 0, y: 0 };
+
+    return (
+      <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            transform: `translate(${translateX + jitter.x}px, ${translateY + jitter.y}px) scale(${scale})`,
+            transformOrigin: 'center center',
+            willChange: 'transform',
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  // Fall back to camera.movement string-based presets
   if (!camera?.movement || camera.movement === 'static') {
     return <div style={{ width: '100%', height: '100%' }}>{children}</div>;
   }

@@ -142,7 +142,7 @@ const CinemaShot: React.FC<{
   return (
     <div style={{ width, height, opacity, position: 'relative' }}>
       <ColorGrade grade={effectiveGrade}>
-        <CameraMotion camera={shot.camera} durationInFrames={shot.durationInFrames}>
+        <CameraMotion camera={shot.camera} motion={shot.motion} durationInFrames={shot.durationInFrames}>
           {shot.isVideo && shot.videoSrc ? (
             <Video
               src={shot.videoSrc}

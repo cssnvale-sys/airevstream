@@ -1093,7 +1093,7 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
         logger.info({ shotId, framepackInputFile, videoSeed, videoDuration }, 'Starting FramePack video generation');
 
         // Queue and wait for video (uses longer timeout — 300s default)
-        const videoClient = new ComfyUIClient(undefined, 600_000); // 10 min timeout for video gen
+        const videoClient = new ComfyUIClient(undefined, 120_000); // 2 min timeout — fail fast on FramePack, fall back to static keyframe
         const videos = await videoClient.queueAndWaitForVideo(framepackWorkflow);
 
         // Download and upload video clips to MinIO

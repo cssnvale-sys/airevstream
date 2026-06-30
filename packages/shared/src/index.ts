@@ -14,6 +14,7 @@ export * from './post-generation-qc.js';
 export * from './workflow-registry.js';
 export * from './composition-registry.js';
 export * from './assembly-resolver.js';
+export * from './production-script.js';
 export * from './errors.js';
 export * from './logger.js';
 export * from './presets/index.js';

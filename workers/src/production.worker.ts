@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector } from '@airevstream/shared';
+import { createLogger, BUCKETS, QUALITY_THRESHOLDS, ComfyUIClient, composeWorkflow, composeRepairWorkflow, scoreShot, extractFingerprint, compareFingerprints, detectFlicker, recommendConditioning, createProvenanceRecord, generateC2PAManifest, lintPrompt, validateShotSpec, SAFETY_DEFAULTS, estimateShotCost, runPostGenQC, validateAVSync, validateDurationEnvelope, getWorkflowWithDefaults, getCompositionForProduction, resolveForRemotion, parseKeyframeUrls, deriveBeatsFromDirector, buildProductionScript } from '@airevstream/shared';
 import type { ShotSpec, RepairSpec, PromptBible, ComfyUIWorkflow, QCScoreResult, ImageFingerprint, ProviderName, PostGenQCOptions, QCDecisionShotInput, QCDecisionOutput, QCVerdict, WordTiming, AssemblyManifest, AssembledShot } from '@airevstream/shared';
 import { createWorker, type Job } from '@airevstream/queue';
 import type {
@@ -1020,12 +1020,14 @@ async function handleShotGeneration(data: ProductionGenerateShotsJob, job: Job<a
       ).score : undefined;
 
       // Update shot with generated keyframes, resolved seed, provenance, and QC score
+      // Clamp QC score to 99.9 max (Decimal(3,1) column can't hold 100+)
+      const clampedQCScore = postGenQCScore !== undefined ? Math.min(99.9, postGenQCScore) : undefined;
       await db.storyboardShot.update({
         where: { id: shotId },
         data: {
           keyframeUrls: uploadedUrls as any,
           status: 'generated',
-          qualityScore: postGenQCScore,
+          qualityScore: clampedQCScore,
           shotspec: { ...spec, seed: workflow.resolvedSeed, provenance: provenance.id, safetyScore: safetyResult.riskScore } as any,
         },
       });
@@ -1857,6 +1859,56 @@ async function handleGenerateStoryboard(data: ProductionStoryboardJob): Promise<
   });
 
   logger.info({ storyboardId: storyboard.id, shotCount: sections.length, hasManifest: true }, 'Storyboard generated with assembly manifest');
+
+  // ─── Build the unified timecoded production script ───
+  try {
+    const content = await db.contentItem.findUnique({
+      where: { id: data.contentId },
+      select: { title: true, contentType: true, channel: { select: { socialAccount: { select: { platform: true } } } } },
+    });
+
+    // Rebuild manifest reference from storyboard scriptJson
+    const sbWithJson = await db.storyboard.findUnique({
+      where: { id: storyboard.id },
+      select: { scriptJson: true },
+    });
+    const storedManifest = sbWithJson?.scriptJson as Record<string, unknown> | null;
+    const manifestShots = (storedManifest?.shots as unknown[]) ?? [];
+    const manifestBeatTimings = storedManifest?.beatTimings as AssemblyManifest['beatTimings'];
+    const manifestSubtitles = storedManifest?.subtitles as AssemblyManifest['subtitles'];
+    const manifestOutputSpec = storedManifest?.outputSpec as AssemblyManifest['outputSpec'];
+
+    const productionScript = buildProductionScript({
+      contentId: data.contentId,
+      storyboardId: storyboard.id,
+      title: content?.title ?? 'Untitled',
+      contentType: content?.contentType ?? 'video_long',
+      platform: content?.channel?.socialAccount?.platform ?? 'youtube',
+      agentOutputs: agentOutputs ?? {},
+      assembledShots: manifestShots as AssembledShot[],
+      beatTimings: manifestBeatTimings,
+      subtitles: manifestSubtitles,
+      outputSpec: manifestOutputSpec,
+    });
+
+    // Persist the production script in the storyboard's scriptJson alongside the manifest
+    const currentScriptJson = await db.storyboard.findUnique({
+      where: { id: storyboard.id },
+      select: { scriptJson: true },
+    });
+    const currentManifest = currentScriptJson?.scriptJson as Record<string, unknown> | null;
+    if (currentManifest) {
+      await db.storyboard.update({
+        where: { id: storyboard.id },
+        data: {
+          scriptJson: { ...currentManifest, productionScript } as any,
+        },
+      });
+      logger.info({ storyboardId: storyboard.id, cueCount: productionScript.cues.length }, 'Timecoded production script generated and persisted');
+    }
+  } catch (scriptErr) {
+    logger.warn({ err: scriptErr, storyboardId: storyboard.id }, 'Failed to generate production script — manifest still stored');
+  }
 }
 
 // ─── Helpers ───

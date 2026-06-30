@@ -510,6 +510,72 @@ export async function contentRoutes(app: FastifyInstance) {
     }
   });
 
+  // Get timecoded production script for content
+  app.get('/:id/production-script', async (request, reply) => {
+    try {
+      const tenantId = await resolveTenantId(request, reply);
+      if (!tenantId) return;
+
+      const { id } = request.params as { id: string };
+      const db = getDb();
+
+      // Verify content belongs to tenant
+      const content = await db.contentItem.findFirst({
+        where: { id, channel: { socialAccount: { emailAccount: { tenantId } } } },
+        select: { id: true, title: true, contentType: true, channel: { select: { socialAccount: { select: { platform: true } } } } },
+      });
+      if (!content) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Content not found' } });
+      }
+
+      const storyboard = await db.storyboard.findFirst({
+        where: { contentId: id },
+        include: { shots: { orderBy: { shotNumber: 'asc' } } },
+      });
+
+      if (!storyboard) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No storyboard for this content' } });
+      }
+
+      const scriptJson = storyboard.scriptJson as Record<string, unknown> | null;
+
+      // Check if production script already exists in scriptJson
+      if (scriptJson?.productionScript) {
+        return reply.send({ success: true, data: scriptJson.productionScript });
+      }
+
+      // If no production script exists, check if we have a manifest to build from
+      const hasManifest = scriptJson?.schemaVersion === '1.0.0';
+      if (!hasManifest) {
+        return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'No production script or manifest available' } });
+      }
+
+      // Build production script from manifest
+      const { buildProductionScript } = await import('@airevstream/shared');
+      const manifest = scriptJson as unknown as any;
+      const productionScript = buildProductionScript({
+        contentId: id,
+        storyboardId: storyboard.id,
+        title: content.title ?? 'Untitled',
+        contentType: content.contentType ?? 'video_long',
+        platform: content.channel?.socialAccount?.platform ?? 'youtube',
+        agentOutputs: manifest.agentOutputs ?? {},
+        assembledShots: manifest.shots ?? [],
+        beatTimings: manifest.beatTimings,
+        subtitles: manifest.subtitles,
+        outputSpec: manifest.outputSpec,
+      });
+
+      return reply.send({ success: true, data: productionScript });
+    } catch (err) {
+      logger.error({ err }, 'GET /content/:id/production-script failed');
+      return reply.status(500).send({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch production script' },
+      });
+    }
+  });
+
   // List pending approvals
   app.get('/approvals/pending', async (request, reply) => {
     try {
